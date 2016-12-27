@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EditorDocument.h"
+
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Engine/Engine.h>
 #include <QApplication>
@@ -10,11 +12,6 @@ namespace Urho3D
 {
 
 class MainWindow;
-
-class EditorDocument
-{
-
-};
 
 class EditorInterface
 {
@@ -60,10 +57,6 @@ private:
     /// Find main menu by name.
     QMenu* FindMainMenu(const QString& name);
 
-private slots:
-    /// Handle main timer.
-    void HandleTimer();
-
 private:
     /// Context.
     SharedPtr<Context> context_;
@@ -71,16 +64,9 @@ private:
     QString activeDirectory_;
     /// Main window.
     QScopedPointer<MainWindow> mainWindow_;
-    /// Engine.
-    SharedPtr<Engine> engine_;
 
     /// Plug-ins.
     Vector<SharedPtr<EditorPlugin>> plugins_;
-};
-
-class SceneEditorDocument : public EditorDocument
-{
-
 };
 
 class SceneEditorPlugin : public EditorPlugin

@@ -16,8 +16,6 @@ EditorApplication::EditorApplication(int argc, char** argv, Urho3D::Context* con
     : QApplication(argc, argv)
     , context_(context)
     , activeDirectory_(GetArguments().Size() > 0 ? GetArguments()[0].CString() : ".")
-    , mainWindow_(new MainWindow(context))
-    , engine_(MakeShared<Engine>(context))
 {
 }
 
@@ -37,39 +35,9 @@ int EditorApplication::Run()
     if (file.open(QFile::ReadOnly | QFile::Text))
         setStyleSheet(QLatin1String(file.readAll()));
 
-    mainWindow_->CreateWidgets();
-
-    VariantMap engineParameters = Engine::ParseParameters(GetArguments());
-    engineParameters[EP_FULL_SCREEN] = false;
-    engineParameters[EP_BORDERLESS] = true;
-    engineParameters[EP_WINDOW_RESIZABLE] = true;
-    engineParameters[EP_EXTERNAL_WINDOW] = (void*)mainWindow_->GetClientWidget()->winId();
-
-    if (!engine_->Initialize(engineParameters))
+    mainWindow_.reset(new MainWindow(context_));
+    if (!mainWindow_->GetUrho3DWidget()->IsInitialized())
         return -1;
-
-    QTimer timer;
-    connect(&timer, SIGNAL(timeout()), this, SLOT(HandleTimer()));
-    timer.start(16);
-
-    //////////////////////////////////////////////////////////////////////////
-    Scene* scene_ = new Scene(context_);
-    scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<DebugRenderer>();
-
-    // Create camera.
-    Node* cameraNode_ = new Node(context_);
-    Camera* camera = cameraNode_->CreateComponent<Camera>();
-
-    camera->SetOrthographic(true);
-    Graphics* graphic = context_->GetSubsystem<Graphics>();
-    camera->SetOrthoSize(graphic->GetHeight() * PIXEL_SIZE);
-
-    SharedPtr<Viewport> viewport(new Viewport(context_, scene_, camera));
-
-    Renderer* renderer = context_->GetSubsystem<Renderer>();
-    renderer->SetViewport(0, viewport);
-    //////////////////////////////////////////////////////////////////////////
 
     mainWindow_->showMaximized();
     return exec();
@@ -89,12 +57,6 @@ QMenu* EditorApplication::GetMainMenu(const String& name, const String& beforeNa
 //     mainMenu_->insertMenu(beforeMenu ? beforeMenu->menuAction() : nullptr, newMenu);
 //     return newMenu;
     return nullptr;
-}
-
-void EditorApplication::HandleTimer()
-{
-    if (engine_ && !engine_->IsExiting())
-        engine_->RunFrame();
 }
 
 QMenu* EditorApplication::FindMainMenu(const QString& name)
