@@ -1,7 +1,16 @@
 #include "../Editor/EditorApplication.h"
 
-int main( int argc, char **argv )
+#include <Urho3D/Core/Main.h>
+
+int Main()
 {
-    Urho3D::EditorApplication a(argc, argv, new Urho3D::Context());
-    return a.Run();
+    int argc = 0;
+    char** argv = 0;
+    Urho3D::SharedPtr<Urho3D::Context> context(new Urho3D::Context());
+    Urho3D::EditorApplication editor(argc, argv, context);
+    editor.AddPlugin(Urho3D::MakeShared<Urho3D::SceneEditorPlugin>());
+
+    return editor.Run();
 }
+
+URHO3D_DEFINE_MAIN(Main());
