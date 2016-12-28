@@ -2,6 +2,8 @@
 
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Engine/Engine.h>
+#include <Urho3D/Graphics/Viewport.h>
+#include <Urho3D/Scene/Node.h>
 #include <QApplication>
 #include <QMainWindow>
 #include <QMenuBar>
@@ -24,6 +26,8 @@ public:
     void Activate();
     /// Deactivate this document.
     void Deactivate();
+    /// Return whether the document is active.
+    bool IsActive() const { return isActive_; }
     /// Get document name.
     const QString& GetName() { return name_; }
 
@@ -40,15 +44,20 @@ private:
     bool isActive_;
 };
 
-class Urho3DDocument : public EditorDocument
+class Urho3DDocument : public EditorDocument, public Object
 {
     Q_OBJECT
+    URHO3D_OBJECT(Urho3DDocument, Object);
 
 public:
     /// Construct.
     Urho3DDocument(Urho3DWidget* urho3dWidget, const QString& name);
     /// Destruct.
     virtual ~Urho3DDocument();
+    /// Get Urho3D widget.
+    Urho3DWidget* GetUrho3DWidget() const { return urho3dWidget_; }
+    /// Get Urho3D context.
+    Context* GetContext() const;
 
 protected:
     /// Document activation handling.
@@ -69,10 +78,32 @@ class SceneDocument : public Urho3DDocument
 public:
     /// Construct.
     SceneDocument(Urho3DWidget* urho3dWidget, const QString& name);
+    /// Set scene.
+    void SetScene(SharedPtr<Scene> scene);
+
+protected:
+    /// Document activation handling.
+    virtual void DoActivate() override;
 
 private:
-    /// Name of the document.
-    QString name_;
+    /// Setup viewport.
+    void SetupViewport();
+
+    /// Handle update.
+    void HandleUpdate(StringHash eventType, VariantMap& eventData);
+    /// Handle mouse button up/down.
+    void HandleMouseButton(StringHash eventType, VariantMap& eventData);
+
+private:
+    /// Camera node.
+    Node cameraNode_;
+    /// Camera component.
+    Camera* camera_;
+
+    /// Scene.
+    SharedPtr<Scene> scene_;
+    /// Viewport.
+    SharedPtr<Viewport> viewport_;
 };
 
 }

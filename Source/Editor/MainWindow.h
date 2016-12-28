@@ -26,7 +26,7 @@ public:
     /// Get client widget.
     Urho3DWidget* GetUrho3DWidget() { return urho3DWidget_.data(); }
     /// Add document.
-    void AddDocument(EditorDocument* document, bool bringToTop);
+    void AddDocument(EditorDocument* document);
 
 // public:
 //     virtual void AddDocument(EditorDocument* document) override;
@@ -42,6 +42,8 @@ private slots:
     void OnTabChanged(int index);
 
     void OnFileNewScene(bool);
+    void OnFileOpenScene(bool);
+    void OnFileSaveScene(bool);
     void OnFileExit(bool);
 
 private:
