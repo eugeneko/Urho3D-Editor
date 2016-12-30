@@ -21,103 +21,6 @@
 namespace Urho3D
 {
 
-AbstractDocument::AbstractDocument(Context* context)
-    : Object(context)
-    , isDirty_(false)
-{
-
-}
-
-void AbstractDocument::MarkDirty()
-{
-    isDirty_ = true;
-}
-
-bool AbstractDocument::Close()
-{
-    return true;
-}
-
-void AbstractDocument::SaveAs()
-{
-    EditorSettings* settings = GetSubsystem<EditorSettings>();
-
-    QFileDialog dialog;
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    dialog.setFileMode(QFileDialog::AnyFile);
-    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    dialog.setDirectory(settings->GetLastDirectory());
-    if (dialog.exec())
-    {
-        const QStringList files = dialog.selectedFiles();
-        const QString fileName = files.empty() ? "" : files[0];
-        if (!fileName.isEmpty())
-        {
-            settings->SetLastDirectory(fileName);
-            SaveAs(fileName);
-        }
-    }
-}
-
-void AbstractDocument::SaveAs(const QString& fileName)
-{
-    UpdateFileNameAndTitle(fileName);
-    DoSave(fileName);
-}
-
-void AbstractDocument::Open()
-{
-    EditorSettings* settings = GetSubsystem<EditorSettings>();
-
-    QFileDialog dialog;
-    dialog.setAcceptMode(QFileDialog::AcceptOpen);
-    dialog.setFileMode(QFileDialog::AnyFile);
-    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    dialog.setDirectory(settings->GetLastDirectory());
-    if (dialog.exec())
-    {
-        const QStringList files = dialog.selectedFiles();
-        const QString fileName = files.empty() ? "" : files[0];
-        if (!fileName.isEmpty())
-        {
-            settings->SetLastDirectory(fileName);
-            Open(fileName);
-        }
-    }
-}
-
-void AbstractDocument::Open(const QString& fileName)
-{
-    UpdateFileNameAndTitle(fileName);
-    DoLoad(fileName);
-}
-
-void AbstractDocument::Activate()
-{
-    if (!isActive_)
-    {
-        isActive_ = true;
-        DoActivate();
-    }
-}
-
-void AbstractDocument::Deactivate()
-{
-    if (isActive_)
-    {
-        isActive_ = false;
-        DoDeactivate();
-    }
-}
-
-void AbstractDocument::UpdateFileNameAndTitle(const QString& fileName)
-{
-    QFileInfo fileInfo(fileName);
-    fileName_ = fileInfo.absoluteFilePath();
-    title_ = fileInfo.fileName();
-}
-
-//////////////////////////////////////////////////////////////////////////
 AbstractPage::AbstractPage(Context* context)
     : Object(context)
     , unsavedChanges_(false)
@@ -234,38 +137,25 @@ StartPage::StartPage(Context* context)
 }
 
 //////////////////////////////////////////////////////////////////////////
-Urho3DDocument::Urho3DDocument(Urho3DWidget* urho3dWidget, const QString& name)
-    : AbstractDocument(urho3dWidget->GetContext())
+Urho3DPage::Urho3DPage(Urho3DWidget* urho3dWidget, const QString& name)
+    : AbstractPage(urho3dWidget->GetContext())
     , urho3dWidget_(urho3dWidget)
 {
     SetTitle(name);
 }
 
-Urho3DDocument::~Urho3DDocument()
+Urho3DPage::~Urho3DPage()
 {
 }
 
-Context* Urho3DDocument::GetContext() const
+Context* Urho3DPage::GetContext() const
 {
     return urho3dWidget_->GetContext();
 }
 
-void Urho3DDocument::DoActivate()
-{
-//     if (!layout())
-//         setLayout(new QVBoxLayout(this));
-//     layout()->addWidget(urho3dWidget_);
-}
-
-void Urho3DDocument::DoDeactivate()
-{
-//     if (urho3dWidget_->parent() == this)
-//         urho3dWidget_->setParent(nullptr);
-}
-
 //////////////////////////////////////////////////////////////////////////
-SceneDocument::SceneDocument(Urho3DWidget* urho3dWidget, const QString& name)
-    : Urho3DDocument(urho3dWidget, name)
+SceneEditorPage::SceneEditorPage(Urho3DWidget* urho3dWidget, const QString& name)
+    : Urho3DPage(urho3dWidget, name)
     , cameraNode_(urho3dWidget->GetContext())
     , camera_(cameraNode_.CreateComponent<Camera>())
 {
@@ -274,40 +164,31 @@ SceneDocument::SceneDocument(Urho3DWidget* urho3dWidget, const QString& name)
 
 //     grabKeyboard();
 
-    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(SceneDocument, HandleUpdate));
-    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(SceneDocument, HandleKey));
-    SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(SceneDocument, HandleKey));
-    SubscribeToEvent(E_MOUSEBUTTONDOWN, URHO3D_HANDLER(SceneDocument, HandleMouseButton));
-    SubscribeToEvent(E_MOUSEBUTTONUP, URHO3D_HANDLER(SceneDocument, HandleMouseButton));
+    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(SceneEditorPage, HandleUpdate));
+    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(SceneEditorPage, HandleKey));
+    SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(SceneEditorPage, HandleKey));
+    SubscribeToEvent(E_MOUSEBUTTONDOWN, URHO3D_HANDLER(SceneEditorPage, HandleMouseButton));
+    SubscribeToEvent(E_MOUSEBUTTONUP, URHO3D_HANDLER(SceneEditorPage, HandleMouseButton));
 }
 
-void SceneDocument::SetScene(SharedPtr<Scene> scene)
+void SceneEditorPage::SetScene(SharedPtr<Scene> scene)
 {
     scene_ = scene;
     viewport_ = new Viewport(GetContext(), scene_, camera_);
     SetupViewport();
 }
 
-void SceneDocument::DoActivate()
+void SceneEditorPage::SetupViewport()
 {
-    Urho3DDocument::DoActivate();
-    SetupViewport();
-}
-
-void SceneDocument::SetupViewport()
-{
-    if (IsActive())
+//     if (IsActive())
     {
         Renderer* renderer = GetContext()->GetSubsystem<Renderer>();
         renderer->SetViewport(0, viewport_);
     }
 }
 
-void SceneDocument::HandleUpdate(StringHash eventType, VariantMap& eventData)
+void SceneEditorPage::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
-    if (!IsActive())
-        return;
-
     float timeStep = eventData[Update::P_TIMESTEP].GetFloat();
     Input* input = GetSubsystem<Input>();
 
@@ -335,7 +216,7 @@ void SceneDocument::HandleUpdate(StringHash eventType, VariantMap& eventData)
     }
 }
 
-void SceneDocument::HandleKey(StringHash eventType, VariantMap& eventData)
+void SceneEditorPage::HandleKey(StringHash eventType, VariantMap& eventData)
 {
     Input* input = GetSubsystem<Input>();
     if (eventType == E_KEYDOWN)
@@ -352,11 +233,8 @@ void SceneDocument::HandleKey(StringHash eventType, VariantMap& eventData)
     }
 }
 
-void SceneDocument::HandleMouseButton(StringHash eventType, VariantMap& eventData)
+void SceneEditorPage::HandleMouseButton(StringHash eventType, VariantMap& eventData)
 {
-    if (!IsActive())
-        return;
-
     // Handle camera rotation
     Input* input = GetSubsystem<Input>();
     if (eventType == E_MOUSEBUTTONDOWN)
@@ -377,54 +255,6 @@ void SceneDocument::HandleMouseButton(StringHash eventType, VariantMap& eventDat
             input->SetMouseMode(MM_ABSOLUTE);
         }
     }
-}
-
-ProjectDocument::ProjectDocument(Context* context)
-    : AbstractDocument(context)
-    , layout_(new QFormLayout())
-    , fieldResourcePrefixPaths_(new QLineEdit())
-    , fieldResourcePaths_(new QListWidget())
-{
-    layout_->addRow("Resource Prefix Paths:", fieldResourcePrefixPaths_);
-    connect(fieldResourcePrefixPaths_, SIGNAL(textChanged(const QString&)), this, SLOT(OnResourcePrefixPathsChanged()));
-
-    layout_->addRow("Resource Paths:", fieldResourcePaths_);
-
-//     setLayout(layout_);
-}
-
-void ProjectDocument::DoSave(const QString& fileName)
-{
-    XMLFile xml(context_);
-    XMLElement root = xml.CreateRoot("project");
-    XMLElement resourcePaths = root.CreateChild("resourcepaths");
-    resourcePaths.SetAttribute("prefix", fieldResourcePrefixPaths_->text().toStdString().c_str());
-
-    File file(context_);
-    if (file.Open(fileName.toStdString().c_str(), FILE_WRITE))
-        xml.Save(file);
-}
-
-void ProjectDocument::DoLoad(const QString& fileName)
-{
-    XMLFile xml(context_);
-    xml.LoadFile(fileName.toStdString().c_str());
-
-    XMLElement root = xml.GetRoot("project");
-    XMLElement resourcePaths = root.GetChild("resourcepaths");
-    resourcePrefixPaths_ = resourcePaths.GetAttribute("prefix").CString();
-
-    fieldResourcePrefixPaths_->setText(resourcePrefixPaths_);
-}
-
-void ProjectDocument::UpdateResourcePaths()
-{
-
-}
-
-void ProjectDocument::OnResourcePrefixPathsChanged(const QString& value)
-{
-    resourcePrefixPaths_ = value;
 }
 
 }

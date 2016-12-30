@@ -19,73 +19,6 @@ namespace Urho3D
 
 class Urho3DWidget;
 
-class AbstractDocument : public QObject, public Object
-{
-    Q_OBJECT
-    URHO3D_OBJECT(AbstractDocument, Object);
-
-public:
-    /// Construct.
-    AbstractDocument(Context* context);
-    /// Destruct.
-    virtual ~AbstractDocument() {}
-    /// Mark document as dirty.
-    void MarkDirty();
-
-    /// Close document.
-    bool Close();
-    /// Save document to file. Opens modal 'Save File' dialog.
-    void SaveAs();
-    /// Save document to file.
-    void SaveAs(const QString& fileName);
-    /// Open document from file. Opens modal 'Open File' dialog.
-    void Open();
-    /// Open document from file.
-    void Open(const QString& fileName);
-
-    /// Activate this document.
-    void Activate();
-    /// Deactivate this document.
-    void Deactivate();
-    /// Return whether the document is active.
-    bool IsActive() const { return isActive_; }
-
-    /// Set document title.
-    void SetTitle(const QString& title) { title_ = title; }
-    /// Get document title.
-    const QString& GetTitle() const { return title_; }
-    /// Get file name.
-    const QString& GetFileName() const { return fileName_; }
-    /// Check whether the document is dirty.
-    bool IsDirty() const { return isDirty_; }
-
-protected:
-    /// Save document to file.
-    virtual void DoSave(const QString& fileName) { }
-    /// Load document from file.
-    virtual void DoLoad(const QString& fileName) { }
-
-    /// Document activation handling.
-    virtual void DoActivate() { }
-    /// Document deactivation handling.
-    virtual void DoDeactivate() { }
-
-private:
-    /// Update file name and title.
-    void UpdateFileNameAndTitle(const QString& fileName);
-
-private:
-    /// File name.
-    QString fileName_;
-    /// Document title.
-    QString title_;
-    /// Whether the document has unsaved changes.
-    bool isDirty_;
-
-    /// Is document active?
-    bool isActive_;
-};
-
 class AbstractPage : public QWidget, public Object
 {
     Q_OBJECT
@@ -166,63 +99,23 @@ private:
 
 };
 
-class ProjectDocument : public AbstractDocument
+class Urho3DPage : public AbstractPage
 {
     Q_OBJECT
-    URHO3D_OBJECT(AbstractDocument, Object);
+    URHO3D_OBJECT(Urho3DPage, AbstractPage);
 
 public:
     /// Construct.
-    ProjectDocument(Context* context);
-
-protected:
-    /// Save document to file.
-    virtual void DoSave(const QString& fileName) override;
-    /// Load document from file.
-    virtual void DoLoad(const QString& fileName) override;
-
-private:
-    /// Update resource paths.
-    void UpdateResourcePaths();
-
-private slots:
-    /// Handle Resource Prefix Paths changed.
-    void OnResourcePrefixPathsChanged(const QString& value);
-
-private:
-    /// 'Resource Prefix Paths' variable.
-    QString resourcePrefixPaths_;
-    /// 'Resource Paths' variable.
-    QStringList resourcePaths_;
-
-    /// Layout.
-    QFormLayout* layout_;
-    /// 'Resource Prefix Paths' field.
-    QLineEdit* fieldResourcePrefixPaths_;
-    /// 'Resource Paths' field.
-    QListWidget* fieldResourcePaths_;
-};
-
-class Urho3DDocument : public AbstractDocument
-{
-    Q_OBJECT
-    URHO3D_OBJECT(Urho3DDocument, AbstractDocument);
-
-public:
-    /// Construct.
-    Urho3DDocument(Urho3DWidget* urho3dWidget, const QString& name);
+    Urho3DPage(Urho3DWidget* urho3dWidget, const QString& name);
     /// Destruct.
-    virtual ~Urho3DDocument();
+    virtual ~Urho3DPage();
     /// Get Urho3D widget.
     Urho3DWidget* GetUrho3DWidget() const { return urho3dWidget_; }
     /// Get Urho3D context.
     Context* GetContext() const;
 
-protected:
-    /// Document activation handling.
-    virtual void DoActivate() override;
-    /// Document deactivation handling.
-    virtual void DoDeactivate() override;
+    /// Return whether the Urho3D widget shall be visible.
+    virtual bool IsUrho3DWidgetVisible() const { return true; }
 
 private:
     /// Urho3D widget.
@@ -230,19 +123,15 @@ private:
 
 };
 
-class SceneDocument : public Urho3DDocument
+class SceneEditorPage : public Urho3DPage
 {
     Q_OBJECT
 
 public:
     /// Construct.
-    SceneDocument(Urho3DWidget* urho3dWidget, const QString& name);
+    SceneEditorPage(Urho3DWidget* urho3dWidget, const QString& name);
     /// Set scene.
     void SetScene(SharedPtr<Scene> scene);
-
-protected:
-    /// Document activation handling.
-    virtual void DoActivate() override;
 
 private:
     /// Setup viewport.

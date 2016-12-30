@@ -13,14 +13,6 @@ namespace Urho3D
 
 class MainWindow;
 
-class EditorInterface
-{
-public:
-    /// Add tab.
-    virtual void AddDocument(AbstractDocument* document) = 0;
-    virtual QMenu* GetMainMenu(const String& name, const String& beforeName = "") = 0;
-};
-
 class EditorPlugin : public QObject, public RefCounted
 {
     Q_OBJECT
@@ -29,13 +21,13 @@ public:
     /// Destruct.
     virtual ~EditorPlugin() { }
     /// Register.
-    virtual void Register(EditorInterface& editor) = 0;
-    /// Unregister.
-    virtual void Unregister(EditorInterface& editor) = 0;
+//     virtual void Register(EditorInterface& editor) = 0;
+//     /// Unregister.
+//     virtual void Unregister(EditorInterface& editor) = 0;
 };
 
 /// Main class of Editor application.
-class EditorApplication : public QApplication, public EditorInterface
+class EditorApplication : public QApplication
 {
     Q_OBJECT
 
@@ -48,10 +40,6 @@ public:
     void AddPlugin(SharedPtr<EditorPlugin> plugin);
     /// Run!
     int Run();
-
-public:
-    virtual void AddDocument(AbstractDocument* document) override;
-    virtual QMenu* GetMainMenu(const String& name, const String& beforeName) override;
 
 private:
     /// Find main menu by name.
@@ -75,9 +63,9 @@ class SceneEditorPlugin : public EditorPlugin
 
 public:
     /// Register.
-    virtual void Register(EditorInterface& editor) override;
-    /// Unregister.
-    virtual void Unregister(EditorInterface& editor) override;
+//     virtual void Register(EditorInterface& editor) override;
+//     /// Unregister.
+//     virtual void Unregister(EditorInterface& editor) override;
 
 private slots:
     /// Create new scene.

@@ -42,22 +42,6 @@ int EditorApplication::Run()
     return exec();
 }
 
-void EditorApplication::AddDocument(AbstractDocument* document)
-{
-
-}
-
-QMenu* EditorApplication::GetMainMenu(const String& name, const String& beforeName)
-{
-//     if (QMenu* menu = FindMainMenu(name.CString()))
-//         return menu;
-//     QMenu* beforeMenu = beforeName.Empty() ? nullptr : FindMainMenu(beforeName.CString());
-//     QMenu* newMenu = new QMenu(name.CString(), mainWindow_.data());
-//     mainMenu_->insertMenu(beforeMenu ? beforeMenu->menuAction() : nullptr, newMenu);
-//     return newMenu;
-    return nullptr;
-}
-
 QMenu* EditorApplication::FindMainMenu(const QString& name)
 {
 //     for (QObject* item : mainMenu_->children())
@@ -67,18 +51,18 @@ QMenu* EditorApplication::FindMainMenu(const QString& name)
     return nullptr;
 }
 
-void SceneEditorPlugin::Register(EditorInterface& editor)
-{
-    QMenu* menuFile = editor.GetMainMenu("File");
-    QAction* menuNewScene = menuFile->addAction("New Scene");
-    connect(menuNewScene, SIGNAL(triggered()), this, SLOT(HandleNewScene()));
-}
-
-void SceneEditorPlugin::Unregister(EditorInterface& editor)
-{
-
-}
-
+// void SceneEditorPlugin::Register(EditorInterface& editor)
+// {
+//     QMenu* menuFile = editor.GetMainMenu("File");
+//     QAction* menuNewScene = menuFile->addAction("New Scene");
+//     connect(menuNewScene, SIGNAL(triggered()), this, SLOT(HandleNewScene()));
+// }
+// 
+// void SceneEditorPlugin::Unregister(EditorInterface& editor)
+// {
+// 
+// }
+// 
 void SceneEditorPlugin::HandleNewScene()
 {
 

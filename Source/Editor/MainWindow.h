@@ -14,8 +14,11 @@
 namespace Urho3D
 {
 
-class AbstractDocument;
-class MainWindow;
+/// Project manager.
+class ProjectManager
+{
+
+};
 
 /// Main window of Editor application.
 class MainWindow : public QMainWindow, public Object
@@ -53,8 +56,6 @@ public:
 private:
     /// Update menu.
     void UpdateMenu();
-    /// Deactivate active document and activate new document.
-    void ActivateDocument(AbstractDocument* document);
     /// Find main menu by name.
     QMenu* FindMainMenu(const QString& name);
 
@@ -97,9 +98,6 @@ private:
     /// 'Project Properties' action.
     QAction* actionProjectProperties_;
 
-
-    /// Active document.
-    AbstractDocument* activeDocument_;
 };
 
 }

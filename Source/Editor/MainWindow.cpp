@@ -23,7 +23,6 @@ MainWindow::MainWindow(Context* context)
     , tabBar_(new QTabBar(this))
     , urho3DWidget_(new Urho3DWidget(context_))
     , urho3DProject_(nullptr)
-    , activeDocument_(nullptr)
 {
     SetCurrentProject(nullptr);
 
@@ -97,7 +96,6 @@ MainWindow::MainWindow(Context* context)
 
 MainWindow::~MainWindow()
 {
-    ActivateDocument(nullptr);
 }
 
 void MainWindow::SetCurrentProject(SharedPtr<Urho3DProject> project)
@@ -186,15 +184,6 @@ void MainWindow::UpdateMenu()
 //     }
 }
 
-void MainWindow::ActivateDocument(AbstractDocument* document)
-{
-    if (activeDocument_)
-        activeDocument_->Deactivate();
-    activeDocument_ = document;
-    if (activeDocument_)
-        activeDocument_->Activate();
-}
-
 void MainWindow::OnTabRenamed(AbstractPage* page, const QString& title)
 {
 //     for (int i = 0; i < tabWidget_->count(); ++i)
@@ -264,7 +253,7 @@ void MainWindow::OnFileOpenScene()
             scene->LoadXML(file);
         }
         
-        SceneDocument* document = new SceneDocument(GetUrho3DWidget(), fileInfo.fileName());
+        SceneEditorPage* document = new SceneEditorPage(GetUrho3DWidget(), fileInfo.fileName());
         document->SetScene(scene);
     }
 //     QFileDialog dialog;
