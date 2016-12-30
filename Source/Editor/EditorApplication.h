@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EditorDocument.h"
+#include "AbstractDocument.h"
 
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Engine/Engine.h>
@@ -17,7 +17,7 @@ class EditorInterface
 {
 public:
     /// Add tab.
-    virtual void AddDocument(EditorDocument* document) = 0;
+    virtual void AddDocument(AbstractDocument* document) = 0;
     virtual QMenu* GetMainMenu(const String& name, const String& beforeName = "") = 0;
 };
 
@@ -50,7 +50,7 @@ public:
     int Run();
 
 public:
-    virtual void AddDocument(EditorDocument* document) override;
+    virtual void AddDocument(AbstractDocument* document) override;
     virtual QMenu* GetMainMenu(const String& name, const String& beforeName) override;
 
 private:

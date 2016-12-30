@@ -1,5 +1,6 @@
 #include "EditorApplication.h"
 #include "MainWindow.h"
+#include "EditorSettings.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
 #include <QFile>
@@ -17,6 +18,7 @@ EditorApplication::EditorApplication(int argc, char** argv, Urho3D::Context* con
     , context_(context)
     , activeDirectory_(GetArguments().Size() > 0 ? GetArguments()[0].CString() : ".")
 {
+    context_->RegisterSubsystem(new EditorSettings(context_));
 }
 
 EditorApplication::~EditorApplication()
@@ -36,14 +38,11 @@ int EditorApplication::Run()
         setStyleSheet(QLatin1String(file.readAll()));
 
     mainWindow_.reset(new MainWindow(context_));
-    if (!mainWindow_->GetUrho3DWidget()->IsInitialized())
-        return -1;
-
     mainWindow_->showMaximized();
     return exec();
 }
 
-void EditorApplication::AddDocument(EditorDocument* document)
+void EditorApplication::AddDocument(AbstractDocument* document)
 {
 
 }

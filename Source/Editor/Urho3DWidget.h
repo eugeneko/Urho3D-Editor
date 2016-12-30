@@ -2,11 +2,14 @@
 
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Engine/Engine.h>
+#include <Urho3D/IO/PackageFile.h>
 #include <QTimer>
 #include <QWidget>
 
 namespace Urho3D
 {
+
+class Urho3DProject;
 
 class Urho3DWidget : public QWidget, public Object
 {
@@ -16,8 +19,8 @@ class Urho3DWidget : public QWidget, public Object
 public:
     /// Construct.
     Urho3DWidget(Context* context);
-    /// Return whether the widget is successfully initialized.
-    bool IsInitialized() const { return engine_->IsInitialized(); }
+    /// Initialize widget with optional configuration.
+    bool SetCurrentProject(Urho3DProject* project);
 
 private slots:
     /// Handle main timer.

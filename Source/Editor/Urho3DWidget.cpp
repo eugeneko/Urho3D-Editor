@@ -1,12 +1,12 @@
 #include "Urho3DWidget.h"
+#include "Urho3DProject.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
+#include <Urho3D/Resource/ResourceCache.h>
 // #include <QFile>
 // #include <QHBoxLayout>
 // #include <QTabBar>
 // #include <QTimer>
-
-#include <Urho3D/Urho3DAll.h>
 
 namespace Urho3D
 {
@@ -14,43 +14,28 @@ namespace Urho3D
 Urho3DWidget::Urho3DWidget(Context* context)
     : QWidget()
     , Object(context)
-    , engine_(MakeShared<Engine>(context))
+    , engine_(MakeShared<Engine>(context_))
 {
-    setAttribute(Qt::WA_PaintOnScreen);
-
+    // Initialize engine
     VariantMap engineParameters = Engine::ParseParameters(GetArguments());
     engineParameters[EP_FULL_SCREEN] = false;
-//     engineParameters[EP_BORDERLESS] = true;
-//     engineParameters[EP_WINDOW_RESIZABLE] = true;
     engineParameters[EP_EXTERNAL_WINDOW] = (void*)winId();
+    engine_->Initialize(engineParameters);
 
-    if (engine_->Initialize(engineParameters))
+    setAttribute(Qt::WA_PaintOnScreen);
+    connect(&timer_, SIGNAL(timeout()), this, SLOT(OnTimer()));
+    timer_.start(16);
+}
+
+bool Urho3DWidget::SetCurrentProject(Urho3DProject* project)
+{
+    VariantMap engineParameters = Engine::ParseParameters(GetArguments());;
+    if (project)
     {
-        connect(&timer_, SIGNAL(timeout()), this, SLOT(OnTimer()));
-        timer_.start(16);
+        engineParameters[EP_RESOURCE_PREFIX_PATHS] = project->GetAbsoluteResourcePrefixPaths(project->GetBasePath()).toStdString().c_str();
+        engineParameters[EP_RESOURCE_PATHS] = project->GetResourcePaths().toStdString().c_str();
     }
-
-    //////////////////////////////////////////////////////////////////////////
-    /*
-    Scene* scene_ = new Scene(context_);
-    scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<DebugRenderer>();
-
-    // Create camera.
-    Node* cameraNode_ = new Node(context_);
-    Camera* camera = cameraNode_->CreateComponent<Camera>();
-
-    camera->SetOrthographic(true);
-    Graphics* graphic = context_->GetSubsystem<Graphics>();
-    camera->SetOrthoSize(graphic->GetHeight() * PIXEL_SIZE);
-
-    SharedPtr<Viewport> viewport(new Viewport(context_, scene_, camera));
-
-    Renderer* renderer = context_->GetSubsystem<Renderer>();
-    renderer->SetViewport(0, viewport);
-    */
-    //////////////////////////////////////////////////////////////////////////
-
+    return engine_->InitializeResourceCache(engineParameters);
 }
 
 void Urho3DWidget::OnTimer()
@@ -69,7 +54,7 @@ void Urho3DWidget::paintEvent(QPaintEvent* /*event*/)
 
 void Urho3DWidget::RunFrame()
 {
-    if (engine_ && !engine_->IsExiting())
+    if (!engine_->IsExiting())
         engine_->RunFrame();
 }
 
