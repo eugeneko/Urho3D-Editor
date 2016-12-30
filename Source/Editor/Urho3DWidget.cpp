@@ -8,18 +8,18 @@
 // #include <QTabBar>
 // #include <QTimer>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
-Urho3DWidget::Urho3DWidget(Context* context)
+Urho3DWidget::Urho3DWidget(Urho3D::Context* context)
     : QWidget()
     , Object(context)
-    , engine_(MakeShared<Engine>(context_))
+    , engine_(Urho3D::MakeShared<Urho3D::Engine>(context_))
 {
     // Initialize engine
-    VariantMap engineParameters = Engine::ParseParameters(GetArguments());
-    engineParameters[EP_FULL_SCREEN] = false;
-    engineParameters[EP_EXTERNAL_WINDOW] = (void*)winId();
+    Urho3D::VariantMap engineParameters = Urho3D::Engine::ParseParameters(Urho3D::GetArguments());
+    engineParameters[Urho3D::EP_FULL_SCREEN] = false;
+    engineParameters[Urho3D::EP_EXTERNAL_WINDOW] = (void*)winId();
     engine_->Initialize(engineParameters);
 
     setAttribute(Qt::WA_PaintOnScreen);
@@ -29,11 +29,11 @@ Urho3DWidget::Urho3DWidget(Context* context)
 
 bool Urho3DWidget::SetCurrentProject(Urho3DProject* project)
 {
-    VariantMap engineParameters = Engine::ParseParameters(GetArguments());;
+    Urho3D::VariantMap engineParameters = Urho3D::Engine::ParseParameters(Urho3D::GetArguments());;
     if (project)
     {
-        engineParameters[EP_RESOURCE_PREFIX_PATHS] = project->GetAbsoluteResourcePrefixPaths(project->GetBasePath()).toStdString().c_str();
-        engineParameters[EP_RESOURCE_PATHS] = project->GetResourcePaths().toStdString().c_str();
+        engineParameters[Urho3D::EP_RESOURCE_PREFIX_PATHS] = project->GetAbsoluteResourcePrefixPaths(project->GetBasePath()).toStdString().c_str();
+        engineParameters[Urho3D::EP_RESOURCE_PATHS] = project->GetResourcePaths().toStdString().c_str();
     }
     return engine_->InitializeResourceCache(engineParameters);
 }

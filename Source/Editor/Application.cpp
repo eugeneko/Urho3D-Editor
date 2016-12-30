@@ -1,4 +1,4 @@
-#include "EditorApplication.h"
+#include "Application.h"
 #include "MainWindow.h"
 #include "EditorSettings.h"
 #include <Urho3D/Core/ProcessUtils.h>
@@ -10,10 +10,10 @@
 
 #include <Urho3D/Urho3DAll.h>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
-EditorApplication::EditorApplication(int argc, char** argv, Urho3D::Context* context)
+Application::Application(int argc, char** argv, Urho3D::Context* context)
     : QApplication(argc, argv)
     , context_(context)
     , activeDirectory_(GetArguments().Size() > 0 ? GetArguments()[0].CString() : ".")
@@ -21,16 +21,16 @@ EditorApplication::EditorApplication(int argc, char** argv, Urho3D::Context* con
     context_->RegisterSubsystem(new EditorSettings(context_));
 }
 
-EditorApplication::~EditorApplication()
+Application::~Application()
 {
 }
 
-void EditorApplication::AddPlugin(SharedPtr<EditorPlugin> plugin)
+void Application::AddPlugin(SharedPtr<EditorPlugin> plugin)
 {
     plugins_.Push(plugin);
 }
 
-int EditorApplication::Run()
+int Application::Run()
 {
     // Setup style
     QFile file(activeDirectory_ + "/qdarkstyle/style.qss");
@@ -42,7 +42,7 @@ int EditorApplication::Run()
     return exec();
 }
 
-QMenu* EditorApplication::FindMainMenu(const QString& name)
+QMenu* Application::FindMainMenu(const QString& name)
 {
 //     for (QObject* item : mainMenu_->children())
 //         if (QMenu* menu = dynamic_cast<QMenu*>(item))

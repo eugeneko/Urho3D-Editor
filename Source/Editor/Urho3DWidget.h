@@ -6,19 +6,19 @@
 #include <QTimer>
 #include <QWidget>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
 class Urho3DProject;
 
-class Urho3DWidget : public QWidget, public Object
+class Urho3DWidget : public QWidget, public Urho3D::Object
 {
     Q_OBJECT
-    URHO3D_OBJECT(Urho3DWidget, Object);
+    URHO3D_OBJECT(Urho3DWidget, Urho3D::Object);
 
 public:
     /// Construct.
-    Urho3DWidget(Context* context);
+    Urho3DWidget(Urho3D::Context* context);
     /// Initialize widget with optional configuration.
     bool SetCurrentProject(Urho3DProject* project);
 
@@ -35,7 +35,7 @@ private:
 
 private:
     /// Engine.
-    SharedPtr<Engine> engine_;
+    Urho3D::SharedPtr<Urho3D::Engine> engine_;
     /// Main timer.
     QTimer timer_;
 

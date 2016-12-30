@@ -17,17 +17,17 @@ class QLineEdit;
 class QListWidget;
 class QListWidgetItem;
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
 /// Urho3D Project document.
-class Urho3DProject : public Resource
+class Urho3DProject : public Urho3D::Resource
 {
-    URHO3D_OBJECT(Urho3DProject, Resource);
+    URHO3D_OBJECT(Urho3DProject, Urho3D::Resource);
 
 public:
     /// Construct.
-    Urho3DProject(Context* context);
+    Urho3DProject(Urho3D::Context* context);
     /// Concatenate path list to string.
     static QString ConcatenateList(const QStringList& list, QChar separator = ';');
     /// Get base path of the project.
@@ -55,9 +55,9 @@ public:
     QStringList GetAvailableResourcePathsList(const QString& basePath) const;
 
     /// Load resource from stream. May be called from a worker thread. Return true if successful.
-    virtual bool BeginLoad(Deserializer& source) override;
+    virtual bool BeginLoad(Urho3D::Deserializer& source) override;
     /// Save resource. Return true if successful.
-    virtual bool Save(Serializer& dest) const override;
+    virtual bool Save(Urho3D::Serializer& dest) const override;
 
 private:
     /// Resource Prefix Paths.
@@ -75,9 +75,9 @@ class Urho3DProjectPage : public AbstractPage
 
 public:
     /// Construct.
-    Urho3DProjectPage(Context* context);
+    Urho3DProjectPage(Urho3D::Context* context);
     /// Get project.
-    SharedPtr<Urho3DProject> GetProject() { return project_; }
+    Urho3D::SharedPtr<Urho3DProject> GetProject() { return project_; }
 
     /// Return default file name for save dialog.
     virtual QString GetDefaultFileName() const { return "Project.urho"; }
@@ -98,7 +98,7 @@ private slots:
 
 private:
     /// Project.
-    SharedPtr<Urho3DProject> project_;
+    Urho3D::SharedPtr<Urho3DProject> project_;
     /// Layout.
     QGridLayout* layout_;
     /// 'Set as Current' button.

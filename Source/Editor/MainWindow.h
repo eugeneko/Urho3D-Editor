@@ -11,7 +11,7 @@
 #include <QTabWidget>
 #include <QVBoxLayout>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
 /// Project manager.
@@ -21,14 +21,14 @@ class ProjectManager
 };
 
 /// Main window of Editor application.
-class MainWindow : public QMainWindow, public Object
+class MainWindow : public QMainWindow, public Urho3D::Object
 {
     Q_OBJECT
-    URHO3D_OBJECT(MainWindow, Object);
+    URHO3D_OBJECT(MainWindow, Urho3D::Object);
 
 public:
     /// Construct.
-    MainWindow(Context* context);
+    MainWindow(Urho3D::Context* context);
     /// Destruct.
     ~MainWindow();
 
@@ -37,7 +37,7 @@ public:
     /// Get current project.
     Urho3DProject* GetCurrentProject() { return urho3DProject_; }
     /// Set current project.
-    void SetCurrentProject(SharedPtr<Urho3DProject> project);
+    void SetCurrentProject(Urho3D::SharedPtr<Urho3DProject> project);
 
     /// Get current page.
     AbstractPage* GetCurrentPage() const;
@@ -83,9 +83,9 @@ private:
     /// Urho3D Widget.
     Urho3DWidget* urho3DWidget_;
     /// Current project.
-    SharedPtr<Urho3DProject> urho3DProject_;
+    Urho3D::SharedPtr<Urho3DProject> urho3DProject_;
     /// Pages.
-    Vector<AbstractPage*> pages_;
+    Urho3D::Vector<AbstractPage*> pages_;
 
     /// 'New Project' action.
     QAction* actionNewProject_;

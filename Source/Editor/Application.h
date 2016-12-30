@@ -8,12 +8,12 @@
 #include <QMainWindow>
 #include <QMenuBar>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
 class MainWindow;
 
-class EditorPlugin : public QObject, public RefCounted
+class EditorPlugin : public QObject, public Urho3D::RefCounted
 {
     Q_OBJECT
 
@@ -27,17 +27,17 @@ public:
 };
 
 /// Main class of Editor application.
-class EditorApplication : public QApplication
+class Application : public QApplication
 {
     Q_OBJECT
 
 public:
     /// Construct.
-    EditorApplication(int argc, char** argv, Context* context);
+    Application(int argc, char** argv, Urho3D::Context* context);
     /// Destruct.
-    ~EditorApplication();
+    ~Application();
     /// Add plug-in.
-    void AddPlugin(SharedPtr<EditorPlugin> plugin);
+    void AddPlugin(Urho3D::SharedPtr<EditorPlugin> plugin);
     /// Run!
     int Run();
 
@@ -47,14 +47,14 @@ private:
 
 private:
     /// Context.
-    SharedPtr<Context> context_;
+    Urho3D::SharedPtr<Urho3D::Context> context_;
     /// Active directory.
     QString activeDirectory_;
     /// Main window.
     QScopedPointer<MainWindow> mainWindow_;
 
     /// Plug-ins.
-    Vector<SharedPtr<EditorPlugin>> plugins_;
+    Urho3D::Vector<Urho3D::SharedPtr<EditorPlugin>> plugins_;
 };
 
 class SceneEditorPlugin : public EditorPlugin

@@ -6,12 +6,12 @@
 // #include <QTimer>
 // #include <QWidget>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
-class EditorSettings : public Object
+class EditorSettings : public Urho3D::Object
 {
-    URHO3D_OBJECT(EditorSettings, Object);
+    URHO3D_OBJECT(EditorSettings, Urho3D::Object);
 
 public:
     static const QString LAST_DIRECTORY;
@@ -19,7 +19,7 @@ public:
 
 public:
     /// Construct.
-    EditorSettings(Context* context);
+    EditorSettings(Urho3D::Context* context);
     /// Get last directory.
     QString GetLastDirectory() const { return settings_.value(LAST_DIRECTORY).toString(); }
     /// Set last directory.

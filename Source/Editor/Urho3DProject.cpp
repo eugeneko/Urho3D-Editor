@@ -21,11 +21,11 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
-Urho3DProject::Urho3DProject(Context* context)
-    : Resource(context)
+Urho3DProject::Urho3DProject(Urho3D::Context* context)
+    : Urho3D::Resource(context)
     , resourcePrefixPaths_(".")
     , resourcePaths_("CoreData;Data")
 {
@@ -99,8 +99,10 @@ QStringList Urho3DProject::GetAvailableResourcePathsList(const QString& basePath
     return result;
 }
 
-bool Urho3DProject::BeginLoad(Deserializer& source)
+bool Urho3DProject::BeginLoad(Urho3D::Deserializer& source)
 {
+    using namespace Urho3D;
+
     XMLFile xmlFile(context_);
     if (!xmlFile.Load(source))
         return false;
@@ -111,8 +113,10 @@ bool Urho3DProject::BeginLoad(Deserializer& source)
     return true;
 }
 
-bool Urho3DProject::Save(Serializer& dest) const
+bool Urho3DProject::Save(Urho3D::Serializer& dest) const
 {
+    using namespace Urho3D;
+
     XMLFile xmlFile(context_);
     XMLElement root = xmlFile.CreateRoot("project");
     root.CreateChild("resourceprefixpaths").SetValue(resourcePrefixPaths_.toStdString().c_str());
@@ -121,9 +125,9 @@ bool Urho3DProject::Save(Serializer& dest) const
 }
 
 //////////////////////////////////////////////////////////////////////////
-Urho3DProjectPage::Urho3DProjectPage(Context* context)
+Urho3DProjectPage::Urho3DProjectPage(Urho3D::Context* context)
     : AbstractPage(context)
-    , project_(MakeShared<Urho3DProject>(context))
+    , project_(Urho3D::MakeShared<Urho3DProject>(context))
     , layout_(new QGridLayout())
     , buttonSetAsCurrent_(new QPushButton())
     , fieldResourcePrefixPaths_(new QLineEdit("."))
@@ -154,14 +158,14 @@ bool Urho3DProjectPage::DoSave()
     project_->SetResourcePrefixPaths(fieldResourcePrefixPaths_->text());
     project_->SetResourcePaths(fieldResourcePaths_->text());
 
-    const String fileName = GetFileName().toStdString().c_str();
+    const Urho3D::String fileName = GetFileName().toStdString().c_str();
     project_->SetName(fileName);
     return project_->SaveFile(fileName);
 }
 
 bool Urho3DProjectPage::DoLoad()
 {
-    const String fileName = GetFileName().toStdString().c_str();
+    const Urho3D::String fileName = GetFileName().toStdString().c_str();
     if (!project_->LoadFile(fileName))
         return false;
     project_->SetName(fileName);

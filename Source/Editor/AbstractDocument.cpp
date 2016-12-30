@@ -18,10 +18,10 @@
 #include <QListWidget>
 #include <QPushButton>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
-AbstractPage::AbstractPage(Context* context)
+AbstractPage::AbstractPage(Urho3D::Context* context)
     : Object(context)
     , unsavedChanges_(false)
 {
@@ -123,7 +123,7 @@ void AbstractPage::SetTitle(const QString& value)
 }
 
 //////////////////////////////////////////////////////////////////////////
-StartPage::StartPage(Context* context)
+StartPage::StartPage(Urho3D::Context* context)
     : AbstractPage(context)
     , layout_(new QGridLayout(this))
     , newProjectButton_(new QPushButton("New Project"))
@@ -148,7 +148,7 @@ Urho3DPage::~Urho3DPage()
 {
 }
 
-Context* Urho3DPage::GetContext() const
+Urho3D::Context* Urho3DPage::GetContext() const
 {
     return urho3dWidget_->GetContext();
 }
@@ -157,24 +157,24 @@ Context* Urho3DPage::GetContext() const
 SceneEditorPage::SceneEditorPage(Urho3DWidget* urho3dWidget, const QString& name)
     : Urho3DPage(urho3dWidget, name)
     , cameraNode_(urho3dWidget->GetContext())
-    , camera_(cameraNode_.CreateComponent<Camera>())
+    , camera_(cameraNode_.CreateComponent<Urho3D::Camera>())
 {
-    cameraNode_.SetWorldPosition(Vector3(0, 1, -1));
-    cameraNode_.LookAt(Vector3::ZERO);
+    cameraNode_.SetWorldPosition(Urho3D::Vector3(0, 1, -1));
+    cameraNode_.LookAt(Urho3D::Vector3::ZERO);
 
 //     grabKeyboard();
 
-    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(SceneEditorPage, HandleUpdate));
-    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(SceneEditorPage, HandleKey));
-    SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(SceneEditorPage, HandleKey));
-    SubscribeToEvent(E_MOUSEBUTTONDOWN, URHO3D_HANDLER(SceneEditorPage, HandleMouseButton));
-    SubscribeToEvent(E_MOUSEBUTTONUP, URHO3D_HANDLER(SceneEditorPage, HandleMouseButton));
+    SubscribeToEvent(Urho3D::E_UPDATE, URHO3D_HANDLER(SceneEditorPage, HandleUpdate));
+    SubscribeToEvent(Urho3D::E_KEYDOWN, URHO3D_HANDLER(SceneEditorPage, HandleKey));
+    SubscribeToEvent(Urho3D::E_KEYUP, URHO3D_HANDLER(SceneEditorPage, HandleKey));
+    SubscribeToEvent(Urho3D::E_MOUSEBUTTONDOWN, URHO3D_HANDLER(SceneEditorPage, HandleMouseButton));
+    SubscribeToEvent(Urho3D::E_MOUSEBUTTONUP, URHO3D_HANDLER(SceneEditorPage, HandleMouseButton));
 }
 
-void SceneEditorPage::SetScene(SharedPtr<Scene> scene)
+void SceneEditorPage::SetScene(Urho3D::SharedPtr<Urho3D::Scene> scene)
 {
     scene_ = scene;
-    viewport_ = new Viewport(GetContext(), scene_, camera_);
+    viewport_ = new Urho3D::Viewport(GetContext(), scene_, camera_);
     SetupViewport();
 }
 
@@ -182,13 +182,15 @@ void SceneEditorPage::SetupViewport()
 {
 //     if (IsActive())
     {
-        Renderer* renderer = GetContext()->GetSubsystem<Renderer>();
+        Urho3D::Renderer* renderer = GetContext()->GetSubsystem<Urho3D::Renderer>();
         renderer->SetViewport(0, viewport_);
     }
 }
 
-void SceneEditorPage::HandleUpdate(StringHash eventType, VariantMap& eventData)
+void SceneEditorPage::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
+    using namespace Urho3D;
+
     float timeStep = eventData[Update::P_TIMESTEP].GetFloat();
     Input* input = GetSubsystem<Input>();
 
@@ -216,8 +218,10 @@ void SceneEditorPage::HandleUpdate(StringHash eventType, VariantMap& eventData)
     }
 }
 
-void SceneEditorPage::HandleKey(StringHash eventType, VariantMap& eventData)
+void SceneEditorPage::HandleKey(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
+    using namespace Urho3D;
+
     Input* input = GetSubsystem<Input>();
     if (eventType == E_KEYDOWN)
     {
@@ -233,8 +237,9 @@ void SceneEditorPage::HandleKey(StringHash eventType, VariantMap& eventData)
     }
 }
 
-void SceneEditorPage::HandleMouseButton(StringHash eventType, VariantMap& eventData)
+void SceneEditorPage::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
+    using namespace Urho3D;
     // Handle camera rotation
     Input* input = GetSubsystem<Input>();
     if (eventType == E_MOUSEBUTTONDOWN)

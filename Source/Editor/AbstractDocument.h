@@ -14,19 +14,19 @@ class QFormLayout;
 class QLineEdit;
 class QListWidget;
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
 class Urho3DWidget;
 
-class AbstractPage : public QWidget, public Object
+class AbstractPage : public QWidget, public Urho3D::Object
 {
     Q_OBJECT
-    URHO3D_OBJECT(AbstractPage, Object);
+    URHO3D_OBJECT(AbstractPage, Urho3D::Object);
 
 public:
     /// Construct.
-    AbstractPage(Context* context);
+    AbstractPage(Urho3D::Context* context);
     /// Destruct.
     virtual ~AbstractPage() {}
 
@@ -87,7 +87,7 @@ class StartPage : public AbstractPage
 
 public:
     /// Construct.
-    StartPage(Context* context);
+    StartPage(Urho3D::Context* context);
 
 private:
     /// Layout.
@@ -112,7 +112,7 @@ public:
     /// Get Urho3D widget.
     Urho3DWidget* GetUrho3DWidget() const { return urho3dWidget_; }
     /// Get Urho3D context.
-    Context* GetContext() const;
+    Urho3D::Context* GetContext() const;
 
     /// Return whether the Urho3D widget shall be visible.
     virtual bool IsUrho3DWidgetVisible() const { return true; }
@@ -131,29 +131,29 @@ public:
     /// Construct.
     SceneEditorPage(Urho3DWidget* urho3dWidget, const QString& name);
     /// Set scene.
-    void SetScene(SharedPtr<Scene> scene);
+    void SetScene(Urho3D::SharedPtr<Urho3D::Scene> scene);
 
 private:
     /// Setup viewport.
     void SetupViewport();
 
     /// Handle update.
-    void HandleUpdate(StringHash eventType, VariantMap& eventData);
+    void HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
     /// Handle key up/down.
-    void HandleKey(StringHash eventType, VariantMap& eventData);
+    void HandleKey(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
     /// Handle mouse button up/down.
-    void HandleMouseButton(StringHash eventType, VariantMap& eventData);
+    void HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
 
 private:
     /// Camera node.
-    Node cameraNode_;
+    Urho3D::Node cameraNode_;
     /// Camera component.
-    Camera* camera_;
+    Urho3D::Camera* camera_;
 
     /// Scene.
-    SharedPtr<Scene> scene_;
+    Urho3D::SharedPtr<Urho3D::Scene> scene_;
     /// Viewport.
-    SharedPtr<Viewport> viewport_;
+    Urho3D::SharedPtr<Urho3D::Viewport> viewport_;
 };
 
 }

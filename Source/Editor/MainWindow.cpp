@@ -12,12 +12,12 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
 //////////////////////////////////////////////////////////////////////////
-MainWindow::MainWindow(Context* context)
-    : Object(context)
+MainWindow::MainWindow(Urho3D::Context* context)
+    : Urho3D::Object(context)
     , centralWidget_(new QWidget(this))
     , layout_(new QVBoxLayout(this))
     , tabBar_(new QTabBar(this))
@@ -98,7 +98,7 @@ MainWindow::~MainWindow()
 {
 }
 
-void MainWindow::SetCurrentProject(SharedPtr<Urho3DProject> project)
+void MainWindow::SetCurrentProject(Urho3D::SharedPtr<Urho3DProject> project)
 {
     urho3DProject_ = project;
     urho3DWidget_->SetCurrentProject(urho3DProject_);
@@ -236,6 +236,7 @@ void MainWindow::OnFileNewScene()
 
 void MainWindow::OnFileOpenScene()
 {
+    using namespace Urho3D;
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     const String folder = cache->GetResourceDirs()[0];
 

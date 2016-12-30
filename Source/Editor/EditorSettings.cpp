@@ -1,13 +1,13 @@
 #include "EditorSettings.h"
 #include <QFileInfo>
 
-namespace Urho3D
+namespace Urho3DEditor
 {
 
 const QString EditorSettings::LAST_DIRECTORY = "LastDirectory";
 const QString EditorSettings::RECENT_PROJECTS = "RecentProjects";
 
-EditorSettings::EditorSettings(Context* context)
+EditorSettings::EditorSettings(Urho3D::Context* context)
     : Object(context)
     , settings_("Urho3D", "Editor")
 {
