@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Module.h"
 #include "Urho3DWidget.h"
 #include "Urho3DProject.h"
 #include <Urho3D/Core/Context.h>
@@ -33,17 +34,76 @@ namespace Urho3DEditor
 //     ProjectManager();
 // };
 
-/// Main window of Editor application.
-class MainWindow : public QMainWindow, public Urho3D::Object
+/// Main window.
+class MainWindow : public Module
 {
     Q_OBJECT
-    URHO3D_OBJECT(MainWindow, Urho3D::Object);
+
+public:
+    /// Menu actions.
+    enum MenuAction
+    {
+        MenuFileNew_After,
+        MenuFileOpen,
+        MenuFileSave,
+        MenuFileSaveAs,
+        MenuFileExit_Before,
+        MenuFileExit,
+        MenuHelpAbout_Before,
+        MenuHelpAbout
+    };
+    /// Construct.
+    MainWindow(QMainWindow* mainWindow, Urho3D::Context* context);
+
+protected:
+    /// Initialize module.
+    virtual void DoInitialize() override;
+    /// Initialize layout.
+    virtual void InitializeLayout();
+    /// Initialize menu.
+    virtual void InitializeMenu();
+
+protected slots:
+    /// Handle 'File/Exit'
+    virtual void HandleFileExit();
+    /// Handle 'Help/About'
+    virtual void HandleHelpAbout();
+
+private:
+    /// Main window.
+    QMainWindow* mainWindow_;
+    /// Urho3D context.
+    Urho3D::Context* context_;
+
+    /// Central widget.
+    QWidget* centralWidget_;
+    /// Main window layout.
+    QVBoxLayout* layout_;
+    /// Tab bar widget.
+    QTabBar* tabBar_;
+    /// Urho3D Widget.
+    Urho3DWidget* urho3DWidget_;
+
+    /// 'File' menu.
+    QMenu* menuFile_;
+    /// 'Help' menu.
+    QMenu* menuHelp_;
+    /// Menu actions.
+    QHash<MenuAction, QAction*> menuActions_;
+
+};
+
+/// Main window of Editor application.
+class MainWindow1 : public QMainWindow, public Urho3D::Object
+{
+    Q_OBJECT
+    URHO3D_OBJECT(MainWindow1, Urho3D::Object);
 
 public:
     /// Construct.
-    MainWindow(Urho3D::Context* context);
+    MainWindow1(Urho3D::Context* context);
     /// Destruct.
-    ~MainWindow();
+    ~MainWindow1();
 
     /// Get client widget.
     Urho3DWidget* GetUrho3DWidget() { return urho3DWidget_; }

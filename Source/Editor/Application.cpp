@@ -32,18 +32,22 @@ int Application::Run()
     if (file.open(QFile::ReadOnly | QFile::Text))
         setStyleSheet(QLatin1String(file.readAll()));
 
+    // Create main window
     mainWindow_.reset(new QMainWindow());
+
+    // Intialize modules
+    if (!InitializeModules())
+        return false;
+
+    // Run!
     mainWindow_->showMaximized();
     return exec();
 }
 
-QMenu* Application::FindMainMenu(const QString& name)
+bool Application::InitializeModules()
 {
-//     for (QObject* item : mainMenu_->children())
-//         if (QMenu* menu = dynamic_cast<QMenu*>(item))
-//             if (menu->title() == name)
-//                 return menu;
-    return nullptr;
+    moduleSystem_.AddModule(new MainWindow(mainWindow_.data(), context_));
+    return true;
 }
 
 // void SceneEditorPlugin::Register(EditorInterface& editor)

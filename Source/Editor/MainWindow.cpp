@@ -15,8 +15,66 @@
 namespace Urho3DEditor
 {
 
+MainWindow::MainWindow(QMainWindow* mainWindow, Urho3D::Context* context)
+    : mainWindow_(mainWindow)
+    , context_(context)
+    , centralWidget_(new QWidget())
+    , layout_(new QVBoxLayout())
+    , tabBar_(new QTabBar())
+    , urho3DWidget_(new Urho3DWidget(context_))
+    , menuFile_(nullptr)
+    , menuHelp_(nullptr)
+{
+}
+
+void MainWindow::DoInitialize()
+{
+    InitializeLayout();
+    InitializeMenu();
+}
+
+void MainWindow::InitializeLayout()
+{
+    mainWindow_->setCentralWidget(centralWidget_);
+    centralWidget_->setLayout(layout_);
+    layout_->addWidget(tabBar_);
+    layout_->addWidget(urho3DWidget_);
+}
+
+void MainWindow::InitializeMenu()
+{
+    QMenuBar* menuBar = mainWindow_->menuBar();
+    menuFile_ = menuBar->addMenu("File");
+    menuHelp_ = menuBar->addMenu("Help");
+    menuActions_[MenuFileNew_After] = menuFile_->addSeparator();
+    menuActions_[MenuFileOpen] = menuFile_->addAction("Open...");
+    menuActions_[MenuFileSave] = menuFile_->addAction("Save");
+    menuActions_[MenuFileSaveAs] = menuFile_->addAction("Save As...");
+    menuActions_[MenuFileExit_Before] = menuFile_->addSeparator();
+    menuActions_[MenuFileExit] = menuFile_->addAction("Exit");
+    menuActions_[MenuHelpAbout_Before] = menuHelp_->addSeparator();
+    menuActions_[MenuHelpAbout] = menuHelp_->addAction("About");
+
+    connect(menuActions_[MenuFileExit], SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));
+    connect(menuActions_[MenuHelpAbout], SIGNAL(triggered(bool)), this, SLOT(HandleHelpAbout()));
+}
+
+void MainWindow::HandleFileExit()
+{
+    mainWindow_->close();
+}
+
+void MainWindow::HandleHelpAbout()
+{
+    QMessageBox messageBox;
+    messageBox.setText("Urho3D Editor v0.0");
+    messageBox.setInformativeText("I promise it will be better...");
+    messageBox.setStandardButtons(QMessageBox::Ok);
+    messageBox.exec();
+}
+
 //////////////////////////////////////////////////////////////////////////
-MainWindow::MainWindow(Urho3D::Context* context)
+MainWindow1::MainWindow1(Urho3D::Context* context)
     : Urho3D::Object(context)
     , centralWidget_(new QWidget(this))
     , layout_(new QVBoxLayout(this))
@@ -94,11 +152,11 @@ MainWindow::MainWindow(Urho3D::Context* context)
 //     addDockWidget(Qt::RightDockWidgetArea, doc2);
 }
 
-MainWindow::~MainWindow()
+MainWindow1::~MainWindow1()
 {
 }
 
-void MainWindow::SetCurrentProject(Urho3D::SharedPtr<Urho3DProject> project)
+void MainWindow1::SetCurrentProject(Urho3D::SharedPtr<Urho3DProject> project)
 {
     urho3DProject_ = project;
     urho3DWidget_->SetCurrentProject(urho3DProject_);
@@ -109,7 +167,7 @@ void MainWindow::SetCurrentProject(Urho3D::SharedPtr<Urho3DProject> project)
         setWindowTitle(title + ": No current project");
 }
 
-AbstractPage* MainWindow::GetCurrentPage() const
+AbstractPage* MainWindow1::GetCurrentPage() const
 {
     return tabBar_->currentIndex() < (int)pages_.Size() ? pages_[tabBar_->currentIndex()] : nullptr;
 }
@@ -134,7 +192,7 @@ AbstractPage* MainWindow::GetCurrentPage() const
 //     urho3DWidget_->SetCurrentProject(nullptr);
 // }
 
-void MainWindow::AddPage(AbstractPage* page, bool makeActive)
+void MainWindow1::AddPage(AbstractPage* page, bool makeActive)
 {
     Q_ASSERT(page);
 
@@ -160,7 +218,7 @@ void MainWindow::AddPage(AbstractPage* page, bool makeActive)
 //     }
 }
 
-void MainWindow::ClosePage(AbstractPage* page)
+void MainWindow1::ClosePage(AbstractPage* page)
 {
     const int index = pages_.Find(page) - pages_.Begin();
     if (index < (int)pages_.Size())
@@ -171,12 +229,12 @@ void MainWindow::ClosePage(AbstractPage* page)
     }
 }
 
-void MainWindow::CloseAllPages()
+void MainWindow1::CloseAllPages()
 {
     
 }
 
-void MainWindow::UpdateMenu()
+void MainWindow1::UpdateMenu()
 {
 //     actionCloseProject_->setEnabled()
 //     if (projectDocument_)
@@ -184,7 +242,7 @@ void MainWindow::UpdateMenu()
 //     }
 }
 
-void MainWindow::OnTabRenamed(AbstractPage* page, const QString& title)
+void MainWindow1::OnTabRenamed(AbstractPage* page, const QString& title)
 {
 //     for (int i = 0; i < tabWidget_->count(); ++i)
 //         if (QWidget* tab = tabWidget_->widget(i))
@@ -195,7 +253,7 @@ void MainWindow::OnTabRenamed(AbstractPage* page, const QString& title)
 //             }
 }
 
-void MainWindow::OnPageChanged(int index)
+void MainWindow1::OnPageChanged(int index)
 {
     for (AbstractPage* page : pages_)
         page->setVisible(false);
@@ -205,36 +263,36 @@ void MainWindow::OnPageChanged(int index)
 //         ActivateDocument(document);
 }
 
-void MainWindow::OnFileNewProject()
+void MainWindow1::OnFileNewProject()
 {
     Urho3DProjectPage* page = new Urho3DProjectPage(context_);
     if (page->Save(true))
         AddPage(page);
 }
 
-void MainWindow::OnFileSave()
+void MainWindow1::OnFileSave()
 {
     if (AbstractPage* currentPage = GetCurrentPage())
         currentPage->Save(false);
 }
 
-void MainWindow::OnFileOpenProject()
+void MainWindow1::OnFileOpenProject()
 {
     Urho3DProjectPage page(context_);
     if (page.Open(true))
         SetCurrentProject(page.GetProject());
 }
 
-void MainWindow::OnFileCloseProject()
+void MainWindow1::OnFileCloseProject()
 {
     SetCurrentProject(nullptr);
 }
 
-void MainWindow::OnFileNewScene()
+void MainWindow1::OnFileNewScene()
 {
 }
 
-void MainWindow::OnFileOpenScene()
+void MainWindow1::OnFileOpenScene()
 {
     using namespace Urho3D;
     ResourceCache* cache = GetSubsystem<ResourceCache>();
@@ -264,12 +322,12 @@ void MainWindow::OnFileOpenScene()
 //     const QStringList files = dialog.selectedFiles();
 }
 
-void MainWindow::OnFileSaveScene()
+void MainWindow1::OnFileSaveScene()
 {
 
 }
 
-void MainWindow::OnFileExit()
+void MainWindow1::OnFileExit()
 {
     close();
 }
