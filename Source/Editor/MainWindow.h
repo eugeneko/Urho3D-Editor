@@ -14,11 +14,24 @@
 namespace Urho3DEditor
 {
 
-/// Project manager.
-class ProjectManager
-{
-
-};
+// class ProjectManagerEvent : public QEvent
+// {
+// public:
+//     enum Type
+//     {
+//         SetCurrentProject,
+//     };
+// };
+// 
+// /// Project manager.
+// class ProjectManager
+// {
+//     Q_OBJECT
+// 
+// public:
+//     /// Construct.
+//     ProjectManager();
+// };
 
 /// Main window of Editor application.
 class MainWindow : public QMainWindow, public Urho3D::Object

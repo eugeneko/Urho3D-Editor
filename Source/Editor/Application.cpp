@@ -25,11 +25,6 @@ Application::~Application()
 {
 }
 
-void Application::AddPlugin(SharedPtr<EditorPlugin> plugin)
-{
-    plugins_.Push(plugin);
-}
-
 int Application::Run()
 {
     // Setup style
@@ -37,7 +32,7 @@ int Application::Run()
     if (file.open(QFile::ReadOnly | QFile::Text))
         setStyleSheet(QLatin1String(file.readAll()));
 
-    mainWindow_.reset(new MainWindow(context_));
+    mainWindow_.reset(new QMainWindow());
     mainWindow_->showMaximized();
     return exec();
 }
@@ -63,9 +58,9 @@ QMenu* Application::FindMainMenu(const QString& name)
 // 
 // }
 // 
-void SceneEditorPlugin::HandleNewScene()
-{
-
-}
+// void SceneEditorPlugin::HandleNewScene()
+// {
+// 
+// }
 
 }
