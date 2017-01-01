@@ -28,6 +28,21 @@ MainWindow::MainWindow(QMainWindow* mainWindow, Urho3D::Context* context)
     urho3DWidget_->setVisible(false);
 }
 
+Configuration& MainWindow::GetConfig() const
+{
+    return *config_;
+}
+
+Urho3D::Context* MainWindow::GetContext() const
+{
+    return context_;
+}
+
+MainWindowPage* MainWindow::GetCurrentPage() const
+{
+    return tabBar_->currentIndex() < 0 ? nullptr : pages_[tabBar_->currentIndex()];
+}
+
 QMenuBar* MainWindow::GetMenuBar() const
 {
     return mainWindow_->menuBar();
@@ -41,6 +56,11 @@ QMenu* MainWindow::GetTopLevelMenu(TopLevelMenu menu) const
 QAction* MainWindow::GetMenuAction(MenuAction action) const
 {
     return menuActions_.value(action, nullptr);
+}
+
+void MainWindow::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
+{
+    mainWindow_->addDockWidget(area, dock);
 }
 
 void MainWindow::AddPage(MainWindowPage* page, bool bringToTop /*= true*/)
@@ -69,17 +89,28 @@ void MainWindow::SelectPage(MainWindowPage* page)
 
 void MainWindow::ClosePage(MainWindowPage* page)
 {
+    emit pageClosed(page);
+
     const int index = pages_.indexOf(page);
     tabBar_->removeTab(index);
     pages_.remove(index);
 
-    // Ensure that Urho3D widget is invisible
     if (pages_.isEmpty())
+    {
+        // Emit signal if all tabs are closed now
+        emit pageChanged(nullptr);
+
+        // Ensure that Urho3D widget is invisible
         urho3DWidget_->setVisible(false);
+    }
 }
 
 bool MainWindow::DoInitialize()
 {
+    config_ = GetModule<Configuration>();
+    if (!config_)
+        return false;
+
     InitializeLayout();
     InitializeMenu();
     return true;
@@ -103,6 +134,7 @@ void MainWindow::InitializeMenu()
 {
     QMenuBar* menuBar = mainWindow_->menuBar();
     topLevelMenus_[MenuFile] = menuBar->addMenu("File");
+    topLevelMenus_[MenuView] = menuBar->addMenu("View");
     topLevelMenus_[MenuHelp] = menuBar->addMenu("Help");
 
     menuActions_[MenuFileNew_After]    = topLevelMenus_[MenuFile]->addSeparator();
@@ -157,7 +189,7 @@ void MainWindow::HandleTabChanged(int index)
     MainWindowPage* page = pages_[index];
     page->setVisible(page->IsPageWidgetVisible());
     urho3DWidget_->setVisible(page->IsUrho3DWidgetVisible());
-    page->OnSelected();
+    emit pageChanged(page);
 }
 
 void MainWindow::HandleTabMoved(int from, int to)
@@ -172,9 +204,10 @@ void MainWindow::HandleTabTitleChanged(MainWindowPage* page)
 }
 
 //////////////////////////////////////////////////////////////////////////
-MainWindowPage::MainWindowPage(Configuration& config)
-    : config_(config)
+MainWindowPage::MainWindowPage(MainWindow& mainWindow)
+    : mainWindow_(mainWindow)
 {
+    connect(&mainWindow, SIGNAL(pageChanged(MainWindowPage*)), this, SLOT(HandleCurrentPageChanged(MainWindowPage*)));
 }
 
 void MainWindowPage::SetTitle(const QString& title)
@@ -192,7 +225,7 @@ bool MainWindowPage::LaunchFileDialog(bool open)
     dialog.setAcceptMode(open ? QFileDialog::AcceptOpen : QFileDialog::AcceptSave);
     dialog.setFileMode(open ? QFileDialog::ExistingFile : QFileDialog::AnyFile);
     dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    dialog.setDirectory(config_.GetLastDirectory());
+    dialog.setDirectory(mainWindow_.GetConfig().GetLastDirectory());
     dialog.setNameFilter(GetNameFilters());
     if (!dialog.exec())
         return false;
@@ -202,7 +235,7 @@ bool MainWindowPage::LaunchFileDialog(bool open)
         return false;
 
     fileName_ = files[0];
-    config_.SetLastDirectoryByFileName(fileName_);
+    mainWindow_.GetConfig().SetLastDirectoryByFileName(fileName_);
     SetTitle(QFileInfo(fileName_).fileName());
     return true;
 }
@@ -212,6 +245,16 @@ bool MainWindowPage::Open()
     if (LaunchFileDialog(true))
         return DoLoad(fileName_);
     return false;
+}
+
+bool MainWindowPage::IsActive() const
+{
+    return mainWindow_.GetCurrentPage() == this;
+}
+
+void MainWindowPage::HandleCurrentPageChanged(MainWindowPage* page)
+{
+
 }
 
 bool MainWindowPage::DoLoad(const QString& /*fileName*/)

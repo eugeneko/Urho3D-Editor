@@ -1,9 +1,4 @@
 #include "Application.h"
-#include "MainWindow.h"
-#include "Urho3DProject.h"
-#include "SceneEditor.h"
-#include "Configuration.h"
-#include "EditorSettings.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
 #include <QFile>
@@ -11,7 +6,11 @@
 #include <QTabBar>
 #include <QTimer>
 
-#include <Urho3D/Urho3DAll.h>
+#include "Configuration.h"
+#include "HierarchyWindow.h"
+#include "MainWindow.h"
+#include "SceneEditor.h"
+#include "Urho3DProject.h"
 
 namespace Urho3DEditor
 {
@@ -19,10 +18,9 @@ namespace Urho3DEditor
 Application::Application(int argc, char** argv, Urho3D::Context* context)
     : QApplication(argc, argv)
     , context_(context)
-    , activeDirectory_(GetArguments().Size() > 0 ? GetArguments()[0].CString() : ".")
+    , activeDirectory_(Urho3D::GetArguments().Size() > 0 ? Urho3D::GetArguments()[0].CString() : ".")
     , moduleSystem_(context_)
 {
-    context_->RegisterSubsystem(new EditorSettings(context_));
 }
 
 Application::~Application()
@@ -32,9 +30,9 @@ Application::~Application()
 int Application::Run()
 {
     // Setup style
-    QFile file(activeDirectory_ + "/qdarkstyle/style.qss");
-    if (file.open(QFile::ReadOnly | QFile::Text))
-        setStyleSheet(QLatin1String(file.readAll()));
+//     QFile file(activeDirectory_ + "/qdarkstyle/style.qss");
+//     if (file.open(QFile::ReadOnly | QFile::Text))
+//         setStyleSheet(QLatin1String(file.readAll()));
 
     // Create main window
     mainWindow_.reset(new QMainWindow());
@@ -54,6 +52,7 @@ bool Application::InitializeModules()
     moduleSystem_.AddModule(new MainWindow(mainWindow_.data(), context_));
     moduleSystem_.AddModule(new ProjectManager());
     moduleSystem_.AddModule(new SceneEditor());
+    moduleSystem_.AddModule(new HierarchyWindowManager());
     return true;
 }
 

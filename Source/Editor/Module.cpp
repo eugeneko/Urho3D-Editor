@@ -15,7 +15,7 @@ namespace Urho3DEditor
 {
 
 ModuleSystem::ModuleSystem(Urho3D::Context* context)
-    : Object(context)
+    : context_(context)
 {
 
 }

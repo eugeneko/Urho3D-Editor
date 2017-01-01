@@ -11,13 +11,14 @@ namespace Urho3DEditor
 class Module;
 
 /// Module system of Editor.
-class ModuleSystem : public Urho3D::Object
+class ModuleSystem
 {
-    URHO3D_OBJECT(ModuleSystem, Urho3D::Object);
-
 public:
     /// Construct.
     ModuleSystem(Urho3D::Context* context);
+
+    /// Get context.
+    Urho3D::Context* GetContext() const { return context_; }
 
     /// Add module. Ownership is passed to ModuleSystem.
     void AddModule(const QString& name, Module* module);
@@ -37,6 +38,8 @@ public:
     T* GetModule() const { return dynamic_cast<T*>(GetModule(T::staticMetaObject.className())); }
 
 private:
+    /// Context.
+    Urho3D::Context* context_;
     /// Modules.
     QHash<QString, QSharedPointer<Module>> modules_;
 

@@ -33,8 +33,6 @@ protected slots:
     virtual void HandleFileOpenScene();
 
 private:
-    /// Configuration.
-    Configuration* config_;
     /// Main window.
     MainWindow* mainWindow_;
     /// 'File/New Scene' action.
@@ -52,10 +50,9 @@ class ScenePage : public MainWindowPage, public Urho3D::Object
 
 public:
     /// Construct.
-    ScenePage(Configuration& config, Urho3D::Context* context);
-
-    /// Handle the page selected.
-    virtual void OnSelected() override;
+    ScenePage(MainWindow& mainWindow);
+    /// Get scene.
+    Urho3D::Scene& GetScene() const { return *scene_; }
 
     /// Return title of the page.
     virtual QString GetTitle() { return GetRawTitle(); }
@@ -67,8 +64,10 @@ public:
     virtual bool IsUrho3DWidgetVisible() { return true; }
 
 protected:
+    /// Handle current page changed.
+    virtual void HandleCurrentPageChanged(MainWindowPage* page) override;
     /// Load the page from file.
-    virtual bool DoLoad(const QString& fileName);
+    virtual bool DoLoad(const QString& fileName) override;
 
 private:
     /// Camera node.

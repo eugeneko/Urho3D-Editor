@@ -68,6 +68,7 @@ protected:
     virtual bool DoLoad() { return true; }
 
 signals:
+    /// Signals that title of the page has changed.
     void titleChanged(AbstractPage* page, const QString& newTitle);
 
 private:

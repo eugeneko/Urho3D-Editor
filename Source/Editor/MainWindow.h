@@ -28,6 +28,7 @@ public:
     enum TopLevelMenu
     {
         MenuFile,
+        MenuView,
         MenuHelp
     };
     /// Menu actions.
@@ -46,6 +47,12 @@ public:
     /// Construct.
     MainWindow(QMainWindow* mainWindow, Urho3D::Context* context);
 
+    /// Get configuration.
+    Configuration& GetConfig() const;
+    /// Get context.
+    Urho3D::Context* GetContext() const;
+    /// Get current active page.
+    MainWindowPage* GetCurrentPage() const;
     /// Get menu bar.
     QMenuBar* GetMenuBar() const;
     /// Get top-level menu.
@@ -53,12 +60,21 @@ public:
     /// Get menu action.
     QAction* GetMenuAction(MenuAction action) const;
 
+    /// Add dock widget.
+    void AddDock(Qt::DockWidgetArea area, QDockWidget* dock);
+
     /// Add page.
     void AddPage(MainWindowPage* page, bool bringToTop = true);
     /// Select page.
     void SelectPage(MainWindowPage* page);
     /// Close page.
     void ClosePage(MainWindowPage* page);
+
+signals:
+    /// Signals that current page has been changed.
+    void pageChanged(MainWindowPage* page);
+    /// Signals that page is closed.
+    void pageClosed(MainWindowPage* page);
 
 protected:
     /// Initialize module.
@@ -87,6 +103,8 @@ private:
     QMainWindow* mainWindow_;
     /// Urho3D context.
     Urho3D::Context* context_;
+    /// Configuration.
+    Configuration* config_;
 
     /// Central widget.
     QScopedPointer<QWidget> centralWidget_;
@@ -114,10 +132,8 @@ class MainWindowPage : public QWidget
 
 public:
     /// Construct.
-    MainWindowPage(Configuration& config);
+    MainWindowPage(MainWindow& mainWindow);
 
-    /// Handle the page selected.
-    virtual void OnSelected() { }
     /// Set title of the page.
     virtual void SetTitle(const QString& title);
     /// Launch file dialog and get the file name.
@@ -125,6 +141,8 @@ public:
     /// Open page from file.
     virtual bool Open();
 
+    /// Return whether the page is active.
+    bool IsActive() const;
     /// Return raw title of the page.
     QString GetRawTitle() { return title_; }
     /// Return file name of the page.
@@ -144,13 +162,17 @@ protected:
     /// Load the page from file.
     virtual bool DoLoad(const QString& fileName);
 
+protected slots:
+    /// Handle current page changed.
+    virtual void HandleCurrentPageChanged(MainWindowPage* page);
+
 signals:
-    /// Signal for changing of page title.
+    /// Signals that title of the page has been changed.
     void titleChanged(MainWindowPage* page);
 
 private:
-    /// Configuration.
-    Configuration& config_;
+    /// Main window.
+    MainWindow& mainWindow_;
     /// File name.
     QString fileName_;
     /// Title.

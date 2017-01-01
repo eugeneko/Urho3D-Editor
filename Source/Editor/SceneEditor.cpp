@@ -9,17 +9,15 @@ namespace Urho3DEditor
 
 
 SceneEditor::SceneEditor()
-    : config_(nullptr)
-    , mainWindow_(nullptr)
+    : mainWindow_(nullptr)
 {
 
 }
 
 bool SceneEditor::DoInitialize()
 {
-    config_ = GetModule<Configuration>();
     mainWindow_ = GetModule<MainWindow>();
-    if (!mainWindow_ || !config_)
+    if (!mainWindow_)
         return false;
 
     QMenu* menuFile = mainWindow_->GetTopLevelMenu(MainWindow::MenuFile);
@@ -41,31 +39,36 @@ bool SceneEditor::DoInitialize()
 
 void SceneEditor::HandleFileNewScene()
 {
-    mainWindow_->AddPage(new ScenePage(*config_, GetContext()));
+    mainWindow_->AddPage(new ScenePage(*mainWindow_));
 }
 
 void SceneEditor::HandleFileOpenScene()
 {
-    QScopedPointer<ScenePage> scenePage(new ScenePage(*config_, GetContext()));
+    QScopedPointer<ScenePage> scenePage(new ScenePage(*mainWindow_));
     if (scenePage->Open())
         mainWindow_->AddPage(scenePage.take());
 }
 
 //////////////////////////////////////////////////////////////////////////
-ScenePage::ScenePage(Configuration& config, Urho3D::Context* context)
-    : MainWindowPage(config)
-    , Object(context)
+ScenePage::ScenePage(MainWindow& mainWindow)
+    : MainWindowPage(mainWindow)
+    , Object(mainWindow.GetContext())
     , cameraNode_(context_)
     , camera_(cameraNode_.CreateComponent<Urho3D::Camera>())
+    , scene_(new Urho3D::Scene(context_))
 {
+    SetTitle("New Scene");
     cameraNode_.SetWorldPosition(Urho3D::Vector3(0, 1, -1));
     cameraNode_.LookAt(Urho3D::Vector3::ZERO);
 }
 
-void ScenePage::OnSelected()
+void ScenePage::HandleCurrentPageChanged(MainWindowPage* page)
 {
-    Urho3D::Renderer* renderer = GetContext()->GetSubsystem<Urho3D::Renderer>();
-    renderer->SetViewport(0, viewport_);
+    if (IsActive())
+    {
+        Urho3D::Renderer* renderer = GetContext()->GetSubsystem<Urho3D::Renderer>();
+        renderer->SetViewport(0, viewport_);
+    }
 }
 
 bool ScenePage::DoLoad(const QString& fileName)
@@ -74,11 +77,9 @@ bool ScenePage::DoLoad(const QString& fileName)
     if (!file.Open(fileName.toStdString().c_str()))
         return false;
 
-    Urho3D::SharedPtr<Urho3D::Scene> scene(new Urho3D::Scene(context_));
-    if (!scene->LoadXML(file))
+    if (!scene_->LoadXML(file))
         return false;
 
-    scene_ = scene;
     viewport_ = new Urho3D::Viewport(context_, scene_, camera_);
     return true;
 }
