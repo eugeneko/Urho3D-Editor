@@ -1,5 +1,8 @@
 #include "Application.h"
 #include "MainWindow.h"
+#include "Urho3DProject.h"
+#include "SceneEditor.h"
+#include "Configuration.h"
 #include "EditorSettings.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
@@ -17,6 +20,7 @@ Application::Application(int argc, char** argv, Urho3D::Context* context)
     : QApplication(argc, argv)
     , context_(context)
     , activeDirectory_(GetArguments().Size() > 0 ? GetArguments()[0].CString() : ".")
+    , moduleSystem_(context_)
 {
     context_->RegisterSubsystem(new EditorSettings(context_));
 }
@@ -35,7 +39,7 @@ int Application::Run()
     // Create main window
     mainWindow_.reset(new QMainWindow());
 
-    // Intialize modules
+    // Initialize modules
     if (!InitializeModules())
         return false;
 
@@ -46,7 +50,10 @@ int Application::Run()
 
 bool Application::InitializeModules()
 {
+    moduleSystem_.AddModule(new Configuration());
     moduleSystem_.AddModule(new MainWindow(mainWindow_.data(), context_));
+    moduleSystem_.AddModule(new ProjectManager());
+    moduleSystem_.AddModule(new SceneEditor());
     return true;
 }
 

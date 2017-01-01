@@ -1,4 +1,6 @@
 #include "MainWindow.h"
+#include "Configuration.h"
+
 #include "AbstractDocument.h"
 
 #include <Urho3D/IO/File.h>
@@ -22,41 +24,109 @@ MainWindow::MainWindow(QMainWindow* mainWindow, Urho3D::Context* context)
     , layout_(new QVBoxLayout())
     , tabBar_(new QTabBar())
     , urho3DWidget_(new Urho3DWidget(context_))
-    , menuFile_(nullptr)
-    , menuHelp_(nullptr)
 {
+    urho3DWidget_->setVisible(false);
 }
 
-void MainWindow::DoInitialize()
+QMenuBar* MainWindow::GetMenuBar() const
+{
+    return mainWindow_->menuBar();
+}
+
+QMenu* MainWindow::GetTopLevelMenu(TopLevelMenu menu) const
+{
+    return topLevelMenus_[menu];
+}
+
+QAction* MainWindow::GetMenuAction(MenuAction action) const
+{
+    return menuActions_.value(action, nullptr);
+}
+
+void MainWindow::AddPage(MainWindowPage* page, bool bringToTop /*= true*/)
+{
+    // Add new tab
+    connect(page, SIGNAL(titleChanged(MainWindowPage*)), this, SLOT(HandleTabTitleChanged(MainWindowPage*)));
+    page->setVisible(false);
+    layout_->addWidget(page);
+    pages_.push_back(page);
+    const int index = tabBar_->addTab(page->GetTitle());
+
+    // Emit signal for first tab
+    if (pages_.size() == 1)
+        HandleTabChanged(tabBar_->currentIndex());
+
+    // Activate
+    if (bringToTop)
+        SelectPage(page);
+}
+
+void MainWindow::SelectPage(MainWindowPage* page)
+{
+    const int index = pages_.indexOf(page);
+    tabBar_->setCurrentIndex(index);
+}
+
+void MainWindow::ClosePage(MainWindowPage* page)
+{
+    const int index = pages_.indexOf(page);
+    tabBar_->removeTab(index);
+    pages_.remove(index);
+
+    // Ensure that Urho3D widget is invisible
+    if (pages_.isEmpty())
+        urho3DWidget_->setVisible(false);
+}
+
+bool MainWindow::DoInitialize()
 {
     InitializeLayout();
     InitializeMenu();
+    return true;
 }
 
 void MainWindow::InitializeLayout()
 {
-    mainWindow_->setCentralWidget(centralWidget_);
-    centralWidget_->setLayout(layout_);
-    layout_->addWidget(tabBar_);
-    layout_->addWidget(urho3DWidget_);
+    centralWidget_->setLayout(layout_.data());
+
+    layout_->addWidget(tabBar_.data());
+    layout_->addWidget(urho3DWidget_.data());
+
+    tabBar_->setMovable(true);
+    tabBar_->setDocumentMode(true);
+    tabBar_->setExpanding(false);
+
+    mainWindow_->setCentralWidget(centralWidget_.data());
 }
 
 void MainWindow::InitializeMenu()
 {
     QMenuBar* menuBar = mainWindow_->menuBar();
-    menuFile_ = menuBar->addMenu("File");
-    menuHelp_ = menuBar->addMenu("Help");
-    menuActions_[MenuFileNew_After] = menuFile_->addSeparator();
-    menuActions_[MenuFileOpen] = menuFile_->addAction("Open...");
-    menuActions_[MenuFileSave] = menuFile_->addAction("Save");
-    menuActions_[MenuFileSaveAs] = menuFile_->addAction("Save As...");
-    menuActions_[MenuFileExit_Before] = menuFile_->addSeparator();
-    menuActions_[MenuFileExit] = menuFile_->addAction("Exit");
-    menuActions_[MenuHelpAbout_Before] = menuHelp_->addSeparator();
-    menuActions_[MenuHelpAbout] = menuHelp_->addAction("About");
+    topLevelMenus_[MenuFile] = menuBar->addMenu("File");
+    topLevelMenus_[MenuHelp] = menuBar->addMenu("Help");
 
-    connect(menuActions_[MenuFileExit], SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));
+    menuActions_[MenuFileNew_After]    = topLevelMenus_[MenuFile]->addSeparator();
+    menuActions_[MenuFileOpen_After]   = topLevelMenus_[MenuFile]->addSeparator();
+    menuActions_[MenuFileClose]        = topLevelMenus_[MenuFile]->addAction("Close");
+    menuActions_[MenuFileSave]         = topLevelMenus_[MenuFile]->addAction("Save");
+    menuActions_[MenuFileSaveAs]       = topLevelMenus_[MenuFile]->addAction("Save As...");
+    menuActions_[MenuFileExit_Before]  = topLevelMenus_[MenuFile]->addSeparator();
+    menuActions_[MenuFileExit]         = topLevelMenus_[MenuFile]->addAction("Exit");
+
+    menuActions_[MenuHelpAbout_Before] = topLevelMenus_[MenuHelp]->addSeparator();
+    menuActions_[MenuHelpAbout]        = topLevelMenus_[MenuHelp]->addAction("About");
+
+    connect(menuActions_[MenuFileClose], SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
+    connect(menuActions_[MenuFileExit],  SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));
     connect(menuActions_[MenuHelpAbout], SIGNAL(triggered(bool)), this, SLOT(HandleHelpAbout()));
+    connect(tabBar_.data(), SIGNAL(currentChanged(int)), this, SLOT(HandleTabChanged(int)));
+    connect(tabBar_.data(), SIGNAL(tabMoved(int, int)),  this, SLOT(HandleTabMoved(int, int)));
+}
+
+void MainWindow::HandleFileClose()
+{
+    if (tabBar_->currentIndex() != -1)
+        ClosePage(pages_[tabBar_->currentIndex()]);
 }
 
 void MainWindow::HandleFileExit()
@@ -71,6 +141,82 @@ void MainWindow::HandleHelpAbout()
     messageBox.setInformativeText("I promise it will be better...");
     messageBox.setStandardButtons(QMessageBox::Ok);
     messageBox.exec();
+}
+
+void MainWindow::HandleTabChanged(int index)
+{
+    if (index < 0)
+        return;
+    Q_ASSERT(index < pages_.size());
+
+    // Hide all pages
+    for (MainWindowPage* page : pages_)
+        page->setVisible(false);
+
+    // Show page
+    MainWindowPage* page = pages_[index];
+    page->setVisible(page->IsPageWidgetVisible());
+    urho3DWidget_->setVisible(page->IsUrho3DWidgetVisible());
+    page->OnSelected();
+}
+
+void MainWindow::HandleTabMoved(int from, int to)
+{
+    pages_.move(from, to);
+}
+
+void MainWindow::HandleTabTitleChanged(MainWindowPage* page)
+{
+    const int index = pages_.indexOf(page);
+    tabBar_->setTabText(index, page->GetTitle());
+}
+
+//////////////////////////////////////////////////////////////////////////
+MainWindowPage::MainWindowPage(Configuration& config)
+    : config_(config)
+{
+}
+
+void MainWindowPage::SetTitle(const QString& title)
+{
+    if (title != title_)
+    {
+        title_ = title;
+        emit titleChanged(this);
+    }
+}
+
+bool MainWindowPage::LaunchFileDialog(bool open)
+{
+    QFileDialog dialog;
+    dialog.setAcceptMode(open ? QFileDialog::AcceptOpen : QFileDialog::AcceptSave);
+    dialog.setFileMode(open ? QFileDialog::ExistingFile : QFileDialog::AnyFile);
+    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    dialog.setDirectory(config_.GetLastDirectory());
+    dialog.setNameFilter(GetNameFilters());
+    if (!dialog.exec())
+        return false;
+
+    const QStringList files = dialog.selectedFiles();
+    if (files.isEmpty())
+        return false;
+
+    fileName_ = files[0];
+    config_.SetLastDirectoryByFileName(fileName_);
+    SetTitle(QFileInfo(fileName_).fileName());
+    return true;
+}
+
+bool MainWindowPage::Open()
+{
+    if (LaunchFileDialog(true))
+        return DoLoad(fileName_);
+    return false;
+}
+
+bool MainWindowPage::DoLoad(const QString& /*fileName*/)
+{
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////////

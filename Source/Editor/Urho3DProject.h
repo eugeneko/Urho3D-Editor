@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Module.h"
 #include "AbstractDocument.h"
 #include <Urho3D/Core/Context.h>
 // #include <Urho3D/Engine/Engine.h>
@@ -19,6 +20,32 @@ class QListWidgetItem;
 
 namespace Urho3DEditor
 {
+
+class MainWindow;
+
+/// Project support.
+class ProjectManager : public Module
+{
+    Q_OBJECT
+
+public:
+    /// Construct.
+    ProjectManager();
+
+protected:
+    /// Initialize module.
+    virtual bool DoInitialize() override;
+
+protected slots:
+    /// Handle 'File/New Project'
+    virtual void HandleFileNewProject();
+
+private:
+    /// Main window.
+    MainWindow* mainWindow_;
+    /// 'File/New Project' action.
+    QScopedPointer<QAction> actionFileNewProject_;
+};
 
 /// Urho3D Project document.
 class Urho3DProject : public Urho3D::Resource

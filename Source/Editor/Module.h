@@ -3,6 +3,7 @@
 #include <QHash>
 #include <QObject>
 #include <QSharedPointer>
+#include <Urho3D/Core/Object.h>
 
 namespace Urho3DEditor
 {
@@ -10,9 +11,14 @@ namespace Urho3DEditor
 class Module;
 
 /// Module system of Editor.
-class ModuleSystem
+class ModuleSystem : public Urho3D::Object
 {
+    URHO3D_OBJECT(ModuleSystem, Urho3D::Object);
+
 public:
+    /// Construct.
+    ModuleSystem(Urho3D::Context* context);
+
     /// Add module. Ownership is passed to ModuleSystem.
     void AddModule(const QString& name, Module* module);
     /// Remove module by name.
@@ -43,8 +49,10 @@ class Module : public QObject
 
 public:
     /// Initialize module.
-    void Initialize(ModuleSystem& system);
+    bool Initialize(ModuleSystem& system);
 
+    /// Get context.
+    Urho3D::Context* GetContext() { return system_->GetContext(); }
     /// Get module by name.
     Module* GetModule(const QString& name) const;
     /// Get module by type.
@@ -52,7 +60,7 @@ public:
 
 protected:
     /// Initialize module.
-    virtual void DoInitialize() { }
+    virtual bool DoInitialize() { return true; }
 
 private:
     /// Module system.

@@ -1,4 +1,5 @@
 #include "Urho3DProject.h"
+#include "MainWindow.h"
 // #include "AbstractDocument.h"
 // #include "EditorSettings.h"
 // #include "Urho3DWidget.h"
@@ -24,6 +25,37 @@
 namespace Urho3DEditor
 {
 
+ProjectManager::ProjectManager()
+    : mainWindow_(nullptr)
+{
+
+}
+
+bool ProjectManager::DoInitialize()
+{
+    mainWindow_ = GetModule<MainWindow>();
+    if (!mainWindow_)
+        return false;
+
+    QMenu* menuFile = mainWindow_->GetTopLevelMenu(MainWindow::MenuFile);
+    QAction* menuFileNew_After = mainWindow_->GetMenuAction(MainWindow::MenuFileNew_After);
+    if (!menuFile || !menuFileNew_After)
+        return false;
+
+    actionFileNewProject_.reset(new QAction("New Project"));
+    menuFile->insertAction(menuFileNew_After, actionFileNewProject_.data());
+    connect(actionFileNewProject_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileNewProject()));
+
+    return true;
+}
+
+
+void ProjectManager::HandleFileNewProject()
+{
+
+}
+
+//////////////////////////////////////////////////////////////////////////
 Urho3DProject::Urho3DProject(Urho3D::Context* context)
     : Urho3D::Resource(context)
     , resourcePrefixPaths_(".")

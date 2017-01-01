@@ -15,24 +15,8 @@
 namespace Urho3DEditor
 {
 
-// class ProjectManagerEvent : public QEvent
-// {
-// public:
-//     enum Type
-//     {
-//         SetCurrentProject,
-//     };
-// };
-// 
-// /// Project manager.
-// class ProjectManager
-// {
-//     Q_OBJECT
-// 
-// public:
-//     /// Construct.
-//     ProjectManager();
-// };
+class Configuration;
+class MainWindowPage;
 
 /// Main window.
 class MainWindow : public Module
@@ -40,11 +24,18 @@ class MainWindow : public Module
     Q_OBJECT
 
 public:
+    /// Top-level menus.
+    enum TopLevelMenu
+    {
+        MenuFile,
+        MenuHelp
+    };
     /// Menu actions.
     enum MenuAction
     {
         MenuFileNew_After,
-        MenuFileOpen,
+        MenuFileOpen_After,
+        MenuFileClose,
         MenuFileSave,
         MenuFileSaveAs,
         MenuFileExit_Before,
@@ -55,19 +46,41 @@ public:
     /// Construct.
     MainWindow(QMainWindow* mainWindow, Urho3D::Context* context);
 
+    /// Get menu bar.
+    QMenuBar* GetMenuBar() const;
+    /// Get top-level menu.
+    QMenu* GetTopLevelMenu(TopLevelMenu menu) const;
+    /// Get menu action.
+    QAction* GetMenuAction(MenuAction action) const;
+
+    /// Add page.
+    void AddPage(MainWindowPage* page, bool bringToTop = true);
+    /// Select page.
+    void SelectPage(MainWindowPage* page);
+    /// Close page.
+    void ClosePage(MainWindowPage* page);
+
 protected:
     /// Initialize module.
-    virtual void DoInitialize() override;
+    virtual bool DoInitialize() override;
     /// Initialize layout.
     virtual void InitializeLayout();
     /// Initialize menu.
     virtual void InitializeMenu();
 
 protected slots:
+    /// Handle 'File/Close'
+    virtual void HandleFileClose();
     /// Handle 'File/Exit'
     virtual void HandleFileExit();
     /// Handle 'Help/About'
     virtual void HandleHelpAbout();
+    /// Handle tab changed.
+    virtual void HandleTabChanged(int index);
+    /// Handle tab moved.
+    virtual void HandleTabMoved(int from, int to);
+    /// Handle tab title changed.
+    virtual void HandleTabTitleChanged(MainWindowPage* page);
 
 private:
     /// Main window.
@@ -76,21 +89,72 @@ private:
     Urho3D::Context* context_;
 
     /// Central widget.
-    QWidget* centralWidget_;
+    QScopedPointer<QWidget> centralWidget_;
     /// Main window layout.
-    QVBoxLayout* layout_;
+    QScopedPointer<QVBoxLayout> layout_;
     /// Tab bar widget.
-    QTabBar* tabBar_;
+    QScopedPointer<QTabBar> tabBar_;
     /// Urho3D Widget.
-    Urho3DWidget* urho3DWidget_;
+    QScopedPointer<Urho3DWidget> urho3DWidget_;
 
-    /// 'File' menu.
-    QMenu* menuFile_;
-    /// 'Help' menu.
-    QMenu* menuHelp_;
+    /// Top-level menus.
+    QHash<TopLevelMenu, QMenu*> topLevelMenus_;
     /// Menu actions.
     QHash<MenuAction, QAction*> menuActions_;
 
+    /// Pages.
+    QVector<MainWindowPage*> pages_;
+
+};
+
+/// Page of the main window.
+class MainWindowPage : public QWidget
+{
+    Q_OBJECT
+
+public:
+    /// Construct.
+    MainWindowPage(Configuration& config);
+
+    /// Handle the page selected.
+    virtual void OnSelected() { }
+    /// Set title of the page.
+    virtual void SetTitle(const QString& title);
+    /// Launch file dialog and get the file name.
+    virtual bool LaunchFileDialog(bool open);
+    /// Open page from file.
+    virtual bool Open();
+
+    /// Return raw title of the page.
+    QString GetRawTitle() { return title_; }
+    /// Return file name of the page.
+    QString GetFileName() { return fileName_; }
+    /// Return title of the page.
+    virtual QString GetTitle() { return title_; }
+    /// Return whether the page can be saved.
+    virtual bool CanBeSaved() { return false; }
+    /// Return whether the page widget should be visible when the page is active.
+    virtual bool IsPageWidgetVisible() { return true; }
+    /// Return whether the Urho3D widget should be visible when the page is active.
+    virtual bool IsUrho3DWidgetVisible() { return false; }
+    /// Get name filters for open and save dialogs.
+    virtual QString GetNameFilters() { return "All files (*.*)"; }
+
+protected:
+    /// Load the page from file.
+    virtual bool DoLoad(const QString& fileName);
+
+signals:
+    /// Signal for changing of page title.
+    void titleChanged(MainWindowPage* page);
+
+private:
+    /// Configuration.
+    Configuration& config_;
+    /// File name.
+    QString fileName_;
+    /// Title.
+    QString title_;
 };
 
 /// Main window of Editor application.
