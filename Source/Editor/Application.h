@@ -30,8 +30,6 @@ protected:
 protected:
     /// Context.
     Urho3D::SharedPtr<Urho3D::Context> context_;
-    /// Active directory.
-    const QString activeDirectory_;
     /// Main window.
     QScopedPointer<QMainWindow> mainWindow_;
     /// Modules.

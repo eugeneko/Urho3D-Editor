@@ -18,7 +18,6 @@ namespace Urho3DEditor
 Application::Application(int argc, char** argv, Urho3D::Context* context)
     : QApplication(argc, argv)
     , context_(context)
-    , activeDirectory_(Urho3D::GetArguments().Size() > 0 ? Urho3D::GetArguments()[0].CString() : ".")
     , moduleSystem_(context_)
 {
 }
@@ -30,9 +29,9 @@ Application::~Application()
 int Application::Run()
 {
     // Setup style
-//     QFile file(activeDirectory_ + "/qdarkstyle/style.qss");
-//     if (file.open(QFile::ReadOnly | QFile::Text))
-//         setStyleSheet(QLatin1String(file.readAll()));
+    QFile file(":/qdarkstyle/style.qss");
+    if (file.open(QFile::ReadOnly | QFile::Text))
+        setStyleSheet(QLatin1String(file.readAll()));
 
     // Create main window
     mainWindow_.reset(new QMainWindow());
