@@ -1,14 +1,10 @@
 #include "Urho3DWidget.h"
-#include "Urho3DProject.h"
+#include "../Urho3DProject.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Input/Input.h>
 #include <QKeyEvent>
-// #include <QFile>
-// #include <QHBoxLayout>
-// #include <QTabBar>
-// #include <QTimer>
 
 namespace Urho3DEditor
 {
