@@ -43,6 +43,11 @@ MainWindowPage* MainWindow::GetCurrentPage() const
     return tabBar_->currentIndex() < 0 ? nullptr : pages_[tabBar_->currentIndex()];
 }
 
+Urho3DWidget* MainWindow::GetUrho3DWidget() const
+{
+    return urho3DWidget_.data();
+}
+
 QMenuBar* MainWindow::GetMenuBar() const
 {
     return mainWindow_->menuBar();
@@ -92,8 +97,8 @@ void MainWindow::ClosePage(MainWindowPage* page)
     emit pageClosed(page);
 
     const int index = pages_.indexOf(page);
-    tabBar_->removeTab(index);
     pages_.remove(index);
+    tabBar_->removeTab(index);
 
     if (pages_.isEmpty())
     {
@@ -126,6 +131,7 @@ void MainWindow::InitializeLayout()
     tabBar_->setMovable(true);
     tabBar_->setDocumentMode(true);
     tabBar_->setExpanding(false);
+    tabBar_->setTabsClosable(true);
 
     mainWindow_->setCentralWidget(centralWidget_.data());
 }
@@ -148,11 +154,16 @@ void MainWindow::InitializeMenu()
     menuActions_[MenuHelpAbout_Before] = topLevelMenus_[MenuHelp]->addSeparator();
     menuActions_[MenuHelpAbout]        = topLevelMenus_[MenuHelp]->addAction("About");
 
+    menuActions_[MenuFileClose]->setShortcut(Qt::CTRL + Qt::Key_W);
+    menuActions_[MenuFileSave]->setShortcut(Qt::CTRL + Qt::Key_S);
+    menuActions_[MenuFileSaveAs]->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_S);
+
     connect(menuActions_[MenuFileClose], SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
     connect(menuActions_[MenuFileExit],  SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));
     connect(menuActions_[MenuHelpAbout], SIGNAL(triggered(bool)), this, SLOT(HandleHelpAbout()));
-    connect(tabBar_.data(), SIGNAL(currentChanged(int)), this, SLOT(HandleTabChanged(int)));
-    connect(tabBar_.data(), SIGNAL(tabMoved(int, int)),  this, SLOT(HandleTabMoved(int, int)));
+    connect(tabBar_.data(), SIGNAL(currentChanged(int)),    this, SLOT(HandleTabChanged(int)));
+    connect(tabBar_.data(), SIGNAL(tabMoved(int, int)),     this, SLOT(HandleTabMoved(int, int)));
+    connect(tabBar_.data(), SIGNAL(tabCloseRequested(int)), this, SLOT(HandleTabClosed(int)));
 }
 
 void MainWindow::HandleFileClose()
@@ -189,12 +200,20 @@ void MainWindow::HandleTabChanged(int index)
     MainWindowPage* page = pages_[index];
     page->setVisible(page->IsPageWidgetVisible());
     urho3DWidget_->setVisible(page->IsUrho3DWidgetVisible());
+    if (page->IsUrho3DWidgetVisible())
+        urho3DWidget_->setFocus(Qt::ActiveWindowFocusReason);
+
     emit pageChanged(page);
 }
 
 void MainWindow::HandleTabMoved(int from, int to)
 {
     pages_.move(from, to);
+}
+
+void MainWindow::HandleTabClosed(int index)
+{
+    ClosePage(pages_[index]);
 }
 
 void MainWindow::HandleTabTitleChanged(MainWindowPage* page)

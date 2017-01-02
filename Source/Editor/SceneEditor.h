@@ -8,6 +8,13 @@
 #include <Urho3D/Scene/Node.h>
 #include <Urho3D/Scene/Scene.h>
 
+namespace Urho3D
+{
+
+class Input;
+
+}
+
 namespace Urho3DEditor
 {
 
@@ -42,6 +49,31 @@ private:
 
 };
 
+/// Scene camera.
+class SceneCamera
+{
+public:
+    /// Construct.
+    SceneCamera(Urho3D::Context* context);
+    /// Get camera.
+    Urho3D::Camera& GetCamera() const { return *camera_; }
+
+    /// Set grab mouse.
+    void SetGrabMouse(bool grab);
+    /// Move camera.
+    void Move(const Urho3D::Vector3& movement, const Urho3D::Vector3& rotation);
+
+private:
+    /// Input subsystem.
+    Urho3D::Input* input_;
+    /// Camera node.
+    Urho3D::Node cameraNode_;
+    /// Camera component.
+    Urho3D::Camera* camera_;
+    /// Camera angles.
+    Urho3D::Vector3 angles_;
+};
+
 /// Scene page.
 class ScenePage : public MainWindowPage, public Urho3D::Object
 {
@@ -55,13 +87,21 @@ public:
     Urho3D::Scene& GetScene() const { return *scene_; }
 
     /// Return title of the page.
-    virtual QString GetTitle() { return GetRawTitle(); }
+    virtual QString GetTitle() override { return GetRawTitle(); }
     /// Return whether the page can be saved.
-    virtual bool CanBeSaved() { return true; }
+    virtual bool CanBeSaved() override { return true; }
     /// Return whether the page widget should be visible when the page is active.
-    virtual bool IsPageWidgetVisible() { return false; }
+    virtual bool IsPageWidgetVisible() override { return false; }
     /// Return whether the Urho3D widget should be visible when the page is active.
-    virtual bool IsUrho3DWidgetVisible() { return true; }
+    virtual bool IsUrho3DWidgetVisible() override { return true; }
+    /// Get name filters for open and save dialogs.
+    virtual QString GetNameFilters() override;
+
+private:
+    /// Handle update.
+    virtual void HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
+    /// Handle mouse button up/down.
+    virtual void HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
 
 protected:
     /// Handle current page changed.
@@ -70,11 +110,10 @@ protected:
     virtual bool DoLoad(const QString& fileName) override;
 
 private:
-    /// Camera node.
-    Urho3D::Node cameraNode_;
-    /// Camera component.
-    Urho3D::Camera* camera_;
-
+    /// Widget.
+    Urho3DWidget* widget_;
+    /// Camera.
+    SceneCamera camera_;
     /// Scene.
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
     /// Viewport.

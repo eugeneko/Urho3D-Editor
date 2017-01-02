@@ -53,6 +53,8 @@ public:
     Urho3D::Context* GetContext() const;
     /// Get current active page.
     MainWindowPage* GetCurrentPage() const;
+    /// Get Urho3D widget.
+    Urho3DWidget* GetUrho3DWidget() const;
     /// Get menu bar.
     QMenuBar* GetMenuBar() const;
     /// Get top-level menu.
@@ -95,6 +97,8 @@ protected slots:
     virtual void HandleTabChanged(int index);
     /// Handle tab moved.
     virtual void HandleTabMoved(int from, int to);
+    /// Handle tab closed.
+    virtual void HandleTabClosed(int index);
     /// Handle tab title changed.
     virtual void HandleTabTitleChanged(MainWindowPage* page);
 

@@ -58,6 +58,9 @@ HierarchyWindow::HierarchyWindow(MainWindow& mainWindow)
     connect(&mainWindow, SIGNAL(pageClosed(MainWindowPage*)),  this, SLOT(HandlePageClosed(MainWindowPage*)));
 
     treeView_->header()->hide();
+    treeView_->setSelectionMode(QAbstractItemView::ExtendedSelection);
+//     treeView_->setDragDropMode(QAbstractItemView::DragDrop);
+//     treeView_->setDragEnabled(true);
     setWidget(treeView_.data());
     //layout_->addWidget(treeView_.data());
     //setLayout(layout_.data());

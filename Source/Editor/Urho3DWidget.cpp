@@ -3,6 +3,8 @@
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
 #include <Urho3D/Resource/ResourceCache.h>
+#include <Urho3D/Input/Input.h>
+#include <QKeyEvent>
 // #include <QFile>
 // #include <QHBoxLayout>
 // #include <QTabBar>
@@ -22,6 +24,7 @@ Urho3DWidget::Urho3DWidget(Urho3D::Context* context)
     engineParameters[Urho3D::EP_EXTERNAL_WINDOW] = (void*)winId();
     engine_->Initialize(engineParameters);
 
+    setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_PaintOnScreen);
     connect(&timer_, SIGNAL(timeout()), this, SLOT(OnTimer()));
     timer_.start(16);
@@ -50,6 +53,23 @@ QPaintEngine* Urho3DWidget::paintEngine() const
 
 void Urho3DWidget::paintEvent(QPaintEvent* /*event*/)
 {
+}
+
+void Urho3DWidget::keyPressEvent(QKeyEvent *event)
+{
+    if (!event->isAutoRepeat())
+        pressedKeys_.insert(event->key());
+}
+
+void Urho3DWidget::keyReleaseEvent(QKeyEvent *event)
+{
+    if (!event->isAutoRepeat())
+        pressedKeys_.remove(event->key());
+}
+
+void Urho3DWidget::focusOutEvent(QFocusEvent *event)
+{
+    pressedKeys_.clear();
 }
 
 void Urho3DWidget::RunFrame()
