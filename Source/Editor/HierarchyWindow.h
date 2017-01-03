@@ -21,17 +21,17 @@ namespace Urho3DEditor
 class Configuration;
 class MainWindow;
 class MainWindowPage;
-class HierarchyWindow;
+class HierarchyWindowWidget;
 class ScenePage;
 
 /// Hierarchy Window module.
-class HierarchyWindowManager : public Module
+class HierarchyWindow : public Module
 {
     Q_OBJECT
 
 public:
     /// Construct.
-    HierarchyWindowManager();
+    HierarchyWindow();
 
 protected:
     /// Initialize module.
@@ -50,7 +50,7 @@ private:
     QScopedPointer<QAction> actionViewHierarchyWindow_;
 
     /// Hierarchy Window.
-    QScopedPointer<HierarchyWindow> hierarchyWindow_;
+    QScopedPointer<HierarchyWindowWidget> hierarchyWindow_;
 
 };
 
@@ -162,14 +162,14 @@ private:
 
 };
 
-/// Hierarchy Window.
-class HierarchyWindow : public QDockWidget
+/// Hierarchy Window Widget.
+class HierarchyWindowWidget : public QDockWidget
 {
     Q_OBJECT
 
 public:
     /// Construct.
-    HierarchyWindow(MainWindow& mainWindow);
+    HierarchyWindowWidget(MainWindow& mainWindow);
 
 private:
     /// Rebuild hierarchy of specified scene and root node.

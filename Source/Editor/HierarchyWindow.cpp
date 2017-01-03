@@ -12,12 +12,12 @@
 namespace Urho3DEditor
 {
 
-HierarchyWindowManager::HierarchyWindowManager()
+HierarchyWindow::HierarchyWindow()
 {
 
 }
 
-bool HierarchyWindowManager::DoInitialize()
+bool HierarchyWindow::DoInitialize()
 {
     mainWindow_ = GetModule<MainWindow>();
     if (!mainWindow_ /*|| !config_*/)
@@ -35,11 +35,11 @@ bool HierarchyWindowManager::DoInitialize()
     return true;
 }
 
-void HierarchyWindowManager::HandleViewHierarchyWindow(bool checked)
+void HierarchyWindow::HandleViewHierarchyWindow(bool checked)
 {
     if (checked)
     {
-        hierarchyWindow_.reset(new HierarchyWindow(*mainWindow_));
+        hierarchyWindow_.reset(new HierarchyWindowWidget(*mainWindow_));
         mainWindow_->AddDock(Qt::LeftDockWidgetArea, hierarchyWindow_.data());
     }
     else
@@ -375,7 +375,7 @@ void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindow::HierarchyWindow(MainWindow& mainWindow)
+HierarchyWindowWidget::HierarchyWindowWidget(MainWindow& mainWindow)
     : QDockWidget("Hierarchy Window")
     , mainWindow_(mainWindow)
     , layout_(new QVBoxLayout())
@@ -395,7 +395,7 @@ HierarchyWindow::HierarchyWindow(MainWindow& mainWindow)
     HandleCurrentPageChanged(mainWindow_.GetCurrentPage());
 }
 
-void HierarchyWindow::RebuildHierarchy(ScenePage* page, Urho3D::Node& root)
+void HierarchyWindowWidget::RebuildHierarchy(ScenePage* page, Urho3D::Node& root)
 {
     if (!trees_[page])
         trees_[page] = QSharedPointer<ObjectHierarchyModel>(new ObjectHierarchyModel());
@@ -403,7 +403,7 @@ void HierarchyWindow::RebuildHierarchy(ScenePage* page, Urho3D::Node& root)
     trees_[page]->UpdateNode(&root);
 }
 
-void HierarchyWindow::HandleCurrentPageChanged(MainWindowPage* page)
+void HierarchyWindowWidget::HandleCurrentPageChanged(MainWindowPage* page)
 {
     if (ScenePage* scenePage = dynamic_cast<ScenePage*>(page))
     {
@@ -417,7 +417,7 @@ void HierarchyWindow::HandleCurrentPageChanged(MainWindowPage* page)
     }
 }
 
-void HierarchyWindow::HandlePageClosed(MainWindowPage* page)
+void HierarchyWindowWidget::HandlePageClosed(MainWindowPage* page)
 {
     if (ScenePage* scenePage = dynamic_cast<ScenePage*>(page))
         trees_.remove(scenePage);

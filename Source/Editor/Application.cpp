@@ -51,7 +51,7 @@ bool Application::InitializeModules()
     moduleSystem_.AddModule(new MainWindow(mainWindow_.data(), context_));
     moduleSystem_.AddModule(new ProjectManager());
     moduleSystem_.AddModule(new SceneEditor());
-    moduleSystem_.AddModule(new HierarchyWindowManager());
+    moduleSystem_.AddModule(new HierarchyWindow());
     return true;
 }
 
