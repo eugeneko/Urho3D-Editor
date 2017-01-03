@@ -141,6 +141,7 @@ void MainWindow::InitializeMenu()
     QMenuBar* menuBar = mainWindow_->menuBar();
     topLevelMenus_[MenuFile] = menuBar->addMenu("File");
     topLevelMenus_[MenuView] = menuBar->addMenu("View");
+    topLevelMenus_[MenuTools] = menuBar->addMenu("Tools");
     topLevelMenus_[MenuHelp] = menuBar->addMenu("Help");
 
     menuActions_[MenuFileNew_After]    = topLevelMenus_[MenuFile]->addSeparator();

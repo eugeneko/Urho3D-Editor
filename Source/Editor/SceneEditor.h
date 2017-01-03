@@ -38,6 +38,16 @@ protected slots:
     virtual void HandleFileNewScene();
     /// Handle 'File/Open Scene'
     virtual void HandleFileOpenScene();
+    /// Handle 'Create/Replicated Node'
+    virtual void HandleCreateReplicatedNode();
+    /// Handle 'Create/Local Node'
+    virtual void HandleCreateLocalNode();
+    /// Handle current page changed.
+    virtual void HandleCurrentPageChanged(MainWindowPage* page);
+
+private:
+    /// Update menu visibility.
+    virtual void UpdateMenuVisibility();
 
 private:
     /// Main window.
@@ -46,6 +56,12 @@ private:
     QScopedPointer<QAction> actionFileNewScene_;
     /// 'File/Open Scene' action.
     QScopedPointer<QAction> actionFileOpenScene_;
+    /// 'Create' menu.
+    QScopedPointer<QMenu> menuCreate_;
+    /// 'Create/Replicated Node' action.
+    QScopedPointer<QAction> actionCreateReplicatedNode_;
+    /// 'Create/Local Node' action.
+    QScopedPointer<QAction> actionCreateLocalNode_;
 
 };
 
@@ -118,6 +134,8 @@ private:
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
     /// Viewport.
     Urho3D::SharedPtr<Urho3D::Viewport> viewport_;
+
+    /// Selected nodes.
 
 };
 

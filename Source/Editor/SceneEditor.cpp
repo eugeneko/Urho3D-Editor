@@ -24,11 +24,15 @@ bool SceneEditor::DoInitialize()
     if (!mainWindow_)
         return false;
 
+    QMenuBar* menuBar = mainWindow_->GetMenuBar();
     QMenu* menuFile = mainWindow_->GetTopLevelMenu(MainWindow::MenuFile);
     QAction* menuFileNew_After = mainWindow_->GetMenuAction(MainWindow::MenuFileNew_After);
     QAction* menuFileOpen_After = mainWindow_->GetMenuAction(MainWindow::MenuFileOpen_After);
-    if (!menuFile || !menuFileNew_After || !menuFileOpen_After)
+    QMenu* menuTools = mainWindow_->GetTopLevelMenu(MainWindow::MenuTools);
+    if (!menuFile || !menuFileNew_After || !menuFileOpen_After || !menuTools)
         return false;
+
+    connect(mainWindow_, SIGNAL(pageChanged(MainWindowPage*)), this, SLOT(HandleCurrentPageChanged(MainWindowPage*)));
 
     actionFileNewScene_.reset(new QAction("New Scene"));
     actionFileNewScene_->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_N);
@@ -40,6 +44,18 @@ bool SceneEditor::DoInitialize()
     menuFile->insertAction(menuFileOpen_After, actionFileOpenScene_.data());
     connect(actionFileOpenScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileOpenScene()));
 
+    menuCreate_.reset(new QMenu("Create"));
+    menuBar->insertMenu(menuTools->menuAction(), menuCreate_.data());
+
+    actionCreateReplicatedNode_.reset(new QAction("Replicated Node"));
+    menuCreate_->addAction(actionCreateReplicatedNode_.data());
+    connect(actionCreateReplicatedNode_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleCreateReplicatedNode()));
+
+    actionCreateLocalNode_.reset(new QAction("Local Node"));
+    menuCreate_->addAction(actionCreateLocalNode_.data());
+    connect(actionCreateLocalNode_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleCreateLocalNode()));
+
+    UpdateMenuVisibility();
     return true;
 }
 
@@ -53,6 +69,34 @@ void SceneEditor::HandleFileOpenScene()
     QScopedPointer<ScenePage> scenePage(new ScenePage(*mainWindow_));
     if (scenePage->Open())
         mainWindow_->AddPage(scenePage.take());
+}
+
+void SceneEditor::HandleCreateReplicatedNode()
+{
+    if (ScenePage* scenePage = dynamic_cast<ScenePage*>(mainWindow_->GetCurrentPage()))
+    {
+
+    }
+}
+
+void SceneEditor::HandleCreateLocalNode()
+{
+    if (ScenePage* scenePage = dynamic_cast<ScenePage*>(mainWindow_->GetCurrentPage()))
+    {
+
+    }
+}
+
+void SceneEditor::HandleCurrentPageChanged(MainWindowPage* page)
+{
+    UpdateMenuVisibility();
+}
+
+void SceneEditor::UpdateMenuVisibility()
+{
+    MainWindowPage* page = mainWindow_->GetCurrentPage();
+    ScenePage* scenePage = dynamic_cast<ScenePage*>(page);
+    menuCreate_->menuAction()->setVisible(!!scenePage);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -35,6 +35,9 @@ public:
     bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
 
+    Qt::DropActions supportedDropActions() const { return Qt::MoveAction; }
+    Qt::DropActions supportedDragActions() const { return Qt::MoveAction | Qt::LinkAction; }
+
 private:
     TreeItem *getItem(const QModelIndex &index) const;
 

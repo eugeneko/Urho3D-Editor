@@ -29,6 +29,7 @@ public:
     {
         MenuFile,
         MenuView,
+        MenuTools,
         MenuHelp
     };
     /// Menu actions.
