@@ -3,6 +3,7 @@
 #include "Module.h"
 #include "Widgets/TreeModel.h"
 #include <QDockWidget>
+#include <QGridLayout>
 
 class QTreeView;
 class QVBoxLayout;
@@ -162,6 +163,24 @@ private:
 
 };
 
+/// Hierarchy Window Page.
+class HierarchyWindowPageWidget : public QWidget
+{
+public:
+    /// Construct.
+    HierarchyWindowPageWidget();
+    /// Get model.
+    ObjectHierarchyModel& GetModel() { return *treeModel_; }
+
+private:
+    /// Layout.
+    QScopedPointer<QGridLayout> layout_;
+    /// Tree view.
+    QScopedPointer<QTreeView> treeView_;
+    /// Tree model.
+    QScopedPointer<ObjectHierarchyModel> treeModel_;
+};
+
 /// Hierarchy Window Widget.
 class HierarchyWindowWidget : public QDockWidget
 {
@@ -172,8 +191,8 @@ public:
     HierarchyWindowWidget(MainWindow& mainWindow);
 
 private:
-    /// Rebuild hierarchy of specified scene and root node.
-    virtual void RebuildHierarchy(ScenePage* page, Urho3D::Node& root);
+    /// Create widget for page if not exist.
+    virtual void CreateWidget(ScenePage* page);
 
 private slots:
     /// Handle current page changed.
@@ -185,12 +204,7 @@ private:
     /// Main window.
     MainWindow& mainWindow_;
     /// Tree models.
-    QHash<ScenePage*, QSharedPointer<ObjectHierarchyModel>> trees_;
-
-    /// Layout.
-    QScopedPointer<QVBoxLayout> layout_;
-    /// Tree view.
-    QScopedPointer<QTreeView> treeView_;
+    QHash<ScenePage*, QSharedPointer<HierarchyWindowPageWidget>> pages_;
 
 };
 

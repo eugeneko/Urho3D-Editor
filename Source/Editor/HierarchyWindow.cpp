@@ -375,52 +375,58 @@ void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindowWidget::HierarchyWindowWidget(MainWindow& mainWindow)
-    : QDockWidget("Hierarchy Window")
-    , mainWindow_(mainWindow)
-    , layout_(new QVBoxLayout())
+HierarchyWindowPageWidget::HierarchyWindowPageWidget()
+    : layout_(new QGridLayout())
     , treeView_(new QTreeView())
+    , treeModel_(new ObjectHierarchyModel())
 {
-    connect(&mainWindow, SIGNAL(pageChanged(MainWindowPage*)), this, SLOT(HandleCurrentPageChanged(MainWindowPage*)));
-    connect(&mainWindow, SIGNAL(pageClosed(MainWindowPage*)),  this, SLOT(HandlePageClosed(MainWindowPage*)));
-
     treeView_->header()->hide();
     treeView_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     treeView_->setDragDropMode(QAbstractItemView::DragDrop);
     treeView_->setDragEnabled(true);
-    setWidget(treeView_.data());
-    //layout_->addWidget(treeView_.data());
-    //setLayout(layout_.data());
+    treeView_->setModel(treeModel_.data());
+
+    layout_->addWidget(treeView_.data(), 0, 0);
+    setLayout(layout_.data());
+}
+
+//////////////////////////////////////////////////////////////////////////
+HierarchyWindowWidget::HierarchyWindowWidget(MainWindow& mainWindow)
+    : QDockWidget("Hierarchy Window")
+    , mainWindow_(mainWindow)
+{
+    connect(&mainWindow, SIGNAL(pageChanged(MainWindowPage*)), this, SLOT(HandleCurrentPageChanged(MainWindowPage*)));
+    connect(&mainWindow, SIGNAL(pageClosed(MainWindowPage*)),  this, SLOT(HandlePageClosed(MainWindowPage*)));
 
     HandleCurrentPageChanged(mainWindow_.GetCurrentPage());
 }
 
-void HierarchyWindowWidget::RebuildHierarchy(ScenePage* page, Urho3D::Node& root)
+void HierarchyWindowWidget::CreateWidget(ScenePage* page)
 {
-    if (!trees_[page])
-        trees_[page] = QSharedPointer<ObjectHierarchyModel>(new ObjectHierarchyModel());
-
-    trees_[page]->UpdateNode(&root);
+    if (!pages_[page])
+    {
+        pages_[page] = QSharedPointer<HierarchyWindowPageWidget>::create();
+        pages_[page]->GetModel().UpdateNode(&page->GetScene());
+    }
 }
 
 void HierarchyWindowWidget::HandleCurrentPageChanged(MainWindowPage* page)
 {
     if (ScenePage* scenePage = dynamic_cast<ScenePage*>(page))
     {
-        if (!trees_[scenePage])
-            RebuildHierarchy(scenePage, scenePage->GetScene());
-        treeView_->setModel(trees_[scenePage].data());
+        CreateWidget(scenePage);
+        setWidget(pages_[scenePage].data());
     }
     else
     {
-        treeView_->setModel(nullptr);
+        setWidget(nullptr);
     }
 }
 
 void HierarchyWindowWidget::HandlePageClosed(MainWindowPage* page)
 {
     if (ScenePage* scenePage = dynamic_cast<ScenePage*>(page))
-        trees_.remove(scenePage);
+        pages_.remove(scenePage);
 }
 
 }
