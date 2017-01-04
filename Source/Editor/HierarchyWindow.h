@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Module.h"
-#include "Widgets/TreeModel.h"
 #include <QDockWidget>
 #include <QGridLayout>
+#include <QAbstractItemModel>
 
 class QTreeView;
 class QVBoxLayout;
@@ -119,6 +119,8 @@ public:
     ObjectHierarchyModel();
     /// Get index of node.
     QModelIndex FindIndex(Urho3D::Node* node);
+    /// Get item by index.
+    ObjectHierarchyItem *GetItem(const QModelIndex &index) const;
 
     /// Add or update component.
     void UpdateComponent(Urho3D::Component* component);
@@ -142,8 +144,6 @@ public:
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
 
 protected:
-    /// Get item by index.
-    ObjectHierarchyItem *GetItem(const QModelIndex &index) const;
     /// Add component.
     void DoAddComponent(QModelIndex nodeIndex, Urho3D::Component* component);
     /// Remove component.

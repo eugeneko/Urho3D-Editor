@@ -184,6 +184,13 @@ ScenePage::ScenePage(MainWindow& mainWindow)
     SubscribeToEvent(Urho3D::E_POSTRENDERUPDATE, URHO3D_HANDLER(ScenePage, HandlePostRenderUpdate));
 }
 
+void ScenePage::SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents)
+{
+    selectedNodes_ = selectedNodes;
+    selectedComponents_ = selectedComponents;
+    emit selectionChanged();
+}
+
 QString ScenePage::GetNameFilters()
 {
     return "Urho3D Scene (*.xml *.json *.bin);;All files (*.*)";

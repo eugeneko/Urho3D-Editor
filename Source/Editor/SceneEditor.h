@@ -111,13 +111,23 @@ public:
         HotKeyStandard,
         HotKeyBlender
     };
+    /// Set of nodes.
+    using NodeSet = QSet<Urho3D::Node*>;
+    /// Set of components.
+    using ComponentSet = QSet<Urho3D::Component*>;
 
+public:
     /// Construct.
     ScenePage(MainWindow& mainWindow);
     /// Get scene.
     Urho3D::Scene& GetScene() const { return *scene_; }
 
-    /// Select node
+    /// Set selection.
+    virtual void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
+    /// Get selected nodes.
+    const NodeSet& GetSelectedNodes() const { return selectedNodes_; }
+    /// Get selected components.
+    const ComponentSet& GetSelectedComponents() const { return selectedComponents_; }
 
     /// Return title of the page.
     virtual QString GetTitle() override { return GetRawTitle(); }
@@ -129,6 +139,10 @@ public:
     virtual bool IsUrho3DWidgetVisible() override { return true; }
     /// Get name filters for open and save dialogs.
     virtual QString GetNameFilters() override;
+
+signals:
+    /// Signals that selection has been changed.
+    void selectionChanged();
 
 private:
     /// Handle update.
@@ -169,9 +183,9 @@ protected:
     Urho3D::SharedPtr<Urho3D::Viewport> viewport_;
 
     /// Selected nodes.
-    QSet<Urho3D::WeakPtr<Urho3D::Node>> selectedNodes_;
+    NodeSet selectedNodes_;
     /// Selected components.
-    QSet<Urho3D::WeakPtr<Urho3D::Component>> selectedComponents_;
+    ComponentSet selectedComponents_;
 };
 
 }

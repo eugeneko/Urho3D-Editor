@@ -152,6 +152,17 @@ QModelIndex ObjectHierarchyModel::FindIndex(Urho3D::Node* node)
     return result;
 }
 
+ObjectHierarchyItem* ObjectHierarchyModel::GetItem(const QModelIndex &index) const
+{
+    if (index.isValid())
+    {
+        ObjectHierarchyItem* item = static_cast<ObjectHierarchyItem*>(index.internalPointer());
+        if (item)
+            return item;
+    }
+    return rootItem_.data();
+}
+
 void ObjectHierarchyModel::UpdateComponent(Urho3D::Component* component)
 {
     Urho3D::Node* node = component->GetNode();
@@ -251,18 +262,7 @@ Qt::ItemFlags ObjectHierarchyModel::flags(const QModelIndex &index) const
     if (!index.isValid())
         return 0;
 
-    return /*Qt::ItemIsEditable |*/ QAbstractItemModel::flags(index);
-}
-
-ObjectHierarchyItem* ObjectHierarchyModel::GetItem(const QModelIndex &index) const
-{
-    if (index.isValid())
-    {
-        ObjectHierarchyItem* item = static_cast<ObjectHierarchyItem*>(index.internalPointer());
-        if (item)
-            return item;
-    }
-    return rootItem_.data();
+    return /*Qt::ItemIsEditable |*/ Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
 }
 
 void ObjectHierarchyModel::DoAddComponent(QModelIndex nodeIndex, Urho3D::Component* component)
@@ -395,7 +395,19 @@ HierarchyWindowPageWidget::HierarchyWindowPageWidget(ScenePage* page)
 
 void HierarchyWindowPageWidget::HandleSelectionChanged()
 {
+    const QModelIndexList selectedIndexes = treeView_->selectionModel()->selectedIndexes();
+    ScenePage::NodeSet selectedNodes;
+    ScenePage::ComponentSet selectedComponents;
+    for (const QModelIndex& selectedIndex : selectedIndexes)
+    {
+        ObjectHierarchyItem* item = treeModel_->GetItem(selectedIndex);
+        if (item->GetComponent())
+            selectedComponents.insert(item->GetComponent());
+        else if (item->GetNode())
+            selectedNodes.insert(item->GetNode());
+    }
 
+    page_->SetSelection(selectedNodes, selectedComponents);
 }
 
 //////////////////////////////////////////////////////////////////////////
