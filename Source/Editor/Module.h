@@ -8,6 +8,8 @@
 namespace Urho3DEditor
 {
 
+class Configuration;
+class MainWindow;
 class Module;
 
 /// Module system of Editor.
@@ -15,10 +17,14 @@ class ModuleSystem
 {
 public:
     /// Construct.
-    ModuleSystem(Urho3D::Context* context);
+    ModuleSystem(Configuration& config, MainWindow& mainWindow, Urho3D::Context& context);
 
+    /// Get config.
+    Configuration& GetConfig() { return config_; }
+    /// Get main window.
+    MainWindow& GetMainWindow() { return mainWindow_; }
     /// Get context.
-    Urho3D::Context* GetContext() const { return context_; }
+    Urho3D::Context& GetContext() const { return context_; }
 
     /// Add module. Ownership is passed to ModuleSystem.
     void AddModule(const QString& name, Module* module);
@@ -38,8 +44,12 @@ public:
     T* GetModule() const { return dynamic_cast<T*>(GetModule(T::staticMetaObject.className())); }
 
 private:
+    /// Configuration.
+    Configuration& config_;
+    /// Main window.
+    MainWindow& mainWindow_;
     /// Context.
-    Urho3D::Context* context_;
+    Urho3D::Context& context_;
     /// Modules.
     QHash<QString, QSharedPointer<Module>> modules_;
 
@@ -54,8 +64,12 @@ public:
     /// Initialize module.
     bool Initialize(ModuleSystem& system);
 
+    /// Get config.
+    Configuration& GetConfig() { return system_->GetConfig(); }
+    /// Get main window.
+    MainWindow& GetMainWindow() { return system_->GetMainWindow(); }
     /// Get context.
-    Urho3D::Context* GetContext() { return system_->GetContext(); }
+    Urho3D::Context& GetContext() { return system_->GetContext(); }
     /// Get module by name.
     Module* GetModule(const QString& name) const;
     /// Get module by type.

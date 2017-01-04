@@ -9,9 +9,9 @@
 namespace Urho3DEditor
 {
 
-Urho3DWidget::Urho3DWidget(Urho3D::Context* context)
+Urho3DWidget::Urho3DWidget(Urho3D::Context& context)
     : QWidget()
-    , Object(context)
+    , Object(&context)
     , engine_(Urho3D::MakeShared<Urho3D::Engine>(context_))
 {
     // Initialize engine

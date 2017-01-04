@@ -6,16 +6,7 @@
 namespace Urho3DEditor
 {
 
-class ConfigurationVariable
-{
-public:
-    /// Construct.
-    ConfigurationVariable(const QString& variable, const QVariant& defaultValue, const QString& description);
-
-private:
-};
-
-class Configuration : public Module
+class Configuration : public QObject
 {
     Q_OBJECT
 

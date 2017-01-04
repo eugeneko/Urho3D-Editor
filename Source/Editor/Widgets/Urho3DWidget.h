@@ -19,7 +19,7 @@ class Urho3DWidget : public QWidget, public Urho3D::Object
 
 public:
     /// Construct.
-    Urho3DWidget(Urho3D::Context* context);
+    Urho3DWidget(Urho3D::Context& context);
     /// Initialize widget with optional configuration.
     bool SetCurrentProject(Urho3DProject* project);
 

@@ -19,7 +19,7 @@ class Configuration;
 class MainWindowPage;
 
 /// Main window.
-class MainWindow : public Module
+class MainWindow : public QObject
 {
     Q_OBJECT
 
@@ -46,12 +46,14 @@ public:
         MenuHelpAbout
     };
     /// Construct.
-    MainWindow(QMainWindow* mainWindow, Urho3D::Context* context);
+    MainWindow(Configuration& config, QMainWindow& mainWindow, Urho3D::Context& context);
+    /// Initialize.
+    virtual bool Initialize();
 
     /// Get configuration.
     Configuration& GetConfig() const;
     /// Get context.
-    Urho3D::Context* GetContext() const;
+    Urho3D::Context& GetContext() const;
     /// Get current active page.
     MainWindowPage* GetCurrentPage() const;
     /// Get Urho3D widget.
@@ -80,8 +82,6 @@ signals:
     void pageClosed(MainWindowPage* page);
 
 protected:
-    /// Initialize module.
-    virtual bool DoInitialize() override;
     /// Initialize layout.
     virtual void InitializeLayout();
     /// Initialize menu.
@@ -104,15 +104,15 @@ protected slots:
     virtual void HandleTabTitleChanged(MainWindowPage* page);
 
 private:
-    /// Main window.
-    QMainWindow* mainWindow_;
-    /// Urho3D context.
-    Urho3D::Context* context_;
     /// Configuration.
-    Configuration* config_;
+    Configuration& config_;
+    /// Main window.
+    QMainWindow& mainWindow_;
+    /// Urho3D context.
+    Urho3D::Context& context_;
 
     /// Central widget.
-    QScopedPointer<QWidget> centralWidget_;
+    QScopedPointer<QWidget> widget_;
     /// Main window layout.
     QScopedPointer<QVBoxLayout> layout_;
     /// Tab bar widget.

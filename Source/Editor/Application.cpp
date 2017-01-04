@@ -18,7 +18,6 @@ namespace Urho3DEditor
 Application::Application(int argc, char** argv, Urho3D::Context* context)
     : QApplication(argc, argv)
     , context_(context)
-    , moduleSystem_(context_)
 {
 }
 
@@ -28,31 +27,30 @@ Application::~Application()
 
 int Application::Run()
 {
+    if (!Initialize())
+        return 1;
+    mainWindowWidget_->showMaximized();
+    return exec();
+}
+
+bool Application::Initialize()
+{
     // Setup style
     QFile file(":/qdarkstyle/style.qss");
     if (file.open(QFile::ReadOnly | QFile::Text))
         setStyleSheet(QLatin1String(file.readAll()));
 
-    // Create main window
-    mainWindow_.reset(new QMainWindow());
-
-    // Initialize modules
-    if (!InitializeModules())
+    mainWindowWidget_.reset(new QMainWindow());
+    config_.reset(new Configuration());
+    mainWindow_.reset(new MainWindow(*config_, *mainWindowWidget_, *context_));
+    moduleSystem_.reset(new ModuleSystem(*config_, *mainWindow_, *context_));
+    if (!mainWindow_->Initialize())
         return false;
 
-    // Run!
-    mainWindow_->showMaximized();
-    return exec();
-}
+    moduleSystem_->AddModule(new ProjectManager());
 
-bool Application::InitializeModules()
-{
-    moduleSystem_.AddModule(new Configuration());
-    moduleSystem_.AddModule(new MainWindow(mainWindow_.data(), context_));
-    moduleSystem_.AddModule(new ProjectManager());
-
-    moduleSystem_.AddModule(new SceneEditor());
-    moduleSystem_.AddModule(new HierarchyWindow());
+    moduleSystem_->AddModule(new SceneEditor());
+    moduleSystem_->AddModule(new HierarchyWindow());
     return true;
 }
 
@@ -62,15 +60,15 @@ bool Application::InitializeModules()
 //     QAction* menuNewScene = menuFile->addAction("New Scene");
 //     connect(menuNewScene, SIGNAL(triggered()), this, SLOT(HandleNewScene()));
 // }
-// 
+//
 // void SceneEditorPlugin::Unregister(EditorInterface& editor)
 // {
-// 
+//
 // }
-// 
+//
 // void SceneEditorPlugin::HandleNewScene()
 // {
-// 
+//
 // }
 
 }

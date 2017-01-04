@@ -33,9 +33,7 @@ ProjectManager::ProjectManager()
 
 bool ProjectManager::DoInitialize()
 {
-    mainWindow_ = GetModule<MainWindow>();
-    if (!mainWindow_)
-        return false;
+    mainWindow_ = &GetMainWindow();
 
     QMenu* menuFile = mainWindow_->GetTopLevelMenu(MainWindow::MenuFile);
     QAction* menuFileNew_After = mainWindow_->GetMenuAction(MainWindow::MenuFileNew_After);

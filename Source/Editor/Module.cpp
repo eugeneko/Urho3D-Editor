@@ -8,14 +8,16 @@
 // #include <QHBoxLayout>
 // #include <QTabBar>
 // #include <QTimer>
-// 
+//
 // #include <Urho3D/Urho3DAll.h>
 
 namespace Urho3DEditor
 {
 
-ModuleSystem::ModuleSystem(Urho3D::Context* context)
-    : context_(context)
+ModuleSystem::ModuleSystem(Configuration& config, MainWindow& mainWindow, Urho3D::Context& context)
+    : config_(config)
+    , mainWindow_(mainWindow)
+    , context_(context)
 {
 
 }

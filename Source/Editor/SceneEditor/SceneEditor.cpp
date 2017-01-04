@@ -38,7 +38,7 @@ SceneEditor::SceneEditor()
 
 bool SceneEditor::DoInitialize()
 {
-    mainWindow_ = GetModule<MainWindow>();
+    mainWindow_ = &GetMainWindow();
     if (!mainWindow_)
         return false;
 
@@ -171,7 +171,7 @@ void SceneCamera::Move(const Urho3D::Vector3& movement, const Urho3D::Vector3& r
 //////////////////////////////////////////////////////////////////////////
 ScenePage::ScenePage(MainWindow& mainWindow)
     : MainWindowPage(mainWindow)
-    , Object(mainWindow.GetContext())
+    , Object(&mainWindow.GetContext())
     , widget_(mainWindow.GetUrho3DWidget())
     , camera_(context_)
     , scene_(new Urho3D::Scene(context_))

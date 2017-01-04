@@ -19,7 +19,7 @@ HierarchyWindow::HierarchyWindow()
 
 bool HierarchyWindow::DoInitialize()
 {
-    mainWindow_ = GetModule<MainWindow>();
+    mainWindow_ = &GetMainWindow();
     if (!mainWindow_ /*|| !config_*/)
         return false;
 

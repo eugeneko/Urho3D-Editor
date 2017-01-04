@@ -17,10 +17,11 @@
 namespace Urho3DEditor
 {
 
-MainWindow::MainWindow(QMainWindow* mainWindow, Urho3D::Context* context)
-    : mainWindow_(mainWindow)
+MainWindow::MainWindow(Configuration& config, QMainWindow& mainWindow, Urho3D::Context& context)
+    : config_(config)
+    , mainWindow_(mainWindow)
     , context_(context)
-    , centralWidget_(new QWidget())
+    , widget_(new QWidget())
     , layout_(new QVBoxLayout())
     , tabBar_(new QTabBar())
     , urho3DWidget_(new Urho3DWidget(context_))
@@ -28,12 +29,19 @@ MainWindow::MainWindow(QMainWindow* mainWindow, Urho3D::Context* context)
     urho3DWidget_->setVisible(false);
 }
 
-Configuration& MainWindow::GetConfig() const
+bool MainWindow::Initialize()
 {
-    return *config_;
+    InitializeLayout();
+    InitializeMenu();
+    return true;
 }
 
-Urho3D::Context* MainWindow::GetContext() const
+Configuration& MainWindow::GetConfig() const
+{
+    return config_;
+}
+
+Urho3D::Context& MainWindow::GetContext() const
 {
     return context_;
 }
@@ -50,7 +58,7 @@ Urho3DWidget* MainWindow::GetUrho3DWidget() const
 
 QMenuBar* MainWindow::GetMenuBar() const
 {
-    return mainWindow_->menuBar();
+    return mainWindow_.menuBar();
 }
 
 QMenu* MainWindow::GetTopLevelMenu(TopLevelMenu menu) const
@@ -65,7 +73,7 @@ QAction* MainWindow::GetMenuAction(MenuAction action) const
 
 void MainWindow::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
 {
-    mainWindow_->addDockWidget(area, dock);
+    mainWindow_.addDockWidget(area, dock);
 }
 
 void MainWindow::AddPage(MainWindowPage* page, bool bringToTop /*= true*/)
@@ -110,20 +118,9 @@ void MainWindow::ClosePage(MainWindowPage* page)
     }
 }
 
-bool MainWindow::DoInitialize()
-{
-    config_ = GetModule<Configuration>();
-    if (!config_)
-        return false;
-
-    InitializeLayout();
-    InitializeMenu();
-    return true;
-}
-
 void MainWindow::InitializeLayout()
 {
-    centralWidget_->setLayout(layout_.data());
+    widget_->setLayout(layout_.data());
 
     layout_->addWidget(tabBar_.data());
     layout_->addWidget(urho3DWidget_.data());
@@ -133,12 +130,12 @@ void MainWindow::InitializeLayout()
     tabBar_->setExpanding(false);
     tabBar_->setTabsClosable(true);
 
-    mainWindow_->setCentralWidget(centralWidget_.data());
+    mainWindow_.setCentralWidget(widget_.data());
 }
 
 void MainWindow::InitializeMenu()
 {
-    QMenuBar* menuBar = mainWindow_->menuBar();
+    QMenuBar* menuBar = mainWindow_.menuBar();
     topLevelMenus_[MenuFile] = menuBar->addMenu("File");
     topLevelMenus_[MenuView] = menuBar->addMenu("View");
     topLevelMenus_[MenuTools] = menuBar->addMenu("Tools");
@@ -175,7 +172,7 @@ void MainWindow::HandleFileClose()
 
 void MainWindow::HandleFileExit()
 {
-    mainWindow_->close();
+    mainWindow_.close();
 }
 
 void MainWindow::HandleHelpAbout()
