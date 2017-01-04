@@ -90,17 +90,34 @@ private:
     Urho3D::Vector3 angles_;
 };
 
-/// Scene page.
+/// Scene document.
 class ScenePage : public MainWindowPage, public Urho3D::Object
 {
     Q_OBJECT
     URHO3D_OBJECT(ScenePage, Urho3D::Object);
 
 public:
+    /// Pick mode.
+    enum PickMode
+    {
+        PickGeometries,
+        PickLights,
+        PickZones,
+        PickRigidbodies
+    };
+    /// Hot key mode.
+    enum HotKeyMode
+    {
+        HotKeyStandard,
+        HotKeyBlender
+    };
+
     /// Construct.
     ScenePage(MainWindow& mainWindow);
     /// Get scene.
     Urho3D::Scene& GetScene() const { return *scene_; }
+
+    /// Select node
 
     /// Return title of the page.
     virtual QString GetTitle() override { return GetRawTitle(); }
@@ -118,6 +135,8 @@ private:
     virtual void HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
     /// Handle mouse button up/down.
     virtual void HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
+    /// Handle post-render update.
+    virtual void HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
 
 protected:
     /// Handle current page changed.
@@ -125,7 +144,21 @@ protected:
     /// Load the page from file.
     virtual bool DoLoad(const QString& fileName) override;
 
-private:
+protected:
+    /// Get camera ray.
+    Urho3D::Ray GetCameraRay(const Urho3D::IntVector2& position) const;
+    /// Check whether to draw debug geometry for node.
+    virtual bool ShallDrawNodeDebug(Urho3D::Node* node);
+    /// Draw node debug geometry.
+    virtual void DrawNodeDebug(Urho3D::Node* node, Urho3D::DebugRenderer* debug, bool drawNode = true);
+    /// Draw debug geometry.
+    virtual void DrawDebugGeometry();
+    /// Draw debug components.
+    virtual void DrawDebugComponents();
+    /// Perform ray cast.
+    virtual void PerformRaycast(bool mouseClick);
+
+protected:
     /// Widget.
     Urho3DWidget* widget_;
     /// Camera.
@@ -136,7 +169,9 @@ private:
     Urho3D::SharedPtr<Urho3D::Viewport> viewport_;
 
     /// Selected nodes.
-
+    QSet<Urho3D::WeakPtr<Urho3D::Node>> selectedNodes_;
+    /// Selected components.
+    QSet<Urho3D::WeakPtr<Urho3D::Component>> selectedComponents_;
 };
 
 }

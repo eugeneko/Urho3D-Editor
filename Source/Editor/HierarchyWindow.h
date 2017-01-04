@@ -42,7 +42,7 @@ protected slots:
     /// Handle 'View/Hierarchy Window'
     virtual void HandleViewHierarchyWindow(bool checked);
 
-private:
+protected:
     /// Configuration.
 //     Configuration* config_;
     /// Main window.
@@ -96,7 +96,7 @@ public:
     /// Get number of this item.
     int GetChildNumber() { return parent_ ? parent_->children_.indexOf(this) : 0; }
 
-private:
+protected:
     /// Node.
     Urho3D::WeakPtr<Urho3D::Node> node_;
     /// Component.
@@ -141,7 +141,7 @@ public:
 
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-private:
+protected:
     /// Get item by index.
     ObjectHierarchyItem *GetItem(const QModelIndex &index) const;
     /// Add component.
@@ -155,7 +155,7 @@ private:
     /// Construct node item.
     void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node);
 
-private:
+protected:
     /// Root item.
     QScopedPointer<ObjectHierarchyItem> rootItem_;
     /// Temporary storage of node hierarchy.
@@ -166,13 +166,21 @@ private:
 /// Hierarchy Window Page.
 class HierarchyWindowPageWidget : public QWidget
 {
+    Q_OBJECT
+
 public:
     /// Construct.
-    HierarchyWindowPageWidget();
+    HierarchyWindowPageWidget(ScenePage* page);
     /// Get model.
     ObjectHierarchyModel& GetModel() { return *treeModel_; }
 
-private:
+protected slots:
+    /// Handle selection change.
+    virtual void HandleSelectionChanged();
+
+protected:
+    /// Page.
+    ScenePage* page_;
     /// Layout.
     QScopedPointer<QGridLayout> layout_;
     /// Tree view.
@@ -190,17 +198,17 @@ public:
     /// Construct.
     HierarchyWindowWidget(MainWindow& mainWindow);
 
-private:
+protected:
     /// Create widget for page if not exist.
     virtual void CreateWidget(ScenePage* page);
 
-private slots:
+protected slots:
     /// Handle current page changed.
     virtual void HandleCurrentPageChanged(MainWindowPage* page);
     /// Handle page closed.
     virtual void HandlePageClosed(MainWindowPage* page);
 
-private:
+protected:
     /// Main window.
     MainWindow& mainWindow_;
     /// Tree models.

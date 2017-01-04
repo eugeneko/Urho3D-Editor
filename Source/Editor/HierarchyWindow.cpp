@@ -375,8 +375,9 @@ void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindowPageWidget::HierarchyWindowPageWidget()
-    : layout_(new QGridLayout())
+HierarchyWindowPageWidget::HierarchyWindowPageWidget(ScenePage* page)
+    : page_(page)
+    , layout_(new QGridLayout())
     , treeView_(new QTreeView())
     , treeModel_(new ObjectHierarchyModel())
 {
@@ -388,6 +389,13 @@ HierarchyWindowPageWidget::HierarchyWindowPageWidget()
 
     layout_->addWidget(treeView_.data(), 0, 0);
     setLayout(layout_.data());
+
+    connect(treeView_->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(HandleSelectionChanged()));
+}
+
+void HierarchyWindowPageWidget::HandleSelectionChanged()
+{
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -405,7 +413,7 @@ void HierarchyWindowWidget::CreateWidget(ScenePage* page)
 {
     if (!pages_[page])
     {
-        pages_[page] = QSharedPointer<HierarchyWindowPageWidget>::create();
+        pages_[page] = QSharedPointer<HierarchyWindowPageWidget>(new HierarchyWindowPageWidget(page));
         pages_[page]->GetModel().UpdateNode(&page->GetScene());
     }
 }

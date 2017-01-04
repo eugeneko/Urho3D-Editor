@@ -1,5 +1,4 @@
 #include "AbstractDocument.h"
-#include "EditorSettings.h"
 #include "Widgets/Urho3DWidget.h"
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Graphics/Camera.h>
@@ -29,25 +28,25 @@ AbstractPage::AbstractPage(Urho3D::Context* context)
 
 bool AbstractPage::LaunchSaveDialog()
 {
-    EditorSettings* settings = GetSubsystem<EditorSettings>();
-
-    QFileDialog dialog;
-    dialog.selectFile(GetDefaultFileName());
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    dialog.setFileMode(QFileDialog::AnyFile);
-    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    dialog.setDirectory(settings->GetLastDirectory());
-    dialog.setNameFilter(GetFilters());
-    if (!dialog.exec())
-        return false;
-
-    const QStringList files = dialog.selectedFiles();
-    if (files.isEmpty())
-        return false;
-
-    fileName_ = files[0];
-    settings->SetLastDirectory(fileName_);
-    SetTitle(QFileInfo(fileName_).fileName());
+//     EditorSettings* settings = GetSubsystem<EditorSettings>();
+// 
+//     QFileDialog dialog;
+//     dialog.selectFile(GetDefaultFileName());
+//     dialog.setAcceptMode(QFileDialog::AcceptSave);
+//     dialog.setFileMode(QFileDialog::AnyFile);
+//     dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+//     dialog.setDirectory(settings->GetLastDirectory());
+//     dialog.setNameFilter(GetFilters());
+//     if (!dialog.exec())
+//         return false;
+// 
+//     const QStringList files = dialog.selectedFiles();
+//     if (files.isEmpty())
+//         return false;
+// 
+//     fileName_ = files[0];
+//     settings->SetLastDirectory(fileName_);
+//     SetTitle(QFileInfo(fileName_).fileName());
     return true;
 }
 
@@ -68,24 +67,24 @@ bool AbstractPage::Save(bool askForDestination)
 
 bool AbstractPage::LaunchOpenDialog()
 {
-    EditorSettings* settings = GetSubsystem<EditorSettings>();
-
-    QFileDialog dialog;
-    dialog.setAcceptMode(QFileDialog::AcceptOpen);
-    dialog.setFileMode(QFileDialog::ExistingFile);
-    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    dialog.setDirectory(settings->GetLastDirectory());
-    dialog.setNameFilter(GetFilters());
-    if (!dialog.exec())
-        return false;
-
-    const QStringList files = dialog.selectedFiles();
-    if (files.isEmpty())
-        return false;
-
-    fileName_ = files[0];
-    settings->SetLastDirectory(fileName_);
-    SetTitle(QFileInfo(fileName_).fileName());
+//     EditorSettings* settings = GetSubsystem<EditorSettings>();
+// 
+//     QFileDialog dialog;
+//     dialog.setAcceptMode(QFileDialog::AcceptOpen);
+//     dialog.setFileMode(QFileDialog::ExistingFile);
+//     dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+//     dialog.setDirectory(settings->GetLastDirectory());
+//     dialog.setNameFilter(GetFilters());
+//     if (!dialog.exec())
+//         return false;
+// 
+//     const QStringList files = dialog.selectedFiles();
+//     if (files.isEmpty())
+//         return false;
+// 
+//     fileName_ = files[0];
+//     settings->SetLastDirectory(fileName_);
+//     SetTitle(QFileInfo(fileName_).fileName());
     return true;
 }
 

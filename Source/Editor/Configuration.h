@@ -6,6 +6,15 @@
 namespace Urho3DEditor
 {
 
+class ConfigurationVariable
+{
+public:
+    /// Construct.
+    ConfigurationVariable(const QString& variable, const QVariant& defaultValue, const QString& description);
+
+private:
+};
+
 class Configuration : public Module
 {
     Q_OBJECT
@@ -17,7 +26,18 @@ public:
 public:
     /// Construct.
     Configuration();
+    /// Destruct.
+    virtual ~Configuration();
+    /// Save setting.
+    virtual void Save();
+    /// Set default value for variable.
+    virtual void SetDefault(const QString& key, const QVariant& value);
+    /// Get value of variable.
+    virtual QVariant GetValue(const QString& key);
+    /// Set value of variable.
+    virtual void SetValue(const QString& key, const QVariant& value, bool saveImmediately = false);
 
+    // #TODO Hide me
     /// Get last directory.
     QString GetLastDirectory() const { return settings_.value(CORE_LASTDIRECTORY).toString(); }
     /// Set last directory.
@@ -33,6 +53,10 @@ public:
 private:
     /// Settings.
     QSettings settings_;
+    /// Stored variables.
+    QHash<QString, QVariant> variables_;
+    /// Default values.
+    QHash<QString, QVariant> defaultValues_;
 
 };
 

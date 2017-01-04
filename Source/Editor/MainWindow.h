@@ -152,6 +152,9 @@ public:
     QString GetRawTitle() { return title_; }
     /// Return file name of the page.
     QString GetFileName() { return fileName_; }
+    /// Get main window.
+    MainWindow& GetMainWindow() { return mainWindow_; }
+
     /// Return title of the page.
     virtual QString GetTitle() { return title_; }
     /// Return whether the page can be saved.
