@@ -7,10 +7,10 @@
 #include <QTimer>
 
 #include "Configuration.h"
-#include "HierarchyWindow.h"
 #include "MainWindow.h"
-#include "SceneEditor.h"
 #include "Urho3DProject.h"
+#include "SceneEditor/HierarchyWindow.h"
+#include "SceneEditor/SceneEditor.h"
 
 namespace Urho3DEditor
 {
@@ -50,6 +50,7 @@ bool Application::InitializeModules()
     moduleSystem_.AddModule(new Configuration());
     moduleSystem_.AddModule(new MainWindow(mainWindow_.data(), context_));
     moduleSystem_.AddModule(new ProjectManager());
+
     moduleSystem_.AddModule(new SceneEditor());
     moduleSystem_.AddModule(new HierarchyWindow());
     return true;

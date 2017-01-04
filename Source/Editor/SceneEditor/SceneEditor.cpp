@@ -1,7 +1,8 @@
 #include "SceneEditor.h"
-#include "Configuration.h"
-#include "MainWindow.h"
-#include "Bridge.h"
+#include "Gizmo.h"
+#include "../Bridge.h"
+#include "../Configuration.h"
+#include "../MainWindow.h"
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Graphics/Octree.h>
@@ -176,6 +177,7 @@ ScenePage::ScenePage(MainWindow& mainWindow)
     , scene_(new Urho3D::Scene(context_))
     , viewport_(new Urho3D::Viewport(context_, scene_, &camera_.GetCamera()))
 {
+    gizmo_.reset(new Gizmo(*this));
     SetTitle("New Scene");
 
     SubscribeToEvent(Urho3D::E_UPDATE, URHO3D_HANDLER(ScenePage, HandleUpdate));

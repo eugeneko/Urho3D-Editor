@@ -272,6 +272,11 @@ bool MainWindowPage::IsActive() const
     return mainWindow_.GetCurrentPage() == this;
 }
 
+Configuration& MainWindowPage::GetConfig()
+{
+    return mainWindow_.GetConfig();
+}
+
 void MainWindowPage::HandleCurrentPageChanged(MainWindowPage* page)
 {
 

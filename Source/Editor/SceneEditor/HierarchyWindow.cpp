@@ -1,8 +1,8 @@
 #include "HierarchyWindow.h"
 // #include "Configuration.h"
-#include "MainWindow.h"
 #include "SceneEditor.h"
-#include "Bridge.h"
+#include "../MainWindow.h"
+#include "../Bridge.h"
 #include <Urho3D/Scene/Component.h>
 #include <Urho3D/Scene/Node.h>
 #include <QTreeView>

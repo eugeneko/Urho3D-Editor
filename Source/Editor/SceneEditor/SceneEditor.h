@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Module.h"
-#include "MainWindow.h"
+#include "../Module.h"
+#include "../MainWindow.h"
 #include <QAction>
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Viewport.h>
@@ -19,6 +19,7 @@ namespace Urho3DEditor
 {
 
 class MainWindow;
+class Gizmo;
 
 /// Scene Editor module.
 class SceneEditor : public Module
@@ -181,6 +182,8 @@ protected:
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
     /// Viewport.
     Urho3D::SharedPtr<Urho3D::Viewport> viewport_;
+    /// Gizmo.
+    QScopedPointer<Gizmo> gizmo_;
 
     /// Selected nodes.
     NodeSet selectedNodes_;

@@ -154,6 +154,8 @@ public:
     QString GetFileName() { return fileName_; }
     /// Get main window.
     MainWindow& GetMainWindow() { return mainWindow_; }
+    /// Get configuration.
+    Configuration& GetConfig();
 
     /// Return title of the page.
     virtual QString GetTitle() { return title_; }
