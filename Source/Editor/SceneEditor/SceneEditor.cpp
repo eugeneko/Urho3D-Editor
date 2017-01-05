@@ -47,8 +47,8 @@ bool SceneEditor::DoInitialize()
     QMenu* menuFile = mainWindow_->GetTopLevelMenu(MainWindow::MenuFile);
     QAction* menuFileNew_After = mainWindow_->GetMenuAction(MainWindow::MenuFileNew_After);
     QAction* menuFileOpen_After = mainWindow_->GetMenuAction(MainWindow::MenuFileOpen_After);
-    QMenu* menuTools = mainWindow_->GetTopLevelMenu(MainWindow::MenuTools);
-    if (!menuFile || !menuFileNew_After || !menuFileOpen_After || !menuTools)
+    QMenu* menuView = mainWindow_->GetTopLevelMenu(MainWindow::MenuView);
+    if (!menuFile || !menuFileNew_After || !menuFileOpen_After || !menuView)
         return false;
 
     connect(mainWindow_, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
@@ -65,7 +65,7 @@ bool SceneEditor::DoInitialize()
     connect(actionFileOpenScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileOpenScene()));
 
     menuCreate_.reset(new QMenu("Create"));
-    menuBar->insertMenu(menuTools->menuAction(), menuCreate_.data());
+    menuBar->insertMenu(menuView->menuAction(), menuCreate_.data());
 
     actionCreateReplicatedNode_.reset(new QAction("Replicated Node"));
     menuCreate_->addAction(actionCreateReplicatedNode_.data());

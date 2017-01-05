@@ -12,6 +12,11 @@ Document::Document(MainWindow& mainWindow)
     connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 }
 
+Document::~Document()
+{
+
+}
+
 void Document::SetTitle(const QString& title)
 {
     if (title != title_)

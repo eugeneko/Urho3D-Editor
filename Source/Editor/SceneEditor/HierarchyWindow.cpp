@@ -14,18 +14,19 @@ namespace Urho3DEditor
 
 HierarchyWindow::HierarchyWindow()
 {
-
 }
 
 bool HierarchyWindow::DoInitialize()
 {
     mainWindow_ = &GetMainWindow();
-    if (!mainWindow_ /*|| !config_*/)
+    if (!mainWindow_)
         return false;
 
     QMenu* menuView = mainWindow_->GetTopLevelMenu(MainWindow::MenuView);
     if (!menuView)
         return false;
+
+    connect(mainWindow_, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 
     actionViewHierarchyWindow_.reset(menuView->addAction("Hierarchy Window"));
     actionViewHierarchyWindow_->setCheckable(true);
@@ -39,13 +40,28 @@ void HierarchyWindow::HandleViewHierarchyWindow(bool checked)
 {
     if (checked)
     {
-        hierarchyWindow_.reset(new HierarchyWindowWidget(*mainWindow_));
+        hierarchyWindow_.reset(new QDockWidget("Hierarchy Window"));
         mainWindow_->AddDock(Qt::LeftDockWidgetArea, hierarchyWindow_.data());
+        HandleCurrentPageChanged(mainWindow_->GetCurrentPage());
     }
     else
     {
         hierarchyWindow_->close();
         hierarchyWindow_.reset();
+    }
+}
+
+void HierarchyWindow::HandleViewHierarchyWindowAboutToShow()
+{
+    actionViewHierarchyWindow_->setChecked(!!hierarchyWindow_);
+}
+
+void HierarchyWindow::HandleCurrentPageChanged(Document* page)
+{
+    if (hierarchyWindow_)
+    {
+        HierarchyWindowWidget* pageWidget = page->Get<HierarchyWindowWidget, ScenePage>(hierarchyWindow_.data());
+        hierarchyWindow_->setWidget(pageWidget);
     }
 }
 
@@ -375,12 +391,14 @@ void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindowPageWidget::HierarchyWindowPageWidget(ScenePage* page)
+HierarchyWindowWidget::HierarchyWindowWidget(ScenePage& page)
     : page_(page)
     , layout_(new QGridLayout())
     , treeView_(new QTreeView())
     , treeModel_(new ObjectHierarchyModel())
 {
+    treeModel_->UpdateNode(&page.GetScene());
+
     treeView_->header()->hide();
     treeView_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     treeView_->setDragDropMode(QAbstractItemView::DragDrop);
@@ -393,7 +411,12 @@ HierarchyWindowPageWidget::HierarchyWindowPageWidget(ScenePage* page)
     connect(treeView_->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(HandleSelectionChanged()));
 }
 
-void HierarchyWindowPageWidget::HandleSelectionChanged()
+HierarchyWindowWidget::~HierarchyWindowWidget()
+{
+
+}
+
+void HierarchyWindowWidget::HandleSelectionChanged()
 {
     const QModelIndexList selectedIndexes = treeView_->selectionModel()->selectedIndexes();
     ScenePage::NodeSet selectedNodes;
@@ -407,46 +430,7 @@ void HierarchyWindowPageWidget::HandleSelectionChanged()
             selectedNodes.insert(item->GetNode());
     }
 
-    page_->SetSelection(selectedNodes, selectedComponents);
-}
-
-//////////////////////////////////////////////////////////////////////////
-HierarchyWindowWidget::HierarchyWindowWidget(MainWindow& mainWindow)
-    : QDockWidget("Hierarchy Window")
-    , mainWindow_(mainWindow)
-{
-    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
-    connect(&mainWindow, SIGNAL(pageClosed(Document*)),  this, SLOT(HandlePageClosed(Document*)));
-
-    HandleCurrentPageChanged(mainWindow_.GetCurrentPage());
-}
-
-void HierarchyWindowWidget::CreateWidget(ScenePage* page)
-{
-    if (!pages_[page])
-    {
-        pages_[page] = QSharedPointer<HierarchyWindowPageWidget>(new HierarchyWindowPageWidget(page));
-        pages_[page]->GetModel().UpdateNode(&page->GetScene());
-    }
-}
-
-void HierarchyWindowWidget::HandleCurrentPageChanged(Document* page)
-{
-    if (ScenePage* scenePage = dynamic_cast<ScenePage*>(page))
-    {
-        CreateWidget(scenePage);
-        setWidget(pages_[scenePage].data());
-    }
-    else
-    {
-        setWidget(nullptr);
-    }
-}
-
-void HierarchyWindowWidget::HandlePageClosed(Document* page)
-{
-    if (ScenePage* scenePage = dynamic_cast<ScenePage*>(page))
-        pages_.remove(scenePage);
+    page_.SetSelection(selectedNodes, selectedComponents);
 }
 
 }

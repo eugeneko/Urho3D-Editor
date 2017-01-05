@@ -41,17 +41,19 @@ protected:
 protected slots:
     /// Handle 'View/Hierarchy Window'
     virtual void HandleViewHierarchyWindow(bool checked);
+    /// Handle 'View/Hierarchy Window' is about to show.
+    virtual void HandleViewHierarchyWindowAboutToShow();
+    /// Handle current page changed.
+    virtual void HandleCurrentPageChanged(Document* page);
 
-protected:
-    /// Configuration.
-//     Configuration* config_;
+private:
     /// Main window.
     MainWindow* mainWindow_;
     /// 'View/Hierarchy Window' action.
     QScopedPointer<QAction> actionViewHierarchyWindow_;
 
     /// Hierarchy Window.
-    QScopedPointer<HierarchyWindowWidget> hierarchyWindow_;
+    QScopedPointer<QDockWidget> hierarchyWindow_;
 
 };
 
@@ -163,14 +165,16 @@ protected:
 
 };
 
-/// Hierarchy Window Page.
-class HierarchyWindowPageWidget : public QWidget
+/// Hierarchy Window Widget.
+class HierarchyWindowWidget : public QWidget
 {
     Q_OBJECT
 
 public:
     /// Construct.
-    HierarchyWindowPageWidget(ScenePage* page);
+    HierarchyWindowWidget(ScenePage& page);
+    /// Destruct.
+    virtual ~HierarchyWindowWidget();
     /// Get model.
     ObjectHierarchyModel& GetModel() { return *treeModel_; }
 
@@ -180,40 +184,13 @@ protected slots:
 
 protected:
     /// Page.
-    ScenePage* page_;
+    ScenePage& page_;
     /// Layout.
     QScopedPointer<QGridLayout> layout_;
     /// Tree view.
     QScopedPointer<QTreeView> treeView_;
     /// Tree model.
     QScopedPointer<ObjectHierarchyModel> treeModel_;
-};
-
-/// Hierarchy Window Widget.
-class HierarchyWindowWidget : public QDockWidget
-{
-    Q_OBJECT
-
-public:
-    /// Construct.
-    HierarchyWindowWidget(MainWindow& mainWindow);
-
-protected:
-    /// Create widget for page if not exist.
-    virtual void CreateWidget(ScenePage* page);
-
-protected slots:
-    /// Handle current page changed.
-    virtual void HandleCurrentPageChanged(Document* page);
-    /// Handle page closed.
-    virtual void HandlePageClosed(Document* page);
-
-protected:
-    /// Main window.
-    MainWindow& mainWindow_;
-    /// Tree models.
-    QHash<ScenePage*, QSharedPointer<HierarchyWindowPageWidget>> pages_;
-
 };
 
 }
