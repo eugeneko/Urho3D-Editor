@@ -3,6 +3,7 @@
 #include "../Bridge.h"
 #include "../Configuration.h"
 #include "../MainWindow.h"
+#include "../Widgets/Urho3DWidget.h"
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Graphics/Octree.h>

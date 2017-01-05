@@ -1,8 +1,9 @@
 #pragma once
 
 #include "../Module.h"
-#include "../MainWindow.h"
+#include "../Document.h"
 #include <QAction>
+#include <QSet>
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Viewport.h>
 #include <Urho3D/Scene/Node.h>
@@ -18,8 +19,9 @@ class Input;
 namespace Urho3DEditor
 {
 
-class MainWindow;
 class Gizmo;
+class MainWindow;
+class Urho3DWidget;
 
 /// Scene Editor module.
 class SceneEditor : public Module

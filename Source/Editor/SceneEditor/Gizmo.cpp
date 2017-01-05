@@ -1,6 +1,7 @@
 #include "Gizmo.h"
 #include "SceneEditor.h"
 #include "../Configuration.h"
+#include <Urho3D/Core/Context.h>
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/Graphics/Model.h>
 #include <Urho3D/Graphics/Octree.h>
