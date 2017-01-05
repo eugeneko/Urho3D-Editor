@@ -22,7 +22,7 @@
 namespace Urho3DEditor
 {
 
-static const QString CONFIG_HOTKEY_MODE = "sceneeditor/blenderhotkeys";
+static const QString CONFIG_HOTKEY_MODE = "sceneeditor/hotkeymode";
 static const QString CONFIG_DISABLE_DEBUG_RENDERER = "sceneeditor/debug/disable";
 static const QString CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS = "sceneeditor/debug/disableforcomponents";
 static const QString CONFIG_DEBUG_RENDERING = "sceneeditor/debug/rendering";
@@ -78,7 +78,7 @@ bool SceneEditor::DoInitialize()
     UpdateMenuVisibility();
 
     // Setup config
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_HOTKEY_MODE, ScenePage::HotKeyStandard);
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_HOTKEY_MODE, ScenePage::HotKeyStandard, "", QStringList({ "Standard", "Blender" }));
     mainWindow_->GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
     mainWindow_->GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
     mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_RENDERING, false);

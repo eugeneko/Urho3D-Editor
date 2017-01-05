@@ -1,8 +1,12 @@
 #include "OptionsDialog.h"
 #include "Configuration.h"
+#include <Urho3D/Math/MathDefs.h>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QDoubleValidator>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QIntValidator>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QScrollArea>
@@ -57,7 +61,12 @@ class StringVariableImpl : public ConfigurationVariableImpl
 {
 public:
     /// Construct.
-    StringVariableImpl() : widget_(new QLineEdit()) { }
+    StringVariableImpl(QValidator* validator = nullptr)
+        : widget_(new QLineEdit())
+    {
+        widget_->setValidator(validator);
+        validator->setParent(widget_.data());
+    }
 
     /// Get widget.
     virtual QWidget* GetWidget() const override { return widget_.data(); }
@@ -66,26 +75,105 @@ public:
     /// Set value.
     virtual void SetValue(const QVariant& value) const override { widget_->setText(value.toString()); }
 
-private:
+protected:
     /// Widget.
     QScopedPointer<QLineEdit> widget_;
 
 };
 
-ConfigurationVariableImpl* CreateVariable(QVariant::Type type)
+class IntegerVariableImpl : public StringVariableImpl
+{
+public:
+    /// Construct.
+    IntegerVariableImpl(bool isSigned)
+        : StringVariableImpl(isSigned
+            ? new QIntValidator(Urho3D::M_MIN_INT, Urho3D::M_MAX_INT)
+            : new QIntValidator(0, Urho3D::M_MAX_INT))
+    {}
+
+    /// Get value.
+    virtual QVariant GetValue() const override
+    {
+        return widget_->text().toInt();
+    }
+    /// Set value.
+    virtual void SetValue(const QVariant& value) const override
+    {
+        widget_->setText(QString::number(value.toInt()));
+    }
+
+};
+
+class DoubleVariableImpl : public StringVariableImpl
+{
+public:
+    /// Construct.
+    DoubleVariableImpl() : StringVariableImpl(new QDoubleValidator()) {}
+
+    /// Get value.
+    virtual QVariant GetValue() const override
+    {
+        return widget_->text().toDouble();
+    }
+    /// Set value.
+    virtual void SetValue(const QVariant& value) const override
+    {
+        widget_->setText(QString::number(value.toDouble()));
+    }
+
+};
+
+class EnumVariableImpl : public ConfigurationVariableImpl
+{
+public:
+    /// Construct.
+    EnumVariableImpl(const QVariant& decoration)
+        : widget_(new QComboBox)
+    {
+        widget_->addItems(decoration.toStringList());
+    }
+
+    /// Get widget.
+    virtual QWidget* GetWidget() const override { return widget_.data(); }
+    /// Get value.
+    virtual QVariant GetValue() const override { return widget_->currentIndex(); }
+    /// Set value.
+    virtual void SetValue(const QVariant& value) const override { widget_->setCurrentIndex(value.toInt()); }
+
+private:
+    /// Widget.
+    QScopedPointer<QComboBox> widget_;
+
+};
+
+ConfigurationVariableImpl* CreateVariable(QVariant::Type type, const QVariant& decoration)
 {
     switch (type)
     {
     case QVariant::String:
         return new StringVariableImpl();
+
     case QVariant::Bool:
         return new BoolVariableImpl();
-    case QVariant::Invalid:
+
     case QVariant::Int:
-    case QVariant::UInt:
     case QVariant::LongLong:
+        if (decoration.type() == QVariant::StringList)
+            return new EnumVariableImpl(decoration);
+        else
+            return new IntegerVariableImpl(true);
+
+    case QVariant::UInt:
     case QVariant::ULongLong:
+        if (decoration.type() == QVariant::StringList)
+            return new EnumVariableImpl(decoration);
+        else
+            return new IntegerVariableImpl(false);
+
     case QVariant::Double:
+        return new DoubleVariableImpl();
+
+    case QVariant::Invalid:
     case QVariant::Char:
     case QVariant::Map:
     case QVariant::List:
@@ -147,7 +235,7 @@ ConfigurationVariable::ConfigurationVariable(Configuration& config, const QStrin
     , displayName_(config.GetComment(name_))
     , defaultValue_(config.GetDefaultValue(name_))
     , decoration_(config.GetDecoration(name_))
-    , impl_(CreateVariable(defaultValue_.type()))
+    , impl_(CreateVariable(defaultValue_.type(), decoration_))
 {
     impl_->SetValue(config_.GetValue(name_));
 }
@@ -190,6 +278,7 @@ void OptionsDialog::Save()
     for (VariableGroup& group : variables_)
         for (ConfigurationVariable* variable : group)
             variable->Save();
+    config_.Save();
 }
 
 void OptionsDialog::Reset()
@@ -333,8 +422,12 @@ void OptionsDialog::SetupLayout()
     }
 
     // Select page
-    groupsList->setCurrentRow(0);
-    HandleListRowChanged(0);
+    if (groups_.size() > 0)
+    {
+        const int currentIndex = qMin(groups_.size() - 1, 1);
+        groupsList->setCurrentRow(currentIndex);
+        HandleListRowChanged(currentIndex);
+    }
 
     // Setup dialog layout
     QVBoxLayout* dialogLayout = new QVBoxLayout;
