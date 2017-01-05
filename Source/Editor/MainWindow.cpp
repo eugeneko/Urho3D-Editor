@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "Configuration.h"
 #include "Document.h"
+#include "OptionsDialog.h"
 
 #include <Urho3D/IO/File.h>
 #include <Urho3D/Scene/Scene.h>
@@ -148,6 +149,8 @@ void MainWindow::InitializeMenu()
     menuActions_[MenuFileExit_Before]  = topLevelMenus_[MenuFile]->addSeparator();
     menuActions_[MenuFileExit]         = topLevelMenus_[MenuFile]->addAction("Exit");
 
+    menuActions_[MenuToolsOptions]     = topLevelMenus_[MenuTools]->addAction("Options");
+
     menuActions_[MenuHelpAbout_Before] = topLevelMenus_[MenuHelp]->addSeparator();
     menuActions_[MenuHelpAbout]        = topLevelMenus_[MenuHelp]->addAction("About");
 
@@ -157,6 +160,7 @@ void MainWindow::InitializeMenu()
 
     connect(menuActions_[MenuFileClose], SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
     connect(menuActions_[MenuFileExit],  SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));
+    connect(menuActions_[MenuToolsOptions], SIGNAL(triggered(bool)), this, SLOT(HandleToolsOptions()));
     connect(menuActions_[MenuHelpAbout], SIGNAL(triggered(bool)), this, SLOT(HandleHelpAbout()));
     connect(tabBar_.data(), SIGNAL(currentChanged(int)),    this, SLOT(HandleTabChanged(int)));
     connect(tabBar_.data(), SIGNAL(tabMoved(int, int)),     this, SLOT(HandleTabMoved(int, int)));
@@ -172,6 +176,12 @@ void MainWindow::HandleFileClose()
 void MainWindow::HandleFileExit()
 {
     mainWindow_.close();
+}
+
+void MainWindow::HandleToolsOptions()
+{
+    OptionsDialog dialog(config_);
+    dialog.exec();
 }
 
 void MainWindow::HandleHelpAbout()

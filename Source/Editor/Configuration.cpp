@@ -34,6 +34,11 @@ void Configuration::RegisterVariable(const QString& key, const QVariant& default
         decorations_[key] = decoration;
 }
 
+QVariant Configuration::GetDefaultValue(const QString& key)
+{
+    return defaultValues_.value(key);
+}
+
 QVariant Configuration::GetValue(const QString& key)
 {
     // Load from settings or defaults

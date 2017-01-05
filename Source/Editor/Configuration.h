@@ -11,6 +11,9 @@ class Configuration : public QObject
     Q_OBJECT
 
 public:
+    /// Map of variables.
+    using VariableMap = QHash<QString, QVariant>;
+
     static const QString CORE_LASTDIRECTORY;
     static const QString PROJECT_RECENT;
 
@@ -25,6 +28,8 @@ public:
     /// Register variable.
     void RegisterVariable(const QString& key, const QVariant& defaultValue,
         const QString& comment = QString(), const QVariant& decoration = QVariant());
+    /// Get default value of variable.
+    QVariant GetDefaultValue(const QString& key);
     /// Get value of variable.
     QVariant GetValue(const QString& key);
     /// Set value of variable.
@@ -34,7 +39,7 @@ public:
     /// Get decoration info.
     QVariant GetDecoration(const QString& key) const;
     /// Get all registered variables with default values.
-    const QHash<QString, QVariant>& GetVariables() const { return defaultValues_; }
+    const VariableMap& GetVariables() const { return defaultValues_; }
 
     // #TODO Remove me
     /// Get last directory.
@@ -53,9 +58,9 @@ private:
     /// Settings.
     QSettings settings_;
     /// Stored variables.
-    QHash<QString, QVariant> variables_;
+    VariableMap variables_;
     /// Default values.
-    QHash<QString, QVariant> defaultValues_;
+    VariableMap defaultValues_;
     /// Comments.
     QHash<QString, QString> comments_;
     /// Decorations.

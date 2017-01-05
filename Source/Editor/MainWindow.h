@@ -42,6 +42,7 @@ public:
         MenuFileSaveAs,
         MenuFileExit_Before,
         MenuFileExit,
+        MenuToolsOptions,
         MenuHelpAbout_Before,
         MenuHelpAbout
     };
@@ -92,6 +93,8 @@ protected slots:
     virtual void HandleFileClose();
     /// Handle 'File/Exit'
     virtual void HandleFileExit();
+    /// Handle 'Tools/Options'
+    virtual void HandleToolsOptions();
     /// Handle 'Help/About'
     virtual void HandleHelpAbout();
     /// Handle tab changed.
