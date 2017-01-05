@@ -24,9 +24,14 @@ void Configuration::Save()
         settings_.setValue(i.key(), i.value());
 }
 
-void Configuration::SetDefault(const QString& key, const QVariant& value)
+void Configuration::RegisterVariable(const QString& key, const QVariant& defaultValue,
+    const QString& comment /*= QString()*/, const QVariant& decoration /*= QVariant()*/)
 {
-    defaultValues_[key] = value;
+    defaultValues_[key] = defaultValue;
+    if (!comment.isEmpty())
+        comments_[key] = comment;
+    if (!decoration.isNull())
+        decorations_[key] = decoration;
 }
 
 QVariant Configuration::GetValue(const QString& key)
@@ -48,6 +53,16 @@ void Configuration::SetValue(const QString& key, const QVariant& value, bool sav
     variables_[key] = value;
     if (saveImmediately)
         settings_.setValue(key, value);
+}
+
+QString Configuration::GetComment(const QString& key) const
+{
+    return comments_.value(key);
+}
+
+QVariant Configuration::GetDecoration(const QString& key) const
+{
+    return decorations_.value(key);
 }
 
 void Configuration::SetLastDirectoryByFileName(const QString& fileName)

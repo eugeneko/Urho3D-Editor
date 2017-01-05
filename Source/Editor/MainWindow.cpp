@@ -46,7 +46,7 @@ Urho3D::Context& MainWindow::GetContext() const
     return context_;
 }
 
-MainWindowPage* MainWindow::GetCurrentPage() const
+Document* MainWindow::GetCurrentPage() const
 {
     return tabBar_->currentIndex() < 0 ? nullptr : pages_[tabBar_->currentIndex()];
 }
@@ -76,10 +76,10 @@ void MainWindow::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
     mainWindow_.addDockWidget(area, dock);
 }
 
-void MainWindow::AddPage(MainWindowPage* page, bool bringToTop /*= true*/)
+void MainWindow::AddPage(Document* page, bool bringToTop /*= true*/)
 {
     // Add new tab
-    connect(page, SIGNAL(titleChanged(MainWindowPage*)), this, SLOT(HandleTabTitleChanged(MainWindowPage*)));
+    connect(page, SIGNAL(titleChanged(Document*)), this, SLOT(HandleTabTitleChanged(Document*)));
     page->setVisible(false);
     layout_->addWidget(page);
     pages_.push_back(page);
@@ -94,13 +94,13 @@ void MainWindow::AddPage(MainWindowPage* page, bool bringToTop /*= true*/)
         SelectPage(page);
 }
 
-void MainWindow::SelectPage(MainWindowPage* page)
+void MainWindow::SelectPage(Document* page)
 {
     const int index = pages_.indexOf(page);
     tabBar_->setCurrentIndex(index);
 }
 
-void MainWindow::ClosePage(MainWindowPage* page)
+void MainWindow::ClosePage(Document* page)
 {
     emit pageClosed(page);
 
@@ -191,11 +191,11 @@ void MainWindow::HandleTabChanged(int index)
     Q_ASSERT(index < pages_.size());
 
     // Hide all pages
-    for (MainWindowPage* page : pages_)
+    for (Document* page : pages_)
         page->setVisible(false);
 
     // Show page
-    MainWindowPage* page = pages_[index];
+    Document* page = pages_[index];
     page->setVisible(page->IsPageWidgetVisible());
     urho3DWidget_->setVisible(page->IsUrho3DWidgetVisible());
     if (page->IsUrho3DWidgetVisible())
@@ -214,20 +214,20 @@ void MainWindow::HandleTabClosed(int index)
     ClosePage(pages_[index]);
 }
 
-void MainWindow::HandleTabTitleChanged(MainWindowPage* page)
+void MainWindow::HandleTabTitleChanged(Document* page)
 {
     const int index = pages_.indexOf(page);
     tabBar_->setTabText(index, page->GetTitle());
 }
 
 //////////////////////////////////////////////////////////////////////////
-MainWindowPage::MainWindowPage(MainWindow& mainWindow)
+Document::Document(MainWindow& mainWindow)
     : mainWindow_(mainWindow)
 {
-    connect(&mainWindow, SIGNAL(pageChanged(MainWindowPage*)), this, SLOT(HandleCurrentPageChanged(MainWindowPage*)));
+    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 }
 
-void MainWindowPage::SetTitle(const QString& title)
+void Document::SetTitle(const QString& title)
 {
     if (title != title_)
     {
@@ -236,7 +236,7 @@ void MainWindowPage::SetTitle(const QString& title)
     }
 }
 
-bool MainWindowPage::LaunchFileDialog(bool open)
+bool Document::LaunchFileDialog(bool open)
 {
     QFileDialog dialog;
     dialog.setAcceptMode(open ? QFileDialog::AcceptOpen : QFileDialog::AcceptSave);
@@ -257,29 +257,29 @@ bool MainWindowPage::LaunchFileDialog(bool open)
     return true;
 }
 
-bool MainWindowPage::Open()
+bool Document::Open()
 {
     if (LaunchFileDialog(true))
         return DoLoad(fileName_);
     return false;
 }
 
-bool MainWindowPage::IsActive() const
+bool Document::IsActive() const
 {
     return mainWindow_.GetCurrentPage() == this;
 }
 
-Configuration& MainWindowPage::GetConfig()
+Configuration& Document::GetConfig()
 {
     return mainWindow_.GetConfig();
 }
 
-void MainWindowPage::HandleCurrentPageChanged(MainWindowPage* page)
+void Document::HandleCurrentPageChanged(Document* page)
 {
 
 }
 
-bool MainWindowPage::DoLoad(const QString& /*fileName*/)
+bool Document::DoLoad(const QString& /*fileName*/)
 {
     return true;
 }

@@ -18,17 +18,25 @@ public:
     /// Construct.
     Configuration();
     /// Destruct.
-    virtual ~Configuration();
+    ~Configuration();
     /// Save setting.
-    virtual void Save();
-    /// Set default value for variable.
-    virtual void SetDefault(const QString& key, const QVariant& value);
-    /// Get value of variable.
-    virtual QVariant GetValue(const QString& key);
-    /// Set value of variable.
-    virtual void SetValue(const QString& key, const QVariant& value, bool saveImmediately = false);
+    void Save();
 
-    // #TODO Hide me
+    /// Register variable.
+    void RegisterVariable(const QString& key, const QVariant& defaultValue,
+        const QString& comment = QString(), const QVariant& decoration = QVariant());
+    /// Get value of variable.
+    QVariant GetValue(const QString& key);
+    /// Set value of variable.
+    void SetValue(const QString& key, const QVariant& value, bool saveImmediately = false);
+    /// Get comment.
+    QString GetComment(const QString& key) const;
+    /// Get decoration info.
+    QVariant GetDecoration(const QString& key) const;
+    /// Get all registered variables with default values.
+    const QHash<QString, QVariant>& GetVariables() const { return defaultValues_; }
+
+    // #TODO Remove me
     /// Get last directory.
     QString GetLastDirectory() const { return settings_.value(CORE_LASTDIRECTORY).toString(); }
     /// Set last directory.
@@ -48,6 +56,10 @@ private:
     QHash<QString, QVariant> variables_;
     /// Default values.
     QHash<QString, QVariant> defaultValues_;
+    /// Comments.
+    QHash<QString, QString> comments_;
+    /// Decorations.
+    QHash<QString, QVariant> decorations_;
 
 };
 

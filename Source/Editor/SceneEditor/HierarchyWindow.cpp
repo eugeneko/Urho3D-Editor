@@ -415,8 +415,8 @@ HierarchyWindowWidget::HierarchyWindowWidget(MainWindow& mainWindow)
     : QDockWidget("Hierarchy Window")
     , mainWindow_(mainWindow)
 {
-    connect(&mainWindow, SIGNAL(pageChanged(MainWindowPage*)), this, SLOT(HandleCurrentPageChanged(MainWindowPage*)));
-    connect(&mainWindow, SIGNAL(pageClosed(MainWindowPage*)),  this, SLOT(HandlePageClosed(MainWindowPage*)));
+    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
+    connect(&mainWindow, SIGNAL(pageClosed(Document*)),  this, SLOT(HandlePageClosed(Document*)));
 
     HandleCurrentPageChanged(mainWindow_.GetCurrentPage());
 }
@@ -430,7 +430,7 @@ void HierarchyWindowWidget::CreateWidget(ScenePage* page)
     }
 }
 
-void HierarchyWindowWidget::HandleCurrentPageChanged(MainWindowPage* page)
+void HierarchyWindowWidget::HandleCurrentPageChanged(Document* page)
 {
     if (ScenePage* scenePage = dynamic_cast<ScenePage*>(page))
     {
@@ -443,7 +443,7 @@ void HierarchyWindowWidget::HandleCurrentPageChanged(MainWindowPage* page)
     }
 }
 
-void HierarchyWindowWidget::HandlePageClosed(MainWindowPage* page)
+void HierarchyWindowWidget::HandlePageClosed(Document* page)
 {
     if (ScenePage* scenePage = dynamic_cast<ScenePage*>(page))
         pages_.remove(scenePage);

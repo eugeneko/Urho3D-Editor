@@ -50,7 +50,7 @@ bool SceneEditor::DoInitialize()
     if (!menuFile || !menuFileNew_After || !menuFileOpen_After || !menuTools)
         return false;
 
-    connect(mainWindow_, SIGNAL(pageChanged(MainWindowPage*)), this, SLOT(HandleCurrentPageChanged(MainWindowPage*)));
+    connect(mainWindow_, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 
     // Setup menu
     actionFileNewScene_.reset(new QAction("New Scene"));
@@ -77,14 +77,14 @@ bool SceneEditor::DoInitialize()
     UpdateMenuVisibility();
 
     // Setup config
-    mainWindow_->GetConfig().SetDefault(CONFIG_HOTKEY_MODE, ScenePage::HotKeyStandard);
-    mainWindow_->GetConfig().SetDefault(CONFIG_DISABLE_DEBUG_RENDERER, false);
-    mainWindow_->GetConfig().SetDefault(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
-    mainWindow_->GetConfig().SetDefault(CONFIG_DEBUG_RENDERING, false);
-    mainWindow_->GetConfig().SetDefault(CONFIG_DEBUG_PHYSICS, false);
-    mainWindow_->GetConfig().SetDefault(CONFIG_DEBUG_OCTREE, false);
-    mainWindow_->GetConfig().SetDefault(CONFIG_DEBUG_NAVIGATION, false);
-    mainWindow_->GetConfig().SetDefault(CONFIG_PICK_MODE, ScenePage::PickGeometries);
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_HOTKEY_MODE, ScenePage::HotKeyStandard);
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_RENDERING, false);
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_PHYSICS, false);
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_OCTREE, false);
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_NAVIGATION, false);
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_PICK_MODE, ScenePage::PickGeometries);
 
     return true;
 }
@@ -117,14 +117,14 @@ void SceneEditor::HandleCreateLocalNode()
     }
 }
 
-void SceneEditor::HandleCurrentPageChanged(MainWindowPage* page)
+void SceneEditor::HandleCurrentPageChanged(Document* page)
 {
     UpdateMenuVisibility();
 }
 
 void SceneEditor::UpdateMenuVisibility()
 {
-    MainWindowPage* page = mainWindow_->GetCurrentPage();
+    Document* page = mainWindow_->GetCurrentPage();
     ScenePage* scenePage = dynamic_cast<ScenePage*>(page);
     menuCreate_->menuAction()->setVisible(!!scenePage);
 }
@@ -170,7 +170,7 @@ void SceneCamera::Move(const Urho3D::Vector3& movement, const Urho3D::Vector3& r
 
 //////////////////////////////////////////////////////////////////////////
 ScenePage::ScenePage(MainWindow& mainWindow)
-    : MainWindowPage(mainWindow)
+    : Document(mainWindow)
     , Object(&mainWindow.GetContext())
     , widget_(mainWindow.GetUrho3DWidget())
     , camera_(context_)
@@ -277,7 +277,7 @@ void ScenePage::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::Var
     }
 }
 
-void ScenePage::HandleCurrentPageChanged(MainWindowPage* page)
+void ScenePage::HandleCurrentPageChanged(Document* page)
 {
     if (IsActive())
     {

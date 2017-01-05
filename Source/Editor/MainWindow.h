@@ -16,7 +16,7 @@ namespace Urho3DEditor
 {
 
 class Configuration;
-class MainWindowPage;
+class Document;
 
 /// Main window.
 class MainWindow : public QObject
@@ -55,7 +55,7 @@ public:
     /// Get context.
     Urho3D::Context& GetContext() const;
     /// Get current active page.
-    MainWindowPage* GetCurrentPage() const;
+    Document* GetCurrentPage() const;
     /// Get Urho3D widget.
     Urho3DWidget* GetUrho3DWidget() const;
     /// Get menu bar.
@@ -69,17 +69,17 @@ public:
     void AddDock(Qt::DockWidgetArea area, QDockWidget* dock);
 
     /// Add page.
-    void AddPage(MainWindowPage* page, bool bringToTop = true);
+    void AddPage(Document* page, bool bringToTop = true);
     /// Select page.
-    void SelectPage(MainWindowPage* page);
+    void SelectPage(Document* page);
     /// Close page.
-    void ClosePage(MainWindowPage* page);
+    void ClosePage(Document* page);
 
 signals:
     /// Signals that current page has been changed.
-    void pageChanged(MainWindowPage* page);
+    void pageChanged(Document* page);
     /// Signals that page is closed.
-    void pageClosed(MainWindowPage* page);
+    void pageClosed(Document* page);
 
 protected:
     /// Initialize layout.
@@ -101,7 +101,7 @@ protected slots:
     /// Handle tab closed.
     virtual void HandleTabClosed(int index);
     /// Handle tab title changed.
-    virtual void HandleTabTitleChanged(MainWindowPage* page);
+    virtual void HandleTabTitleChanged(Document* page);
 
 private:
     /// Configuration.
@@ -126,18 +126,18 @@ private:
     QHash<MenuAction, QAction*> menuActions_;
 
     /// Pages.
-    QVector<MainWindowPage*> pages_;
+    QVector<Document*> pages_;
 
 };
 
-/// Page of the main window.
-class MainWindowPage : public QWidget
+/// Document of the main window.
+class Document : public QWidget
 {
     Q_OBJECT
 
 public:
     /// Construct.
-    MainWindowPage(MainWindow& mainWindow);
+    Document(MainWindow& mainWindow);
 
     /// Set title of the page.
     virtual void SetTitle(const QString& title);
@@ -174,11 +174,11 @@ protected:
 
 protected slots:
     /// Handle current page changed.
-    virtual void HandleCurrentPageChanged(MainWindowPage* page);
+    virtual void HandleCurrentPageChanged(Document* page);
 
 signals:
     /// Signals that title of the page has been changed.
-    void titleChanged(MainWindowPage* page);
+    void titleChanged(Document* page);
 
 private:
     /// Main window.

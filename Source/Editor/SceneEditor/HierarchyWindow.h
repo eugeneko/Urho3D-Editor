@@ -21,7 +21,7 @@ namespace Urho3DEditor
 
 class Configuration;
 class MainWindow;
-class MainWindowPage;
+class Document;
 class HierarchyWindowWidget;
 class ScenePage;
 
@@ -204,9 +204,9 @@ protected:
 
 protected slots:
     /// Handle current page changed.
-    virtual void HandleCurrentPageChanged(MainWindowPage* page);
+    virtual void HandleCurrentPageChanged(Document* page);
     /// Handle page closed.
-    virtual void HandlePageClosed(MainWindowPage* page);
+    virtual void HandlePageClosed(Document* page);
 
 protected:
     /// Main window.

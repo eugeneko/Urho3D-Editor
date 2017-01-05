@@ -44,7 +44,7 @@ protected slots:
     /// Handle 'Create/Local Node'
     virtual void HandleCreateLocalNode();
     /// Handle current page changed.
-    virtual void HandleCurrentPageChanged(MainWindowPage* page);
+    virtual void HandleCurrentPageChanged(Document* page);
 
 private:
     /// Update menu visibility.
@@ -92,7 +92,7 @@ private:
 };
 
 /// Scene document.
-class ScenePage : public MainWindowPage, public Urho3D::Object
+class ScenePage : public Document, public Urho3D::Object
 {
     Q_OBJECT
     URHO3D_OBJECT(ScenePage, Urho3D::Object);
@@ -155,7 +155,7 @@ private:
 
 protected:
     /// Handle current page changed.
-    virtual void HandleCurrentPageChanged(MainWindowPage* page) override;
+    virtual void HandleCurrentPageChanged(Document* page) override;
     /// Load the page from file.
     virtual bool DoLoad(const QString& fileName) override;
 
