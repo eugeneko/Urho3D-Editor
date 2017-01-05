@@ -94,10 +94,10 @@ private:
 };
 
 /// Scene document.
-class ScenePage : public Document, public Urho3D::Object
+class SceneDocument : public Document, public Urho3D::Object
 {
     Q_OBJECT
-    URHO3D_OBJECT(ScenePage, Urho3D::Object);
+    URHO3D_OBJECT(SceneDocument, Urho3D::Object);
 
 public:
     /// Pick mode.
@@ -121,7 +121,7 @@ public:
 
 public:
     /// Construct.
-    ScenePage(MainWindow& mainWindow);
+    SceneDocument(MainWindow& mainWindow);
     /// Get scene.
     Urho3D::Scene& GetScene() const { return *scene_; }
 

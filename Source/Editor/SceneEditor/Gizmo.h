@@ -13,7 +13,7 @@ class StaticModel;
 namespace Urho3DEditor
 {
 
-class ScenePage;
+class SceneDocument;
 
 /// Gizmo manager.
 class Gizmo : public QObject
@@ -32,7 +32,7 @@ public:
 
 public:
     /// Construct.
-    Gizmo(ScenePage& page);
+    Gizmo(SceneDocument& page);
     /// Destruct.
     virtual ~Gizmo();
     /// Set gizmo type.
@@ -50,7 +50,7 @@ private:
 
 private:
     /// Page.
-    ScenePage& page_;
+    SceneDocument& page_;
     /// Gizmo node.
     Urho3D::Node gizmoNode_;
     /// Static model.

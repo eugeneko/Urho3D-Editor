@@ -60,7 +60,7 @@ void HierarchyWindow::HandleCurrentPageChanged(Document* page)
 {
     if (hierarchyWindow_)
     {
-        HierarchyWindowWidget* pageWidget = page->Get<HierarchyWindowWidget, ScenePage>(hierarchyWindow_.data());
+        HierarchyWindowWidget* pageWidget = page->Get<HierarchyWindowWidget, SceneDocument>(hierarchyWindow_.data());
         hierarchyWindow_->setWidget(pageWidget);
     }
 }
@@ -391,7 +391,7 @@ void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindowWidget::HierarchyWindowWidget(ScenePage& page)
+HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& page)
     : page_(page)
     , layout_(new QGridLayout())
     , treeView_(new QTreeView())
@@ -419,8 +419,8 @@ HierarchyWindowWidget::~HierarchyWindowWidget()
 void HierarchyWindowWidget::HandleSelectionChanged()
 {
     const QModelIndexList selectedIndexes = treeView_->selectionModel()->selectedIndexes();
-    ScenePage::NodeSet selectedNodes;
-    ScenePage::ComponentSet selectedComponents;
+    SceneDocument::NodeSet selectedNodes;
+    SceneDocument::ComponentSet selectedComponents;
     for (const QModelIndex& selectedIndex : selectedIndexes)
     {
         ObjectHierarchyItem* item = treeModel_->GetItem(selectedIndex);

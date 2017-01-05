@@ -78,33 +78,33 @@ bool SceneEditor::DoInitialize()
     UpdateMenuVisibility();
 
     // Setup config
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_HOTKEY_MODE, ScenePage::HotKeyStandard, "", QStringList({ "Standard", "Blender" }));
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_HOTKEY_MODE, SceneDocument::HotKeyStandard, "", QStringList({ "Standard", "Blender" }));
     mainWindow_->GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
     mainWindow_->GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
     mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_RENDERING, false);
     mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_PHYSICS, false);
     mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_OCTREE, false);
     mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_NAVIGATION, false);
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_PICK_MODE, ScenePage::PickGeometries);
+    mainWindow_->GetConfig().RegisterVariable(CONFIG_PICK_MODE, SceneDocument::PickGeometries);
 
     return true;
 }
 
 void SceneEditor::HandleFileNewScene()
 {
-    mainWindow_->AddPage(new ScenePage(*mainWindow_));
+    mainWindow_->AddPage(new SceneDocument(*mainWindow_));
 }
 
 void SceneEditor::HandleFileOpenScene()
 {
-    QScopedPointer<ScenePage> scenePage(new ScenePage(*mainWindow_));
+    QScopedPointer<SceneDocument> scenePage(new SceneDocument(*mainWindow_));
     if (scenePage->Open())
         mainWindow_->AddPage(scenePage.take());
 }
 
 void SceneEditor::HandleCreateReplicatedNode()
 {
-    if (ScenePage* scenePage = dynamic_cast<ScenePage*>(mainWindow_->GetCurrentPage()))
+    if (SceneDocument* scenePage = dynamic_cast<SceneDocument*>(mainWindow_->GetCurrentPage()))
     {
 
     }
@@ -112,7 +112,7 @@ void SceneEditor::HandleCreateReplicatedNode()
 
 void SceneEditor::HandleCreateLocalNode()
 {
-    if (ScenePage* scenePage = dynamic_cast<ScenePage*>(mainWindow_->GetCurrentPage()))
+    if (SceneDocument* scenePage = dynamic_cast<SceneDocument*>(mainWindow_->GetCurrentPage()))
     {
 
     }
@@ -126,7 +126,7 @@ void SceneEditor::HandleCurrentPageChanged(Document* page)
 void SceneEditor::UpdateMenuVisibility()
 {
     Document* page = mainWindow_->GetCurrentPage();
-    ScenePage* scenePage = dynamic_cast<ScenePage*>(page);
+    SceneDocument* scenePage = dynamic_cast<SceneDocument*>(page);
     menuCreate_->menuAction()->setVisible(!!scenePage);
 }
 
@@ -170,7 +170,7 @@ void SceneCamera::Move(const Urho3D::Vector3& movement, const Urho3D::Vector3& r
 }
 
 //////////////////////////////////////////////////////////////////////////
-ScenePage::ScenePage(MainWindow& mainWindow)
+SceneDocument::SceneDocument(MainWindow& mainWindow)
     : Document(mainWindow)
     , Object(&mainWindow.GetContext())
     , widget_(mainWindow.GetUrho3DWidget())
@@ -181,25 +181,25 @@ ScenePage::ScenePage(MainWindow& mainWindow)
     gizmo_.reset(new Gizmo(*this));
     SetTitle("New Scene");
 
-    SubscribeToEvent(Urho3D::E_UPDATE, URHO3D_HANDLER(ScenePage, HandleUpdate));
-    SubscribeToEvent(Urho3D::E_MOUSEBUTTONDOWN, URHO3D_HANDLER(ScenePage, HandleMouseButton));
-    SubscribeToEvent(Urho3D::E_MOUSEBUTTONUP, URHO3D_HANDLER(ScenePage, HandleMouseButton));
-    SubscribeToEvent(Urho3D::E_POSTRENDERUPDATE, URHO3D_HANDLER(ScenePage, HandlePostRenderUpdate));
+    SubscribeToEvent(Urho3D::E_UPDATE, URHO3D_HANDLER(SceneDocument, HandleUpdate));
+    SubscribeToEvent(Urho3D::E_MOUSEBUTTONDOWN, URHO3D_HANDLER(SceneDocument, HandleMouseButton));
+    SubscribeToEvent(Urho3D::E_MOUSEBUTTONUP, URHO3D_HANDLER(SceneDocument, HandleMouseButton));
+    SubscribeToEvent(Urho3D::E_POSTRENDERUPDATE, URHO3D_HANDLER(SceneDocument, HandlePostRenderUpdate));
 }
 
-void ScenePage::SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents)
+void SceneDocument::SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents)
 {
     selectedNodes_ = selectedNodes;
     selectedComponents_ = selectedComponents;
     emit selectionChanged();
 }
 
-QString ScenePage::GetNameFilters()
+QString SceneDocument::GetNameFilters()
 {
     return "Urho3D Scene (*.xml *.json *.bin);;All files (*.*)";
 }
 
-void ScenePage::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+void SceneDocument::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     if (!IsActive())
         return;
@@ -239,7 +239,7 @@ void ScenePage::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& e
     camera_.Move(movement * timeStep, rotation);
 }
 
-void ScenePage::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+void SceneDocument::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     if (!IsActive())
         return;
@@ -264,7 +264,7 @@ void ScenePage::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantM
     }
 }
 
-void ScenePage::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
 
@@ -278,7 +278,7 @@ void ScenePage::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::Var
     }
 }
 
-void ScenePage::HandleCurrentPageChanged(Document* page)
+void SceneDocument::HandleCurrentPageChanged(Document* page)
 {
     if (IsActive())
     {
@@ -287,7 +287,7 @@ void ScenePage::HandleCurrentPageChanged(Document* page)
     }
 }
 
-bool ScenePage::DoLoad(const QString& fileName)
+bool SceneDocument::DoLoad(const QString& fileName)
 {
     Urho3D::File file(context_);
     if (!file.Open(Cast(fileName)))
@@ -313,7 +313,7 @@ bool ScenePage::DoLoad(const QString& fileName)
     return true;
 }
 
-Urho3D::Ray ScenePage::GetCameraRay(const Urho3D::IntVector2& position) const
+Urho3D::Ray SceneDocument::GetCameraRay(const Urho3D::IntVector2& position) const
 {
     if (Urho3D::View* view = viewport_->GetView())
     {
@@ -326,7 +326,7 @@ Urho3D::Ray ScenePage::GetCameraRay(const Urho3D::IntVector2& position) const
         return Urho3D::Ray();
 }
 
-bool ScenePage::ShallDrawNodeDebug(Urho3D::Node* node)
+bool SceneDocument::ShallDrawNodeDebug(Urho3D::Node* node)
 {
     // Exception for the scene to avoid bringing the editor to its knees: drawing either the whole hierarchy or the subsystem-
     // components can have a large performance hit. Also skip nodes with some components.
@@ -342,7 +342,7 @@ bool ScenePage::ShallDrawNodeDebug(Urho3D::Node* node)
     return true;
 }
 
-void ScenePage::DrawNodeDebug(Urho3D::Node* node, Urho3D::DebugRenderer* debug, bool drawNode /*= true*/)
+void SceneDocument::DrawNodeDebug(Urho3D::Node* node, Urho3D::DebugRenderer* debug, bool drawNode /*= true*/)
 {
     using namespace Urho3D;
 
@@ -363,7 +363,7 @@ void ScenePage::DrawNodeDebug(Urho3D::Node* node, Urho3D::DebugRenderer* debug, 
         DrawNodeDebug(child, debug, false);
 }
 
-void ScenePage::DrawDebugGeometry()
+void SceneDocument::DrawDebugGeometry()
 {
     using namespace Urho3D;
 
@@ -383,7 +383,7 @@ void ScenePage::DrawDebugGeometry()
         renderer->DrawDebugGeometry(false);
 }
 
-void ScenePage::DrawDebugComponents()
+void SceneDocument::DrawDebugComponents()
 {
     using namespace Urho3D;
 
@@ -418,7 +418,7 @@ void ScenePage::DrawDebugComponents()
     }
 }
 
-void ScenePage::PerformRaycast(bool mouseClick)
+void SceneDocument::PerformRaycast(bool mouseClick)
 {
     using namespace Urho3D;
 

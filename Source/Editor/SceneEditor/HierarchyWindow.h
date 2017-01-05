@@ -23,7 +23,7 @@ class Configuration;
 class MainWindow;
 class Document;
 class HierarchyWindowWidget;
-class ScenePage;
+class SceneDocument;
 
 /// Hierarchy Window module.
 class HierarchyWindow : public Module
@@ -172,7 +172,7 @@ class HierarchyWindowWidget : public QWidget
 
 public:
     /// Construct.
-    HierarchyWindowWidget(ScenePage& page);
+    HierarchyWindowWidget(SceneDocument& page);
     /// Destruct.
     virtual ~HierarchyWindowWidget();
     /// Get model.
@@ -184,7 +184,7 @@ protected slots:
 
 protected:
     /// Page.
-    ScenePage& page_;
+    SceneDocument& page_;
     /// Layout.
     QScopedPointer<QGridLayout> layout_;
     /// Tree view.

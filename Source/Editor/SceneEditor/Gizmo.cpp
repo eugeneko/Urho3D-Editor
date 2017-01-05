@@ -11,7 +11,7 @@
 namespace Urho3DEditor
 {
 
-Gizmo::Gizmo(ScenePage& page)
+Gizmo::Gizmo(SceneDocument& page)
     : page_(page)
     , gizmoNode_(page.GetContext())
     , gizmo_(*gizmoNode_.CreateComponent<Urho3D::StaticModel>())
@@ -71,8 +71,8 @@ void Gizmo::CreateGizmo()
     using namespace Urho3D;
 
     // Gather nodes
-    ScenePage::NodeSet editNodes = page_.GetSelectedNodes();
-    const ScenePage::ComponentSet selectedComponents = page_.GetSelectedComponents();
+    SceneDocument::NodeSet editNodes = page_.GetSelectedNodes();
+    const SceneDocument::ComponentSet selectedComponents = page_.GetSelectedComponents();
     for (Component* component : selectedComponents)
         editNodes.insert(component->GetNode());
 
