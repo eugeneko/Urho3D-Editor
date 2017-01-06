@@ -1,4 +1,5 @@
 #include "SceneEditor.h"
+#include "SceneOverlay.h"
 #include "../Bridge.h"
 #include "../Configuration.h"
 #include "../MainWindow.h"
@@ -187,6 +188,17 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
     SubscribeToEvent(Urho3D::E_POSTRENDERUPDATE, URHO3D_HANDLER(SceneDocument, HandlePostRenderUpdate));
 }
 
+void SceneDocument::AddOverlay(SceneOverlay* overlay)
+{
+    if (!overlays_.contains(overlay))
+        overlays_.push_front(overlay);
+}
+
+void SceneDocument::RemoveOverlay(SceneOverlay* overlay)
+{
+    overlays_.removeAll(overlay);
+}
+
 void SceneDocument::SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents)
 {
     selectedNodes_ = selectedNodes;
@@ -245,18 +257,25 @@ void SceneDocument::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::Vari
         return;
 
     using namespace Urho3D;
-
-    // Handle camera rotation
     Input* input = GetSubsystem<Input>();
     const int button = eventData[MouseButtonDown::P_BUTTON].GetInt();
+    const bool pressed = eventType == E_MOUSEBUTTONDOWN;
+
+    // Update overlays
+    bool consumed = false;
+    const Urho3D::Ray ray = GetCameraRay(input->GetMousePosition());
+    for (SceneOverlay* overlay : overlays_)
+        consumed |= overlay->MouseButtonEvent(ray, ConvertMouseButton(button), pressed, consumed);
+
+    // Handle camera rotation
     if (button == MOUSEB_RIGHT)
     {
-        if (eventType == E_MOUSEBUTTONDOWN)
+        if (pressed)
         {
             input->SetMouseVisible(false);
             input->SetMouseMode(MM_WRAP);
         }
-        else if (eventType == E_MOUSEBUTTONUP)
+        else
         {
             input->SetMouseVisible(true);
             input->SetMouseMode(MM_ABSOLUTE);
@@ -267,6 +286,11 @@ void SceneDocument::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::Vari
 void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
+    Input* input = GetSubsystem<Input>();
+
+    const Urho3D::Ray ray = GetCameraRay(input->GetMousePosition());
+    for (SceneOverlay* overlay : overlays_)
+        overlay->PostRenderUpdate(ray);
 
     DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
     const bool debugRendererDisabled = GetMainWindow().GetConfig().GetValue(CONFIG_DISABLE_DEBUG_RENDERER).toBool();

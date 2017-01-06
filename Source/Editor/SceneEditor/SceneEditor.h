@@ -20,6 +20,7 @@ namespace Urho3DEditor
 {
 
 class MainWindow;
+class SceneOverlay;
 class Urho3DWidget;
 
 /// Scene Editor module.
@@ -122,6 +123,11 @@ public:
     /// Get scene.
     Urho3D::Scene& GetScene() const { return *scene_; }
 
+    /// Add overlay.
+    void AddOverlay(SceneOverlay* overlay);
+    /// Remove overlay.
+    void RemoveOverlay(SceneOverlay* overlay);
+
     /// Set selection.
     virtual void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
     /// Get selected nodes.
@@ -175,6 +181,9 @@ protected:
 protected:
     /// Widget.
     Urho3DWidget* widget_;
+    /// Overlays.
+    QList<SceneOverlay*> overlays_;
+
     /// Camera.
     SceneCamera camera_;
     /// Scene.
