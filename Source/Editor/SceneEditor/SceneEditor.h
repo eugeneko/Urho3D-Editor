@@ -45,8 +45,8 @@ protected slots:
     virtual void HandleCreateReplicatedNode();
     /// Handle 'Create/Local Node'
     virtual void HandleCreateLocalNode();
-    /// Handle current page changed.
-    virtual void HandleCurrentPageChanged(Document* page);
+    /// Handle current document changed.
+    virtual void HandleCurrentPageChanged(Document* document);
 
 private:
     /// Update menu visibility.
@@ -130,13 +130,13 @@ public:
     /// Get selected components.
     const ComponentSet& GetSelectedComponents() const { return selectedComponents_; }
 
-    /// Return title of the page.
+    /// Return title of the document.
     virtual QString GetTitle() override { return GetRawTitle(); }
-    /// Return whether the page can be saved.
+    /// Return whether the document can be saved.
     virtual bool CanBeSaved() override { return true; }
-    /// Return whether the page widget should be visible when the page is active.
+    /// Return whether the document widget should be visible when the document is active.
     virtual bool IsPageWidgetVisible() override { return false; }
-    /// Return whether the Urho3D widget should be visible when the page is active.
+    /// Return whether the Urho3D widget should be visible when the document is active.
     virtual bool IsUrho3DWidgetVisible() override { return true; }
     /// Get name filters for open and save dialogs.
     virtual QString GetNameFilters() override;
@@ -154,9 +154,9 @@ private:
     virtual void HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
 
 protected:
-    /// Handle current page changed.
-    virtual void HandleCurrentPageChanged(Document* page) override;
-    /// Load the page from file.
+    /// Handle current document changed.
+    virtual void HandleCurrentPageChanged(Document* document) override;
+    /// Load the document from file.
     virtual bool DoLoad(const QString& fileName) override;
 
 protected:

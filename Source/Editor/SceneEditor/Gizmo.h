@@ -14,6 +14,7 @@ class StaticModel;
 namespace Urho3DEditor
 {
 
+class Document;
 class SceneDocument;
 
 /// Gizmo manager.
@@ -27,9 +28,13 @@ public:
 
 public:
 
-protected:
+private:
     /// Initialize module.
     virtual bool Initialize() override;
+
+private slots:
+    /// Handle current document changed.
+    virtual void HandleCurrentPageChanged(Document* document);
 
 };
 
@@ -50,7 +55,7 @@ public:
 
 public:
     /// Construct.
-    Gizmo(SceneDocument& page);
+    Gizmo(SceneDocument& document);
     /// Destruct.
     virtual ~Gizmo();
     /// Set gizmo type.
@@ -67,8 +72,8 @@ private:
     void CreateGizmo();
 
 private:
-    /// Page.
-    SceneDocument& page_;
+    /// Document.
+    SceneDocument& document_;
     /// Gizmo node.
     Urho3D::Node gizmoNode_;
     /// Static model.

@@ -119,7 +119,7 @@ void SceneEditor::HandleCreateLocalNode()
     }
 }
 
-void SceneEditor::HandleCurrentPageChanged(Document* page)
+void SceneEditor::HandleCurrentPageChanged(Document* document)
 {
     UpdateMenuVisibility();
 }
@@ -127,9 +127,9 @@ void SceneEditor::HandleCurrentPageChanged(Document* page)
 void SceneEditor::UpdateMenuVisibility()
 {
     MainWindow& mainWindow = GetMainWindow();
-    Document* page = mainWindow.GetCurrentPage();
-    SceneDocument* scenePage = dynamic_cast<SceneDocument*>(page);
-    menuCreate_->menuAction()->setVisible(!!scenePage);
+    Document* document = mainWindow.GetCurrentPage();
+    SceneDocument* sceneDocument = dynamic_cast<SceneDocument*>(document);
+    menuCreate_->menuAction()->setVisible(!!sceneDocument);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -280,7 +280,7 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
     }
 }
 
-void SceneDocument::HandleCurrentPageChanged(Document* page)
+void SceneDocument::HandleCurrentPageChanged(Document* document)
 {
     if (IsActive())
     {

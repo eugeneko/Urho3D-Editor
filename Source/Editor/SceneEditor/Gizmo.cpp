@@ -1,6 +1,7 @@
 #include "Gizmo.h"
 #include "SceneEditor.h"
 #include "../Configuration.h"
+#include "../MainWindow.h"
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/Graphics/Model.h>
@@ -15,6 +16,9 @@ const QString GizmoManager::VarGizmoMode = "scene/gizmo/mode";
 
 bool GizmoManager::Initialize()
 {
+    MainWindow& mainWindow = GetMainWindow();
+    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
+
     Configuration& config = GetConfig();
     QStringList gizmoTypeNames;
     gizmoTypeNames << "None" << "Position" << "Rotation" << "Scale";
@@ -22,16 +26,23 @@ bool GizmoManager::Initialize()
     return true;
 }
 
+void GizmoManager::HandleCurrentPageChanged(Document* document)
+{
+    if (SceneDocument* sceneDocument = dynamic_cast<SceneDocument*>(document))
+    {
+    }
+}
+
 //////////////////////////////////////////////////////////////////////////
-Gizmo::Gizmo(SceneDocument& page)
-    : page_(page)
-    , gizmoNode_(page.GetContext())
+Gizmo::Gizmo(SceneDocument& document)
+    : document_(document)
+    , gizmoNode_(document.GetContext())
     , gizmo_(*gizmoNode_.CreateComponent<Urho3D::StaticModel>())
     , type_(GizmoNone)
 {
     // Setup gizmo
     // #TODO Make configurable
-    Urho3D::ResourceCache* cache = page.GetContext()->GetSubsystem<Urho3D::ResourceCache>();
+    Urho3D::ResourceCache* cache = document.GetContext()->GetSubsystem<Urho3D::ResourceCache>();
     gizmo_.SetModel(cache->GetResource<Urho3D::Model>("Models/Editor/Axes.mdl"));
     gizmo_.SetMaterial(0, cache->GetResource<Urho3D::Material>("Materials/Editor/RedUnlit.xml"));
     gizmo_.SetMaterial(1, cache->GetResource<Urho3D::Material>("Materials/Editor/GreenUnlit.xml"));
@@ -41,10 +52,10 @@ Gizmo::Gizmo(SceneDocument& page)
     gizmo_.SetOccludee(false);
     gizmoNode_.SetName("EditorGizmo");
 
-    connect(&page_, SIGNAL(selectionChanged()), this, SLOT(HandleSelectionChanged()));
+    connect(&document_, SIGNAL(selectionChanged()), this, SLOT(HandleSelectionChanged()));
 
     // #TODO Use me
-    Configuration& config = page_.GetConfig();
+    Configuration& config = document_.GetConfig();
 
     SetType(GizmoPosition);
 }
@@ -83,13 +94,13 @@ void Gizmo::CreateGizmo()
     using namespace Urho3D;
 
     // Gather nodes
-    SceneDocument::NodeSet editNodes = page_.GetSelectedNodes();
-    const SceneDocument::ComponentSet selectedComponents = page_.GetSelectedComponents();
+    SceneDocument::NodeSet editNodes = document_.GetSelectedNodes();
+    const SceneDocument::ComponentSet selectedComponents = document_.GetSelectedComponents();
     for (Component* component : selectedComponents)
         editNodes.insert(component->GetNode());
 
     // Hide gizmo if scene included
-    if (editNodes.contains(&page_.GetScene()))
+    if (editNodes.contains(&document_.GetScene()))
     {
         HideGizmo();
         return;
@@ -104,7 +115,7 @@ void Gizmo::CreateGizmo()
     // Setup gizmo
     gizmoNode_.SetWorldPosition(gizmoPosition);
     gizmoNode_.SetWorldRotation(Quaternion());
-    if (Octree* octree = page_.GetScene().GetComponent<Octree>())
+    if (Octree* octree = document_.GetScene().GetComponent<Octree>())
         octree->AddManualDrawable(&gizmo_);
 }
 

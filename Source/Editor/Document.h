@@ -85,7 +85,7 @@ protected:
 
 protected slots:
     /// Handle current document changed.
-    virtual void HandleCurrentPageChanged(Document* page);
+    virtual void HandleCurrentPageChanged(Document* document);
 
 signals:
     /// Signals that title of the document has been changed.

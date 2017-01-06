@@ -43,8 +43,8 @@ protected slots:
     virtual void HandleViewHierarchyWindow(bool checked);
     /// Handle 'View/Hierarchy Window' is about to show.
     virtual void HandleViewHierarchyWindowAboutToShow();
-    /// Handle current page changed.
-    virtual void HandleCurrentPageChanged(Document* page);
+    /// Handle current document changed.
+    virtual void HandleCurrentPageChanged(Document* document);
 
 private:
     /// 'View/Hierarchy Window' action.
@@ -170,7 +170,7 @@ class HierarchyWindowWidget : public QWidget
 
 public:
     /// Construct.
-    HierarchyWindowWidget(SceneDocument& page);
+    HierarchyWindowWidget(SceneDocument& document);
     /// Destruct.
     virtual ~HierarchyWindowWidget();
     /// Get model.
@@ -181,8 +181,8 @@ protected slots:
     virtual void HandleSelectionChanged();
 
 protected:
-    /// Page.
-    SceneDocument& page_;
+    /// Document.
+    SceneDocument& document_;
     /// Layout.
     QScopedPointer<QGridLayout> layout_;
     /// Tree view.

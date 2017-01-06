@@ -55,11 +55,11 @@ void HierarchyWindow::HandleViewHierarchyWindowAboutToShow()
     actionViewHierarchyWindow_->setChecked(!!hierarchyWindow_);
 }
 
-void HierarchyWindow::HandleCurrentPageChanged(Document* page)
+void HierarchyWindow::HandleCurrentPageChanged(Document* document)
 {
     if (hierarchyWindow_)
     {
-        HierarchyWindowWidget* pageWidget = page->Get<HierarchyWindowWidget, SceneDocument>(hierarchyWindow_.data());
+        HierarchyWindowWidget* pageWidget = document->Get<HierarchyWindowWidget, SceneDocument>(hierarchyWindow_.data());
         hierarchyWindow_->setWidget(pageWidget);
     }
 }
@@ -390,13 +390,13 @@ void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& page)
-    : page_(page)
+HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
+    : document_(document)
     , layout_(new QGridLayout())
     , treeView_(new QTreeView())
     , treeModel_(new ObjectHierarchyModel())
 {
-    treeModel_->UpdateNode(&page.GetScene());
+    treeModel_->UpdateNode(&document.GetScene());
 
     treeView_->header()->hide();
     treeView_->setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -429,7 +429,7 @@ void HierarchyWindowWidget::HandleSelectionChanged()
             selectedNodes.insert(item->GetNode());
     }
 
-    page_.SetSelection(selectedNodes, selectedComponents);
+    document_.SetSelection(selectedNodes, selectedComponents);
 }
 
 }

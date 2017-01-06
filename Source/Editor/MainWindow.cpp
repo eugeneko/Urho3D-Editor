@@ -48,7 +48,7 @@ Urho3D::Context& MainWindow::GetContext() const
 
 Document* MainWindow::GetCurrentPage() const
 {
-    return tabBar_->currentIndex() < 0 ? nullptr : pages_[tabBar_->currentIndex()];
+    return tabBar_->currentIndex() < 0 ? nullptr : documents_[tabBar_->currentIndex()];
 }
 
 Urho3DWidget* MainWindow::GetUrho3DWidget() const
@@ -76,39 +76,39 @@ void MainWindow::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
     mainWindow_.addDockWidget(area, dock);
 }
 
-void MainWindow::AddPage(Document* page, bool bringToTop /*= true*/)
+void MainWindow::AddPage(Document* document, bool bringToTop /*= true*/)
 {
     // Add new tab
-    connect(page, SIGNAL(titleChanged(Document*)), this, SLOT(HandleTabTitleChanged(Document*)));
-    page->setVisible(false);
-    layout_->addWidget(page);
-    pages_.push_back(page);
-    const int index = tabBar_->addTab(page->GetTitle());
+    connect(document, SIGNAL(titleChanged(Document*)), this, SLOT(HandleTabTitleChanged(Document*)));
+    document->setVisible(false);
+    layout_->addWidget(document);
+    documents_.push_back(document);
+    const int index = tabBar_->addTab(document->GetTitle());
 
     // Emit signal for first tab
-    if (pages_.size() == 1)
+    if (documents_.size() == 1)
         HandleTabChanged(tabBar_->currentIndex());
 
     // Activate
     if (bringToTop)
-        SelectPage(page);
+        SelectPage(document);
 }
 
-void MainWindow::SelectPage(Document* page)
+void MainWindow::SelectPage(Document* document)
 {
-    const int index = pages_.indexOf(page);
+    const int index = documents_.indexOf(document);
     tabBar_->setCurrentIndex(index);
 }
 
-void MainWindow::ClosePage(Document* page)
+void MainWindow::ClosePage(Document* document)
 {
-    emit pageClosed(page);
+    emit pageClosed(document);
 
-    const int index = pages_.indexOf(page);
-    pages_.remove(index);
+    const int index = documents_.indexOf(document);
+    documents_.remove(index);
     tabBar_->removeTab(index);
 
-    if (pages_.isEmpty())
+    if (documents_.isEmpty())
     {
         // Emit signal if all tabs are closed now
         emit pageChanged(nullptr);
@@ -170,7 +170,7 @@ void MainWindow::InitializeMenu()
 void MainWindow::HandleFileClose()
 {
     if (tabBar_->currentIndex() != -1)
-        ClosePage(pages_[tabBar_->currentIndex()]);
+        ClosePage(documents_[tabBar_->currentIndex()]);
 }
 
 void MainWindow::HandleFileExit()
@@ -197,36 +197,36 @@ void MainWindow::HandleTabChanged(int index)
 {
     if (index < 0)
         return;
-    Q_ASSERT(index < pages_.size());
+    Q_ASSERT(index < documents_.size());
 
-    // Hide all pages
-    for (Document* page : pages_)
-        page->setVisible(false);
+    // Hide all documents
+    for (Document* document : documents_)
+        document->setVisible(false);
 
-    // Show page
-    Document* page = pages_[index];
-    page->setVisible(page->IsPageWidgetVisible());
-    urho3DWidget_->setVisible(page->IsUrho3DWidgetVisible());
-    if (page->IsUrho3DWidgetVisible())
+    // Show document
+    Document* document = documents_[index];
+    document->setVisible(document->IsPageWidgetVisible());
+    urho3DWidget_->setVisible(document->IsUrho3DWidgetVisible());
+    if (document->IsUrho3DWidgetVisible())
         urho3DWidget_->setFocus(Qt::ActiveWindowFocusReason);
 
-    emit pageChanged(page);
+    emit pageChanged(document);
 }
 
 void MainWindow::HandleTabMoved(int from, int to)
 {
-    pages_.move(from, to);
+    documents_.move(from, to);
 }
 
 void MainWindow::HandleTabClosed(int index)
 {
-    ClosePage(pages_[index]);
+    ClosePage(documents_[index]);
 }
 
-void MainWindow::HandleTabTitleChanged(Document* page)
+void MainWindow::HandleTabTitleChanged(Document* document)
 {
-    const int index = pages_.indexOf(page);
-    tabBar_->setTabText(index, page->GetTitle());
+    const int index = documents_.indexOf(document);
+    tabBar_->setTabText(index, document->GetTitle());
 }
 
 }

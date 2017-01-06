@@ -429,7 +429,7 @@ void OptionsDialog::SetupLayout()
         variablesGroupArea->setWidget(variablesGroup);
     }
 
-    // Select page
+    // Select group
     if (groups_.size() > 0)
     {
         const int currentIndex = qMin(groups_.size() - 1, 1);

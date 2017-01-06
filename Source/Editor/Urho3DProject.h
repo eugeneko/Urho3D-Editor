@@ -111,9 +111,9 @@ public:
     virtual QString GetFilters() const override;
 
 protected:
-    /// Save page.
+    /// Save document.
     virtual bool DoSave() override;
-    /// Load page.
+    /// Load document.
     virtual bool DoLoad() override;
 
 private slots:

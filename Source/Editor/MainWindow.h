@@ -55,7 +55,7 @@ public:
     Configuration& GetConfig() const;
     /// Get context.
     Urho3D::Context& GetContext() const;
-    /// Get current active page.
+    /// Get current active document.
     Document* GetCurrentPage() const;
     /// Get Urho3D widget.
     Urho3DWidget* GetUrho3DWidget() const;
@@ -69,18 +69,18 @@ public:
     /// Add dock widget.
     void AddDock(Qt::DockWidgetArea area, QDockWidget* dock);
 
-    /// Add page.
-    void AddPage(Document* page, bool bringToTop = true);
-    /// Select page.
-    void SelectPage(Document* page);
-    /// Close page.
-    void ClosePage(Document* page);
+    /// Add document.
+    void AddPage(Document* document, bool bringToTop = true);
+    /// Select document.
+    void SelectPage(Document* document);
+    /// Close document.
+    void ClosePage(Document* document);
 
 signals:
-    /// Signals that current page has been changed.
-    void pageChanged(Document* page);
-    /// Signals that page is closed.
-    void pageClosed(Document* page);
+    /// Signals that current document has been changed.
+    void pageChanged(Document* document);
+    /// Signals that document is closed.
+    void pageClosed(Document* document);
 
 protected:
     /// Initialize layout.
@@ -104,7 +104,7 @@ protected slots:
     /// Handle tab closed.
     virtual void HandleTabClosed(int index);
     /// Handle tab title changed.
-    virtual void HandleTabTitleChanged(Document* page);
+    virtual void HandleTabTitleChanged(Document* document);
 
 private:
     /// Configuration.
@@ -129,7 +129,7 @@ private:
     QHash<MenuAction, QAction*> menuActions_;
 
     /// Pages.
-    QVector<Document*> pages_;
+    QVector<Document*> documents_;
 
 };
 

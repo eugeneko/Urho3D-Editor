@@ -64,7 +64,7 @@ Configuration& Document::GetConfig()
     return mainWindow_.GetConfig();
 }
 
-void Document::HandleCurrentPageChanged(Document* page)
+void Document::HandleCurrentPageChanged(Document* document)
 {
 
 }
