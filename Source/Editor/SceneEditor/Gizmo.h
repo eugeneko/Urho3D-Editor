@@ -25,6 +25,18 @@ class GizmoManager : public Module
 public:
     /// 'Gizmo Type' variable.
     static const QString VarGizmoMode;
+    /// 'Model Position' variable.
+    static const QString VarModelPosition;
+    /// 'Model Rotation' variable.
+    static const QString VarModelRotation;
+    /// 'Model Scale' variable.
+    static const QString VarModelScale;
+    /// 'Material Red' variable.
+    static const QString VarMaterialRed;
+    /// 'Material Green' variable.
+    static const QString VarMaterialGreen;
+    /// 'Material Blue' variable.
+    static const QString VarMaterialBlue;
 
 public:
 

@@ -13,6 +13,12 @@ namespace Urho3DEditor
 {
 
 const QString GizmoManager::VarGizmoMode = "scene/gizmo/mode";
+// const QString GizmoManager::VarModelPosition = "Models/Editor/Axes.mdl";
+// const QString GizmoManager::VarModelRotation = "Models/Editor/RotateAxes.mdl";
+// const QString GizmoManager::VarModelScale = "Models/Editor/ScaleAxes.mdl";
+// const QString GizmoManager::VarMaterialRed = "Materials/Editor/RedUnlit.xml";
+// const QString GizmoManager::VarMaterialGreen = "Materials/Editor/GreenUnlit.xml";
+// const QString GizmoManager::VarMaterialBlue = "Materials/Editor/BlueUnlit.xml";
 
 bool GizmoManager::Initialize()
 {
@@ -30,6 +36,7 @@ void GizmoManager::HandleCurrentPageChanged(Document* document)
 {
     if (SceneDocument* sceneDocument = dynamic_cast<SceneDocument*>(document))
     {
+        sceneDocument->Get<Gizmo, SceneDocument>();
     }
 }
 
@@ -115,6 +122,7 @@ void Gizmo::CreateGizmo()
     // Setup gizmo
     gizmoNode_.SetWorldPosition(gizmoPosition);
     gizmoNode_.SetWorldRotation(Quaternion());
+    gizmo_.SetEnabled(true);
     if (Octree* octree = document_.GetScene().GetComponent<Octree>())
         octree->AddManualDrawable(&gizmo_);
 }

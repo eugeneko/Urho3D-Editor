@@ -19,7 +19,6 @@ class Input;
 namespace Urho3DEditor
 {
 
-class Gizmo;
 class MainWindow;
 class Urho3DWidget;
 
@@ -182,8 +181,6 @@ protected:
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
     /// Viewport.
     Urho3D::SharedPtr<Urho3D::Viewport> viewport_;
-    /// Gizmo.
-    QScopedPointer<Gizmo> gizmo_;
 
     /// Selected nodes.
     NodeSet selectedNodes_;

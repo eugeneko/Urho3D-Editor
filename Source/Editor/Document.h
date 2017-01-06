@@ -41,7 +41,7 @@ public:
     /// Get (and create if not exist) object of specified type. Type shall be constructible from this casted to U&.
     /// Nullptr will be returned only if document is not convertible to U.
     template <class TObject, class TDocument = Document, class TParent = QObject>
-    TObject* Get(TParent* parent)
+    TObject* Get(TParent* parent = nullptr)
     {
         TDocument* document = qobject_cast<TDocument*>(this);
         if (!document)
