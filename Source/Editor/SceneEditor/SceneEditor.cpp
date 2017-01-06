@@ -32,26 +32,23 @@ static const QString CONFIG_DEBUG_NAVIGATION = "sceneeditor/debug/navigation";
 static const QString CONFIG_PICK_MODE = "sceneeditor/pickmode";
 
 SceneEditor::SceneEditor()
-    : mainWindow_(nullptr)
 {
 
 }
 
-bool SceneEditor::DoInitialize()
+bool SceneEditor::Initialize()
 {
-    mainWindow_ = &GetMainWindow();
-    if (!mainWindow_)
-        return false;
+    MainWindow& mainWindow = GetMainWindow();
 
-    QMenuBar* menuBar = mainWindow_->GetMenuBar();
-    QMenu* menuFile = mainWindow_->GetTopLevelMenu(MainWindow::MenuFile);
-    QAction* menuFileNew_After = mainWindow_->GetMenuAction(MainWindow::MenuFileNew_After);
-    QAction* menuFileOpen_After = mainWindow_->GetMenuAction(MainWindow::MenuFileOpen_After);
-    QMenu* menuView = mainWindow_->GetTopLevelMenu(MainWindow::MenuView);
+    QMenuBar* menuBar = mainWindow.GetMenuBar();
+    QMenu* menuFile = mainWindow.GetTopLevelMenu(MainWindow::MenuFile);
+    QAction* menuFileNew_After = mainWindow.GetMenuAction(MainWindow::MenuFileNew_After);
+    QAction* menuFileOpen_After = mainWindow.GetMenuAction(MainWindow::MenuFileOpen_After);
+    QMenu* menuView = mainWindow.GetTopLevelMenu(MainWindow::MenuView);
     if (!menuFile || !menuFileNew_After || !menuFileOpen_After || !menuView)
         return false;
 
-    connect(mainWindow_, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
+    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 
     // Setup menu
     actionFileNewScene_.reset(new QAction("New Scene"));
@@ -78,33 +75,36 @@ bool SceneEditor::DoInitialize()
     UpdateMenuVisibility();
 
     // Setup config
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_HOTKEY_MODE, SceneDocument::HotKeyStandard, "", QStringList({ "Standard", "Blender" }));
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_RENDERING, false);
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_PHYSICS, false);
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_OCTREE, false);
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_DEBUG_NAVIGATION, false);
-    mainWindow_->GetConfig().RegisterVariable(CONFIG_PICK_MODE, SceneDocument::PickGeometries);
+    GetConfig().RegisterVariable(CONFIG_HOTKEY_MODE, SceneDocument::HotKeyStandard, "", QStringList({ "Standard", "Blender" }));
+    GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
+    GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
+    GetConfig().RegisterVariable(CONFIG_DEBUG_RENDERING, false);
+    GetConfig().RegisterVariable(CONFIG_DEBUG_PHYSICS, false);
+    GetConfig().RegisterVariable(CONFIG_DEBUG_OCTREE, false);
+    GetConfig().RegisterVariable(CONFIG_DEBUG_NAVIGATION, false);
+    GetConfig().RegisterVariable(CONFIG_PICK_MODE, SceneDocument::PickGeometries);
 
     return true;
 }
 
 void SceneEditor::HandleFileNewScene()
 {
-    mainWindow_->AddPage(new SceneDocument(*mainWindow_));
+    MainWindow& mainWindow = GetMainWindow();
+    mainWindow.AddPage(new SceneDocument(mainWindow));
 }
 
 void SceneEditor::HandleFileOpenScene()
 {
-    QScopedPointer<SceneDocument> scenePage(new SceneDocument(*mainWindow_));
+    MainWindow& mainWindow = GetMainWindow();
+    QScopedPointer<SceneDocument> scenePage(new SceneDocument(mainWindow));
     if (scenePage->Open())
-        mainWindow_->AddPage(scenePage.take());
+        mainWindow.AddPage(scenePage.take());
 }
 
 void SceneEditor::HandleCreateReplicatedNode()
 {
-    if (SceneDocument* scenePage = dynamic_cast<SceneDocument*>(mainWindow_->GetCurrentPage()))
+    MainWindow& mainWindow = GetMainWindow();
+    if (SceneDocument* scenePage = dynamic_cast<SceneDocument*>(mainWindow.GetCurrentPage()))
     {
 
     }
@@ -112,7 +112,8 @@ void SceneEditor::HandleCreateReplicatedNode()
 
 void SceneEditor::HandleCreateLocalNode()
 {
-    if (SceneDocument* scenePage = dynamic_cast<SceneDocument*>(mainWindow_->GetCurrentPage()))
+    MainWindow& mainWindow = GetMainWindow();
+    if (SceneDocument* scenePage = dynamic_cast<SceneDocument*>(mainWindow.GetCurrentPage()))
     {
 
     }
@@ -125,7 +126,8 @@ void SceneEditor::HandleCurrentPageChanged(Document* page)
 
 void SceneEditor::UpdateMenuVisibility()
 {
-    Document* page = mainWindow_->GetCurrentPage();
+    MainWindow& mainWindow = GetMainWindow();
+    Document* page = mainWindow.GetCurrentPage();
     SceneDocument* scenePage = dynamic_cast<SceneDocument*>(page);
     menuCreate_->menuAction()->setVisible(!!scenePage);
 }

@@ -34,17 +34,16 @@ public:
 
 protected:
     /// Initialize module.
-    virtual bool DoInitialize() override;
+    virtual bool Initialize() override;
 
 protected slots:
     /// Handle 'File/New Project'
     virtual void HandleFileNewProject();
 
 private:
-    /// Main window.
-    MainWindow* mainWindow_;
     /// 'File/New Project' action.
     QScopedPointer<QAction> actionFileNewProject_;
+
 };
 
 /// Urho3D Project document.

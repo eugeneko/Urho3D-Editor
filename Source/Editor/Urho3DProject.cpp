@@ -26,17 +26,16 @@ namespace Urho3DEditor
 {
 
 ProjectManager::ProjectManager()
-    : mainWindow_(nullptr)
 {
 
 }
 
-bool ProjectManager::DoInitialize()
+bool ProjectManager::Initialize()
 {
-    mainWindow_ = &GetMainWindow();
+    MainWindow& mainWindow = GetMainWindow();
 
-    QMenu* menuFile = mainWindow_->GetTopLevelMenu(MainWindow::MenuFile);
-    QAction* menuFileNew_After = mainWindow_->GetMenuAction(MainWindow::MenuFileNew_After);
+    QMenu* menuFile = mainWindow.GetTopLevelMenu(MainWindow::MenuFile);
+    QAction* menuFileNew_After = mainWindow.GetMenuAction(MainWindow::MenuFileNew_After);
     if (!menuFile || !menuFileNew_After)
         return false;
 

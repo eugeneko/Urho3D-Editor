@@ -34,7 +34,7 @@ public:
 
 protected:
     /// Initialize module.
-    virtual bool DoInitialize() override;
+    virtual bool Initialize() override;
 
 protected slots:
     /// Handle 'File/New Scene'
@@ -53,8 +53,6 @@ private:
     virtual void UpdateMenuVisibility();
 
 private:
-    /// Main window.
-    MainWindow* mainWindow_;
     /// 'File/New Scene' action.
     QScopedPointer<QAction> actionFileNewScene_;
     /// 'File/Open Scene' action.

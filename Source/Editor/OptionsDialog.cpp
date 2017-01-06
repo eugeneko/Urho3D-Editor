@@ -229,10 +229,19 @@ ConfigurationVariableImpl* CreateVariable(QVariant::Type type, const QVariant& d
     }
 }
 
+QPair<QString, QString> SplitComment(const QString& comment)
+{
+    const int separatorIndex = comment.indexOf('/');
+    if (separatorIndex < 0)
+        return qMakePair(QString(), comment);
+    else
+        return qMakePair(comment.left(separatorIndex), comment.mid(separatorIndex + 1));
+}
+
 ConfigurationVariable::ConfigurationVariable(Configuration& config, const QString& name)
     : config_(config)
     , name_(name)
-    , displayName_(config.GetComment(name_))
+    , displayName_(SplitComment(config.GetComment(name_)).second)
     , defaultValue_(config.GetDefaultValue(name_))
     , decoration_(config.GetDecoration(name_))
     , impl_(CreateVariable(defaultValue_.type(), decoration_))
@@ -342,12 +351,11 @@ void OptionsDialog::SetupVariables()
     {
         const QString& name = iter.key();
         const QString comment = config_.GetComment(name);
-        const int separatorIndex = comment.indexOf('/');
-        const QString group = separatorIndex < 0 ? GROUP_OTHER : comment.left(separatorIndex);
+        const QString group = SplitComment(comment).first;
 
         ConfigurationVariable* variable = new ConfigurationVariable(config_, name);
         variable->setParent(this);
-        variables_[group].push_back(variable);
+        variables_[group.isEmpty() ? GROUP_OTHER : group].push_back(variable);
     }
 
     for (VariableGroup& group : variables_)

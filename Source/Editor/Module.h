@@ -55,14 +55,16 @@ private:
 
 };
 
-/// Module of Urho3D Editor.
+/// Module of Urho3D Editor. Mustn't be used before Initialize() call.
 class Module : public QObject
 {
     Q_OBJECT
 
 public:
+    /// Attach module to system.
+    void Construct(ModuleSystem& system);
     /// Initialize module.
-    bool Initialize(ModuleSystem& system);
+    virtual bool Initialize() { return true; }
 
     /// Get config.
     Configuration& GetConfig() { return system_->GetConfig(); }
@@ -74,10 +76,6 @@ public:
     Module* GetModule(const QString& name) const;
     /// Get module by type.
     template <class T> T* GetModule() const { return dynamic_cast<T*>(GetModule(T::staticMetaObject.className())); }
-
-protected:
-    /// Initialize module.
-    virtual bool DoInitialize() { return true; }
 
 private:
     /// Module system.

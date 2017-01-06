@@ -36,7 +36,7 @@ public:
 
 protected:
     /// Initialize module.
-    virtual bool DoInitialize() override;
+    virtual bool Initialize() override;
 
 protected slots:
     /// Handle 'View/Hierarchy Window'
@@ -47,8 +47,6 @@ protected slots:
     virtual void HandleCurrentPageChanged(Document* page);
 
 private:
-    /// Main window.
-    MainWindow* mainWindow_;
     /// 'View/Hierarchy Window' action.
     QScopedPointer<QAction> actionViewHierarchyWindow_;
 

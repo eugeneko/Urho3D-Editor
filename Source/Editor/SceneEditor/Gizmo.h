@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Module.h"
 #include <Urho3D/Scene/Node.h>
 #include <QObject>
 
@@ -16,6 +17,23 @@ namespace Urho3DEditor
 class SceneDocument;
 
 /// Gizmo manager.
+class GizmoManager : public Module
+{
+    Q_OBJECT
+
+public:
+    /// 'Gizmo Type' variable.
+    static const QString VarGizmoMode;
+
+public:
+
+protected:
+    /// Initialize module.
+    virtual bool Initialize() override;
+
+};
+
+/// Gizmo.
 class Gizmo : public QObject
 {
     Q_OBJECT

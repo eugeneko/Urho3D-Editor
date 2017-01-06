@@ -25,7 +25,8 @@ ModuleSystem::ModuleSystem(Configuration& config, MainWindow& mainWindow, Urho3D
 void ModuleSystem::AddModule(const QString& name, Module* module)
 {
     Q_ASSERT(module);
-    if (module->Initialize(*this))
+    module->Construct(*this);
+    if (module->Initialize())
         modules_.insert(name, QSharedPointer<Module>(module));
     else
     {
@@ -49,10 +50,9 @@ Module* ModuleSystem::GetModule(const QString& name) const
     return modules_.value(name).data();
 }
 
-bool Module::Initialize(ModuleSystem& system)
+void Module::Construct(ModuleSystem& system)
 {
     system_ = &system;
-    return DoInitialize();
 }
 
 

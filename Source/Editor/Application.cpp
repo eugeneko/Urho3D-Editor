@@ -11,6 +11,7 @@
 #include "Urho3DProject.h"
 #include "SceneEditor/HierarchyWindow.h"
 #include "SceneEditor/SceneEditor.h"
+#include "SceneEditor/Gizmo.h"
 
 namespace Urho3DEditor
 {
@@ -51,6 +52,7 @@ bool Application::Initialize()
 
     moduleSystem_->AddModule(new SceneEditor());
     moduleSystem_->AddModule(new HierarchyWindow());
+    moduleSystem_->AddModule(new GizmoManager());
     return true;
 }
 

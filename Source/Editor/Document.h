@@ -52,7 +52,10 @@ public:
         if (!object)
         {
             object = new TObject(*document);
-            object->setParent(parent);
+            if (parent)
+                object->setParent(parent);
+            else
+                object->setParent(this);
             objects_.insert(className, object);
         }
         return object;

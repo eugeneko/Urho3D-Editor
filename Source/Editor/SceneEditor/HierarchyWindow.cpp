@@ -16,17 +16,15 @@ HierarchyWindow::HierarchyWindow()
 {
 }
 
-bool HierarchyWindow::DoInitialize()
+bool HierarchyWindow::Initialize()
 {
-    mainWindow_ = &GetMainWindow();
-    if (!mainWindow_)
-        return false;
+    MainWindow& mainWindow = GetMainWindow();
 
-    QMenu* menuView = mainWindow_->GetTopLevelMenu(MainWindow::MenuView);
+    QMenu* menuView = mainWindow.GetTopLevelMenu(MainWindow::MenuView);
     if (!menuView)
         return false;
 
-    connect(mainWindow_, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
+    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 
     actionViewHierarchyWindow_.reset(menuView->addAction("Hierarchy Window"));
     actionViewHierarchyWindow_->setCheckable(true);
@@ -38,11 +36,12 @@ bool HierarchyWindow::DoInitialize()
 
 void HierarchyWindow::HandleViewHierarchyWindow(bool checked)
 {
+    MainWindow& mainWindow = GetMainWindow();
     if (checked)
     {
         hierarchyWindow_.reset(new QDockWidget("Hierarchy Window"));
-        mainWindow_->AddDock(Qt::LeftDockWidgetArea, hierarchyWindow_.data());
-        HandleCurrentPageChanged(mainWindow_->GetCurrentPage());
+        mainWindow.AddDock(Qt::LeftDockWidgetArea, hierarchyWindow_.data());
+        HandleCurrentPageChanged(mainWindow.GetCurrentPage());
     }
     else
     {

@@ -11,6 +11,18 @@
 namespace Urho3DEditor
 {
 
+const QString GizmoManager::VarGizmoMode = "scene/gizmo/mode";
+
+bool GizmoManager::Initialize()
+{
+    Configuration& config = GetConfig();
+    QStringList gizmoTypeNames;
+    gizmoTypeNames << "None" << "Position" << "Rotation" << "Scale";
+    config.RegisterVariable(VarGizmoMode, Gizmo::GizmoNone, "Scene.Gizmo/Mode", gizmoTypeNames);
+    return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
 Gizmo::Gizmo(SceneDocument& page)
     : page_(page)
     , gizmoNode_(page.GetContext())
