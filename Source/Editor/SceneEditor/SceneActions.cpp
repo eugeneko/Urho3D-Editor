@@ -1,5 +1,5 @@
 #include "SceneActions.h"
-#include "SceneEditor.h" // #TODO Split it
+#include "SceneDocument.h"
 #include <Urho3D/Scene/Node.h>
 #include <Urho3D/Scene/Scene.h>
 

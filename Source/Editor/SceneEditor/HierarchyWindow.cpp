@@ -1,6 +1,6 @@
 #include "HierarchyWindow.h"
 // #include "Configuration.h"
-#include "SceneEditor.h"
+#include "SceneDocument.h"
 #include "../MainWindow.h"
 #include "../Bridge.h"
 #include <Urho3D/Scene/Component.h>

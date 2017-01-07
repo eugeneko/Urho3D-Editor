@@ -1,6 +1,6 @@
 #include "Gizmo.h"
 #include "SceneActions.h"
-#include "SceneEditor.h"
+#include "SceneDocument.h"
 #include "../Configuration.h"
 #include "../MainWindow.h"
 #include "../Bridge.h"
