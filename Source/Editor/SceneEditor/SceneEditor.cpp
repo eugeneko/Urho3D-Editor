@@ -199,10 +199,31 @@ void SceneDocument::RemoveOverlay(SceneOverlay* overlay)
     overlays_.removeAll(overlay);
 }
 
+void SceneDocument::AddAction(const ActionGroup& actionGroup)
+{
+    actions_.push_back(actionGroup);
+}
+
+void SceneDocument::UndoAction()
+{
+    // #TODO Implement me
+}
+
+void SceneDocument::RedoAction()
+{
+    // #TODO Implement me
+}
+
+Urho3D::Camera& SceneDocument::GetCurrentCamera()
+{
+    return camera_.GetCamera();
+}
+
 void SceneDocument::SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents)
 {
     selectedNodes_ = selectedNodes;
     selectedComponents_ = selectedComponents;
+    GatherSelectedNodes();
     emit selectionChanged();
 }
 
@@ -219,6 +240,12 @@ void SceneDocument::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMa
     using namespace Urho3D;
 
     const float timeStep = eventData[Update::P_TIMESTEP].GetFloat();
+
+    /// Update overlays
+    Input* input = GetSubsystem<Input>();
+    const Urho3D::Ray ray = GetCameraRay(input->GetMousePosition());
+    for (SceneOverlay* overlay : overlays_)
+        overlay->Update(ray, timeStep);
 
     Vector3 movement;
     if (widget_->IsKeyPressed(Qt::Key_W))
@@ -239,7 +266,6 @@ void SceneDocument::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMa
         movement *= 5.0f;
 
     Urho3D::Vector3 rotation;
-    Input* input = GetSubsystem<Input>();
     if (input->IsMouseGrabbed())
     {
         const IntVector2 mouseMove = input->GetMouseMove();
@@ -579,6 +605,13 @@ void SceneDocument::PerformRaycast(bool mouseClick)
         }
     }
 
+}
+
+void SceneDocument::GatherSelectedNodes()
+{
+    selectedNodesCombined_ = selectedNodes_;
+    for (Urho3D::Component* component : selectedComponents_)
+        selectedNodesCombined_.insert(component->GetNode());
 }
 
 }

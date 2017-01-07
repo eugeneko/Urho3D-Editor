@@ -64,8 +64,11 @@ public:
     StringVariableImpl(QValidator* validator = nullptr)
         : widget_(new QLineEdit())
     {
-        widget_->setValidator(validator);
-        validator->setParent(widget_.data());
+        if (validator)
+        {
+            widget_->setValidator(validator);
+            validator->setParent(widget_.data());
+        }
     }
 
     /// Get widget.
@@ -315,6 +318,8 @@ void OptionsDialog::HandleListRowChanged(int row)
 
     if (currentGroup_)
         currentGroup_->setVisible(true);
+
+    resize(sizeHint());
 }
 
 void OptionsDialog::HandleOk()
@@ -412,22 +417,31 @@ void OptionsDialog::SetupLayout()
     for (const QString& group : groups)
     {
         QScrollArea* variablesGroupArea = new QScrollArea;
-        variablesGroupArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        variablesGroupArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+        variablesGroupArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         variablesGroupArea->setVisible(false);
+        variablesGroupArea->setWidgetResizable(true);
         variablesGroupArea->setObjectName(group);
         mainLayout->addWidget(variablesGroupArea);
         mainLayout->setStretchFactor(variablesGroupArea, 1);
         groups_.push_back(variablesGroupArea);
 
-        QWidget* variablesGroup = new QWidget;
+        QWidget* variableGroupWidget = new QWidget;
         QFormLayout* variablesLayout = new QFormLayout;
-        variablesGroup->setLayout(variablesLayout);
+        variablesLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+        variableGroupWidget->setLayout(variablesLayout);
 
         for (ConfigurationVariable* variable : variables_[group])
             variablesLayout->addRow(variable->GetDisplayName(), variable->GetWidget());
 
-        variablesGroupArea->setWidget(variablesGroup);
+        variablesGroupArea->setWidget(variableGroupWidget);
     }
+
+    // Setup dialog layout
+    QVBoxLayout* dialogLayout = new QVBoxLayout;
+    dialogLayout->addLayout(mainLayout);
+    dialogLayout->addLayout(buttonsLayout);
+    setLayout(dialogLayout);
 
     // Select group
     if (groups_.size() > 0)
@@ -436,12 +450,6 @@ void OptionsDialog::SetupLayout()
         groupsList->setCurrentRow(currentIndex);
         HandleListRowChanged(currentIndex);
     }
-
-    // Setup dialog layout
-    QVBoxLayout* dialogLayout = new QVBoxLayout;
-    dialogLayout->addLayout(mainLayout);
-    dialogLayout->addLayout(buttonsLayout);
-    setLayout(dialogLayout);
 }
 
 }

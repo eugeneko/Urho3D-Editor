@@ -2,6 +2,7 @@
 
 #include "../Module.h"
 #include "../Document.h"
+#include "../Action.h"
 #include <QAction>
 #include <QSet>
 #include <Urho3D/Graphics/Camera.h>
@@ -128,12 +129,24 @@ public:
     /// Remove overlay.
     void RemoveOverlay(SceneOverlay* overlay);
 
+    /// Add action.
+    void AddAction(const ActionGroup& actionGroup);
+    /// Undo action.
+    void UndoAction();
+    /// Redo action.
+    void RedoAction();
+
+    /// Get current camera.
+    Urho3D::Camera& GetCurrentCamera();
+
     /// Set selection.
     virtual void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
     /// Get selected nodes.
     const NodeSet& GetSelectedNodes() const { return selectedNodes_; }
     /// Get selected components.
     const ComponentSet& GetSelectedComponents() const { return selectedComponents_; }
+    /// Get selected nodes and components.
+    const NodeSet& GetSelectedNodesAndComponents() const { return selectedNodesCombined_; }
 
     /// Return title of the document.
     virtual QString GetTitle() override { return GetRawTitle(); }
@@ -149,6 +162,8 @@ public:
 signals:
     /// Signals that selection has been changed.
     void selectionChanged();
+    /// Signals that node transforms has been changed.
+    void nodeTransformChanged(const Urho3D::Node& node);
 
 private:
     /// Handle update.
@@ -177,6 +192,8 @@ protected:
     virtual void DrawDebugComponents();
     /// Perform ray cast.
     virtual void PerformRaycast(bool mouseClick);
+    /// Gather selected nodes.
+    void GatherSelectedNodes();
 
 protected:
     /// Widget.
@@ -191,10 +208,16 @@ protected:
     /// Viewport.
     Urho3D::SharedPtr<Urho3D::Viewport> viewport_;
 
+    /// Actions.
+    QVector<ActionGroup> actions_;
+
     /// Selected nodes.
     NodeSet selectedNodes_;
     /// Selected components.
     ComponentSet selectedComponents_;
+    /// Selected nodes and components.
+    NodeSet selectedNodesCombined_;
+
 };
 
 }

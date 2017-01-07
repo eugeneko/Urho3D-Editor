@@ -11,9 +11,11 @@ class SceneOverlay
 {
 public:
     /// Mouse button up/down event. Returns true if event was consumed.
-    virtual bool MouseButtonEvent(const Urho3D::Ray& cameraRay, Qt::MouseButton button, bool pressed, bool consumed) = 0;
+    virtual bool MouseButtonEvent(const Urho3D::Ray& cameraRay, Qt::MouseButton button, bool pressed, bool consumed);
+    /// General update.
+    virtual void Update(const Urho3D::Ray& cameraRay, float timeStep);
     /// Post-render update. It is safe to render here.
-    virtual void PostRenderUpdate(const Urho3D::Ray& cameraRay) = 0;
+    virtual void PostRenderUpdate(const Urho3D::Ray& cameraRay);
 };
 
 }
