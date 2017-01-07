@@ -2,6 +2,7 @@
 
 #include "Module.h"
 #include <QSettings>
+#include <QVector>
 
 namespace Urho3DEditor
 {
@@ -11,8 +12,24 @@ class Configuration : public QObject
     Q_OBJECT
 
 public:
+    /// Variable description.
+    struct VariableDesc
+    {
+        /// Name.
+        QString name_;
+        /// Default value.
+        QVariant defaultValue_;
+        /// Display text.
+        QString displayText_;
+        /// Decoration info.
+        QVariant decoration_;
+    };
+    /// Name of default section
+    static const QString DefaultSection;
     /// Map of variables.
     using VariableMap = QHash<QString, QVariant>;
+    /// Map of sections.
+    using SectionMap = QHash<QString, QVector<VariableDesc>>;
 
     static const QString CORE_LASTDIRECTORY;
     static const QString PROJECT_RECENT;
@@ -27,19 +44,16 @@ public:
 
     /// Register variable.
     void RegisterVariable(const QString& key, const QVariant& defaultValue,
-        const QString& comment = QString(), const QVariant& decoration = QVariant());
+        const QString& section = QString(), const QString& displayText = QString(), const QVariant& decoration = QVariant());
+
     /// Get default value of variable.
     QVariant GetDefaultValue(const QString& key);
     /// Get value of variable.
     QVariant GetValue(const QString& key);
     /// Set value of variable.
     void SetValue(const QString& key, const QVariant& value, bool saveImmediately = false);
-    /// Get comment.
-    QString GetComment(const QString& key) const;
-    /// Get decoration info.
-    QVariant GetDecoration(const QString& key) const;
-    /// Get all registered variables with default values.
-    const VariableMap& GetVariables() const { return defaultValues_; }
+    /// Get all registered variables per-section.
+    const SectionMap& GetSections() const { return sections_; }
 
     // #TODO Remove me
     /// Get last directory.
@@ -61,10 +75,8 @@ private:
     VariableMap variables_;
     /// Default values.
     VariableMap defaultValues_;
-    /// Comments.
-    QHash<QString, QString> comments_;
-    /// Decorations.
-    QHash<QString, QVariant> decorations_;
+    /// Sections.
+    QHash<QString, QVector<VariableDesc>> sections_;
 
 };
 

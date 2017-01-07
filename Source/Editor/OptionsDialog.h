@@ -19,9 +19,10 @@ class ConfigurationVariable : public QObject
 
 public:
     /// Construct.
-    ConfigurationVariable(Configuration& config, const QString& name);
-    /// Get display name.
-    const QString& GetDisplayName() const;
+    ConfigurationVariable(Configuration& config, const QString& name,
+        const QVariant& defaultValue, const QString& displayText, const QVariant& decorationInfo);
+    /// Get display text.
+    const QString& GetDisplayText() const;
     /// Get widget.
     QWidget* GetWidget();
     /// Save variable value.
@@ -35,11 +36,11 @@ private:
     /// Name.
     const QString name_;
     /// Display name.
-    const QString displayName_;
+    const QString displayText_;
     /// Default value.
     const QVariant defaultValue_;
     /// Decoration info.
-    const QVariant decoration_;
+    const QVariant decorationInfo_;
     /// Implementation details.
     QScopedPointer<ConfigurationVariableImpl> impl_;
 
@@ -51,12 +52,8 @@ class OptionsDialog : public QDialog
     Q_OBJECT
 
 public:
-    /// Name of 'Other' group
-    static const QString GROUP_OTHER;
-    /// Variable Group container.
-    using VariableGroup = QVector<ConfigurationVariable*>;
-    /// Variable Groups container.
-    using VariableGroups = QHash<QString, VariableGroup>;
+    /// Section that contains variables.
+    using Section = QVector<ConfigurationVariable*>;
 
 public:
     /// Construct.
@@ -65,8 +62,8 @@ public:
     void Save();
     /// Reset variables.
     void Reset();
-    /// Reset variables from group.
-    void ResetGroup(const QString& groupName);
+    /// Reset variables from section.
+    void ResetSection(const QString& sectionName);
 
 private slots:
     /// Handle list item selected.
@@ -94,11 +91,11 @@ private:
     /// Dialog layout.
     QScopedPointer<QVBoxLayout> dialogLayout_;
     /// Variables.
-    VariableGroups variables_;
-    /// Group widgets.
-    QVector<QWidget*> groups_;
-    /// Current group.
-    QWidget* currentGroup_;
+    QHash<QString, Section> variables_;
+    /// Section widgets.
+    QVector<QWidget*> sections_;
+    /// Current section.
+    QWidget* currentSection_;
 
 };
 

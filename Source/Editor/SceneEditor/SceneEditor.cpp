@@ -76,7 +76,7 @@ bool SceneEditor::Initialize()
     UpdateMenuVisibility();
 
     // Setup config
-    GetConfig().RegisterVariable(CONFIG_HOTKEY_MODE, SceneDocument::HotKeyStandard, "", QStringList({ "Standard", "Blender" }));
+    GetConfig().RegisterVariable(CONFIG_HOTKEY_MODE, SceneDocument::HotKeyStandard, "", "", QStringList({ "Standard", "Blender" }));
     GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
     GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
     GetConfig().RegisterVariable(CONFIG_DEBUG_RENDERING, false);

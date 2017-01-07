@@ -4,6 +4,8 @@
 namespace Urho3DEditor
 {
 
+const QString Configuration::DefaultSection = "(Internal)";
+
 const QString Configuration::CORE_LASTDIRECTORY = "Core.LastDirectory";
 const QString Configuration::PROJECT_RECENT = "Project.Recent";
 
@@ -25,13 +27,16 @@ void Configuration::Save()
 }
 
 void Configuration::RegisterVariable(const QString& key, const QVariant& defaultValue,
-    const QString& comment /*= QString()*/, const QVariant& decoration /*= QVariant()*/)
+    const QString& section /*= QString()*/, const QString& displayText /*= QString()*/, const QVariant& decoration /*= QVariant()*/)
 {
     defaultValues_[key] = defaultValue;
-    if (!comment.isEmpty())
-        comments_[key] = comment;
-    if (!decoration.isNull())
-        decorations_[key] = decoration;
+
+    VariableDesc desc;
+    desc.name_ = key;
+    desc.defaultValue_ = defaultValue;
+    desc.displayText_ = displayText;
+    desc.decoration_ = decoration;
+    sections_[section.isEmpty() ? DefaultSection : section].push_back(desc);
 }
 
 QVariant Configuration::GetDefaultValue(const QString& key)
@@ -58,16 +63,6 @@ void Configuration::SetValue(const QString& key, const QVariant& value, bool sav
     variables_[key] = value;
     if (saveImmediately)
         settings_.setValue(key, value);
-}
-
-QString Configuration::GetComment(const QString& key) const
-{
-    return comments_.value(key);
-}
-
-QVariant Configuration::GetDecoration(const QString& key) const
-{
-    return decorations_.value(key);
 }
 
 void Configuration::SetLastDirectoryByFileName(const QString& fileName)

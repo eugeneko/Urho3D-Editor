@@ -69,6 +69,10 @@ public:
             widget_->setValidator(validator);
             validator->setParent(widget_.data());
         }
+        else
+        {
+            widget_->setMinimumWidth(200);
+        }
     }
 
     /// Get widget.
@@ -232,29 +236,21 @@ ConfigurationVariableImpl* CreateVariable(QVariant::Type type, const QVariant& d
     }
 }
 
-QPair<QString, QString> SplitComment(const QString& comment)
-{
-    const int separatorIndex = comment.indexOf('/');
-    if (separatorIndex < 0)
-        return qMakePair(QString(), comment);
-    else
-        return qMakePair(comment.left(separatorIndex), comment.mid(separatorIndex + 1));
-}
-
-ConfigurationVariable::ConfigurationVariable(Configuration& config, const QString& name)
+ConfigurationVariable::ConfigurationVariable(Configuration& config, const QString& name,
+    const QVariant& defaultValue, const QString& displayText, const QVariant& decorationInfo)
     : config_(config)
     , name_(name)
-    , displayName_(SplitComment(config.GetComment(name_)).second)
-    , defaultValue_(config.GetDefaultValue(name_))
-    , decoration_(config.GetDecoration(name_))
-    , impl_(CreateVariable(defaultValue_.type(), decoration_))
+    , displayText_(displayText.isEmpty() ? name : displayText)
+    , defaultValue_(defaultValue)
+    , decorationInfo_(decorationInfo)
+    , impl_(CreateVariable(defaultValue_.type(), decorationInfo_))
 {
     impl_->SetValue(config_.GetValue(name_));
 }
 
-const QString& ConfigurationVariable::GetDisplayName() const
+const QString& ConfigurationVariable::GetDisplayText() const
 {
-    return displayName_.isEmpty() ? name_ : displayName_;
+    return displayText_.isEmpty() ? name_ : displayText_;
 }
 
 QWidget* ConfigurationVariable::GetWidget()
@@ -273,12 +269,10 @@ void ConfigurationVariable::Reset()
 }
 
 //////////////////////////////////////////////////////////////////////////
-const QString OptionsDialog::GROUP_OTHER = "(Other)";
-
 OptionsDialog::OptionsDialog(Configuration& config)
     : QDialog()
     , config_(config)
-    , currentGroup_(nullptr)
+    , currentSection_(nullptr)
 {
     setWindowTitle("Options");
     SetupVariables();
@@ -287,7 +281,7 @@ OptionsDialog::OptionsDialog(Configuration& config)
 
 void OptionsDialog::Save()
 {
-    for (VariableGroup& group : variables_)
+    for (Section& group : variables_)
         for (ConfigurationVariable* variable : group)
             variable->Save();
     config_.Save();
@@ -295,12 +289,12 @@ void OptionsDialog::Save()
 
 void OptionsDialog::Reset()
 {
-    for (VariableGroup& group : variables_)
+    for (Section& group : variables_)
         for (ConfigurationVariable* variable : group)
             variable->Reset();
 }
 
-void OptionsDialog::ResetGroup(const QString& groupName)
+void OptionsDialog::ResetSection(const QString& groupName)
 {
     if (variables_.contains(groupName))
     {
@@ -311,13 +305,13 @@ void OptionsDialog::ResetGroup(const QString& groupName)
 
 void OptionsDialog::HandleListRowChanged(int row)
 {
-    for (QWidget* group : groups_)
+    for (QWidget* group : sections_)
         group->setVisible(false);
 
-    currentGroup_ = (row >= 0 && row < groups_.size()) ? groups_[row] : nullptr;
+    currentSection_ = (row >= 0 && row < sections_.size()) ? sections_[row] : nullptr;
 
-    if (currentGroup_)
-        currentGroup_->setVisible(true);
+    if (currentSection_)
+        currentSection_->setVisible(true);
 
     resize(sizeHint());
 }
@@ -340,8 +334,8 @@ void OptionsDialog::HandleCancel()
 
 void OptionsDialog::HandleResetThese()
 {
-    if (currentGroup_)
-        ResetGroup(currentGroup_->objectName());
+    if (currentSection_)
+        ResetSection(currentSection_->objectName());
 }
 
 void OptionsDialog::HandleResetAll()
@@ -351,25 +345,17 @@ void OptionsDialog::HandleResetAll()
 
 void OptionsDialog::SetupVariables()
 {
-    const Configuration::VariableMap& variables = config_.GetVariables();
-    for (Configuration::VariableMap::ConstIterator iter = variables.begin(); iter != variables.end(); ++iter)
+    const Configuration::SectionMap& sections = config_.GetSections();
+    for (Configuration::SectionMap::ConstIterator iter = sections.begin(); iter != sections.end(); ++iter)
     {
-        const QString& name = iter.key();
-        const QString comment = config_.GetComment(name);
-        const QString group = SplitComment(comment).first;
-
-        ConfigurationVariable* variable = new ConfigurationVariable(config_, name);
-        variable->setParent(this);
-        variables_[group.isEmpty() ? GROUP_OTHER : group].push_back(variable);
-    }
-
-    for (VariableGroup& group : variables_)
-    {
-        qSort(group.begin(), group.end(),
-            [](ConfigurationVariable* lhs, ConfigurationVariable* rhs)
+        const QString& sectionName = iter.key();
+        for (const Configuration::VariableDesc& desc : *iter)
         {
-            return lhs->GetDisplayName().compare(rhs->GetDisplayName(), Qt::CaseInsensitive) < 0;
-        });
+            ConfigurationVariable* variable = new ConfigurationVariable(config_, desc.name_,
+                desc.defaultValue_, desc.displayText_, desc.decoration_);
+            variable->setParent(this);
+            variables_[sectionName].push_back(variable);
+        }
     }
 }
 
@@ -424,7 +410,7 @@ void OptionsDialog::SetupLayout()
         variablesGroupArea->setObjectName(group);
         mainLayout->addWidget(variablesGroupArea);
         mainLayout->setStretchFactor(variablesGroupArea, 1);
-        groups_.push_back(variablesGroupArea);
+        sections_.push_back(variablesGroupArea);
 
         QWidget* variableGroupWidget = new QWidget;
         QFormLayout* variablesLayout = new QFormLayout;
@@ -432,7 +418,7 @@ void OptionsDialog::SetupLayout()
         variableGroupWidget->setLayout(variablesLayout);
 
         for (ConfigurationVariable* variable : variables_[group])
-            variablesLayout->addRow(variable->GetDisplayName(), variable->GetWidget());
+            variablesLayout->addRow(variable->GetDisplayText(), variable->GetWidget());
 
         variablesGroupArea->setWidget(variableGroupWidget);
     }
@@ -444,9 +430,9 @@ void OptionsDialog::SetupLayout()
     setLayout(dialogLayout);
 
     // Select group
-    if (groups_.size() > 0)
+    if (sections_.size() > 0)
     {
-        const int currentIndex = qMin(groups_.size() - 1, 1);
+        const int currentIndex = qMin(sections_.size() - 1, 1);
         groupsList->setCurrentRow(currentIndex);
         HandleListRowChanged(currentIndex);
     }

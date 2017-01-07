@@ -21,9 +21,9 @@ const QString GizmoManager::VarSnapFactor =       "scene.gizmo/snap.factor";
 const QString GizmoManager::VarSnapPosition =     "scene.gizmo/snap.position";
 const QString GizmoManager::VarSnapRotation =     "scene.gizmo/snap.rotation";
 const QString GizmoManager::VarSnapScale =        "scene.gizmo/snap.scale";
-const QString GizmoManager::VarSnapPositionStep = "scene.gizmo/snap.step.position";
-const QString GizmoManager::VarSnapRotationStep = "scene.gizmo/snap.step.rotation";
-const QString GizmoManager::VarSnapScaleStep =    "scene.gizmo/snap.step.scale";
+const QString GizmoManager::VarSnapPositionStep = "scene.gizmo/step.position";
+const QString GizmoManager::VarSnapRotationStep = "scene.gizmo/step.rotation";
+const QString GizmoManager::VarSnapScaleStep =    "scene.gizmo/step.scale";
 
 const QString GizmoManager::VarModelPosition = "scene.gizmo/model.position";
 const QString GizmoManager::VarModelRotation = "scene.gizmo/model.rotation";
@@ -46,31 +46,31 @@ bool GizmoManager::Initialize()
 
     QStringList gizmoTypeNames;
     gizmoTypeNames << "Position" << "Rotation" << "Scale" << "Select";
-    config.RegisterVariable(VarGizmoType, (int)GizmoType::Position, "Scene.Gizmo/.Type", gizmoTypeNames);
+    config.RegisterVariable(VarGizmoType, (int)GizmoType::Position, "Scene.Gizmo", "Type", gizmoTypeNames);
 
     QStringList gizmoAxisModeNames;
     gizmoAxisModeNames << "Local" << "World";
-    config.RegisterVariable(VarGizmoAxisMode, (int)GizmoAxisMode::Local, "Scene.Gizmo/.Axis Mode", gizmoAxisModeNames);
+    config.RegisterVariable(VarGizmoAxisMode, (int)GizmoAxisMode::Local, "Scene.Gizmo", "Axis Mode", gizmoAxisModeNames);
 
-    config.RegisterVariable(VarSnapFactor,       1.0,   "Scene.Gizmo/Snap Factor");
-    config.RegisterVariable(VarSnapPosition,     false, "Scene.Gizmo/Enable Snap Position");
-    config.RegisterVariable(VarSnapRotation,     false, "Scene.Gizmo/Enable Snap Rotation");
-    config.RegisterVariable(VarSnapScale,        false, "Scene.Gizmo/Enable Snap Scale");
-    config.RegisterVariable(VarSnapPositionStep, 0.5,   "Scene.Gizmo/Step of Position Snap");
-    config.RegisterVariable(VarSnapRotationStep, 5.0,   "Scene.Gizmo/Step of Rotation Snap");
-    config.RegisterVariable(VarSnapScaleStep,    1.0,   "Scene.Gizmo/Step of Scale Snap");
+    config.RegisterVariable(VarSnapFactor,       1.0,   "Scene.Gizmo", "Snap Factor");
+    config.RegisterVariable(VarSnapPosition,     false, "Scene.Gizmo", "Snap Position");
+    config.RegisterVariable(VarSnapRotation,     false, "Scene.Gizmo", "Snap Rotation");
+    config.RegisterVariable(VarSnapScale,        false, "Scene.Gizmo", "Snap Scale");
+    config.RegisterVariable(VarSnapPositionStep, 0.5,   "Scene.Gizmo", "Position Step");
+    config.RegisterVariable(VarSnapRotationStep, 5.0,   "Scene.Gizmo", "Rotation Step");
+    config.RegisterVariable(VarSnapScaleStep,    1.0,   "Scene.Gizmo", "Scale Step");
 
-    config.RegisterVariable(VarModelPosition, "Models/Editor/Axes.mdl",       "Scene.Gizmo/Model Position");
-    config.RegisterVariable(VarModelRotation, "Models/Editor/RotateAxes.mdl", "Scene.Gizmo/Model Rotation");
-    config.RegisterVariable(VarModelScale,    "Models/Editor/ScaleAxes.mdl",  "Scene.Gizmo/Model Scale");
+    config.RegisterVariable(VarModelPosition, "Models/Editor/Axes.mdl",       "Scene.Gizmo", "Model Position");
+    config.RegisterVariable(VarModelRotation, "Models/Editor/RotateAxes.mdl", "Scene.Gizmo", "Model Rotation");
+    config.RegisterVariable(VarModelScale,    "Models/Editor/ScaleAxes.mdl",  "Scene.Gizmo", "Model Scale");
 
-    config.RegisterVariable(VarMaterialRed,   "Materials/Editor/RedUnlit.xml",   "Scene.Gizmo/Material Red");
-    config.RegisterVariable(VarMaterialGreen, "Materials/Editor/GreenUnlit.xml", "Scene.Gizmo/Material Green");
-    config.RegisterVariable(VarMaterialBlue,  "Materials/Editor/BlueUnlit.xml",  "Scene.Gizmo/Material Blue");
+    config.RegisterVariable(VarMaterialRed,   "Materials/Editor/RedUnlit.xml",   "Scene.Gizmo", "Material Red");
+    config.RegisterVariable(VarMaterialGreen, "Materials/Editor/GreenUnlit.xml", "Scene.Gizmo", "Material Green");
+    config.RegisterVariable(VarMaterialBlue,  "Materials/Editor/BlueUnlit.xml",  "Scene.Gizmo", "Material Blue");
 
-    config.RegisterVariable(VarMaterialRedHighlight,   "Materials/Editor/BrightRedUnlit.xml",   "Scene.Gizmo/Material Red (Highlight)");
-    config.RegisterVariable(VarMaterialGreenHighlight, "Materials/Editor/BrightGreenUnlit.xml", "Scene.Gizmo/Material Green (Highlight)");
-    config.RegisterVariable(VarMaterialBlueHighlight,  "Materials/Editor/BrightBlueUnlit.xml",  "Scene.Gizmo/Material Blue (Highlight)");
+    config.RegisterVariable(VarMaterialRedHighlight,   "Materials/Editor/BrightRedUnlit.xml",   "Scene.Gizmo", "Material Red (Highlight)");
+    config.RegisterVariable(VarMaterialGreenHighlight, "Materials/Editor/BrightGreenUnlit.xml", "Scene.Gizmo", "Material Green (Highlight)");
+    config.RegisterVariable(VarMaterialBlueHighlight,  "Materials/Editor/BrightBlueUnlit.xml",  "Scene.Gizmo", "Material Blue (Highlight)");
 
     return true;
 }
