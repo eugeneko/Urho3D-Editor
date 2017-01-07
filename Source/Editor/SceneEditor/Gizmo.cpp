@@ -52,13 +52,13 @@ bool GizmoManager::Initialize()
     gizmoAxisModeNames << "Local" << "World";
     config.RegisterVariable(VarGizmoAxisMode, (int)GizmoAxisMode::Local, "Scene.Gizmo/.Axis Mode", gizmoAxisModeNames);
 
-    config.RegisterVariable(VarSnapFactor,       1.0f,  "Scene.Gizmo/Snap Factor");
+    config.RegisterVariable(VarSnapFactor,       1.0,   "Scene.Gizmo/Snap Factor");
     config.RegisterVariable(VarSnapPosition,     false, "Scene.Gizmo/Enable Snap Position");
     config.RegisterVariable(VarSnapRotation,     false, "Scene.Gizmo/Enable Snap Rotation");
     config.RegisterVariable(VarSnapScale,        false, "Scene.Gizmo/Enable Snap Scale");
-    config.RegisterVariable(VarSnapPositionStep, 0.5f,  "Scene.Gizmo/Step of Position Snap");
-    config.RegisterVariable(VarSnapRotationStep, 5.0f,  "Scene.Gizmo/Step of Rotation Snap");
-    config.RegisterVariable(VarSnapScaleStep,    1.0f,  "Scene.Gizmo/Step of Scale Snap");
+    config.RegisterVariable(VarSnapPositionStep, 0.5,   "Scene.Gizmo/Step of Position Snap");
+    config.RegisterVariable(VarSnapRotationStep, 5.0,   "Scene.Gizmo/Step of Rotation Snap");
+    config.RegisterVariable(VarSnapScaleStep,    1.0,   "Scene.Gizmo/Step of Scale Snap");
 
     config.RegisterVariable(VarModelPosition, "Models/Editor/Axes.mdl",       "Scene.Gizmo/Model Position");
     config.RegisterVariable(VarModelRotation, "Models/Editor/RotateAxes.mdl", "Scene.Gizmo/Model Rotation");
