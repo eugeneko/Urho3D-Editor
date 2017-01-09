@@ -5,12 +5,12 @@
 #include "Widgets/Urho3DWidget.h"
 #include <Urho3D/Core/Context.h>
 #include <QApplication>
-#include <QDockWidget>
 #include <QMainWindow>
-#include <QMenuBar>
-#include <QSettings>
-#include <QTabWidget>
-#include <QVBoxLayout>
+
+class QDockWidget;
+class QMainWindow;
+class QDomNode;
+class QVBoxLayout;
 
 namespace Urho3DEditor
 {
@@ -22,6 +22,10 @@ class Document;
 class MainWindow : public QObject
 {
     Q_OBJECT
+
+public:
+    /// Contains name of layout file. Restart is required.
+    static const QString VarLayoutFileName;
 
 public:
     /// Top-level menus.
@@ -50,6 +54,8 @@ public:
     MainWindow(Configuration& config, QMainWindow& mainWindow, Urho3D::Context& context);
     /// Initialize.
     virtual bool Initialize();
+    /// Load layout.
+    virtual void LoadLayout();
 
     /// Get configuration.
     Configuration& GetConfig() const;
@@ -82,11 +88,15 @@ signals:
     /// Signals that document is closed.
     void pageClosed(Document* document);
 
-protected:
+private:
     /// Initialize layout.
-    virtual void InitializeLayout();
+    void InitializeLayout();
     /// Initialize menu.
-    virtual void InitializeMenu();
+    void InitializeMenu();
+    /// Read menu.
+    QMenu* ReadMenu(const QDomNode& node);
+    /// Read action.
+    QAction* ReadAction(const QDomNode& node);
 
 protected slots:
     /// Handle 'File/Close'

@@ -9,6 +9,7 @@ project (Urho3DEditor)
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
 find_package (Qt5Widgets)
+find_package (Qt5Xml)
 
 #
 # Setup Urho3D
@@ -49,13 +50,13 @@ foreach (SOURCE_FILE ${EDITOR_SOURCE})
 endforeach ()
 
 add_library (Urho3DEditor ${EDITOR_SOURCE})
-target_link_libraries (Urho3DEditor Qt5::Widgets) 
+target_link_libraries (Urho3DEditor Qt5::Widgets Qt5::Xml) 
 
 #
 # Setup Editor Launcher
 #
 
-qt5_add_resources(RESOURCES ${CMAKE_SOURCE_DIR}/Resources/QDarkStyle/style.qrc)
+qt5_add_resources(RESOURCES ${CMAKE_SOURCE_DIR}/Resources/QDarkStyle/style.qrc ${CMAKE_SOURCE_DIR}/Resources/Resources.qrc)
 add_executable (Urho3DEditorLauncher WIN32 ${CMAKE_SOURCE_DIR}/Source/EditorLauncher/Main.cpp ${RESOURCES})
 target_link_libraries (Urho3DEditorLauncher Urho3DEditor)
 set (TARGET_NAME Urho3DEditorLauncher)

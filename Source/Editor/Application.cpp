@@ -53,6 +53,8 @@ bool Application::Initialize()
     moduleSystem_->AddModule(new SceneEditor());
     moduleSystem_->AddModule(new HierarchyWindow());
     moduleSystem_->AddModule(new GizmoManager());
+
+    mainWindow_->LoadLayout();
     return true;
 }
 

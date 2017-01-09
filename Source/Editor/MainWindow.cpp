@@ -8,14 +8,15 @@
 #include <Urho3D/Resource/ResourceCache.h>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QTabBar>
 #include <QMessageBox>
-
-#include <QPushButton>
+#include <QTabBar>
 #include <QVBoxLayout>
+#include <QtXml/QDomDocument>
 
 namespace Urho3DEditor
 {
+
+const QString MainWindow::VarLayoutFileName = "global/layout";
 
 MainWindow::MainWindow(Configuration& config, QMainWindow& mainWindow, Urho3D::Context& context)
     : config_(config)
@@ -27,6 +28,8 @@ MainWindow::MainWindow(Configuration& config, QMainWindow& mainWindow, Urho3D::C
     , urho3DWidget_(new Urho3DWidget(context_))
 {
     urho3DWidget_->setVisible(false);
+
+    config.RegisterVariable(VarLayoutFileName, ":/Layout.xml", ".Global", "Layout");
 }
 
 bool MainWindow::Initialize()
@@ -34,6 +37,45 @@ bool MainWindow::Initialize()
     InitializeLayout();
     InitializeMenu();
     return true;
+}
+
+void MainWindow::LoadLayout()
+{
+    const QString fileName = config_.GetValue(VarLayoutFileName).toString();
+    QFile file(fileName);
+
+    // Close if cannot load layout
+    if (!file.open(QFile::ReadOnly | QFile::Text))
+    {
+        const QMessageBox::StandardButton button = QMessageBox::critical(&mainWindow_,
+            "Main Window error",
+            "Failed to load layout " + fileName + "\nReset to default?",
+            QMessageBox::Yes | QMessageBox::No);
+
+        if (button == QMessageBox::Yes)
+            config_.SetValue(VarLayoutFileName, config_.GetDefaultValue(VarLayoutFileName), true);
+
+        mainWindow_.close();
+        return;
+    }
+
+    // Read layout
+    QDomDocument xml;
+    if (!xml.setContent(&file))
+        return;
+
+    const QDomElement root = xml.documentElement();
+    const QDomNodeList children = root.childNodes();
+    for (int i = 0; i < children.count(); ++i)
+    {
+        const QDomNode node = children.at(i);
+        if (node.nodeName() == "menu")
+        {
+            const QDomNodeList menus = node.childNodes();
+            for (int j = 0; j < menus.count(); ++j)
+                mainWindow_.menuBar()->addMenu(ReadMenu(menus.at(j)));
+        }
+    }
 }
 
 Configuration& MainWindow::GetConfig() const
@@ -165,6 +207,36 @@ void MainWindow::InitializeMenu()
     connect(tabBar_.data(), SIGNAL(currentChanged(int)),    this, SLOT(HandleTabChanged(int)));
     connect(tabBar_.data(), SIGNAL(tabMoved(int, int)),     this, SLOT(HandleTabMoved(int, int)));
     connect(tabBar_.data(), SIGNAL(tabCloseRequested(int)), this, SLOT(HandleTabClosed(int)));
+}
+
+QMenu* MainWindow::ReadMenu(const QDomNode& node)
+{
+    const QDomNamedNodeMap attributes = node.attributes();
+    const QString name = attributes.namedItem("name").nodeValue();
+    QScopedPointer<QMenu> menu(new QMenu(name, &mainWindow_));
+
+    QDomNodeList children = node.childNodes();
+    for (int i = 0; i < children.size(); ++i)
+    {
+        const QDomNode child = children.at(i);
+        const QString type = child.nodeName();
+        if (type == "menu")
+            menu->addMenu(ReadMenu(child));
+        else if (type == "action")
+            menu->addAction(ReadAction(child));
+        else if (type == "separator")
+            menu->addSeparator();
+    }
+    return menu.take();
+}
+
+QAction* MainWindow::ReadAction(const QDomNode& node)
+{
+    const QDomNamedNodeMap attributes = node.attributes();
+    const QString name = attributes.namedItem("name").nodeValue();
+    // #TODO Add real action
+    QScopedPointer<QAction> action(new QAction(name, &mainWindow_));
+    return action.take();
 }
 
 void MainWindow::HandleFileClose()

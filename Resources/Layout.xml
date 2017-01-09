@@ -1,0 +1,34 @@
+<layout>
+    <menu>
+        <menu name="File">
+            <action name="New Project" />
+            <action name="New Scene" />
+            <separator/>
+            <action name="Open Scene..." />
+            <separator/>
+            <action name="Save" />
+            <action name="Save As..." />
+            <action name="Close" />
+            <separator/>
+            <action name="Exit" />
+        </menu>
+        <menu name="Edit">
+            <action name="Undo" />
+            <action name="Redo" />
+            <separator/>
+            <action name="Cut" />
+            <action name="Copy" />
+            <action name="Paste" />
+            <action name="Delete" />
+        </menu>
+        <menu name="View">
+            <action name="Hierarchy Browser" />
+        </menu>
+        <menu name="Tools">
+            <action name="Options..." />
+        </menu>
+        <menu name="Help">
+            <action name="About..." />
+        </menu>
+    </menu>
+</layout>
