@@ -103,14 +103,15 @@ QMenuBar* MainWindow::GetMenuBar() const
     return mainWindow_.menuBar();
 }
 
-QMenu* MainWindow::GetTopLevelMenu(TopLevelMenu menu) const
+QAction* MainWindow::GetAction(const QString& name) const
 {
-    return topLevelMenus_[menu];
+    return menuActions_.value(name);
 }
 
-QAction* MainWindow::GetMenuAction(MenuAction action) const
+void MainWindow::AddAction(const QString& name, QAction* action)
 {
-    return menuActions_.value(action, nullptr);
+    action->setParent(this);
+    menuActions_[name] = action;
 }
 
 void MainWindow::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
@@ -173,40 +174,40 @@ void MainWindow::InitializeLayout()
     tabBar_->setTabsClosable(true);
 
     mainWindow_.setCentralWidget(widget_.data());
+
+    connect(tabBar_.data(), SIGNAL(currentChanged(int)), this, SLOT(HandleTabChanged(int)));
+    connect(tabBar_.data(), SIGNAL(tabMoved(int, int)), this, SLOT(HandleTabMoved(int, int)));
+    connect(tabBar_.data(), SIGNAL(tabCloseRequested(int)), this, SLOT(HandleTabClosed(int)));
 }
 
 void MainWindow::InitializeMenu()
 {
-    QMenuBar* menuBar = mainWindow_.menuBar();
-    topLevelMenus_[MenuFile] = menuBar->addMenu("File");
-    topLevelMenus_[MenuView] = menuBar->addMenu("View");
-    topLevelMenus_[MenuTools] = menuBar->addMenu("Tools");
-    topLevelMenus_[MenuHelp] = menuBar->addMenu("Help");
+    QAction* action = nullptr;
 
-    menuActions_[MenuFileNew_After]    = topLevelMenus_[MenuFile]->addSeparator();
-    menuActions_[MenuFileOpen_After]   = topLevelMenus_[MenuFile]->addSeparator();
-    menuActions_[MenuFileClose]        = topLevelMenus_[MenuFile]->addAction("Close");
-    menuActions_[MenuFileSave]         = topLevelMenus_[MenuFile]->addAction("Save");
-    menuActions_[MenuFileSaveAs]       = topLevelMenus_[MenuFile]->addAction("Save As...");
-    menuActions_[MenuFileExit_Before]  = topLevelMenus_[MenuFile]->addSeparator();
-    menuActions_[MenuFileExit]         = topLevelMenus_[MenuFile]->addAction("Exit");
+    action = new QAction("Close");
+    action->setShortcut(Qt::CTRL + Qt::Key_W);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
+    AddAction("File.Close", action);
 
-    menuActions_[MenuToolsOptions]     = topLevelMenus_[MenuTools]->addAction("Options");
+    action = new QAction("Save");
+    action->setShortcut(Qt::CTRL + Qt::Key_S);
+    AddAction("File.Save", action);
 
-    menuActions_[MenuHelpAbout_Before] = topLevelMenus_[MenuHelp]->addSeparator();
-    menuActions_[MenuHelpAbout]        = topLevelMenus_[MenuHelp]->addAction("About");
+    action = new QAction("Save As...");
+    action->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_S);
+    AddAction("File.SaveAs", action);
 
-    menuActions_[MenuFileClose]->setShortcut(Qt::CTRL + Qt::Key_W);
-    menuActions_[MenuFileSave]->setShortcut(Qt::CTRL + Qt::Key_S);
-    menuActions_[MenuFileSaveAs]->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_S);
+    action = new QAction("Exit");
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));
+    AddAction("File.Exit", action);
 
-    connect(menuActions_[MenuFileClose], SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
-    connect(menuActions_[MenuFileExit],  SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));
-    connect(menuActions_[MenuToolsOptions], SIGNAL(triggered(bool)), this, SLOT(HandleToolsOptions()));
-    connect(menuActions_[MenuHelpAbout], SIGNAL(triggered(bool)), this, SLOT(HandleHelpAbout()));
-    connect(tabBar_.data(), SIGNAL(currentChanged(int)),    this, SLOT(HandleTabChanged(int)));
-    connect(tabBar_.data(), SIGNAL(tabMoved(int, int)),     this, SLOT(HandleTabMoved(int, int)));
-    connect(tabBar_.data(), SIGNAL(tabCloseRequested(int)), this, SLOT(HandleTabClosed(int)));
+    action = new QAction("Options");
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleToolsOptions()));
+    AddAction("Tools.Options", action);
+
+    action = new QAction("About");
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleHelpAbout()));
+    AddAction("Help.About", action);
 }
 
 QMenu* MainWindow::ReadMenu(const QDomNode& node)
@@ -234,9 +235,12 @@ QAction* MainWindow::ReadAction(const QDomNode& node)
 {
     const QDomNamedNodeMap attributes = node.attributes();
     const QString name = attributes.namedItem("name").nodeValue();
-    // #TODO Add real action
-    QScopedPointer<QAction> action(new QAction(name, &mainWindow_));
-    return action.take();
+    const QString actionName = attributes.namedItem("action").nodeValue();
+
+    QAction* action = menuActions_.value(actionName);
+    if (!action)
+        action = new QAction(name + " (Unknown)", &mainWindow_);
+    return action;
 }
 
 void MainWindow::HandleFileClose()

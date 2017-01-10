@@ -34,14 +34,9 @@ bool ProjectManager::Initialize()
 {
     MainWindow& mainWindow = GetMainWindow();
 
-    QMenu* menuFile = mainWindow.GetTopLevelMenu(MainWindow::MenuFile);
-    QAction* menuFileNew_After = mainWindow.GetMenuAction(MainWindow::MenuFileNew_After);
-    if (!menuFile || !menuFileNew_After)
-        return false;
-
     actionFileNewProject_.reset(new QAction("New Project"));
-    menuFile->insertAction(menuFileNew_After, actionFileNewProject_.data());
     connect(actionFileNewProject_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileNewProject()));
+    mainWindow.AddAction("File.NewProject", actionFileNewProject_.data());
 
     return true;
 }

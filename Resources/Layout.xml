@@ -1,16 +1,16 @@
 <layout>
     <menu>
         <menu name="File">
-            <action name="New Project" />
-            <action name="New Scene" />
+            <action name="New Project" action="File.NewProject" />
+            <action name="New Scene" action="File.NewScene" />
             <separator/>
-            <action name="Open Scene..." />
+            <action name="Open Scene..." action="File.OpenScene"/>
             <separator/>
-            <action name="Save" />
-            <action name="Save As..." />
-            <action name="Close" />
+            <action name="Save" action="File.Save" />
+            <action name="Save As..." action="File.SaveAs" />
+            <action name="Close" action="File.Close" />
             <separator/>
-            <action name="Exit" />
+            <action name="Exit" action="File.Exit" />
         </menu>
         <menu name="Edit">
             <action name="Undo" />
@@ -22,13 +22,13 @@
             <action name="Delete" />
         </menu>
         <menu name="View">
-            <action name="Hierarchy Browser" />
+            <action name="Hierarchy Window" action="View.HierarchyWindow" />
         </menu>
         <menu name="Tools">
-            <action name="Options..." />
+            <action name="Options..." action="Tools.Options" />
         </menu>
         <menu name="Help">
-            <action name="About..." />
+            <action name="About..." action="Help.About" />
         </menu>
     </menu>
 </layout>

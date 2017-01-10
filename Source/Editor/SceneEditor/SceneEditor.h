@@ -53,8 +53,6 @@ private:
     QScopedPointer<QAction> actionFileNewScene_;
     /// 'File/Open Scene' action.
     QScopedPointer<QAction> actionFileOpenScene_;
-    /// 'Create' menu.
-    QScopedPointer<QMenu> menuCreate_;
     /// 'Create/Replicated Node' action.
     QScopedPointer<QAction> actionCreateReplicatedNode_;
     /// 'Create/Local Node' action.

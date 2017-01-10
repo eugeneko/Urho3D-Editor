@@ -20,15 +20,12 @@ bool HierarchyWindow::Initialize()
 {
     MainWindow& mainWindow = GetMainWindow();
 
-    QMenu* menuView = mainWindow.GetTopLevelMenu(MainWindow::MenuView);
-    if (!menuView)
-        return false;
-
     connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 
-    actionViewHierarchyWindow_.reset(menuView->addAction("Hierarchy Window"));
+    actionViewHierarchyWindow_.reset(new QAction("Hierarchy Window"));
     actionViewHierarchyWindow_->setCheckable(true);
     connect(actionViewHierarchyWindow_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleViewHierarchyWindow(bool)));
+    mainWindow.AddAction("View.HierarchyWindow", actionViewHierarchyWindow_.data());
 
     actionViewHierarchyWindow_->activate(QAction::Trigger);
     return true;

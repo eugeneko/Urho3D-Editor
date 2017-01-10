@@ -28,28 +28,6 @@ public:
     static const QString VarLayoutFileName;
 
 public:
-    /// Top-level menus.
-    enum TopLevelMenu
-    {
-        MenuFile,
-        MenuView,
-        MenuTools,
-        MenuHelp
-    };
-    /// Menu actions.
-    enum MenuAction
-    {
-        MenuFileNew_After,
-        MenuFileOpen_After,
-        MenuFileClose,
-        MenuFileSave,
-        MenuFileSaveAs,
-        MenuFileExit_Before,
-        MenuFileExit,
-        MenuToolsOptions,
-        MenuHelpAbout_Before,
-        MenuHelpAbout
-    };
     /// Construct.
     MainWindow(Configuration& config, QMainWindow& mainWindow, Urho3D::Context& context);
     /// Initialize.
@@ -67,11 +45,11 @@ public:
     Urho3DWidget* GetUrho3DWidget() const;
     /// Get menu bar.
     QMenuBar* GetMenuBar() const;
-    /// Get top-level menu.
-    QMenu* GetTopLevelMenu(TopLevelMenu menu) const;
-    /// Get menu action.
-    QAction* GetMenuAction(MenuAction action) const;
+    /// Get action by name.
+    QAction* GetAction(const QString& name) const;
 
+    /// Add menu action.
+    void AddAction(const QString& name, QAction* action);
     /// Add dock widget.
     void AddDock(Qt::DockWidgetArea area, QDockWidget* dock);
 
@@ -133,10 +111,8 @@ private:
     /// Urho3D Widget.
     QScopedPointer<Urho3DWidget> urho3DWidget_;
 
-    /// Top-level menus.
-    QHash<TopLevelMenu, QMenu*> topLevelMenus_;
     /// Menu actions.
-    QHash<MenuAction, QAction*> menuActions_;
+    QHash<QString, QAction*> menuActions_;
 
     /// Pages.
     QVector<Document*> documents_;

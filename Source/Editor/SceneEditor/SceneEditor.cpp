@@ -40,37 +40,25 @@ SceneEditor::SceneEditor()
 bool SceneEditor::Initialize()
 {
     MainWindow& mainWindow = GetMainWindow();
-
-    QMenuBar* menuBar = mainWindow.GetMenuBar();
-    QMenu* menuFile = mainWindow.GetTopLevelMenu(MainWindow::MenuFile);
-    QAction* menuFileNew_After = mainWindow.GetMenuAction(MainWindow::MenuFileNew_After);
-    QAction* menuFileOpen_After = mainWindow.GetMenuAction(MainWindow::MenuFileOpen_After);
-    QMenu* menuView = mainWindow.GetTopLevelMenu(MainWindow::MenuView);
-    if (!menuFile || !menuFileNew_After || !menuFileOpen_After || !menuView)
-        return false;
-
     connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 
     // Setup menu
     actionFileNewScene_.reset(new QAction("New Scene"));
     actionFileNewScene_->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_N);
-    menuFile->insertAction(menuFileNew_After, actionFileNewScene_.data());
+    mainWindow.AddAction("File.NewScene", actionFileNewScene_.data());
     connect(actionFileNewScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileNewScene()));
 
     actionFileOpenScene_.reset(new QAction("Open Scene..."));
     actionFileOpenScene_->setShortcut(Qt::CTRL + Qt::Key_O);
-    menuFile->insertAction(menuFileOpen_After, actionFileOpenScene_.data());
+    mainWindow.AddAction("File.OpenScene", actionFileOpenScene_.data());
     connect(actionFileOpenScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileOpenScene()));
 
-    menuCreate_.reset(new QMenu("Create"));
-    menuBar->insertMenu(menuView->menuAction(), menuCreate_.data());
-
     actionCreateReplicatedNode_.reset(new QAction("Replicated Node"));
-    menuCreate_->addAction(actionCreateReplicatedNode_.data());
+    mainWindow.AddAction("Create.ReplicatedNode", actionCreateReplicatedNode_.data());
     connect(actionCreateReplicatedNode_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleCreateReplicatedNode()));
 
     actionCreateLocalNode_.reset(new QAction("Local Node"));
-    menuCreate_->addAction(actionCreateLocalNode_.data());
+    mainWindow.AddAction("Create.LocalNode", actionCreateLocalNode_.data());
     connect(actionCreateLocalNode_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleCreateLocalNode()));
 
     UpdateMenuVisibility();
@@ -130,7 +118,6 @@ void SceneEditor::UpdateMenuVisibility()
     MainWindow& mainWindow = GetMainWindow();
     Document* document = mainWindow.GetCurrentPage();
     SceneDocument* sceneDocument = dynamic_cast<SceneDocument*>(document);
-    menuCreate_->menuAction()->setVisible(!!sceneDocument);
 }
 
 }
