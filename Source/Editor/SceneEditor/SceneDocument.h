@@ -72,6 +72,8 @@ public:
 
     /// Get current camera.
     Urho3D::Camera& GetCurrentCamera() { return viewportManager_.GetCurrentCamera(); }
+    /// Get current camera ray.
+    const Urho3D::Ray& GetCurrentCameraRay() { return viewportManager_.GetCurrentCameraRay(); }
 
     /// Set selection.
     virtual void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
@@ -144,8 +146,6 @@ protected:
     virtual bool DoLoad(const QString& fileName) override;
 
 protected:
-    /// Get camera ray.
-    Urho3D::Ray GetCameraRay(const Urho3D::IntVector2& position) const;
     /// Check whether to draw debug geometry for node.
     virtual bool ShallDrawNodeDebug(Urho3D::Node* node);
     /// Draw node debug geometry.

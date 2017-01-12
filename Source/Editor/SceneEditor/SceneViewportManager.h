@@ -21,7 +21,7 @@ public:
     SceneViewport(Urho3D::Context* context, Urho3D::Scene* scene, Urho3D::Camera* camera);
     /// Set rectangle.
     void SetRect(Urho3D::IntRect rect);
-    /// Update yaw and pitch angles. Update local camera roation.
+    /// Update yaw and pitch angles. Update local camera rotation.
     void UpdateRotation(float deltaPitch, float deltaYaw, bool limitPitch);
 
     /// Get camera node.
@@ -78,9 +78,15 @@ public:
     void SetLayout(SceneViewportLayout layout);
     /// Apply viewports to Urho3D Renderer.
     void ApplyViewports();
+    /// Update current viewport and ray.
+    void UpdateCurrentViewport(const Urho3D::IntVector2& mousePosition);
 
+    /// Compute camera ray.
+    Urho3D::Ray ComputeCameraRay(const Urho3D::Viewport& viewport, const Urho3D::IntVector2& mousePosition);
     /// Get current camera.
     Urho3D::Camera& GetCurrentCamera();
+    /// Get current camera ray.
+    const Urho3D::Ray& GetCurrentCameraRay() const { return currentCameraRay_; }
 
     /// General update.
     virtual void Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep) override;
@@ -102,9 +108,15 @@ private:
     SceneDocument& document_;
     /// Scene.
     Urho3D::Scene& scene_;
+    /// Graphics.
+    Urho3D::Graphics& graphics_;
 
     /// Viewports.
-    QVector<QSharedPointer<SceneViewport>> mainViewports_;
+    QVector<QSharedPointer<SceneViewport>> viewports_;
+    /// Current viewport index.
+    int currentViewport_;
+    /// Current camera ray.
+    Urho3D::Ray currentCameraRay_;
     /// Layout type.
     SceneViewportLayout layout_;
     /// Controls whether in fly mode.

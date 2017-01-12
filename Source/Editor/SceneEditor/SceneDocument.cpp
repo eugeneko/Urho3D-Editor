@@ -173,11 +173,11 @@ void SceneDocument::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMa
     if (!IsActive())
         return;
 
-    const float timeStep = eventData[Urho3D::Update::P_TIMESTEP].GetFloat();
-    const Urho3D::Ray ray = GetCameraRay(input_.GetMousePosition());
+    viewportManager_.UpdateCurrentViewport(input_.GetMousePosition());
 
+    const float timeStep = eventData[Urho3D::Update::P_TIMESTEP].GetFloat();
     for (SceneOverlay* overlay : overlays_)
-        overlay->Update(*this, ray, timeStep);
+        overlay->Update(*this, GetCurrentCameraRay(), timeStep);
 }
 
 void SceneDocument::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
@@ -199,9 +199,8 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
 {
     using namespace Urho3D;
 
-    const Urho3D::Ray ray = GetCameraRay(input_.GetMousePosition());
     for (SceneOverlay* overlay : overlays_)
-        overlay->PostRenderUpdate(*this, ray);
+        overlay->PostRenderUpdate(*this, GetCurrentCameraRay());
 
     pressedKeys_.clear();
     wheelDelta_ = 0;
@@ -251,19 +250,6 @@ bool SceneDocument::DoLoad(const QString& fileName)
     }
 
     return true;
-}
-
-Urho3D::Ray SceneDocument::GetCameraRay(const Urho3D::IntVector2& position) const
-{
-//     if (Urho3D::View* view = viewport_->GetView())
-//     {
-//         const Urho3D::IntRect rect = view->GetViewRect();
-//         return camera_.GetCamera().GetScreenRay(
-//             float(position.x_ - rect.left_) / rect.Width(),
-//             float(position.y_ - rect.top_) / rect.Height());
-//     }
-//     else
-        return Urho3D::Ray();
 }
 
 bool SceneDocument::ShallDrawNodeDebug(Urho3D::Node* node)
@@ -367,7 +353,7 @@ void SceneDocument::PerformRaycast(bool mouseClick)
         return;
     DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
 
-    Ray cameraRay = GetCameraRay(input->GetMousePosition());
+    Ray cameraRay = GetCurrentCameraRay();
     Component* selectedComponent = nullptr;
 
     Configuration& config = GetMainWindow().GetConfig();
