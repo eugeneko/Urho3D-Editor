@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SceneOverlay.h"
+#include "SceneViewportManager.h"
 #include "../Document.h"
 #include "../Action.h"
 #include <QAction>
@@ -23,33 +25,15 @@ class MainWindow;
 class SceneOverlay;
 class Urho3DWidget;
 
-/// Scene camera.
-class SceneCamera
+/// Hot key mode.
+enum class HotKeyMode
 {
-public:
-    /// Construct.
-    SceneCamera(Urho3D::Context* context);
-    /// Get camera.
-    Urho3D::Camera& GetCamera() const { return *camera_; }
-
-    /// Set grab mouse.
-    void SetGrabMouse(bool grab);
-    /// Move camera.
-    void Move(const Urho3D::Vector3& movement, const Urho3D::Vector3& rotation);
-
-private:
-    /// Input subsystem.
-    Urho3D::Input* input_;
-    /// Camera node.
-    Urho3D::Node cameraNode_;
-    /// Camera component.
-    Urho3D::Camera* camera_;
-    /// Camera angles.
-    Urho3D::Vector3 angles_;
+    Standard,
+    Blender
 };
 
 /// Scene document.
-class SceneDocument : public Document, public Urho3D::Object
+class SceneDocument : public Document, public Urho3D::Object, public SceneInputInterface
 {
     Q_OBJECT
     URHO3D_OBJECT(SceneDocument, Urho3D::Object);
@@ -62,12 +46,6 @@ public:
         PickLights,
         PickZones,
         PickRigidbodies
-    };
-    /// Hot key mode.
-    enum HotKeyMode
-    {
-        HotKeyStandard,
-        HotKeyBlender
     };
     /// Set of nodes.
     using NodeSet = QSet<Urho3D::Node*>;
@@ -93,7 +71,7 @@ public:
     void RedoAction();
 
     /// Get current camera.
-    Urho3D::Camera& GetCurrentCamera();
+    Urho3D::Camera& GetCurrentCamera() { return viewportManager_.GetCurrentCamera(); }
 
     /// Set selection.
     virtual void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
@@ -103,6 +81,23 @@ public:
     const ComponentSet& GetSelectedComponents() const { return selectedComponents_; }
     /// Get selected nodes and components.
     const NodeSet& GetSelectedNodesAndComponents() const { return selectedNodesCombined_; }
+    /// Returns whether there are selected nodes and/or components.
+    bool HasSelectedNodesOrComponents() const { return !selectedNodesCombined_.empty(); }
+    /// Get center point of selected nodes.
+    Urho3D::Vector3 GetSelectedCenter();
+
+    /// Set mouse mode.
+    virtual void SetMouseMode(Urho3D::MouseMode mouseMode) override;
+    /// Return whether the key is down.
+    virtual bool IsKeyDown(Qt::Key key) const override { return keysDown_.contains(key); }
+    /// Return whether the key is pressed.
+    virtual bool IsKeyPressed(Qt::Key key) const override { return pressedKeys_.contains(key); }
+    /// Return whether the mouse button is down.
+    virtual bool IsMouseButtonDown(Qt::MouseButton mouseButton) const override { return mouseButtonsDown_.contains(mouseButton); }
+    /// Return mouse move.
+    virtual Urho3D::IntVector2 GetMouseMove() const override;
+    /// Return mouse wheel delta.
+    virtual int GetMouseWheelMove() const override { return wheelDelta_; }
 
     /// Return title of the document.
     virtual QString GetTitle() override { return GetRawTitle(); }
@@ -120,6 +115,19 @@ signals:
     void selectionChanged();
     /// Signals that node transforms has been changed.
     void nodeTransformChanged(const Urho3D::Node& node);
+
+private slots:
+    /// Handle viewports changed.
+    void HandleViewportsChanged();
+
+    /// Handle key press.
+    void HandleKeyPress(QKeyEvent* event);
+    /// Handle key release.
+    void HandleKeyRelease(QKeyEvent* event);
+    /// Handle mouse wheel.
+    void HandleMouseWheel(QWheelEvent* event);
+    /// Handle focus out.
+    void HandleFocusOut();
 
 private:
     /// Handle update.
@@ -152,17 +160,26 @@ protected:
     void GatherSelectedNodes();
 
 protected:
+    /// Input subsystem.
+    Urho3D::Input& input_;
     /// Widget.
-    Urho3DWidget* widget_;
+    Urho3DWidget& widget_;
+    /// Mouse buttons are down.
+    QSet<Qt::MouseButton> mouseButtonsDown_;
+    /// Keys are down.
+    QSet<Qt::Key> keysDown_;
+    /// Pressed keys.
+    QSet<Qt::Key> pressedKeys_;
+    /// Wheel delta.
+    int wheelDelta_;
+
     /// Overlays.
     QList<SceneOverlay*> overlays_;
 
-    /// Camera.
-    SceneCamera camera_;
     /// Scene.
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
-    /// Viewport.
-    Urho3D::SharedPtr<Urho3D::Viewport> viewport_;
+    /// Viewport manager.
+    SceneViewportManager viewportManager_;
 
     /// Actions.
     QVector<ActionGroup> actions_;
@@ -173,6 +190,8 @@ protected:
     ComponentSet selectedComponents_;
     /// Selected nodes and components.
     NodeSet selectedNodesCombined_;
+    /// Last center of selected nodes and components.
+    Urho3D::Vector3 lastSelectedCenter_;
 
 };
 

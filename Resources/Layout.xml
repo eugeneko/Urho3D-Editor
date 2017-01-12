@@ -27,6 +27,17 @@
         <menu name="Tools">
             <action name="Options..." action="Tools.Options" />
         </menu>
+        <menu name="Window">
+            <action name="Single" action="Scene.Camera.Single" />
+            <action name="Vertical Split" action="Scene.Camera.Vertical" />
+            <action name="Horizontal Split" action="Scene.Camera.Horizontal" />
+            <action name="Quad Split" action="Scene.Camera.Quad" />
+            <action name="1 Top / 2 Bottom" action="Scene.Camera.TB12" />
+            <action name="2 Top / 1 Bottom" action="Scene.Camera.TB21" />
+            <action name="1 Left / 2 Right" action="Scene.Camera.LR12" />
+            <action name="2 Left / 1 Right" action="Scene.Camera.LR21" />
+            <separator/>
+        </menu>
         <menu name="Help">
             <action name="About..." action="Help.About" />
         </menu>

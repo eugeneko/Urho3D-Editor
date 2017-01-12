@@ -23,8 +23,15 @@ public:
     /// Initialize widget with optional configuration.
     bool SetCurrentProject(Urho3DProject* project);
 
-    /// Check whether the key is pressed.
-    bool IsKeyPressed(int key) const { return pressedKeys_.contains(key); }
+signals:
+    /// Signals that key is pressed.
+    void keyPressed(QKeyEvent* event);
+    /// Signals that key is released.
+    void keyReleased(QKeyEvent* event);
+    /// Signals that wheel is moved.
+    void wheelMoved(QWheelEvent* event);
+    /// Signals that widget lost focus.
+    void focusOut();
 
 private slots:
     /// Handle main timer.
@@ -35,6 +42,7 @@ protected:
     virtual void paintEvent(QPaintEvent *event) override;
     virtual void keyPressEvent(QKeyEvent *event) override;
     virtual void keyReleaseEvent(QKeyEvent *event) override;
+    virtual void wheelEvent(QWheelEvent * event) override;
     virtual void focusOutEvent(QFocusEvent *event) override;
 
 private:
@@ -45,8 +53,6 @@ private:
     Urho3D::SharedPtr<Urho3D::Engine> engine_;
     /// Main timer.
     QTimer timer_;
-    /// Pressed keys.
-    QSet<int> pressedKeys_;
 
 };
 

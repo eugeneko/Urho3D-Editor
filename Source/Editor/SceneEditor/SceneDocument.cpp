@@ -18,6 +18,7 @@
 #include <Urho3D/Physics/RigidBody.h>
 #include <Urho3D/Physics/PhysicsWorld.h>
 #include <QFileInfo>
+#include <QKeyEvent>
 
 namespace Urho3DEditor
 {
@@ -32,60 +33,28 @@ static const QString CONFIG_DEBUG_OCTREE = "sceneeditor/debug/octree";
 static const QString CONFIG_DEBUG_NAVIGATION = "sceneeditor/debug/navigation";
 static const QString CONFIG_PICK_MODE = "sceneeditor/pickmode";
 
-//////////////////////////////////////////////////////////////////////////
-SceneCamera::SceneCamera(Urho3D::Context* context)
-    : input_(context->GetSubsystem<Urho3D::Input>())
-    , cameraNode_(context)
-    , camera_(cameraNode_.CreateComponent<Urho3D::Camera>())
-{
-    cameraNode_.SetWorldPosition(Urho3D::Vector3(0, 10, -10));
-    cameraNode_.LookAt(Urho3D::Vector3::ZERO);
-    angles_ = cameraNode_.GetWorldRotation().EulerAngles();
-}
-
-void SceneCamera::SetGrabMouse(bool grab)
-{
-    using namespace Urho3D;
-
-    if (grab)
-    {
-        input_->SetMouseVisible(false);
-        input_->SetMouseMode(MM_WRAP);
-    }
-    else
-    {
-        input_->SetMouseVisible(true);
-        input_->SetMouseMode(MM_ABSOLUTE);
-    }
-}
-
-void SceneCamera::Move(const Urho3D::Vector3& movement, const Urho3D::Vector3& rotation)
-{
-    using namespace Urho3D;
-
-    cameraNode_.Translate(movement, TS_LOCAL);
-
-    angles_ += rotation;
-    angles_.y_ = Fract(angles_.y_ / 360.0f) * 360.0f;
-    angles_.x_ = Clamp(angles_.x_, -85.0f, 85.0f);
-    cameraNode_.SetWorldRotation(Quaternion(angles_.x_, angles_.y_, angles_.z_));
-}
-
-//////////////////////////////////////////////////////////////////////////
 SceneDocument::SceneDocument(MainWindow& mainWindow)
     : Document(mainWindow)
     , Object(&mainWindow.GetContext())
-    , widget_(mainWindow.GetUrho3DWidget())
-    , camera_(context_)
+    , input_(*GetSubsystem<Urho3D::Input>())
+    , widget_(*mainWindow.GetUrho3DWidget())
+    , wheelDelta_(0)
     , scene_(new Urho3D::Scene(context_))
-    , viewport_(new Urho3D::Viewport(context_, scene_, &camera_.GetCamera()))
+    , viewportManager_(*this)
 {
+    AddOverlay(&viewportManager_);
     SetTitle("New Scene");
 
     SubscribeToEvent(Urho3D::E_UPDATE, URHO3D_HANDLER(SceneDocument, HandleUpdate));
     SubscribeToEvent(Urho3D::E_MOUSEBUTTONDOWN, URHO3D_HANDLER(SceneDocument, HandleMouseButton));
     SubscribeToEvent(Urho3D::E_MOUSEBUTTONUP, URHO3D_HANDLER(SceneDocument, HandleMouseButton));
     SubscribeToEvent(Urho3D::E_POSTRENDERUPDATE, URHO3D_HANDLER(SceneDocument, HandlePostRenderUpdate));
+
+    connect(&viewportManager_, SIGNAL(viewportsChanged()), this, SLOT(HandleViewportsChanged()));
+    connect(&widget_, SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(HandleKeyPress(QKeyEvent*)));
+    connect(&widget_, SIGNAL(keyReleased(QKeyEvent*)), this, SLOT(HandleKeyRelease(QKeyEvent*)));
+    connect(&widget_, SIGNAL(wheelMoved(QWheelEvent*)), this, SLOT(HandleMouseWheel(QWheelEvent*)));
+    connect(&widget_, SIGNAL(focusOut()), this, SLOT(HandleFocusOut()));
 }
 
 void SceneDocument::AddOverlay(SceneOverlay* overlay)
@@ -114,11 +83,6 @@ void SceneDocument::RedoAction()
     // #TODO Implement me
 }
 
-Urho3D::Camera& SceneDocument::GetCurrentCamera()
-{
-    return camera_.GetCamera();
-}
-
 void SceneDocument::SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents)
 {
     selectedNodes_ = selectedNodes;
@@ -127,9 +91,81 @@ void SceneDocument::SetSelection(const NodeSet& selectedNodes, const ComponentSe
     emit selectionChanged();
 }
 
+Urho3D::Vector3 SceneDocument::GetSelectedCenter()
+{
+    using namespace Urho3D;
+
+    const unsigned count = selectedNodes_.size() + selectedComponents_.size();
+    Vector3 centerPoint;
+    for (Node* node : selectedNodes_)
+        centerPoint += node->GetWorldPosition();
+
+    for (Component* component : selectedComponents_)
+    {
+        Drawable* drawable = dynamic_cast<Drawable*>(component);
+        if (drawable)
+            centerPoint += drawable->GetNode()->LocalToWorld(drawable->GetBoundingBox().Center());
+        else
+            centerPoint += component->GetNode()->GetWorldPosition();
+    }
+
+    if (count > 0)
+        lastSelectedCenter_ = centerPoint / count;
+    return lastSelectedCenter_;
+}
+
+void SceneDocument::SetMouseMode(Urho3D::MouseMode mouseMode)
+{
+    input_.SetMouseMode(mouseMode);
+}
+
+Urho3D::IntVector2 SceneDocument::GetMouseMove() const
+{
+    return input_.GetMouseMove();
+}
+
 QString SceneDocument::GetNameFilters()
 {
     return "Urho3D Scene (*.xml *.json *.bin);;All files (*.*)";
+}
+
+void SceneDocument::HandleViewportsChanged()
+{
+    if (IsActive())
+        viewportManager_.ApplyViewports();
+}
+
+void SceneDocument::HandleKeyPress(QKeyEvent* event)
+{
+    if (IsActive())
+    {
+        pressedKeys_.insert((Qt::Key)event->key());
+        if (!event->isAutoRepeat())
+            keysDown_.insert((Qt::Key)event->key());
+    }
+}
+
+void SceneDocument::HandleKeyRelease(QKeyEvent* event)
+{
+    if (IsActive())
+    {
+        if (!event->isAutoRepeat())
+            keysDown_.remove((Qt::Key)event->key());
+    }
+}
+
+void SceneDocument::HandleMouseWheel(QWheelEvent* event)
+{
+    wheelDelta_ += event->delta() / 120;
+}
+
+void SceneDocument::HandleFocusOut()
+{
+    if (IsActive())
+    {
+        keysDown_.clear();
+        pressedKeys_.clear();
+    }
 }
 
 void SceneDocument::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
@@ -137,44 +173,11 @@ void SceneDocument::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMa
     if (!IsActive())
         return;
 
-    using namespace Urho3D;
+    const float timeStep = eventData[Urho3D::Update::P_TIMESTEP].GetFloat();
+    const Urho3D::Ray ray = GetCameraRay(input_.GetMousePosition());
 
-    const float timeStep = eventData[Update::P_TIMESTEP].GetFloat();
-
-    /// Update overlays
-    Input* input = GetSubsystem<Input>();
-    const Urho3D::Ray ray = GetCameraRay(input->GetMousePosition());
     for (SceneOverlay* overlay : overlays_)
-        overlay->Update(ray, timeStep);
-
-    Vector3 movement;
-    if (widget_->IsKeyPressed(Qt::Key_W))
-        movement += Vector3::FORWARD;
-    if (widget_->IsKeyPressed(Qt::Key_S))
-        movement += Vector3::BACK;
-    if (widget_->IsKeyPressed(Qt::Key_A))
-        movement += Vector3::LEFT;
-    if (widget_->IsKeyPressed(Qt::Key_D))
-        movement += Vector3::RIGHT;
-    if (widget_->IsKeyPressed(Qt::Key_Q))
-        movement += Vector3::DOWN;
-    if (widget_->IsKeyPressed(Qt::Key_E))
-        movement += Vector3::UP;
-    if (widget_->IsKeyPressed(Qt::Key_Shift))
-        movement *= 25.0f; // #TODO Configure
-    else
-        movement *= 5.0f;
-
-    Urho3D::Vector3 rotation;
-    if (input->IsMouseGrabbed())
-    {
-        const IntVector2 mouseMove = input->GetMouseMove();
-        const Vector3 delta(mouseMove.y_, mouseMove.x_, 0.0f);
-        const Vector3 sensitivity(0.5f, 0.5f, 0.0f); // #TODO Configure
-        rotation = delta * sensitivity;
-    }
-
-    camera_.Move(movement * timeStep, rotation);
+        overlay->Update(*this, ray, timeStep);
 }
 
 void SceneDocument::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
@@ -183,40 +186,25 @@ void SceneDocument::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::Vari
         return;
 
     using namespace Urho3D;
-    Input* input = GetSubsystem<Input>();
     const int button = eventData[MouseButtonDown::P_BUTTON].GetInt();
     const bool pressed = eventType == E_MOUSEBUTTONDOWN;
 
-    // Update overlays
-    bool consumed = false;
-    const Urho3D::Ray ray = GetCameraRay(input->GetMousePosition());
-    for (SceneOverlay* overlay : overlays_)
-        consumed |= overlay->MouseButtonEvent(ray, ConvertMouseButton(button), pressed, consumed);
-
-    // Handle camera rotation
-    if (button == MOUSEB_RIGHT)
-    {
-        if (pressed)
-        {
-            input->SetMouseVisible(false);
-            input->SetMouseMode(MM_WRAP);
-        }
-        else
-        {
-            input->SetMouseVisible(true);
-            input->SetMouseMode(MM_ABSOLUTE);
-        }
-    }
+    if (pressed)
+        mouseButtonsDown_.insert(ConvertMouseButton(button));
+    else
+        mouseButtonsDown_.remove(ConvertMouseButton(button));
 }
 
 void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
-    Input* input = GetSubsystem<Input>();
 
-    const Urho3D::Ray ray = GetCameraRay(input->GetMousePosition());
+    const Urho3D::Ray ray = GetCameraRay(input_.GetMousePosition());
     for (SceneOverlay* overlay : overlays_)
-        overlay->PostRenderUpdate(ray);
+        overlay->PostRenderUpdate(*this, ray);
+
+    pressedKeys_.clear();
+    wheelDelta_ = 0;
 
     DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
     const bool debugRendererDisabled = GetMainWindow().GetConfig().GetValue(CONFIG_DISABLE_DEBUG_RENDERER).toBool();
@@ -231,9 +219,11 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
 void SceneDocument::HandleCurrentPageChanged(Document* document)
 {
     if (IsActive())
+        viewportManager_.ApplyViewports();
+    else
     {
-        Urho3D::Renderer* renderer = GetContext()->GetSubsystem<Urho3D::Renderer>();
-        renderer->SetViewport(0, viewport_);
+        keysDown_.clear();
+        pressedKeys_.clear();
     }
 }
 
@@ -265,14 +255,14 @@ bool SceneDocument::DoLoad(const QString& fileName)
 
 Urho3D::Ray SceneDocument::GetCameraRay(const Urho3D::IntVector2& position) const
 {
-    if (Urho3D::View* view = viewport_->GetView())
-    {
-        const Urho3D::IntRect rect = view->GetViewRect();
-        return camera_.GetCamera().GetScreenRay(
-            float(position.x_ - rect.left_) / rect.Width(),
-            float(position.y_ - rect.top_) / rect.Height());
-    }
-    else
+//     if (Urho3D::View* view = viewport_->GetView())
+//     {
+//         const Urho3D::IntRect rect = view->GetViewRect();
+//         return camera_.GetCamera().GetScreenRay(
+//             float(position.x_ - rect.left_) / rect.Width(),
+//             float(position.y_ - rect.top_) / rect.Height());
+//     }
+//     else
         return Urho3D::Ray();
 }
 
@@ -392,15 +382,15 @@ void SceneDocument::PerformRaycast(bool mouseClick)
 
         static int pickModeDrawableFlags[3] = { DRAWABLE_GEOMETRY, DRAWABLE_LIGHT, DRAWABLE_ZONE };
         PODVector<RayQueryResult> result;
-        RayOctreeQuery query(result, cameraRay, RAY_TRIANGLE, camera_.GetCamera().GetFarClip(), pickModeDrawableFlags[pickMode], 0x7fffffff);
-        octree->RaycastSingle(query);
+//         RayOctreeQuery query(result, cameraRay, RAY_TRIANGLE, camera_.GetCamera().GetFarClip(), pickModeDrawableFlags[pickMode], 0x7fffffff);
+//         octree->RaycastSingle(query);
 
         if (!result.Empty())
         {
             Drawable* drawable = result[0].drawable_;
 
             // for actual last selected node or component in both modes
-            if (hotKeyMode == HotKeyStandard)
+//             if (hotKeyMode == HotKeyStandard)
             {
                 if (input->GetMouseButtonDown(MOUSEB_LEFT))
                 {
@@ -410,7 +400,7 @@ void SceneDocument::PerformRaycast(bool mouseClick)
 //                     lastSelectedComponent = drawable;
                 }
             }
-            else if (hotKeyMode == HotKeyBlender)
+//             else if (hotKeyMode == HotKeyBlender)
             {
                 if (input->GetMouseButtonDown(MOUSEB_RIGHT))
                 {
@@ -446,7 +436,7 @@ void SceneDocument::PerformRaycast(bool mouseClick)
             physicsWorld->UpdateCollisions();
 
         PhysicsRaycastResult result;
-        physicsWorld->RaycastSingle(result, cameraRay, camera_.GetCamera().GetFarClip());
+//         physicsWorld->RaycastSingle(result, cameraRay, camera_.GetCamera().GetFarClip());
         if (result.body_)
         {
             RigidBody* body = result.body_;
@@ -463,14 +453,14 @@ void SceneDocument::PerformRaycast(bool mouseClick)
     bool componentSelectQualifier = false;
     bool mouseButtonPressRL = false;
 
-    if (hotKeyMode == HotKeyStandard)
+//     if (hotKeyMode == HotKeyStandard)
     {
         mouseButtonPressRL = input->GetMouseButtonPress(MOUSEB_LEFT);
         // #TODO It won't work
         componentSelectQualifier = input->GetQualifierDown(QUAL_SHIFT);
         multiselect = input->GetQualifierDown(QUAL_CTRL);
     }
-    else if (hotKeyMode == HotKeyBlender)
+//     else if (hotKeyMode == HotKeyBlender)
     {
         mouseButtonPressRL = input->GetMouseButtonPress(MOUSEB_RIGHT);
         // #TODO It won't work

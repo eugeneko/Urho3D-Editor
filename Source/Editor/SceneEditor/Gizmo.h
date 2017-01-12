@@ -129,10 +129,8 @@ public:
     virtual ~Gizmo();
 
 private:
-    /// @see SceneOverlay::MouseButtonEvent
-    virtual bool MouseButtonEvent(const Urho3D::Ray& cameraRay, Qt::MouseButton button, bool pressed, bool consumed) override;
     /// @see SceneOverlay::Update
-    virtual void Update(const Urho3D::Ray& cameraRay, float timeStep) override;
+    virtual void Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep) override;
 
 private:
     /// Get gizmo model.

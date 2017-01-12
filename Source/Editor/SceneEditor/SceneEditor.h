@@ -25,6 +25,10 @@ class SceneEditor : public Module
     Q_OBJECT
 
 public:
+    /// Controls hot key mode.
+    static const QString VarHotkeyMode;
+
+public:
     /// Construct.
     SceneEditor();
 

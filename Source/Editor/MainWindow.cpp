@@ -239,7 +239,7 @@ QAction* MainWindow::ReadAction(const QDomNode& node)
 
     QAction* action = menuActions_.value(actionName);
     if (!action)
-        action = new QAction(name + " (Unknown)", &mainWindow_);
+        action = new QAction(name + " (Dummy)", &mainWindow_);
     return action;
 }
 

@@ -152,30 +152,9 @@ Gizmo::~Gizmo()
 {
 }
 
-bool Gizmo::MouseButtonEvent(const Urho3D::Ray& cameraRay, Qt::MouseButton button, bool pressed, bool consumed)
+void Gizmo::Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep)
 {
-    if (button != Qt::LeftButton)
-        return false;
-
-    // Process button press if not consumed yet
-    if (!consumed && pressed)
-    {
-        drag_ = true;
-        return true;
-    }
-
-    // Always process button release
-    if (!pressed)
-    {
-        drag_ = false;
-        return true;
-    }
-
-    return false;
-}
-
-void Gizmo::Update(const Urho3D::Ray& cameraRay, float timeStep)
-{
+    drag_ = input.IsMouseButtonDown(Qt::LeftButton);
     UseGizmo(cameraRay);
     PositionGizmo();
     ResizeGizmo();

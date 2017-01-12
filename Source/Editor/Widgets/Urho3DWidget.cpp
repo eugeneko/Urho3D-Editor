@@ -53,19 +53,22 @@ void Urho3DWidget::paintEvent(QPaintEvent* /*event*/)
 
 void Urho3DWidget::keyPressEvent(QKeyEvent *event)
 {
-    if (!event->isAutoRepeat())
-        pressedKeys_.insert(event->key());
+    emit keyPressed(event);
 }
 
 void Urho3DWidget::keyReleaseEvent(QKeyEvent *event)
 {
-    if (!event->isAutoRepeat())
-        pressedKeys_.remove(event->key());
+    emit keyReleased(event);
+}
+
+void Urho3DWidget::wheelEvent(QWheelEvent * event)
+{
+    emit wheelMoved(event);
 }
 
 void Urho3DWidget::focusOutEvent(QFocusEvent *event)
 {
-    pressedKeys_.clear();
+    emit focusOut();
 }
 
 void Urho3DWidget::RunFrame()
