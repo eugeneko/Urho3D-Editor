@@ -45,23 +45,28 @@ bool SceneEditor::Initialize()
     connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 
     // Setup menu
-    actionFileNewScene_.reset(new QAction("New Scene"));
-    actionFileNewScene_->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_N);
-    mainWindow.AddAction("File.NewScene", actionFileNewScene_.data());
+    actionFileNewScene_.reset(mainWindow.AddAction("File.NewScene", Qt::CTRL + Qt::SHIFT + Qt::Key_N));
     connect(actionFileNewScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileNewScene()));
 
-    actionFileOpenScene_.reset(new QAction("Open Scene..."));
-    actionFileOpenScene_->setShortcut(Qt::CTRL + Qt::Key_O);
-    mainWindow.AddAction("File.OpenScene", actionFileOpenScene_.data());
+    actionFileOpenScene_.reset(mainWindow.AddAction("File.OpenScene", Qt::CTRL + Qt::Key_O));
     connect(actionFileOpenScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileOpenScene()));
 
-    actionCreateReplicatedNode_.reset(new QAction("Replicated Node"));
-    mainWindow.AddAction("Create.ReplicatedNode", actionCreateReplicatedNode_.data());
+    actionCreateReplicatedNode_.reset(mainWindow.AddAction("Create.ReplicatedNode"));
     connect(actionCreateReplicatedNode_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleCreateReplicatedNode()));
 
-    actionCreateLocalNode_.reset(new QAction("Local Node"));
-    mainWindow.AddAction("Create.LocalNode", actionCreateLocalNode_.data());
+    actionCreateLocalNode_.reset(mainWindow.AddAction("Create.LocalNode"));
     connect(actionCreateLocalNode_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleCreateLocalNode()));
+
+    QAction* action = nullptr;
+
+    mainWindow.AddAction("Scene.Camera.Single");
+    mainWindow.AddAction("Scene.Camera.Vertical");
+    mainWindow.AddAction("Scene.Camera.Horizontal");
+    mainWindow.AddAction("Scene.Camera.Quad");
+    mainWindow.AddAction("Scene.Camera.Top1_Bottom2");
+    mainWindow.AddAction("Scene.Camera.Top2_Bottom1");
+    mainWindow.AddAction("Scene.Camera.Left1_Right2");
+    mainWindow.AddAction("Scene.Camera.Left2_Right1");
 
     UpdateMenuVisibility();
 

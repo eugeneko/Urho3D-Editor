@@ -19,6 +19,8 @@ class SceneViewport
 public:
     /// Construct.
     SceneViewport(Urho3D::Context* context, Urho3D::Scene* scene, Urho3D::Camera* camera);
+    /// Set transform.
+    void SetTransform(const Urho3D::Vector3& position, const Urho3D::Quaternion& rotation);
     /// Set rectangle.
     void SetRect(Urho3D::IntRect rect);
     /// Update yaw and pitch angles. Update local camera rotation.
@@ -78,8 +80,6 @@ public:
     void SetLayout(SceneViewportLayout layout);
     /// Apply viewports to Urho3D Renderer.
     void ApplyViewports();
-    /// Update current viewport and ray.
-    void UpdateCurrentViewport(const Urho3D::IntVector2& mousePosition);
 
     /// Compute camera ray.
     Urho3D::Ray ComputeCameraRay(const Urho3D::Viewport& viewport, const Urho3D::IntVector2& mousePosition);
@@ -100,6 +100,8 @@ private:
     void HandleResize(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
     /// Update number of main viewports.
     void UpdateNumberOfViewports(int numViewports);
+    /// Update current viewport.
+    void UpdateCurrentViewport(const Urho3D::IntVector2& mousePosition);
     /// Update viewport layout.
     void UpdateViewportLayout();
 

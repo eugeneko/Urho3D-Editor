@@ -36,7 +36,7 @@ protected:
     /// Initialize module.
     virtual bool Initialize() override;
 
-protected slots:
+private slots:
     /// Handle 'File/New Scene'
     virtual void HandleFileNewScene();
     /// Handle 'File/Open Scene'

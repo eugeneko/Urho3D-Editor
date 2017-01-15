@@ -55,6 +55,16 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
     connect(&widget_, SIGNAL(keyReleased(QKeyEvent*)), this, SLOT(HandleKeyRelease(QKeyEvent*)));
     connect(&widget_, SIGNAL(wheelMoved(QWheelEvent*)), this, SLOT(HandleMouseWheel(QWheelEvent*)));
     connect(&widget_, SIGNAL(focusOut()), this, SLOT(HandleFocusOut()));
+
+    connect(mainWindow.GetAction("Scene.Camera.Single"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraSingle()));
+    connect(mainWindow.GetAction("Scene.Camera.Vertical"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraVertical()));
+    connect(mainWindow.GetAction("Scene.Camera.Horizontal"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraHorizontal()));
+    connect(mainWindow.GetAction("Scene.Camera.Quad"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraQuad()));
+    connect(mainWindow.GetAction("Scene.Camera.Top1_Bottom2"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraTop1Bottom2()));
+    connect(mainWindow.GetAction("Scene.Camera.Top2_Bottom1"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraTop2Bottom1()));
+    connect(mainWindow.GetAction("Scene.Camera.Left1_Right2"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraLeft1Right2()));
+    connect(mainWindow.GetAction("Scene.Camera.Left2_Right1"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraLeft2Right1()));
+
 }
 
 void SceneDocument::AddOverlay(SceneOverlay* overlay)
@@ -119,6 +129,11 @@ void SceneDocument::SetMouseMode(Urho3D::MouseMode mouseMode)
     input_.SetMouseMode(mouseMode);
 }
 
+Urho3D::IntVector2 SceneDocument::GetMousePosition() const
+{
+    return input_.GetMousePosition();
+}
+
 Urho3D::IntVector2 SceneDocument::GetMouseMove() const
 {
     return input_.GetMouseMove();
@@ -139,7 +154,7 @@ void SceneDocument::HandleKeyPress(QKeyEvent* event)
 {
     if (IsActive())
     {
-        pressedKeys_.insert((Qt::Key)event->key());
+        keysPressed_.insert((Qt::Key)event->key());
         if (!event->isAutoRepeat())
             keysDown_.insert((Qt::Key)event->key());
     }
@@ -164,7 +179,9 @@ void SceneDocument::HandleFocusOut()
     if (IsActive())
     {
         keysDown_.clear();
-        pressedKeys_.clear();
+        keysPressed_.clear();
+        mouseButtonsDown_.clear();
+        mouseButtonsPressed_.clear();
     }
 }
 
@@ -172,8 +189,6 @@ void SceneDocument::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMa
 {
     if (!IsActive())
         return;
-
-    viewportManager_.UpdateCurrentViewport(input_.GetMousePosition());
 
     const float timeStep = eventData[Urho3D::Update::P_TIMESTEP].GetFloat();
     for (SceneOverlay* overlay : overlays_)
@@ -186,13 +201,16 @@ void SceneDocument::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::Vari
         return;
 
     using namespace Urho3D;
-    const int button = eventData[MouseButtonDown::P_BUTTON].GetInt();
+    const Qt::MouseButton button = ConvertMouseButton(eventData[MouseButtonDown::P_BUTTON].GetInt());
     const bool pressed = eventType == E_MOUSEBUTTONDOWN;
 
     if (pressed)
-        mouseButtonsDown_.insert(ConvertMouseButton(button));
+    {
+        mouseButtonsPressed_.insert(button);
+        mouseButtonsDown_.insert(button);
+    }
     else
-        mouseButtonsDown_.remove(ConvertMouseButton(button));
+        mouseButtonsDown_.remove(button);
 }
 
 void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
@@ -202,7 +220,8 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
     for (SceneOverlay* overlay : overlays_)
         overlay->PostRenderUpdate(*this, GetCurrentCameraRay());
 
-    pressedKeys_.clear();
+    keysPressed_.clear();
+    mouseButtonsPressed_.clear();
     wheelDelta_ = 0;
 
     DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
@@ -222,7 +241,9 @@ void SceneDocument::HandleCurrentPageChanged(Document* document)
     else
     {
         keysDown_.clear();
-        pressedKeys_.clear();
+        keysPressed_.clear();
+        mouseButtonsDown_.clear();
+        mouseButtonsPressed_.clear();
     }
 }
 

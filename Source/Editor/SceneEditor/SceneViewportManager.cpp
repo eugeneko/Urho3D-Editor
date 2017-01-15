@@ -39,8 +39,12 @@ SceneViewport::SceneViewport(Urho3D::Context* context, Urho3D::Scene* scene, Urh
     , camera_(sceneCamera_ ? sceneCamera_ : localCamera_)
     , viewport_(new Urho3D::Viewport(context, scene, camera_))
 {
-    localCameraNode_.SetWorldPosition(Urho3D::Vector3(0, 10, -10));
-    localCameraNode_.LookAt(Urho3D::Vector3::ZERO);
+}
+
+void SceneViewport::SetTransform(const Urho3D::Vector3& position, const Urho3D::Quaternion& rotation)
+{
+    localCameraNode_.SetWorldPosition(position);
+    localCameraNode_.SetWorldRotation(rotation);
     localCameraAngles_ = localCameraNode_.GetRotation().EulerAngles();
 }
 
@@ -95,22 +99,6 @@ void SceneViewportManager::ApplyViewports()
     currentViewport_ = qMin(currentViewport_, (int)index - 1);
 }
 
-void SceneViewportManager::UpdateCurrentViewport(const Urho3D::IntVector2& mousePosition)
-{
-    Urho3D::IntVector2 localPosition;
-    for (int i = 0; i < viewports_.size(); ++i)
-    {
-        const Urho3D::Viewport& viewport = viewports_[i]->GetViewport();
-        const Urho3D::IntRect rect = viewport.GetRect();
-        if (rect.Size() == Urho3D::IntVector2::ZERO || rect.IsInside(mousePosition) != Urho3D::OUTSIDE)
-        {
-            currentViewport_ = i;
-            currentCameraRay_ = ComputeCameraRay(viewport, mousePosition);
-            break;
-        }
-    }
-}
-
 Urho3D::Ray SceneViewportManager::ComputeCameraRay(const Urho3D::Viewport& viewport, const Urho3D::IntVector2& mousePosition)
 {
     using namespace Urho3D;
@@ -131,6 +119,13 @@ Urho3D::Camera& SceneViewportManager::GetCurrentCamera()
 
 void SceneViewportManager::Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep)
 {
+    // Update current viewport
+    if (!input.IsMouseButtonDown(Qt::LeftButton)
+        && !input.IsMouseButtonDown(Qt::RightButton) && !input.IsMouseButtonDown(Qt::MiddleButton))
+    {
+        UpdateCurrentViewport(input.GetMousePosition());
+    }
+
     Configuration& config = document_.GetConfig();
     const HotKeyMode hotKeyMode = (HotKeyMode)config.GetValue(SceneEditor::VarHotkeyMode).toInt();
     const float cameraShiftSpeedMultiplier = 5.0f; // #TODO Make config
@@ -142,6 +137,7 @@ void SceneViewportManager::Update(SceneInputInterface& input, const Urho3D::Ray&
 
     using namespace Urho3D;
     SceneViewport& currentViewport = *viewports_[currentViewport_];
+    currentCameraRay_ = ComputeCameraRay(currentViewport.GetViewport(), input.GetMousePosition());
     Node& cameraNode = currentViewport.GetNode();
     Camera& camera = currentViewport.GetCamera();
 
@@ -344,7 +340,47 @@ void SceneViewportManager::HandleResize(Urho3D::StringHash eventType, Urho3D::Va
 
 void SceneViewportManager::UpdateNumberOfViewports(int numViewports)
 {
-    viewports_.push_back(QSharedPointer<SceneViewport>(new SceneViewport(context_, &scene_, nullptr)));
+    using namespace Urho3D;
+
+    static const Vector3 defaultPosition(0, 10, -10);
+    static const Quaternion defaultRotation(45, 0, 0);
+
+    const int oldNumViewports = viewports_.size();
+    if (numViewports < oldNumViewports)
+        viewports_.resize(numViewports);
+    else
+    {
+        Vector3 position = defaultPosition;
+        Quaternion rotation = defaultRotation;
+        if (oldNumViewports > 0)
+        {
+            Node& node = viewports_[oldNumViewports - 1]->GetNode();
+            position = node.GetWorldPosition();
+            rotation = node.GetWorldRotation();
+        }
+
+        for (int i = oldNumViewports; i < numViewports; ++i)
+        {
+            QSharedPointer<SceneViewport> viewport(new SceneViewport(context_, &scene_, nullptr));
+            viewport->SetTransform(position, rotation);
+            viewports_.push_back(viewport);
+        }
+    }
+}
+
+void SceneViewportManager::UpdateCurrentViewport(const Urho3D::IntVector2& mousePosition)
+{
+    Urho3D::IntVector2 localPosition;
+    for (int i = 0; i < viewports_.size(); ++i)
+    {
+        const Urho3D::Viewport& viewport = viewports_[i]->GetViewport();
+        const Urho3D::IntRect rect = viewport.GetRect();
+        if (rect.Size() == Urho3D::IntVector2::ZERO || rect.IsInside(mousePosition) != Urho3D::OUTSIDE)
+        {
+            currentViewport_ = i;
+            break;
+        }
+    }
 }
 
 void SceneViewportManager::UpdateViewportLayout()
@@ -353,29 +389,50 @@ void SceneViewportManager::UpdateViewportLayout()
     Graphics* graphics = GetSubsystem<Graphics>();
     const int width = graphics->GetWidth();
     const int height = graphics->GetHeight();
+    const int halfWidth = width / 2;
+    const int halfHeight = height / 2;
 
+    Q_ASSERT(viewports_.size() == GetNumberOfViewports(layout_));
     switch (layout_)
     {
     case Urho3DEditor::SceneViewportLayout::Empty:
-        Q_ASSERT(viewports_.size() == 0);
         break;
     case Urho3DEditor::SceneViewportLayout::Single:
-        Q_ASSERT(viewports_.size() == 1);
-        viewports_[0]->SetRect(IntRect(0, 0, width - 1, height - 1));
+        viewports_[0]->SetRect(IntRect(0, 0, width, height));
         break;
     case Urho3DEditor::SceneViewportLayout::Vertical:
+        viewports_[0]->SetRect(IntRect(0, 0, halfWidth, height));
+        viewports_[1]->SetRect(IntRect(halfWidth, 0, width, height));
         break;
     case Urho3DEditor::SceneViewportLayout::Horizontal:
+        viewports_[0]->SetRect(IntRect(0, 0, width, halfHeight));
+        viewports_[1]->SetRect(IntRect(0, halfHeight, width, height));
         break;
     case Urho3DEditor::SceneViewportLayout::Quad:
+        viewports_[0]->SetRect(IntRect(0, 0, halfWidth, halfHeight));
+        viewports_[1]->SetRect(IntRect(halfWidth, 0, width, halfHeight));
+        viewports_[2]->SetRect(IntRect(0, halfHeight, halfWidth, height));
+        viewports_[3]->SetRect(IntRect(halfWidth, halfHeight, width, height));
         break;
     case Urho3DEditor::SceneViewportLayout::Top1_Bottom2:
+        viewports_[0]->SetRect(IntRect(0, 0, width, halfHeight));
+        viewports_[1]->SetRect(IntRect(0, halfHeight, halfWidth, height));
+        viewports_[2]->SetRect(IntRect(halfWidth, halfHeight, width, height));
         break;
     case Urho3DEditor::SceneViewportLayout::Top2_Bottom1:
+        viewports_[0]->SetRect(IntRect(0, 0, halfWidth, halfHeight));
+        viewports_[1]->SetRect(IntRect(halfWidth, 0, width, halfHeight));
+        viewports_[2]->SetRect(IntRect(0, halfHeight, width, height));
         break;
     case Urho3DEditor::SceneViewportLayout::Left1_Right2:
+        viewports_[0]->SetRect(IntRect(0, 0, halfWidth, height));
+        viewports_[1]->SetRect(IntRect(halfWidth, 0, width, halfHeight));
+        viewports_[2]->SetRect(IntRect(halfWidth, halfHeight, width, height));
         break;
     case Urho3DEditor::SceneViewportLayout::Left2_Right1:
+        viewports_[0]->SetRect(IntRect(0, 0, halfWidth, halfHeight));
+        viewports_[1]->SetRect(IntRect(0, halfHeight, halfWidth, height));
+        viewports_[2]->SetRect(IntRect(halfWidth, 0, width, height));
         break;
     default:
         break;

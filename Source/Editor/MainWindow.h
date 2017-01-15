@@ -49,7 +49,9 @@ public:
     QAction* GetAction(const QString& name) const;
 
     /// Add menu action.
-    void AddAction(const QString& name, QAction* action);
+    QAction* AddAction(const QString& name, QAction* action);
+    /// Add new menu action.
+    QAction* AddAction(const QString& name, const QKeySequence& shortcut = QKeySequence());
     /// Add dock widget.
     void AddDock(Qt::DockWidgetArea area, QDockWidget* dock);
 

@@ -108,10 +108,18 @@ QAction* MainWindow::GetAction(const QString& name) const
     return menuActions_.value(name);
 }
 
-void MainWindow::AddAction(const QString& name, QAction* action)
+QAction* MainWindow::AddAction(const QString& name, QAction* action)
 {
     action->setParent(this);
     menuActions_[name] = action;
+    return action;
+}
+
+QAction* MainWindow::AddAction(const QString& name, const QKeySequence& shortcut /*= QKeySequence()*/)
+{
+    QScopedPointer<QAction> action(new QAction);
+    action->setShortcut(shortcut);
+    return AddAction(name, action.take());
 }
 
 void MainWindow::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
@@ -240,6 +248,8 @@ QAction* MainWindow::ReadAction(const QDomNode& node)
     QAction* action = menuActions_.value(actionName);
     if (!action)
         action = new QAction(name + " (Dummy)", &mainWindow_);
+    else
+        action->setText(name);
     return action;
 }
 

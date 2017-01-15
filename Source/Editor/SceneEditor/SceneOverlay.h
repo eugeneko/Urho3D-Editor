@@ -19,6 +19,10 @@ public:
     virtual bool IsKeyPressed(Qt::Key key) const = 0;
     /// Return whether the mouse button is down.
     virtual bool IsMouseButtonDown(Qt::MouseButton mouseButton) const = 0;
+    /// Return whether the mouse button is pressed.
+    virtual bool IsMouseButtonPressed(Qt::MouseButton mouseButton) const = 0;
+    /// Return mouse position.
+    virtual Urho3D::IntVector2 GetMousePosition() const = 0;
     /// Return mouse move.
     virtual Urho3D::IntVector2 GetMouseMove() const = 0;
     /// Return mouse wheel delta.

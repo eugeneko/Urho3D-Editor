@@ -93,9 +93,13 @@ public:
     /// Return whether the key is down.
     virtual bool IsKeyDown(Qt::Key key) const override { return keysDown_.contains(key); }
     /// Return whether the key is pressed.
-    virtual bool IsKeyPressed(Qt::Key key) const override { return pressedKeys_.contains(key); }
+    virtual bool IsKeyPressed(Qt::Key key) const override { return keysPressed_.contains(key); }
     /// Return whether the mouse button is down.
     virtual bool IsMouseButtonDown(Qt::MouseButton mouseButton) const override { return mouseButtonsDown_.contains(mouseButton); }
+    /// Return whether the mouse button is pressed.
+    virtual bool IsMouseButtonPressed(Qt::MouseButton mouseButton) const override { return mouseButtonsPressed_.contains(mouseButton); }
+    /// Return mouse position.
+    virtual Urho3D::IntVector2 GetMousePosition() const override;
     /// Return mouse move.
     virtual Urho3D::IntVector2 GetMouseMove() const override;
     /// Return mouse wheel delta.
@@ -119,6 +123,23 @@ signals:
     void nodeTransformChanged(const Urho3D::Node& node);
 
 private slots:
+    /// Handle 'Scene.Camera.Single'
+    void HandleCameraSingle()      { viewportManager_.SetLayout(SceneViewportLayout::Single); }
+    /// Handle 'Scene.Camera.Vertical'
+    void HandleCameraVertical()    { viewportManager_.SetLayout(SceneViewportLayout::Vertical); }
+    /// Handle 'Scene.Camera.Horizontal'
+    void HandleCameraHorizontal()  { viewportManager_.SetLayout(SceneViewportLayout::Horizontal); }
+    /// Handle 'Scene.Camera.Quad'
+    void HandleCameraQuad()        { viewportManager_.SetLayout(SceneViewportLayout::Quad); }
+    /// Handle 'Scene.Camera.Top1_Bottom2'
+    void HandleCameraTop1Bottom2() { viewportManager_.SetLayout(SceneViewportLayout::Top1_Bottom2); }
+    /// Handle 'Scene.Camera.Top2_Bottom1'
+    void HandleCameraTop2Bottom1() { viewportManager_.SetLayout(SceneViewportLayout::Top2_Bottom1); }
+    /// Handle 'Scene.Camera.Left1_Right2'
+    void HandleCameraLeft1Right2() { viewportManager_.SetLayout(SceneViewportLayout::Left1_Right2); }
+    /// Handle 'Scene.Camera.Left2_Right1'
+    void HandleCameraLeft2Right1() { viewportManager_.SetLayout(SceneViewportLayout::Left2_Right1); }
+
     /// Handle viewports changed.
     void HandleViewportsChanged();
 
@@ -166,10 +187,12 @@ protected:
     Urho3DWidget& widget_;
     /// Mouse buttons are down.
     QSet<Qt::MouseButton> mouseButtonsDown_;
+    /// Mouse buttons are pressed.
+    QSet<Qt::MouseButton> mouseButtonsPressed_;
     /// Keys are down.
     QSet<Qt::Key> keysDown_;
-    /// Pressed keys.
-    QSet<Qt::Key> pressedKeys_;
+    /// Keys are pressed.
+    QSet<Qt::Key> keysPressed_;
     /// Wheel delta.
     int wheelDelta_;
 
