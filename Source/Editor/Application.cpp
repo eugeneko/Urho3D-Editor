@@ -11,7 +11,7 @@
 #include "Urho3DProject.h"
 #include "SceneEditor/HierarchyWindow.h"
 #include "SceneEditor/SceneEditor.h"
-#include "SceneEditor/Gizmo.h"
+#include "SceneEditor/GizmoManager.h"
 
 namespace Urho3DEditor
 {

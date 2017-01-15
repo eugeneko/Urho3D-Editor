@@ -1,4 +1,4 @@
-#include "Gizmo.h"
+#include "GizmoManager.h"
 #include "SceneActions.h"
 #include "SceneDocument.h"
 #include "../Configuration.h"
