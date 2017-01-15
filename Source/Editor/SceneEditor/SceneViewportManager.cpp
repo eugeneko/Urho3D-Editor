@@ -34,18 +34,20 @@ int GetNumberOfViewports(SceneViewportLayout layout)
 
 SceneViewport::SceneViewport(Urho3D::Context* context, Urho3D::Scene* scene, Urho3D::Camera* camera)
     : sceneCamera_(camera)
-    , localCameraNode_(context)
-    , localCamera_(localCameraNode_.CreateComponent<Urho3D::Camera>())
-    , camera_(sceneCamera_ ? sceneCamera_ : localCamera_)
-    , viewport_(new Urho3D::Viewport(context, scene, camera_))
+    , cameraNode_(context)
+    , camera_(*cameraNode_.CreateComponent<Urho3D::Camera>())
+    , viewportCamera_(sceneCamera_ ? sceneCamera_ : &camera_)
+    , viewport_(new Urho3D::Viewport(context, scene, viewportCamera_))
+    , flyMode_(false)
+    , orbiting_(false)
 {
 }
 
 void SceneViewport::SetTransform(const Urho3D::Vector3& position, const Urho3D::Quaternion& rotation)
 {
-    localCameraNode_.SetWorldPosition(position);
-    localCameraNode_.SetWorldRotation(rotation);
-    localCameraAngles_ = localCameraNode_.GetRotation().EulerAngles();
+    cameraNode_.SetWorldPosition(position);
+    cameraNode_.SetWorldRotation(rotation);
+    cameraAngles_ = cameraNode_.GetRotation().EulerAngles();
 }
 
 void SceneViewport::SetRect(Urho3D::IntRect rect)
@@ -53,15 +55,211 @@ void SceneViewport::SetRect(Urho3D::IntRect rect)
     viewport_->SetRect(rect);
 }
 
-void SceneViewport::UpdateRotation(float deltaPitch, float deltaYaw, bool limitPitch)
+void SceneViewport::Update(const SceneViewportUpdateParams& p)
 {
-    localCameraAngles_.x_ += deltaPitch;
-    localCameraAngles_.y_ += deltaYaw;
+    using namespace Urho3D;
+    const float timeStep = p.timeStep_;
+    SceneInputInterface& input = *p.input_;
+    Configuration& config = *p.config_;
 
-    if (limitPitch)
-        localCameraAngles_.x_ = Urho3D::Clamp(localCameraAngles_.x_, -90.0f, 90.0f);
+    const HotKeyMode hotKeyMode = (HotKeyMode)config.GetValue(SceneEditor::VarHotKeyMode).toInt();
+    const float cameraShiftSpeedMultiplier = 5.0f; // #TODO Make config
+    const float cameraBaseSpeed = 5.0f;
+    const bool mouseWheelCameraPosition = false;
+    const bool mmbPanMode = true;
+    const bool limitRotation = true;
+    const float cameraBaseRotationSpeed = 0.2f;
 
-    localCameraNode_.SetRotation(Urho3D::Quaternion(localCameraAngles_.x_, localCameraAngles_.y_, 0));
+    // Check for camera fly mode
+    if (hotKeyMode == HotKeyMode::Blender)
+    {
+        if (input.IsKeyDown(Qt::Key_Shift) && input.IsKeyPressed(Qt::Key_F))
+            flyMode_ = !flyMode_;
+    }
+
+    // Move camera
+    float speedMultiplier = 1.0;
+    if (input.IsKeyDown(Qt::Key_Shift))
+        speedMultiplier = cameraShiftSpeedMultiplier;
+
+    if (!input.IsKeyDown(Qt::Key_Control) && !input.IsKeyDown(Qt::Key_Alt))
+    {
+        if (hotKeyMode == HotKeyMode::Standard || (hotKeyMode == HotKeyMode::Blender && flyMode_ && !input.IsKeyDown(Qt::Key_Shift)))
+        {
+            if (input.IsKeyDown(Qt::Key_W) || input.IsKeyDown(Qt::Key_Up))
+            {
+                cameraNode_.Translate(Vector3(0, 0, cameraBaseSpeed) * timeStep * speedMultiplier);
+            }
+            if (input.IsKeyDown(Qt::Key_S) || input.IsKeyDown(Qt::Key_Down))
+            {
+                cameraNode_.Translate(Vector3(0, 0, -cameraBaseSpeed) * timeStep * speedMultiplier);
+            }
+            if (input.IsKeyDown(Qt::Key_A) || input.IsKeyDown(Qt::Key_Left))
+            {
+                cameraNode_.Translate(Vector3(-cameraBaseSpeed, 0, 0) * timeStep * speedMultiplier);
+            }
+            if (input.IsKeyDown(Qt::Key_D) || input.IsKeyDown(Qt::Key_Right))
+            {
+                cameraNode_.Translate(Vector3(cameraBaseSpeed, 0, 0) * timeStep * speedMultiplier);
+            }
+            if (input.IsKeyDown(Qt::Key_E) || input.IsKeyDown(Qt::Key_PageUp))
+            {
+                cameraNode_.Translate(Vector3(0, cameraBaseSpeed, 0) * timeStep * speedMultiplier, TS_WORLD);
+            }
+            if (input.IsKeyDown(Qt::Key_Q) || input.IsKeyDown(Qt::Key_PageDown))
+            {
+                cameraNode_.Translate(Vector3(0, -cameraBaseSpeed, 0) * timeStep * speedMultiplier, TS_WORLD);
+            }
+        }
+    }
+
+    if (input.GetMouseWheelMove() != 0)
+    {
+        if (hotKeyMode == HotKeyMode::Standard)
+        {
+            if (mouseWheelCameraPosition)
+            {
+                cameraNode_.Translate(Vector3(0, 0, -cameraBaseSpeed) * -input.GetMouseWheelMove() * 20 * timeStep *
+                    speedMultiplier);
+            }
+            else
+            {
+                const float zoom = camera_.GetZoom() + -input.GetMouseWheelMove() * 0.1 * speedMultiplier;
+                camera_.SetZoom(Clamp(zoom, 0.1f, 30.0f));
+            }
+        }
+        else if (hotKeyMode == HotKeyMode::Blender)
+        {
+            if (mouseWheelCameraPosition && !camera_.IsOrthographic())
+            {
+                if (input.IsKeyDown(Qt::Key_Shift))
+                    cameraNode_.Translate(Vector3(0, -cameraBaseSpeed, 0) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
+                else if (input.IsKeyDown(Qt::Key_Control))
+                    cameraNode_.Translate(Vector3(-cameraBaseSpeed, 0, 0) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
+                else
+                {
+                    float distance = (cameraNode_.GetWorldPosition() - p.selectionCenter_).Length();
+                    float ratio = distance / 40.0f;
+                    float factor = ratio < 1.0f ? ratio : 1.0f;
+                    cameraNode_.Translate(Vector3(0, 0, -cameraBaseSpeed) * -input.GetMouseWheelMove() * 40 * factor*timeStep*speedMultiplier);
+                }
+            }
+            else
+            {
+                if (input.IsKeyDown(Qt::Key_Shift))
+                {
+                    cameraNode_.Translate(Vector3(0, -cameraBaseSpeed, 0) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
+                }
+                else if (input.IsKeyDown(Qt::Key_Control))
+                {
+                    cameraNode_.Translate(Vector3(-cameraBaseSpeed, 0, 0) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
+                }
+                else
+                {
+                    if (input.IsKeyDown(Qt::Key_Alt))
+                    {
+                        const float zoom = camera_.GetZoom() + -input.GetMouseWheelMove() * 0.1f * speedMultiplier;
+                        camera_.SetZoom(Clamp(zoom, 0.1f, 30.0f));
+                    }
+                    else
+                    {
+                        cameraNode_.Translate(Vector3(0, 0, -cameraBaseSpeed) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
+                    }
+                }
+            }
+        }
+    }
+
+    if (input.IsKeyDown(Qt::Key_Home))
+    {
+        if (p.hasSelection_)
+        {
+            Vector3 d = cameraNode_.GetWorldPosition() - p.selectionCenter_;
+            cameraNode_.SetWorldPosition(p.selectionCenter_ - cameraNode_.GetRotation() * Vector3(0.0, 0.0, 10));
+        }
+    }
+
+    // Rotate/orbit/pan camera
+    bool changeCamViewButton = false;
+
+    if (hotKeyMode == HotKeyMode::Standard)
+        changeCamViewButton = input.IsMouseButtonDown(Qt::RightButton) || input.IsMouseButtonDown(Qt::MiddleButton);
+    else if (hotKeyMode == HotKeyMode::Blender)
+    {
+        changeCamViewButton = input.IsMouseButtonDown(Qt::MiddleButton) || flyMode_;
+
+        if (input.IsMouseButtonDown(Qt::RightButton) || input.IsKeyDown(Qt::Key_Escape))
+            flyMode_ = false;
+    }
+
+    if (changeCamViewButton)
+    {
+        input.SetMouseMode(MM_WRAP);
+
+        const IntVector2 mouseMove = input.GetMouseMove();
+        if (mouseMove.x_ != 0 || mouseMove.y_ != 0)
+        {
+            bool panTheCamera = false;
+
+            if (hotKeyMode == HotKeyMode::Standard)
+            {
+                if (input.IsMouseButtonDown(Qt::MiddleButton))
+                {
+                    if (mmbPanMode)
+                        panTheCamera = !input.IsKeyDown(Qt::Key_Shift);
+                    else
+                        panTheCamera = input.IsKeyDown(Qt::Key_Shift);
+                }
+            }
+            else if (hotKeyMode == HotKeyMode::Blender)
+            {
+                if (!flyMode_)
+                    panTheCamera = input.IsKeyDown(Qt::Key_Shift);
+            }
+
+            if (panTheCamera)
+                cameraNode_.Translate(Vector3(-mouseMove.x_, mouseMove.y_, 0) * timeStep * cameraBaseSpeed * 0.5);
+            else
+            {
+                cameraAngles_.x_ += mouseMove.y_ * cameraBaseRotationSpeed;
+                cameraAngles_.y_ += mouseMove.x_ * cameraBaseRotationSpeed;
+
+                if (limitRotation)
+                    cameraAngles_.x_ = Urho3D::Clamp(cameraAngles_.x_, -90.0f, 90.0f);
+
+                cameraNode_.SetRotation(Urho3D::Quaternion(cameraAngles_.x_, cameraAngles_.y_, 0));
+
+                if (hotKeyMode == HotKeyMode::Standard)
+                {
+                    if (input.IsMouseButtonDown(Qt::MiddleButton) && p.hasSelection_)
+                    {
+                        Vector3 d = cameraNode_.GetWorldPosition() - p.selectionCenter_;
+                        cameraNode_.SetWorldPosition(p.selectionCenter_ - cameraNode_.GetWorldRotation() * Vector3(0.0, 0.0, d.Length()));
+                        orbiting_ = true;
+                    }
+                }
+                else if (hotKeyMode == HotKeyMode::Blender)
+                {
+                    if (input.IsMouseButtonDown(Qt::MiddleButton))
+                    {
+                        Vector3 d = cameraNode_.GetWorldPosition() - p.selectionCenter_;
+                        cameraNode_.SetWorldPosition(p.selectionCenter_ - cameraNode_.GetWorldRotation() * Vector3(0.0, 0.0, d.Length()));
+                        orbiting_ = true;
+                    }
+                }
+            }
+        }
+    }
+    else
+        input.SetMouseMode(MM_ABSOLUTE);
+
+    if (orbiting_ && !input.IsMouseButtonDown(Qt::MiddleButton))
+        orbiting_ = false;
+
+    if (hotKeyMode == HotKeyMode::Blender)
+    {
+        // Implement 'View Closer' here if you want
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -72,8 +270,6 @@ SceneViewportManager::SceneViewportManager(SceneDocument& document)
     , graphics_(*GetSubsystem<Urho3D::Graphics>())
     , currentViewport_(0)
     , layout_(SceneViewportLayout::Empty)
-    , flyMode_(false)
-    , orbiting_(false)
 {
     SetLayout(SceneViewportLayout::Single); // #TODO Change
     SubscribeToEvent(Urho3D::E_SCREENMODE, URHO3D_HANDLER(SceneViewportManager, HandleResize));
@@ -119,218 +315,24 @@ Urho3D::Camera& SceneViewportManager::GetCurrentCamera()
 
 void SceneViewportManager::Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep)
 {
-    // Update current viewport
+    // Select current viewport
     if (!input.IsMouseButtonDown(Qt::LeftButton)
         && !input.IsMouseButtonDown(Qt::RightButton) && !input.IsMouseButtonDown(Qt::MiddleButton))
     {
-        UpdateCurrentViewport(input.GetMousePosition());
+        SelectCurrentViewport(input.GetMousePosition());
     }
 
-    Configuration& config = document_.GetConfig();
-    const HotKeyMode hotKeyMode = (HotKeyMode)config.GetValue(SceneEditor::VarHotkeyMode).toInt();
-    const float cameraShiftSpeedMultiplier = 5.0f; // #TODO Make config
-    const float cameraBaseSpeed = 5.0f;
-    const bool mouseWheelCameraPosition = false;
-    const bool mmbPanMode = true;
-    const bool limitRotation = true;
-    const float cameraBaseRotationSpeed = 0.2f;
+    // Update current viewport
+    SceneViewportUpdateParams param;
+    param.timeStep_ = timeStep;
+    param.config_ = &document_.GetConfig();
+    param.input_ = &input;
+    param.hasSelection_ = document_.HasSelectedNodesOrComponents();
+    param.selectionCenter_ = document_.GetSelectedCenter();
 
-    using namespace Urho3D;
     SceneViewport& currentViewport = *viewports_[currentViewport_];
     currentCameraRay_ = ComputeCameraRay(currentViewport.GetViewport(), input.GetMousePosition());
-    Node& cameraNode = currentViewport.GetNode();
-    Camera& camera = currentViewport.GetCamera();
-
-    // Check for camera fly mode
-    if (hotKeyMode == HotKeyMode::Blender)
-    {
-        if (input.IsKeyDown(Qt::Key_Shift) && input.IsKeyPressed(Qt::Key_F))
-            flyMode_ = !flyMode_;
-    }
-
-    // Move camera
-    float speedMultiplier = 1.0;
-    if (input.IsKeyDown(Qt::Key_Shift))
-        speedMultiplier = cameraShiftSpeedMultiplier;
-
-    if (!input.IsKeyDown(Qt::Key_Control) && !input.IsKeyDown(Qt::Key_Alt))
-    {
-        if (hotKeyMode == HotKeyMode::Standard || (hotKeyMode == HotKeyMode::Blender && flyMode_ && !input.IsKeyDown(Qt::Key_Shift)))
-        {
-            if (input.IsKeyDown(Qt::Key_W) || input.IsKeyDown(Qt::Key_Up))
-            {
-                cameraNode.Translate(Vector3(0, 0, cameraBaseSpeed) * timeStep * speedMultiplier);
-            }
-            if (input.IsKeyDown(Qt::Key_S) || input.IsKeyDown(Qt::Key_Down))
-            {
-                cameraNode.Translate(Vector3(0, 0, -cameraBaseSpeed) * timeStep * speedMultiplier);
-            }
-            if (input.IsKeyDown(Qt::Key_A) || input.IsKeyDown(Qt::Key_Left))
-            {
-                cameraNode.Translate(Vector3(-cameraBaseSpeed, 0, 0) * timeStep * speedMultiplier);
-            }
-            if (input.IsKeyDown(Qt::Key_D) || input.IsKeyDown(Qt::Key_Right))
-            {
-                cameraNode.Translate(Vector3(cameraBaseSpeed, 0, 0) * timeStep * speedMultiplier);
-            }
-            if (input.IsKeyDown(Qt::Key_E) || input.IsKeyDown(Qt::Key_PageUp))
-            {
-                cameraNode.Translate(Vector3(0, cameraBaseSpeed, 0) * timeStep * speedMultiplier, TS_WORLD);
-            }
-            if (input.IsKeyDown(Qt::Key_Q) || input.IsKeyDown(Qt::Key_PageDown))
-            {
-                cameraNode.Translate(Vector3(0, -cameraBaseSpeed, 0) * timeStep * speedMultiplier, TS_WORLD);
-            }
-        }
-    }
-
-    if (input.GetMouseWheelMove() != 0)
-    {
-        if (hotKeyMode == HotKeyMode::Standard)
-        {
-            if (mouseWheelCameraPosition)
-            {
-                cameraNode.Translate(Vector3(0, 0, -cameraBaseSpeed) * -input.GetMouseWheelMove() * 20 * timeStep *
-                    speedMultiplier);
-            }
-            else
-            {
-                const float zoom = camera.GetZoom() + -input.GetMouseWheelMove() * 0.1 * speedMultiplier;
-                camera.SetZoom(Clamp(zoom, 0.1f, 30.0f));
-            }
-        }
-        else if (hotKeyMode == HotKeyMode::Blender)
-        {
-            if (mouseWheelCameraPosition && !camera.IsOrthographic())
-            {
-                if (input.IsKeyDown(Qt::Key_Shift))
-                    cameraNode.Translate(Vector3(0, -cameraBaseSpeed, 0) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
-                else if (input.IsKeyDown(Qt::Key_Control))
-                    cameraNode.Translate(Vector3(-cameraBaseSpeed, 0, 0) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
-                else
-                {
-                    Vector3 center = document_.GetSelectedCenter();
-                    float distance = (cameraNode.GetWorldPosition() - center).Length();
-                    float ratio = distance / 40.0f;
-                    float factor = ratio < 1.0f ? ratio : 1.0f;
-                    cameraNode.Translate(Vector3(0, 0, -cameraBaseSpeed) * -input.GetMouseWheelMove() * 40 * factor*timeStep*speedMultiplier);
-                }
-            }
-            else
-            {
-                if (input.IsKeyDown(Qt::Key_Shift))
-                {
-                    cameraNode.Translate(Vector3(0, -cameraBaseSpeed, 0) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
-                }
-                else if (input.IsKeyDown(Qt::Key_Control))
-                {
-                    cameraNode.Translate(Vector3(-cameraBaseSpeed, 0, 0) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
-                }
-                else
-                {
-                    if (input.IsKeyDown(Qt::Key_Alt))
-                    {
-                        const float zoom = camera.GetZoom() + -input.GetMouseWheelMove() * 0.1f * speedMultiplier;
-                        camera.SetZoom(Clamp(zoom, 0.1f, 30.0f));
-                    }
-                    else
-                    {
-                        cameraNode.Translate(Vector3(0, 0, -cameraBaseSpeed) * -input.GetMouseWheelMove() * 20 * timeStep * speedMultiplier);
-                    }
-                }
-            }
-        }
-    }
-
-    if (input.IsKeyDown(Qt::Key_Home))
-    {
-        if (document_.HasSelectedNodesOrComponents())
-        {
-            Vector3 centerPoint = document_.GetSelectedCenter();
-            Vector3 d = cameraNode.GetWorldPosition() - centerPoint;
-            cameraNode.SetWorldPosition(centerPoint - cameraNode.GetRotation() * Vector3(0.0, 0.0, 10));
-        }
-    }
-
-    // Rotate/orbit/pan camera
-    bool changeCamViewButton = false;
-
-    if (hotKeyMode == HotKeyMode::Standard)
-        changeCamViewButton = input.IsMouseButtonDown(Qt::RightButton) || input.IsMouseButtonDown(Qt::MiddleButton);
-    else if (hotKeyMode == HotKeyMode::Blender)
-    {
-        changeCamViewButton = input.IsMouseButtonDown(Qt::MiddleButton) || flyMode_;
-
-        if (input.IsMouseButtonDown(Qt::RightButton) || input.IsKeyDown(Qt::Key_Escape))
-            flyMode_ = false;
-    }
-
-    if (changeCamViewButton)
-    {
-        input.SetMouseMode(MM_WRAP);
-
-        const IntVector2 mouseMove = input.GetMouseMove();
-        if (mouseMove.x_ != 0 || mouseMove.y_ != 0)
-        {
-            bool panTheCamera = false;
-
-            if (hotKeyMode == HotKeyMode::Standard)
-            {
-                if (input.IsMouseButtonDown(Qt::MiddleButton))
-                {
-                    if (mmbPanMode)
-                        panTheCamera = !input.IsKeyDown(Qt::Key_Shift);
-                    else
-                        panTheCamera = input.IsKeyDown(Qt::Key_Shift);
-                }
-            }
-            else if (hotKeyMode == HotKeyMode::Blender)
-            {
-                if (!flyMode_)
-                    panTheCamera = input.IsKeyDown(Qt::Key_Shift);
-            }
-
-            if (panTheCamera)
-                cameraNode.Translate(Vector3(-mouseMove.x_, mouseMove.y_, 0) * timeStep * cameraBaseSpeed * 0.5);
-            else
-            {
-                currentViewport.UpdateRotation(
-                    mouseMove.y_ * cameraBaseRotationSpeed, mouseMove.x_ * cameraBaseRotationSpeed, limitRotation);
-
-                if (hotKeyMode == HotKeyMode::Standard)
-                {
-                    if (input.IsMouseButtonDown(Qt::MiddleButton) && document_.HasSelectedNodesOrComponents())
-                    {
-                        Vector3 centerPoint = document_.GetSelectedCenter();
-                        Vector3 d = cameraNode.GetWorldPosition() - centerPoint;
-                        cameraNode.SetWorldPosition(centerPoint - cameraNode.GetWorldRotation() * Vector3(0.0, 0.0, d.Length()));
-                        orbiting_ = true;
-                    }
-                }
-                else if (hotKeyMode == HotKeyMode::Blender)
-                {
-                    if (input.IsMouseButtonDown(Qt::MiddleButton))
-                    {
-                        const Vector3 centerPoint = document_.GetSelectedCenter();
-
-                        Vector3 d = cameraNode.GetWorldPosition() - centerPoint;
-                        cameraNode.SetWorldPosition(centerPoint - cameraNode.GetWorldRotation() * Vector3(0.0, 0.0, d.Length()));
-                        orbiting_ = true;
-                    }
-                }
-            }
-        }
-    }
-    else
-        input.SetMouseMode(MM_ABSOLUTE);
-
-    if (orbiting_ && !input.IsMouseButtonDown(Qt::MiddleButton))
-        orbiting_ = false;
-
-    if (hotKeyMode == HotKeyMode::Blender)
-    {
-        // Implement 'View Closer' here if you want
-    }
+    currentViewport.Update(param);
 }
 
 void SceneViewportManager::HandleResize(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
@@ -368,7 +370,7 @@ void SceneViewportManager::UpdateNumberOfViewports(int numViewports)
     }
 }
 
-void SceneViewportManager::UpdateCurrentViewport(const Urho3D::IntVector2& mousePosition)
+void SceneViewportManager::SelectCurrentViewport(const Urho3D::IntVector2& mousePosition)
 {
     Urho3D::IntVector2 localPosition;
     for (int i = 0; i < viewports_.size(); ++i)

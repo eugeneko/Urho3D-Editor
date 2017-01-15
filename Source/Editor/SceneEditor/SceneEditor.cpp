@@ -32,7 +32,7 @@ static const QString CONFIG_DEBUG_OCTREE = "sceneeditor/debug/octree";
 static const QString CONFIG_DEBUG_NAVIGATION = "sceneeditor/debug/navigation";
 static const QString CONFIG_PICK_MODE = "sceneeditor/pickmode";
 
-const QString SceneEditor::VarHotkeyMode = "scene/hotkey";
+const QString SceneEditor::VarHotKeyMode = "scene/hotkey";
 
 SceneEditor::SceneEditor()
 {
@@ -71,7 +71,7 @@ bool SceneEditor::Initialize()
     UpdateMenuVisibility();
 
     // Setup config
-    GetConfig().RegisterVariable(VarHotkeyMode, (int)HotKeyMode::Standard, "", "", QStringList({ "Standard", "Blender" }));
+    GetConfig().RegisterVariable(VarHotKeyMode, (int)HotKeyMode::Standard, "", "", QStringList({ "Standard", "Blender" }));
     GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
     GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
     GetConfig().RegisterVariable(CONFIG_DEBUG_RENDERING, false);

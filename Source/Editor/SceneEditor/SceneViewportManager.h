@@ -11,7 +11,22 @@
 namespace Urho3DEditor
 {
 
+class Configuration;
 class SceneDocument;
+
+struct SceneViewportUpdateParams
+{
+    /// Time step.
+    float timeStep_;
+    /// Input interface.
+    SceneInputInterface* input_;
+    /// Configuration.
+    Configuration* config_;
+    /// Specifies whether anything is selected.
+    bool hasSelection_;
+    /// Center of selection.
+    Urho3D::Vector3 selectionCenter_;
+};
 
 /// Scene viewport description.
 class SceneViewport
@@ -23,13 +38,13 @@ public:
     void SetTransform(const Urho3D::Vector3& position, const Urho3D::Quaternion& rotation);
     /// Set rectangle.
     void SetRect(Urho3D::IntRect rect);
-    /// Update yaw and pitch angles. Update local camera rotation.
-    void UpdateRotation(float deltaPitch, float deltaYaw, bool limitPitch);
+    /// Update viewport camera.
+    void Update(const SceneViewportUpdateParams& p);
 
     /// Get camera node.
-    Urho3D::Node& GetNode() { return localCameraNode_; }
-    /// Get camera.
-    Urho3D::Camera& GetCamera() const { return *camera_; }
+    Urho3D::Node& GetNode() { return cameraNode_; }
+    /// Get viewport camera.
+    Urho3D::Camera& GetCamera() const { return *viewportCamera_; }
     /// Get viewport.
     Urho3D::Viewport& GetViewport() const { return *viewport_; }
 
@@ -40,14 +55,19 @@ private:
     Urho3D::Rect rect_;
 
     /// Local camera node.
-    Urho3D::Node localCameraNode_;
+    Urho3D::Node cameraNode_;
     /// Local camera component.
-    Urho3D::Camera* localCamera_;
+    Urho3D::Camera& camera_;
     /// Local camera angles.
-    Urho3D::Vector3 localCameraAngles_;
+    Urho3D::Vector3 cameraAngles_;
+
+    /// Controls whether in fly mode.
+    bool flyMode_;
+    /// Shows whether the camera is orbiting.
+    bool orbiting_;
 
     /// Camera.
-    Urho3D::Camera* camera_;
+    Urho3D::Camera* viewportCamera_;
     /// Viewport.
     Urho3D::SharedPtr<Urho3D::Viewport> viewport_;
 
@@ -101,7 +121,7 @@ private:
     /// Update number of main viewports.
     void UpdateNumberOfViewports(int numViewports);
     /// Update current viewport.
-    void UpdateCurrentViewport(const Urho3D::IntVector2& mousePosition);
+    void SelectCurrentViewport(const Urho3D::IntVector2& mousePosition);
     /// Update viewport layout.
     void UpdateViewportLayout();
 
@@ -121,10 +141,6 @@ private:
     Urho3D::Ray currentCameraRay_;
     /// Layout type.
     SceneViewportLayout layout_;
-    /// Controls whether in fly mode.
-    bool flyMode_;
-    /// Shows whether the camera is orbiting.
-    bool orbiting_;
 
 };
 
