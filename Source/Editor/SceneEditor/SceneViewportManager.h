@@ -79,12 +79,19 @@ enum class SceneViewportLayout
     Empty,
     /// Single viewport.
     Single,
+    /// Vertical split.
     Vertical,
+    /// Horizontal split.
     Horizontal,
+    /// Quad split.
     Quad,
+    /// T-split, 1 viewport on the top, 2 viewports on the bottom.
     Top1_Bottom2,
+    /// T-split, 2 viewports on the top, 1 viewport on the bottom.
     Top2_Bottom1,
+    /// T-split, 1 viewport on the left, 2 viewports on the right.
     Left1_Right2,
+    /// T-split, 2 viewports on the left, 1 viewport on the right.
     Left2_Right1
 };
 

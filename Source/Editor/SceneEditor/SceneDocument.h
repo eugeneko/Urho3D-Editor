@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SceneOverlay.h"
-#include "SceneViewportManager.h"
 #include "../Document.h"
 #include "../Action.h"
 #include <QAction>
@@ -24,6 +23,7 @@ namespace Urho3DEditor
 class MainWindow;
 class SceneOverlay;
 class Urho3DWidget;
+class SceneViewportManager;
 
 /// Hot key mode.
 enum class HotKeyMode
@@ -71,9 +71,9 @@ public:
     void RedoAction();
 
     /// Get current camera.
-    Urho3D::Camera& GetCurrentCamera() { return viewportManager_.GetCurrentCamera(); }
+    Urho3D::Camera& GetCurrentCamera();
     /// Get current camera ray.
-    const Urho3D::Ray& GetCurrentCameraRay() { return viewportManager_.GetCurrentCameraRay(); }
+    const Urho3D::Ray& GetCurrentCameraRay();
 
     /// Set selection.
     virtual void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
@@ -124,21 +124,21 @@ signals:
 
 private slots:
     /// Handle 'Scene.Camera.Single'
-    void HandleCameraSingle()      { viewportManager_.SetLayout(SceneViewportLayout::Single); }
+    void HandleCameraSingle();
     /// Handle 'Scene.Camera.Vertical'
-    void HandleCameraVertical()    { viewportManager_.SetLayout(SceneViewportLayout::Vertical); }
+    void HandleCameraVertical();
     /// Handle 'Scene.Camera.Horizontal'
-    void HandleCameraHorizontal()  { viewportManager_.SetLayout(SceneViewportLayout::Horizontal); }
+    void HandleCameraHorizontal();
     /// Handle 'Scene.Camera.Quad'
-    void HandleCameraQuad()        { viewportManager_.SetLayout(SceneViewportLayout::Quad); }
+    void HandleCameraQuad();
     /// Handle 'Scene.Camera.Top1_Bottom2'
-    void HandleCameraTop1Bottom2() { viewportManager_.SetLayout(SceneViewportLayout::Top1_Bottom2); }
+    void HandleCameraTop1Bottom2();
     /// Handle 'Scene.Camera.Top2_Bottom1'
-    void HandleCameraTop2Bottom1() { viewportManager_.SetLayout(SceneViewportLayout::Top2_Bottom1); }
+    void HandleCameraTop2Bottom1();
     /// Handle 'Scene.Camera.Left1_Right2'
-    void HandleCameraLeft1Right2() { viewportManager_.SetLayout(SceneViewportLayout::Left1_Right2); }
+    void HandleCameraLeft1Right2();
     /// Handle 'Scene.Camera.Left2_Right1'
-    void HandleCameraLeft2Right1() { viewportManager_.SetLayout(SceneViewportLayout::Left2_Right1); }
+    void HandleCameraLeft2Right1();
 
     /// Handle viewports changed.
     void HandleViewportsChanged();
@@ -202,7 +202,7 @@ protected:
     /// Scene.
     Urho3D::SharedPtr<Urho3D::Scene> scene_;
     /// Viewport manager.
-    SceneViewportManager viewportManager_;
+    QScopedPointer<SceneViewportManager> viewportManager_;
 
     /// Actions.
     QVector<ActionGroup> actions_;
