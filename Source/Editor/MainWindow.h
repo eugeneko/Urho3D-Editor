@@ -78,23 +78,27 @@ private:
     /// Read action.
     QAction* ReadAction(const QDomNode& node);
 
-protected slots:
+private slots:
     /// Handle 'File/Close'
-    virtual void HandleFileClose();
+    void HandleFileClose();
     /// Handle 'File/Exit'
-    virtual void HandleFileExit();
+    void HandleFileExit();
+    /// Handle 'Edit/Undo'
+    void EditUndo();
+    /// Handle 'Edit/Redo'
+    void EditRedo();
     /// Handle 'Tools/Options'
-    virtual void HandleToolsOptions();
+    void HandleToolsOptions();
     /// Handle 'Help/About'
-    virtual void HandleHelpAbout();
+    void HandleHelpAbout();
     /// Handle tab changed.
-    virtual void HandleTabChanged(int index);
+    void HandleTabChanged(int index);
     /// Handle tab moved.
-    virtual void HandleTabMoved(int from, int to);
+    void HandleTabMoved(int from, int to);
     /// Handle tab closed.
-    virtual void HandleTabClosed(int index);
+    void HandleTabClosed(int index);
     /// Handle tab title changed.
-    virtual void HandleTabTitleChanged(Document* document);
+    void HandleTabTitleChanged(Document* document);
 
 private:
     /// Configuration.

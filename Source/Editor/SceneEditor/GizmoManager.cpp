@@ -1,6 +1,7 @@
 #include "GizmoManager.h"
 #include "SceneActions.h"
 #include "SceneDocument.h"
+#include "SceneEditor.h"
 #include "../Configuration.h"
 #include "../MainWindow.h"
 #include "../Bridge.h"
@@ -130,8 +131,10 @@ Gizmo::Gizmo(SceneDocument& document)
     , gizmoNode_(document.GetContext())
     , gizmo_(*gizmoNode_.CreateComponent<Urho3D::StaticModel>())
     , lastType_(GizmoType::Position)
-    , drag_(false)
-    , lastDrag_(false)
+    , mouseDrag_(false)
+    , lastMouseDrag_(false)
+    , keyDrag_(false)
+    , lastKeyDrag_(false)
     , moved_(false)
 {
     document_.AddOverlay(this);
@@ -154,8 +157,11 @@ Gizmo::~Gizmo()
 
 void Gizmo::Update(SceneInputInterface& input, float timeStep)
 {
-    drag_ = input.IsMouseButtonDown(Qt::LeftButton);
-    UseGizmo(input.GetMouseRay());
+    UpdateDragState(input);
+    PrepareUndo();
+    UseGizmoKeyboard(input, timeStep);
+    UseGizmoMouse(input.GetMouseRay());
+    FinalizeUndo();
     PositionGizmo();
     ResizeGizmo();
 }
@@ -223,6 +229,69 @@ void Gizmo::ShowGizmo()
 void Gizmo::HideGizmo()
 {
     gizmo_.SetEnabled(false);
+}
+
+void Gizmo::UpdateDragState(SceneInputInterface& input)
+{
+    // Update mouse drag state
+    mouseDrag_ = input.IsMouseButtonDown(Qt::LeftButton);
+
+    // Update keyboard drag state
+    Configuration& config = document_.GetConfig();
+    const GizmoType editMode = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
+    const bool moveSnap = config.GetValue(GizmoManager::VarSnapPosition).toBool();
+    const bool rotateSnap = config.GetValue(GizmoManager::VarSnapRotation).toBool();
+    const bool scaleSnap = config.GetValue(GizmoManager::VarSnapScale).toBool();
+
+    keyDrag_ = false;
+    if (input.IsKeyDown(Qt::Key_Control))
+    {
+        if (input.IsKeyDown(Qt::Key_Up) || input.IsKeyDown(Qt::Key_Down)
+            || input.IsKeyDown(Qt::Key_Left) || input.IsKeyDown(Qt::Key_Right)
+            || input.IsKeyDown(Qt::Key_PageUp) || input.IsKeyDown(Qt::Key_PageDown))
+        {
+            keyDrag_ = true;
+        }
+        if (editMode == GizmoType::Scale
+            && (input.IsKeyDown(Qt::Key_Plus) || input.IsKeyDown(Qt::Key_Minus)))
+        {
+            keyDrag_ = true;
+        }
+    }
+}
+
+void Gizmo::PrepareUndo()
+{
+    Configuration& config = document_.GetConfig();
+    const GizmoType editMode = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
+
+    if (!gizmo_.IsEnabled() || editMode == GizmoType::Select)
+    {
+        FlushActions();
+        lastMouseDrag_ = false;
+        lastKeyDrag_ = false;
+    }
+
+    if (editMode == GizmoType::Select)
+        return;
+
+    // Store initial transforms for undo when gizmo drag started
+    if (IsDragging() && !WasDragging())
+    {
+        editNodes_ = document_.GetSelectedNodesAndComponents().toList();
+        oldTransforms_.resize(editNodes_.size());
+        for (int i = 0; i < editNodes_.size(); ++i)
+            oldTransforms_[i].Define(*editNodes_[i]);
+    }
+}
+
+void Gizmo::FinalizeUndo()
+{
+    if (!IsDragging() && WasDragging())
+        FlushActions();
+
+    lastKeyDrag_ = keyDrag_;
+    lastMouseDrag_ = mouseDrag_;
 }
 
 void Gizmo::PositionGizmo()
@@ -300,6 +369,8 @@ void Gizmo::MarkMoved()
     axisY_.Moved();
     axisZ_.Moved();
     moved_ = true;
+    for (Urho3D::Node* node : editNodes_)
+        emit document_.nodeTransformChanged(*node);
 }
 
 void Gizmo::FlushActions()
@@ -320,23 +391,136 @@ void Gizmo::FlushActions()
     moved_ = false;
 }
 
-void Gizmo::UseGizmo(const Urho3D::Ray& cameraRay)
+void Gizmo::UseGizmoKeyboard(SceneInputInterface& input, float timeStep)
 {
     using namespace Urho3D;
 
     Configuration& config = document_.GetConfig();
-    const GizmoType type = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
+    const HotKeyMode hotKeyMode = (HotKeyMode)config.GetValue(SceneEditor::VarHotKeyMode).toInt();
+    const GizmoType editMode = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
+    const float moveStep = config.GetValue(GizmoManager::VarSnapPositionStep).toFloat();
+    const bool moveSnap = config.GetValue(GizmoManager::VarSnapPosition).toBool();
+    const float rotateStep = config.GetValue(GizmoManager::VarSnapRotationStep).toFloat();
+    const bool rotateSnap = config.GetValue(GizmoManager::VarSnapRotation).toBool();
+    const float scaleStep = config.GetValue(GizmoManager::VarSnapScaleStep).toFloat();
+    const bool scaleSnap = config.GetValue(GizmoManager::VarSnapScale).toBool();
 
-    if (!gizmo_.IsEnabled() || type == GizmoType::Select)
+    const SceneDocument::NodeSet editNodes = document_.GetSelectedNodesAndComponents();
+    if (editNodes.empty() || editMode == GizmoType::Select)
+        return;
+
+    // Process continuous movement
+    if (!input.IsKeyDown(Qt::Key_Control))
+        return;
+
+    Vector3 adjust(0, 0, 0);
+    if (input.IsKeyDown(Qt::Key_Up))
+        adjust.z_ = 1;
+    if (input.IsKeyDown(Qt::Key_Down))
+        adjust.z_ = -1;
+    if (input.IsKeyDown(Qt::Key_Left))
+        adjust.x_ = -1;
+    if (input.IsKeyDown(Qt::Key_Right))
+        adjust.x_ = 1;
+    if (input.IsKeyDown(Qt::Key_PageUp))
+        adjust.y_ = 1;
+    if (input.IsKeyDown(Qt::Key_PageDown))
+        adjust.y_ = -1;
+    if (editMode == GizmoType::Scale)
     {
-        FlushActions();
-        lastDrag_ = false;
+        if (input.IsKeyDown(Qt::Key_Plus))
+            adjust = Vector3(1, 1, 1);
+        if (input.IsKeyDown(Qt::Key_Minus))
+            adjust = Vector3(-1, -1, -1);
     }
+
+    if (adjust != Vector3::ZERO)
+    {
+        bool moved = false;
+        adjust *= timeStep * 10;
+
+        switch (editMode)
+        {
+        case GizmoType::Position:
+            if (!moveSnap)
+                moved = MoveNodes(adjust * moveStep);
+            break;
+
+        case GizmoType::Rotation:
+            if (!rotateSnap)
+                moved = RotateNodes(adjust * rotateStep);
+            break;
+
+        case GizmoType::Scale:
+            if (!scaleSnap)
+                moved = ScaleNodes(adjust * scaleStep);
+            break;
+        }
+
+        if (moved)
+            MarkMoved();
+    }
+
+    // Process snapped movement
+    adjust = Vector3::ZERO;
+    if (input.IsKeyPressed(Qt::Key_Up))
+        adjust.z_ = 1;
+    if (input.IsKeyPressed(Qt::Key_Down))
+        adjust.z_ = -1;
+    if (input.IsKeyPressed(Qt::Key_Left))
+        adjust.x_ = -1;
+    if (input.IsKeyPressed(Qt::Key_Right))
+        adjust.x_ = 1;
+    if (input.IsKeyPressed(Qt::Key_PageUp))
+        adjust.y_ = 1;
+    if (input.IsKeyPressed(Qt::Key_PageDown))
+        adjust.y_ = -1;
+    if (editMode == GizmoType::Scale)
+    {
+        if (input.IsKeyPressed(Qt::Key_Plus))
+            adjust = Vector3(1, 1, 1);
+        if (input.IsKeyPressed(Qt::Key_Minus))
+            adjust = Vector3(-1, -1, -1);
+    }
+
+    if (adjust != Vector3::ZERO)
+    {
+        bool moved = false;
+
+        switch (editMode)
+        {
+        case GizmoType::Position:
+            if (moveSnap)
+                moved = MoveNodes(adjust);
+            break;
+
+        case GizmoType::Rotation:
+            if (rotateSnap)
+                moved = RotateNodes(adjust * rotateStep);
+            break;
+
+        case GizmoType::Scale:
+            if (scaleSnap)
+                moved = ScaleNodes(adjust * scaleStep);
+            break;
+        }
+
+        if (moved)
+            MarkMoved();
+    }
+}
+
+void Gizmo::UseGizmoMouse(const Urho3D::Ray& mouseRay)
+{
+    using namespace Urho3D;
+
+    Configuration& config = document_.GetConfig();
+    const GizmoType editMode = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
 
     const float scale = gizmoNode_.GetScale().x_;
 
     // Recalculate axes only when not left-dragging
-    if (!drag_)
+    if (!mouseDrag_)
         CalculateGizmoAxes();
 
     // #TODO Move to config
@@ -344,9 +528,9 @@ void Gizmo::UseGizmo(const Urho3D::Ray& cameraRay)
     const float axisMaxT = 1.0f;
     const float rotSensitivity = 50.0f;
 
-    axisX_.Update(cameraRay, scale, drag_, axisMaxT, axisMaxD);
-    axisY_.Update(cameraRay, scale, drag_, axisMaxT, axisMaxD);
-    axisZ_.Update(cameraRay, scale, drag_, axisMaxT, axisMaxD);
+    axisX_.Update(mouseRay, scale, mouseDrag_, axisMaxT, axisMaxD);
+    axisY_.Update(mouseRay, scale, mouseDrag_, axisMaxT, axisMaxD);
+    axisZ_.Update(mouseRay, scale, mouseDrag_, axisMaxT, axisMaxD);
 
     if (axisX_.selected != axisX_.lastSelected)
     {
@@ -364,10 +548,10 @@ void Gizmo::UseGizmo(const Urho3D::Ray& cameraRay)
         axisZ_.lastSelected = axisZ_.selected;
     };
 
-    if (drag_)
+    if (mouseDrag_)
     {
         // Store initial transforms for undo when gizmo drag started
-        if (!lastDrag_)
+        if (!lastMouseDrag_)
         {
             editNodes_ = document_.GetSelectedNodesAndComponents().toList();
             oldTransforms_.resize(editNodes_.size());
@@ -377,7 +561,7 @@ void Gizmo::UseGizmo(const Urho3D::Ray& cameraRay)
 
         bool moved = false;
 
-        if (type == GizmoType::Position)
+        if (editMode == GizmoType::Position)
         {
             Vector3 adjust(0, 0, 0);
             if (axisX_.selected)
@@ -389,7 +573,7 @@ void Gizmo::UseGizmo(const Urho3D::Ray& cameraRay)
 
             moved = MoveNodes(adjust);
         }
-        else if (type == GizmoType::Rotation)
+        else if (editMode == GizmoType::Rotation)
         {
             Vector3 adjust(0, 0, 0);
             if (axisX_.selected)
@@ -401,7 +585,7 @@ void Gizmo::UseGizmo(const Urho3D::Ray& cameraRay)
 
             moved = RotateNodes(adjust);
         }
-        else if (type == GizmoType::Scale)
+        else if (editMode == GizmoType::Scale)
         {
             Vector3 adjust(0, 0, 0);
             if (axisX_.selected)
@@ -412,7 +596,7 @@ void Gizmo::UseGizmo(const Urho3D::Ray& cameraRay)
                 adjust += Vector3(0, 0, 1) * (axisZ_.t - axisZ_.lastT);
 
             // Special handling for uniform scale: use the unmodified X-axis movement only
-            if (type == GizmoType::Scale && axisX_.selected && axisY_
+            if (editMode == GizmoType::Scale && axisX_.selected && axisY_
                 .selected && axisZ_.selected)
             {
                 float x = axisX_.t - axisX_.lastT;
@@ -423,19 +607,15 @@ void Gizmo::UseGizmo(const Urho3D::Ray& cameraRay)
         }
 
         if (moved)
-        {
             MarkMoved();
-            for (Node* node : editNodes_)
-                emit document_.nodeTransformChanged(*node);
-        }
     }
     else
     {
-        if (lastDrag_)
+        if (lastMouseDrag_)
             FlushActions();
     }
 
-    lastDrag_ = drag_;
+    lastMouseDrag_ = mouseDrag_;
 }
 
 bool Gizmo::MoveNodes(Urho3D::Vector3 adjust)

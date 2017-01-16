@@ -28,6 +28,11 @@ public:
     /// Open document from file.
     virtual bool Open();
 
+    /// Undo.
+    virtual void Undo() {}
+    /// Redo.
+    virtual void Redo() {}
+
     /// Return whether the document is active.
     bool IsActive() const;
     /// Return raw title of the document.

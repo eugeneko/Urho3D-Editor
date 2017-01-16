@@ -58,6 +58,11 @@ public:
     /// Get scene.
     Urho3D::Scene& GetScene() const { return *scene_; }
 
+    /// Undo.
+    virtual void Undo() override;
+    /// Redo.
+    virtual void Redo() override;
+
     /// Add overlay.
     void AddOverlay(SceneOverlay* overlay);
     /// Remove overlay.
@@ -204,8 +209,10 @@ protected:
     /// Viewport manager.
     QScopedPointer<SceneViewportManager> viewportManager_;
 
-    /// Actions.
-    QVector<ActionGroup> actions_;
+    /// Undo actions.
+    QVector<ActionGroup> undoActions_;
+    /// Redo actions.
+    QVector<ActionGroup> redoActions_;
 
     /// Selected nodes.
     NodeSet selectedNodes_;

@@ -13,8 +13,8 @@
             <action name="Exit" action="File.Exit" />
         </menu>
         <menu name="Edit">
-            <action name="Undo" />
-            <action name="Redo" />
+            <action name="Undo" action="Edit.Undo" />
+            <action name="Redo" action="Edit.Redo" />
             <separator/>
             <action name="Cut" />
             <action name="Copy" />

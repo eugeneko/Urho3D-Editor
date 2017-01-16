@@ -143,6 +143,17 @@ private:
     /// Hide gizmo.
     void HideGizmo();
 
+    /// Update drag state.
+    void UpdateDragState(SceneInputInterface& input);
+    /// Prepare undo action if dragging started.
+    void PrepareUndo();
+    /// Flush undo action if dragging started, update previous drag states.
+    void FinalizeUndo();
+    /// Check whether gizmo is dragging.
+    bool IsDragging() const { return keyDrag_ || mouseDrag_; }
+    /// Check whether gizmo was dragging.
+    bool WasDragging() const { return lastKeyDrag_ || lastMouseDrag_; }
+
     /// Position gizmo.
     void PositionGizmo();
     /// Resize gizmo.
@@ -153,8 +164,10 @@ private:
     void MarkMoved();
     /// Flush gizmo actions.
     void FlushActions();
-    /// Use gizmo.
-    void UseGizmo(const Urho3D::Ray& cameraRay);
+    /// Use gizmo (by keyboard).
+    void UseGizmoKeyboard(SceneInputInterface& input, float timeStep);
+    /// Use gizmo (by mouse).
+    void UseGizmoMouse(const Urho3D::Ray& mouseRay);
 
     /// Move edited nodes.
     bool MoveNodes(Urho3D::Vector3 adjust);
@@ -181,10 +194,14 @@ private:
     /// Z axis of gizmo.
     GizmoAxis axisZ_;
 
-    /// Is dragging?
-    bool drag_;
-    /// Was dragging?
-    bool lastDrag_;
+    /// Is dragging by mouse?
+    bool mouseDrag_;
+    /// Was dragging by mouse?
+    bool lastMouseDrag_;
+    /// Is dragging by keyboard?
+    bool keyDrag_;
+    /// Was dragging by keyboard?
+    bool lastKeyDrag_;
     /// Edited nodes.
     QList<Urho3D::Node*> editNodes_;
     /// Old transforms.

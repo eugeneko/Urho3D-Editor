@@ -68,6 +68,26 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
 
 }
 
+void SceneDocument::Undo()
+{
+    if (!undoActions_.empty())
+    {
+        ActionGroup group = undoActions_.takeLast();
+        group.Undo();
+        redoActions_.push_back(group);
+    }
+}
+
+void SceneDocument::Redo()
+{
+    if (!redoActions_.empty())
+    {
+        ActionGroup group = redoActions_.takeLast();
+        group.Redo();
+        undoActions_.push_back(group);
+    }
+}
+
 void SceneDocument::AddOverlay(SceneOverlay* overlay)
 {
     if (!overlays_.contains(overlay))
@@ -81,7 +101,7 @@ void SceneDocument::RemoveOverlay(SceneOverlay* overlay)
 
 void SceneDocument::AddAction(const ActionGroup& actionGroup)
 {
-    actions_.push_back(actionGroup);
+    undoActions_.push_back(actionGroup);
 }
 
 void SceneDocument::UndoAction()

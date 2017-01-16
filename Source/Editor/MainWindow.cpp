@@ -192,30 +192,27 @@ void MainWindow::InitializeMenu()
 {
     QAction* action = nullptr;
 
-    action = new QAction("Close");
-    action->setShortcut(Qt::CTRL + Qt::Key_W);
+    action = AddAction("File.Close", Qt::CTRL + Qt::Key_W);
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
-    AddAction("File.Close", action);
 
-    action = new QAction("Save");
-    action->setShortcut(Qt::CTRL + Qt::Key_S);
-    AddAction("File.Save", action);
+    action = AddAction("File.Save", Qt::CTRL + Qt::Key_S);
 
-    action = new QAction("Save As...");
-    action->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_S);
-    AddAction("File.SaveAs", action);
+    action = AddAction("File.SaveAs", Qt::CTRL + Qt::SHIFT + Qt::Key_S);
 
-    action = new QAction("Exit");
+    action = AddAction("File.Exit");
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));
-    AddAction("File.Exit", action);
 
-    action = new QAction("Options");
+    action = AddAction("Edit.Undo", Qt::CTRL + Qt::Key_Z);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(EditUndo()));
+
+    action = AddAction("Edit.Redo", Qt::CTRL + Qt::Key_Y);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(EditRedo()));
+
+    action = AddAction("Tools.Options");
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleToolsOptions()));
-    AddAction("Tools.Options", action);
 
-    action = new QAction("About");
+    action = AddAction("Help.About");
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleHelpAbout()));
-    AddAction("Help.About", action);
 }
 
 QMenu* MainWindow::ReadMenu(const QDomNode& node)
@@ -262,6 +259,18 @@ void MainWindow::HandleFileClose()
 void MainWindow::HandleFileExit()
 {
     mainWindow_.close();
+}
+
+void MainWindow::EditUndo()
+{
+    if (Document* document = GetCurrentPage())
+        document->Undo();
+}
+
+void MainWindow::EditRedo()
+{
+    if (Document* document = GetCurrentPage())
+        document->Redo();
 }
 
 void MainWindow::HandleToolsOptions()
