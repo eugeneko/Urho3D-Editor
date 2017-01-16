@@ -27,6 +27,18 @@ class SceneEditor : public Module
 public:
     /// Controls hot key mode.
     static const QString VarHotKeyMode;
+    /// Controls base camera speed.
+    static const QString VarCameraBaseSpeed;
+    /// Controls camera speed multiplication when Shift is pressed/
+    static const QString VarCameraShiftSpeedMultiplier;
+    /// Controls base camera rotation speed.
+    static const QString VarCameraBaseRotationSpeed;
+    /// Controls whether the mouse wheel control position instead of scrolling.
+    static const QString VarMouseWheelCameraPosition;
+    /// Controls whether the mouse middle button enables pan camera mode.
+    static const QString VarMmbPanMode;
+    /// Controls whether the camera pitch is limited by 90 degrees.
+    static const QString VarLimitRotation;
 
 public:
     /// Construct.

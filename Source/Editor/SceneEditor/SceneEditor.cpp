@@ -32,7 +32,13 @@ static const QString CONFIG_DEBUG_OCTREE = "sceneeditor/debug/octree";
 static const QString CONFIG_DEBUG_NAVIGATION = "sceneeditor/debug/navigation";
 static const QString CONFIG_PICK_MODE = "sceneeditor/pickmode";
 
-const QString SceneEditor::VarHotKeyMode = "scene/hotkey";
+const QString SceneEditor::VarHotKeyMode =                 "scene.camera/hotkey";
+const QString SceneEditor::VarCameraBaseSpeed =            "scene.camera/speedbase";
+const QString SceneEditor::VarCameraShiftSpeedMultiplier = "scene.camera/shiftfactor";
+const QString SceneEditor::VarCameraBaseRotationSpeed =    "scene.camera/speedrotation";
+const QString SceneEditor::VarMouseWheelCameraPosition =   "scene.camera/wheelposition";
+const QString SceneEditor::VarMmbPanMode =                 "scene.camera/mmbpan";
+const QString SceneEditor::VarLimitRotation =              "scene.camera/limitrot";
 
 SceneEditor::SceneEditor()
 {
@@ -71,14 +77,22 @@ bool SceneEditor::Initialize()
     UpdateMenuVisibility();
 
     // Setup config
-    GetConfig().RegisterVariable(VarHotKeyMode, (int)HotKeyMode::Standard, "", "", QStringList({ "Standard", "Blender" }));
-    GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
-    GetConfig().RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
-    GetConfig().RegisterVariable(CONFIG_DEBUG_RENDERING, false);
-    GetConfig().RegisterVariable(CONFIG_DEBUG_PHYSICS, false);
-    GetConfig().RegisterVariable(CONFIG_DEBUG_OCTREE, false);
-    GetConfig().RegisterVariable(CONFIG_DEBUG_NAVIGATION, false);
-    GetConfig().RegisterVariable(CONFIG_PICK_MODE, SceneDocument::PickGeometries);
+    Configuration& config = GetConfig();
+    config.RegisterVariable(VarHotKeyMode, (int)HotKeyMode::Standard, "Scene.Camera", "HotKey Mode", QStringList({ "Standard", "Blender" }));
+    config.RegisterVariable(VarCameraBaseSpeed, 5.0, "Scene.Camera", "Camera Speed");
+    config.RegisterVariable(VarCameraShiftSpeedMultiplier, 5.0, "Scene.Camera", "Shift Speed Multiplier");
+    config.RegisterVariable(VarCameraBaseRotationSpeed, 0.2, "Scene.Camera", "Rotation Speed");
+    config.RegisterVariable(VarMouseWheelCameraPosition, true, "Scene.Camera", "Mouse Wheel controls Camera Position");
+    config.RegisterVariable(VarMmbPanMode, true, "Scene.Camera", "Mouse Middle Button makes Camera pan");
+    config.RegisterVariable(VarLimitRotation, true, "Scene.Camera", "Limit Camera Rotation");
+
+    config.RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
+    config.RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
+    config.RegisterVariable(CONFIG_DEBUG_RENDERING, false);
+    config.RegisterVariable(CONFIG_DEBUG_PHYSICS, false);
+    config.RegisterVariable(CONFIG_DEBUG_OCTREE, false);
+    config.RegisterVariable(CONFIG_DEBUG_NAVIGATION, false);
+    config.RegisterVariable(CONFIG_PICK_MODE, SceneDocument::PickGeometries);
 
     return true;
 }

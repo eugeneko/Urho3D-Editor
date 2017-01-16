@@ -63,12 +63,12 @@ void SceneViewport::Update(const SceneViewportUpdateParams& p)
     Configuration& config = *p.config_;
 
     const HotKeyMode hotKeyMode = (HotKeyMode)config.GetValue(SceneEditor::VarHotKeyMode).toInt();
-    const float cameraShiftSpeedMultiplier = 5.0f; // #TODO Make config
-    const float cameraBaseSpeed = 5.0f;
-    const bool mouseWheelCameraPosition = false;
-    const bool mmbPanMode = true;
-    const bool limitRotation = true;
-    const float cameraBaseRotationSpeed = 0.2f;
+    const float cameraShiftSpeedMultiplier = config.GetValue(SceneEditor::VarCameraShiftSpeedMultiplier).toFloat();
+    const float cameraBaseSpeed = config.GetValue(SceneEditor::VarCameraBaseSpeed).toFloat();
+    const bool mouseWheelCameraPosition = config.GetValue(SceneEditor::VarMouseWheelCameraPosition).toBool();
+    const bool mmbPanMode = config.GetValue(SceneEditor::VarMmbPanMode).toBool();
+    const bool limitRotation = config.GetValue(SceneEditor::VarLimitRotation).toBool();
+    const float cameraBaseRotationSpeed = config.GetValue(SceneEditor::VarCameraBaseRotationSpeed).toFloat();
 
     // Check for camera fly mode
     if (hotKeyMode == HotKeyMode::Blender)
