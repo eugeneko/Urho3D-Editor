@@ -99,11 +99,6 @@ Urho3D::Camera& SceneDocument::GetCurrentCamera()
     return viewportManager_->GetCurrentCamera();
 }
 
-const Urho3D::Ray& SceneDocument::GetCurrentCameraRay()
-{
-    return viewportManager_->GetCurrentCameraRay();
-}
-
 void SceneDocument::SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents)
 {
     selectedNodes_ = selectedNodes;
@@ -148,6 +143,11 @@ Urho3D::IntVector2 SceneDocument::GetMousePosition() const
 Urho3D::IntVector2 SceneDocument::GetMouseMove() const
 {
     return input_.GetMouseMove();
+}
+
+Urho3D::Ray SceneDocument::GetMouseRay() const
+{
+    return viewportManager_->GetCurrentCameraRay();
 }
 
 QString SceneDocument::GetNameFilters()
@@ -243,7 +243,7 @@ void SceneDocument::HandleUpdate(Urho3D::StringHash eventType, Urho3D::VariantMa
 
     const float timeStep = eventData[Urho3D::Update::P_TIMESTEP].GetFloat();
     for (SceneOverlay* overlay : overlays_)
-        overlay->Update(*this, GetCurrentCameraRay(), timeStep);
+        overlay->Update(*this, timeStep);
 }
 
 void SceneDocument::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
@@ -269,7 +269,7 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
     using namespace Urho3D;
 
     for (SceneOverlay* overlay : overlays_)
-        overlay->PostRenderUpdate(*this, GetCurrentCameraRay());
+        overlay->PostRenderUpdate(*this);
 
     keysPressed_.clear();
     mouseButtonsPressed_.clear();
@@ -425,7 +425,7 @@ void SceneDocument::PerformRaycast(bool mouseClick)
         return;
     DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
 
-    Ray cameraRay = GetCurrentCameraRay();
+    Ray cameraRay = GetMouseRay();
     Component* selectedComponent = nullptr;
 
     Configuration& config = GetMainWindow().GetConfig();

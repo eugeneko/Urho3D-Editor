@@ -27,6 +27,8 @@ public:
     virtual Urho3D::IntVector2 GetMouseMove() const = 0;
     /// Return mouse wheel delta.
     virtual int GetMouseWheelMove() const = 0;
+    /// Return mouse ray in 3D.
+    virtual Urho3D::Ray GetMouseRay() const = 0;
 
 };
 
@@ -35,9 +37,9 @@ class SceneOverlay
 {
 public:
     /// General update.
-    virtual void Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep);
+    virtual void Update(SceneInputInterface& input, float timeStep);
     /// Post-render update. It is safe to render here.
-    virtual void PostRenderUpdate(SceneInputInterface& input, const Urho3D::Ray& cameraRay);
+    virtual void PostRenderUpdate(SceneInputInterface& input);
 };
 
 }

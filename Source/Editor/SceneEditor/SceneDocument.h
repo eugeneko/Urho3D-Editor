@@ -72,8 +72,6 @@ public:
 
     /// Get current camera.
     Urho3D::Camera& GetCurrentCamera();
-    /// Get current camera ray.
-    const Urho3D::Ray& GetCurrentCameraRay();
 
     /// Set selection.
     virtual void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
@@ -104,6 +102,8 @@ public:
     virtual Urho3D::IntVector2 GetMouseMove() const override;
     /// Return mouse wheel delta.
     virtual int GetMouseWheelMove() const override { return wheelDelta_; }
+    /// Return mouse ray in 3D.
+    virtual Urho3D::Ray GetMouseRay() const override;
 
     /// Return title of the document.
     virtual QString GetTitle() override { return GetRawTitle(); }

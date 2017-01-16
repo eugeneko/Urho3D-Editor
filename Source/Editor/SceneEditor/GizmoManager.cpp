@@ -152,10 +152,10 @@ Gizmo::~Gizmo()
 {
 }
 
-void Gizmo::Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep)
+void Gizmo::Update(SceneInputInterface& input, float timeStep)
 {
     drag_ = input.IsMouseButtonDown(Qt::LeftButton);
-    UseGizmo(cameraRay);
+    UseGizmo(input.GetMouseRay());
     PositionGizmo();
     ResizeGizmo();
 }

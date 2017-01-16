@@ -313,7 +313,7 @@ Urho3D::Camera& SceneViewportManager::GetCurrentCamera()
     return viewports_[currentViewport_]->GetCamera();
 }
 
-void SceneViewportManager::Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep)
+void SceneViewportManager::Update(SceneInputInterface& input, float timeStep)
 {
     // Select current viewport
     if (!input.IsMouseButtonDown(Qt::LeftButton)

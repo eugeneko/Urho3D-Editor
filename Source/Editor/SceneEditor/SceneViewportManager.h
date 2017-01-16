@@ -116,7 +116,7 @@ public:
     const Urho3D::Ray& GetCurrentCameraRay() const { return currentCameraRay_; }
 
     /// General update.
-    virtual void Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep) override;
+    virtual void Update(SceneInputInterface& input, float timeStep) override;
 
 signals:
     /// Signals that viewports have been changed.

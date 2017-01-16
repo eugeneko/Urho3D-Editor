@@ -130,7 +130,7 @@ public:
 
 private:
     /// @see SceneOverlay::Update
-    virtual void Update(SceneInputInterface& input, const Urho3D::Ray& cameraRay, float timeStep) override;
+    virtual void Update(SceneInputInterface& input, float timeStep) override;
 
 private:
     /// Get gizmo model.
