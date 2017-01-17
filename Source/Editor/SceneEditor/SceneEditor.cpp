@@ -1,5 +1,5 @@
 #include "SceneEditor.h"
-#include "GizmoManager.h"
+#include "Gizmo.h"
 #include "SceneDocument.h"
 #include "SceneOverlay.h"
 #include "../Bridge.h"

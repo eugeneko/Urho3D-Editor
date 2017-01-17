@@ -22,7 +22,7 @@
 #include <QKeyEvent>
 
 // #TODO Extract this code
-#include "GizmoManager.h"
+#include "Gizmo.h"
 
 namespace Urho3DEditor
 {
