@@ -15,75 +15,6 @@
 namespace Urho3DEditor
 {
 
-const QString GizmoManager::VarGizmoType =     "scene.gizmo/type";
-const QString GizmoManager::VarGizmoAxisMode = "scene.gizmo/axismode";
-
-const QString GizmoManager::VarSnapFactor =       "scene.gizmo/snap.factor";
-const QString GizmoManager::VarSnapPosition =     "scene.gizmo/snap.position";
-const QString GizmoManager::VarSnapRotation =     "scene.gizmo/snap.rotation";
-const QString GizmoManager::VarSnapScale =        "scene.gizmo/snap.scale";
-const QString GizmoManager::VarSnapPositionStep = "scene.gizmo/step.position";
-const QString GizmoManager::VarSnapRotationStep = "scene.gizmo/step.rotation";
-const QString GizmoManager::VarSnapScaleStep =    "scene.gizmo/step.scale";
-
-const QString GizmoManager::VarModelPosition = "scene.gizmo/model.position";
-const QString GizmoManager::VarModelRotation = "scene.gizmo/model.rotation";
-const QString GizmoManager::VarModelScale =    "scene.gizmo/model.scale";
-
-const QString GizmoManager::VarMaterialRed =   "scene.gizmo/material.red";
-const QString GizmoManager::VarMaterialGreen = "scene.gizmo/material.green";
-const QString GizmoManager::VarMaterialBlue =  "scene.gizmo/material.blue";
-
-const QString GizmoManager::VarMaterialRedHighlight =   "scene.gizmo/material.red.h";
-const QString GizmoManager::VarMaterialGreenHighlight = "scene.gizmo/material.green.h";
-const QString GizmoManager::VarMaterialBlueHighlight =  "scene.gizmo/material.blue.h";
-
-bool GizmoManager::Initialize()
-{
-    MainWindow& mainWindow = GetMainWindow();
-    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
-
-    Configuration& config = GetConfig();
-
-    QStringList gizmoTypeNames;
-    gizmoTypeNames << "Position" << "Rotation" << "Scale" << "Select";
-    config.RegisterVariable(VarGizmoType, (int)GizmoType::Position, "Scene.Gizmo", "Type", gizmoTypeNames);
-
-    QStringList gizmoAxisModeNames;
-    gizmoAxisModeNames << "Local" << "World";
-    config.RegisterVariable(VarGizmoAxisMode, (int)GizmoAxisMode::Local, "Scene.Gizmo", "Axis Mode", gizmoAxisModeNames);
-
-    config.RegisterVariable(VarSnapFactor,       1.0,   "Scene.Gizmo", "Snap Factor");
-    config.RegisterVariable(VarSnapPosition,     false, "Scene.Gizmo", "Snap Position");
-    config.RegisterVariable(VarSnapRotation,     false, "Scene.Gizmo", "Snap Rotation");
-    config.RegisterVariable(VarSnapScale,        false, "Scene.Gizmo", "Snap Scale");
-    config.RegisterVariable(VarSnapPositionStep, 0.5,   "Scene.Gizmo", "Position Step");
-    config.RegisterVariable(VarSnapRotationStep, 5.0,   "Scene.Gizmo", "Rotation Step");
-    config.RegisterVariable(VarSnapScaleStep,    1.0,   "Scene.Gizmo", "Scale Step");
-
-    config.RegisterVariable(VarModelPosition, "Models/Editor/Axes.mdl",       "Scene.Gizmo", "Model Position");
-    config.RegisterVariable(VarModelRotation, "Models/Editor/RotateAxes.mdl", "Scene.Gizmo", "Model Rotation");
-    config.RegisterVariable(VarModelScale,    "Models/Editor/ScaleAxes.mdl",  "Scene.Gizmo", "Model Scale");
-
-    config.RegisterVariable(VarMaterialRed,   "Materials/Editor/RedUnlit.xml",   "Scene.Gizmo", "Material Red");
-    config.RegisterVariable(VarMaterialGreen, "Materials/Editor/GreenUnlit.xml", "Scene.Gizmo", "Material Green");
-    config.RegisterVariable(VarMaterialBlue,  "Materials/Editor/BlueUnlit.xml",  "Scene.Gizmo", "Material Blue");
-
-    config.RegisterVariable(VarMaterialRedHighlight,   "Materials/Editor/BrightRedUnlit.xml",   "Scene.Gizmo", "Material Red (Highlight)");
-    config.RegisterVariable(VarMaterialGreenHighlight, "Materials/Editor/BrightGreenUnlit.xml", "Scene.Gizmo", "Material Green (Highlight)");
-    config.RegisterVariable(VarMaterialBlueHighlight,  "Materials/Editor/BrightBlueUnlit.xml",  "Scene.Gizmo", "Material Blue (Highlight)");
-
-    return true;
-}
-
-void GizmoManager::HandleCurrentPageChanged(Document* document)
-{
-    if (SceneDocument* sceneDocument = dynamic_cast<SceneDocument*>(document))
-    {
-        sceneDocument->Get<Gizmo, SceneDocument>();
-    }
-}
-
 //////////////////////////////////////////////////////////////////////////
 GizmoAxis::GizmoAxis()
     : selected(false)
@@ -175,13 +106,13 @@ Urho3D::Model* Gizmo::GetGizmoModel(GizmoType type)
     {
     case GizmoType::Select:
     case GizmoType::Position:
-        variableName = GizmoManager::VarModelPosition;
+        variableName = SceneEditor::VarModelPosition;
         break;
     case GizmoType::Rotation:
-        variableName = GizmoManager::VarModelRotation;
+        variableName = SceneEditor::VarModelRotation;
         break;
     case GizmoType::Scale:
-        variableName = GizmoManager::VarModelScale;
+        variableName = SceneEditor::VarModelScale;
         break;
     default:
         Q_ASSERT(0);
@@ -201,13 +132,13 @@ Urho3D::Material* Gizmo::GetGizmoMaterial(int axis, bool highlight)
     switch (axis)
     {
     case 0:
-        variableName = highlight ? GizmoManager::VarMaterialRedHighlight : GizmoManager::VarMaterialRed;
+        variableName = highlight ? SceneEditor::VarMaterialRedHighlight : SceneEditor::VarMaterialRed;
         break;
     case 1:
-        variableName = highlight ? GizmoManager::VarMaterialGreenHighlight : GizmoManager::VarMaterialGreen;
+        variableName = highlight ? SceneEditor::VarMaterialGreenHighlight : SceneEditor::VarMaterialGreen;
         break;
     case 2:
-        variableName = highlight ? GizmoManager::VarMaterialBlueHighlight : GizmoManager::VarMaterialBlue;
+        variableName = highlight ? SceneEditor::VarMaterialBlueHighlight : SceneEditor::VarMaterialBlue;
         break;
     default:
         Q_ASSERT(0);
@@ -238,10 +169,10 @@ void Gizmo::UpdateDragState(SceneInputInterface& input)
 
     // Update keyboard drag state
     Configuration& config = document_.GetConfig();
-    const GizmoType editMode = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
-    const bool moveSnap = config.GetValue(GizmoManager::VarSnapPosition).toBool();
-    const bool rotateSnap = config.GetValue(GizmoManager::VarSnapRotation).toBool();
-    const bool scaleSnap = config.GetValue(GizmoManager::VarSnapScale).toBool();
+    const GizmoType editMode = (GizmoType)config.GetValue(SceneEditor::VarGizmoType).toInt();
+    const bool moveSnap = config.GetValue(SceneEditor::VarSnapPosition).toBool();
+    const bool rotateSnap = config.GetValue(SceneEditor::VarSnapRotation).toBool();
+    const bool scaleSnap = config.GetValue(SceneEditor::VarSnapScale).toBool();
 
     keyDrag_ = false;
     if (input.IsKeyDown(Qt::Key_Control))
@@ -263,7 +194,7 @@ void Gizmo::UpdateDragState(SceneInputInterface& input)
 void Gizmo::PrepareUndo()
 {
     Configuration& config = document_.GetConfig();
-    const GizmoType editMode = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
+    const GizmoType editMode = (GizmoType)config.GetValue(SceneEditor::VarGizmoType).toInt();
 
     if (!gizmo_.IsEnabled() || editMode == GizmoType::Select)
     {
@@ -299,8 +230,8 @@ void Gizmo::PositionGizmo()
     using namespace Urho3D;
 
     Configuration& config = document_.GetConfig();
-    const GizmoType type = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
-    const GizmoAxisMode axisMode = (GizmoAxisMode)config.GetValue(GizmoManager::VarGizmoAxisMode).toInt();
+    const GizmoType type = (GizmoType)config.GetValue(SceneEditor::VarGizmoType).toInt();
+    const GizmoAxisMode axisMode = (GizmoAxisMode)config.GetValue(SceneEditor::VarGizmoAxisMode).toInt();
 
     // Gather nodes. Hide gizmo if scene is selected.
     const SceneDocument::NodeSet& editNodes = document_.GetSelectedNodesAndComponents();
@@ -397,13 +328,13 @@ void Gizmo::UseGizmoKeyboard(SceneInputInterface& input, float timeStep)
 
     Configuration& config = document_.GetConfig();
     const HotKeyMode hotKeyMode = (HotKeyMode)config.GetValue(SceneEditor::VarHotKeyMode).toInt();
-    const GizmoType editMode = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
-    const float moveStep = config.GetValue(GizmoManager::VarSnapPositionStep).toFloat();
-    const bool moveSnap = config.GetValue(GizmoManager::VarSnapPosition).toBool();
-    const float rotateStep = config.GetValue(GizmoManager::VarSnapRotationStep).toFloat();
-    const bool rotateSnap = config.GetValue(GizmoManager::VarSnapRotation).toBool();
-    const float scaleStep = config.GetValue(GizmoManager::VarSnapScaleStep).toFloat();
-    const bool scaleSnap = config.GetValue(GizmoManager::VarSnapScale).toBool();
+    const GizmoType editMode = (GizmoType)config.GetValue(SceneEditor::VarGizmoType).toInt();
+    const float moveStep = config.GetValue(SceneEditor::VarSnapPositionStep).toFloat();
+    const bool moveSnap = config.GetValue(SceneEditor::VarSnapPosition).toBool();
+    const float rotateStep = config.GetValue(SceneEditor::VarSnapRotationStep).toFloat();
+    const bool rotateSnap = config.GetValue(SceneEditor::VarSnapRotation).toBool();
+    const float scaleStep = config.GetValue(SceneEditor::VarSnapScaleStep).toFloat();
+    const bool scaleSnap = config.GetValue(SceneEditor::VarSnapScale).toBool();
 
     const SceneDocument::NodeSet editNodes = document_.GetSelectedNodesAndComponents();
     if (editNodes.empty() || editMode == GizmoType::Select)
@@ -515,7 +446,7 @@ void Gizmo::UseGizmoMouse(const Urho3D::Ray& mouseRay)
     using namespace Urho3D;
 
     Configuration& config = document_.GetConfig();
-    const GizmoType editMode = (GizmoType)config.GetValue(GizmoManager::VarGizmoType).toInt();
+    const GizmoType editMode = (GizmoType)config.GetValue(SceneEditor::VarGizmoType).toInt();
 
     const float scale = gizmoNode_.GetScale().x_;
 
@@ -623,10 +554,10 @@ bool Gizmo::MoveNodes(Urho3D::Vector3 adjust)
     using namespace Urho3D;
 
     Configuration& config = document_.GetConfig();
-    const GizmoAxisMode axisMode = (GizmoAxisMode)config.GetValue(GizmoManager::VarGizmoAxisMode).toInt();
-    const float snapScale = config.GetValue(GizmoManager::VarSnapFactor).toFloat();
-    const float moveStep = config.GetValue(GizmoManager::VarSnapPositionStep).toFloat();
-    const bool moveSnap = config.GetValue(GizmoManager::VarSnapPosition).toBool();
+    const GizmoAxisMode axisMode = (GizmoAxisMode)config.GetValue(SceneEditor::VarGizmoAxisMode).toInt();
+    const float snapScale = config.GetValue(SceneEditor::VarSnapFactor).toFloat();
+    const float moveStep = config.GetValue(SceneEditor::VarSnapPositionStep).toFloat();
+    const bool moveSnap = config.GetValue(SceneEditor::VarSnapPosition).toBool();
 
     bool moved = false;
 
@@ -670,10 +601,10 @@ bool Gizmo::RotateNodes(Urho3D::Vector3 adjust)
     using namespace Urho3D;
 
     Configuration& config = document_.GetConfig();
-    const GizmoAxisMode axisMode = (GizmoAxisMode)config.GetValue(GizmoManager::VarGizmoAxisMode).toInt();
-    const float snapScale = config.GetValue(GizmoManager::VarSnapFactor).toFloat();
-    const float rotateStep = config.GetValue(GizmoManager::VarSnapRotationStep).toFloat();
-    const bool rotateSnap = config.GetValue(GizmoManager::VarSnapRotation).toBool();
+    const GizmoAxisMode axisMode = (GizmoAxisMode)config.GetValue(SceneEditor::VarGizmoAxisMode).toInt();
+    const float snapScale = config.GetValue(SceneEditor::VarSnapFactor).toFloat();
+    const float rotateStep = config.GetValue(SceneEditor::VarSnapRotationStep).toFloat();
+    const bool rotateSnap = config.GetValue(SceneEditor::VarSnapRotation).toBool();
 
     bool moved = false;
 
@@ -717,9 +648,9 @@ bool Gizmo::ScaleNodes(Urho3D::Vector3 adjust)
     using namespace Urho3D;
 
     Configuration& config = document_.GetConfig();
-    const float snapScale = config.GetValue(GizmoManager::VarSnapFactor).toFloat();
-    const float scaleStep = config.GetValue(GizmoManager::VarSnapScaleStep).toFloat();
-    const bool scaleSnap = config.GetValue(GizmoManager::VarSnapScale).toBool();
+    const float snapScale = config.GetValue(SceneEditor::VarSnapFactor).toFloat();
+    const float scaleStep = config.GetValue(SceneEditor::VarSnapScaleStep).toFloat();
+    const bool scaleSnap = config.GetValue(SceneEditor::VarSnapScale).toBool();
 
     bool moved = false;
 

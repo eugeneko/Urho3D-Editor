@@ -24,65 +24,6 @@ class Document;
 class SceneDocument;
 struct NodeTransform;
 
-/// Gizmo manager.
-class GizmoManager : public Module
-{
-    Q_OBJECT
-
-public:
-    /// Controls type of gizmo.
-    static const QString VarGizmoType;
-    /// Controls axis mode.
-    static const QString VarGizmoAxisMode;
-
-    /// Controls snap step multiplier.
-    static const QString VarSnapFactor;
-    /// Controls whether the position change is snapped to step.
-    static const QString VarSnapPosition;
-    /// Controls whether the rotation change is snapped to step.
-    static const QString VarSnapRotation;
-    /// Controls whether the scale change is snapped to step.
-    static const QString VarSnapScale;
-    /// Controls the step of position snapping.
-    static const QString VarSnapPositionStep;
-    /// Controls the step of rotation snapping.
-    static const QString VarSnapRotationStep;
-    /// Controls the step of scale snapping.
-    static const QString VarSnapScaleStep;
-
-    /// Controls 3D model of gizmo axes (edit position).
-    static const QString VarModelPosition;
-    /// Controls 3D model of gizmo axes (edit rotation).
-    static const QString VarModelRotation;
-    /// Controls 3D model of gizmo axes (edit scale).
-    static const QString VarModelScale;
-
-    /// Controls material of X axis.
-    static const QString VarMaterialRed;
-    /// Controls material of Y axis.
-    static const QString VarMaterialGreen;
-    /// Controls material of Z axis.
-    static const QString VarMaterialBlue;
-
-    /// Controls material of X axis (highlighted)
-    static const QString VarMaterialRedHighlight;
-    /// Controls material of Y axis (highlighted)
-    static const QString VarMaterialGreenHighlight;
-    /// Controls material of Z axis (highlighted)
-    static const QString VarMaterialBlueHighlight;
-
-public:
-
-private:
-    /// Initialize module.
-    virtual bool Initialize() override;
-
-private slots:
-    /// Handle current document changed.
-    virtual void HandleCurrentPageChanged(Document* document);
-
-};
-
 /// Gizmo axis.
 struct GizmoAxis
 {

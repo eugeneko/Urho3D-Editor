@@ -21,6 +21,9 @@
 #include <QFileInfo>
 #include <QKeyEvent>
 
+// #TODO Extract this code
+#include "GizmoManager.h"
+
 namespace Urho3DEditor
 {
 
@@ -65,6 +68,9 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
     connect(mainWindow.GetAction("Scene.Camera.Top2_Bottom1"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraTop2Bottom1()));
     connect(mainWindow.GetAction("Scene.Camera.Left1_Right2"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraLeft1Right2()));
     connect(mainWindow.GetAction("Scene.Camera.Left2_Right1"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraLeft2Right1()));
+
+    // #TODO Extract this code
+    Get<Gizmo, SceneDocument>();
 
 }
 
