@@ -25,11 +25,24 @@ class SceneOverlay;
 class Urho3DWidget;
 class SceneViewportManager;
 
-/// Hot key mode.
+/// Hot key mode. Affects camera, gizmo and selection control.
 enum class HotKeyMode
 {
+    /// Standard mode.
     Standard,
+    /// Blender mode.
     Blender
+};
+
+/// Selection action.
+enum class SelectionAction
+{
+    /// Select object.
+    Select,
+    /// Deselect object.
+    Deselect,
+    /// Flip selection.
+    Flip
 };
 
 /// Scene document.
@@ -39,14 +52,6 @@ class SceneDocument : public Document, public Urho3D::Object, public SceneInputI
     URHO3D_OBJECT(SceneDocument, Urho3D::Object);
 
 public:
-    /// Pick mode.
-    enum PickMode
-    {
-        PickGeometries,
-        PickLights,
-        PickZones,
-        PickRigidbodies
-    };
     /// Set of nodes.
     using NodeSet = QSet<Urho3D::Node*>;
     /// Set of components.
@@ -79,7 +84,13 @@ public:
     Urho3D::Camera& GetCurrentCamera();
 
     /// Set selection.
-    virtual void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
+    void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
+    /// Clear selection.
+    void ClearSelection();
+    /// Select node.
+    void SelectNode(Urho3D::Node* node, SelectionAction action, bool clearSelection);
+    /// Select component.
+    void SelectComponent(Urho3D::Component* component, SelectionAction action, bool clearSelection);
     /// Get selected nodes.
     const NodeSet& GetSelectedNodes() const { return selectedNodes_; }
     /// Get selected components.
@@ -180,8 +191,6 @@ protected:
     virtual void DrawDebugGeometry();
     /// Draw debug components.
     virtual void DrawDebugComponents();
-    /// Perform ray cast.
-    virtual void PerformRaycast(bool mouseClick);
     /// Gather selected nodes.
     void GatherSelectedNodes();
 

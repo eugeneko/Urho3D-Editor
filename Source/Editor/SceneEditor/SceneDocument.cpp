@@ -23,6 +23,7 @@
 
 // #TODO Extract this code
 #include "Gizmo.h"
+#include "ObjectPicker.h"
 
 namespace Urho3DEditor
 {
@@ -71,6 +72,7 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
 
     // #TODO Extract this code
     Get<Gizmo, SceneDocument>();
+    Get<ObjectPicker, SceneDocument>();
 
 }
 
@@ -129,6 +131,46 @@ void SceneDocument::SetSelection(const NodeSet& selectedNodes, const ComponentSe
 {
     selectedNodes_ = selectedNodes;
     selectedComponents_ = selectedComponents;
+    GatherSelectedNodes();
+    emit selectionChanged();
+}
+
+void SceneDocument::ClearSelection()
+{
+    selectedNodes_.clear();
+    selectedComponents_.clear();
+    GatherSelectedNodes();
+    emit selectionChanged();
+}
+
+void SceneDocument::SelectNode(Urho3D::Node* node, SelectionAction action, bool clearSelection)
+{
+    if (clearSelection)
+    {
+        selectedNodes_.clear();
+        selectedComponents_.clear();
+    }
+
+    const bool wasSelected = selectedNodes_.remove(node);
+    if (!wasSelected && action != SelectionAction::Deselect)
+        selectedNodes_.insert(node);
+
+    GatherSelectedNodes();
+    emit selectionChanged();
+}
+
+void SceneDocument::SelectComponent(Urho3D::Component* component, SelectionAction action, bool clearSelection)
+{
+    if (clearSelection)
+    {
+        selectedNodes_.clear();
+        selectedComponents_.clear();
+    }
+
+    const bool wasSelected = selectedComponents_.remove(component);
+    if (!wasSelected && action != SelectionAction::Deselect)
+        selectedComponents_.insert(component);
+
     GatherSelectedNodes();
     emit selectionChanged();
 }
@@ -307,7 +349,6 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
     {
         DrawDebugGeometry();
         DrawDebugComponents();
-        PerformRaycast(false);
     }
 }
 
@@ -440,145 +481,6 @@ void SceneDocument::DrawDebugComponents()
         for (DynamicNavigationMesh* dynNavMesh : dynNavMeshes)
             dynNavMesh->DrawDebugGeometry(true);
     }
-}
-
-void SceneDocument::PerformRaycast(bool mouseClick)
-{
-    using namespace Urho3D;
-
-    Input* input = GetSubsystem<Input>();
-    if (input->IsMouseGrabbed())
-        return;
-    DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
-
-    Ray cameraRay = GetMouseRay();
-    Component* selectedComponent = nullptr;
-
-    Configuration& config = GetMainWindow().GetConfig();
-    HotKeyMode hotKeyMode = (HotKeyMode)config.GetValue(CONFIG_HOTKEY_MODE).toInt();
-
-    PickMode pickMode = (PickMode)config.GetValue(CONFIG_PICK_MODE).toInt();
-    if (pickMode < PickRigidbodies)
-    {
-        Octree* octree = scene_->GetComponent<Octree>();
-        if (!octree)
-            return;
-
-        static int pickModeDrawableFlags[3] = { DRAWABLE_GEOMETRY, DRAWABLE_LIGHT, DRAWABLE_ZONE };
-        PODVector<RayQueryResult> result;
-//         RayOctreeQuery query(result, cameraRay, RAY_TRIANGLE, camera_.GetCamera().GetFarClip(), pickModeDrawableFlags[pickMode], 0x7fffffff);
-//         octree->RaycastSingle(query);
-
-        if (!result.Empty())
-        {
-            Drawable* drawable = result[0].drawable_;
-
-            // for actual last selected node or component in both modes
-//             if (hotKeyMode == HotKeyStandard)
-            {
-                if (input->GetMouseButtonDown(MOUSEB_LEFT))
-                {
-                    // #TODO Fixme
-//                     lastSelectedNode = drawable->GetNode();
-//                     lastSelectedDrawable = drawable;
-//                     lastSelectedComponent = drawable;
-                }
-            }
-//             else if (hotKeyMode == HotKeyBlender)
-            {
-                if (input->GetMouseButtonDown(MOUSEB_RIGHT))
-                {
-                    // #TODO Fixme
-//                     lastSelectedNode = drawable->GetNode();
-//                     lastSelectedDrawable = drawable;
-//                     lastSelectedComponent = drawable;
-                }
-            }
-
-            // If selecting a terrain patch, select the parent terrain instead
-            if (drawable->GetTypeName() != "TerrainPatch")
-            {
-                selectedComponent = drawable;
-                if (debug)
-                {
-                    debug->AddNode(drawable->GetNode(), 1.0, false);
-                    drawable->DrawDebugGeometry(debug, false);
-                }
-            }
-            else if (drawable->GetNode()->GetParent())
-                selectedComponent = drawable->GetNode()->GetParent()->GetComponent("Terrain");
-        }
-    }
-    else
-    {
-        PhysicsWorld* physicsWorld = scene_->GetComponent<PhysicsWorld>();
-        if (!physicsWorld)
-            return;
-
-        // If we are not running the actual physics update, refresh collisions before raycasting
-        //if (!runUpdate) #TODO Fixme
-            physicsWorld->UpdateCollisions();
-
-        PhysicsRaycastResult result;
-//         physicsWorld->RaycastSingle(result, cameraRay, camera_.GetCamera().GetFarClip());
-        if (result.body_)
-        {
-            RigidBody* body = result.body_;
-            if (debug)
-            {
-                debug->AddNode(body->GetNode(), 1.0, false);
-                body->DrawDebugGeometry(debug, false);
-            }
-            selectedComponent = body;
-        }
-    }
-
-    bool multiselect = false;
-    bool componentSelectQualifier = false;
-    bool mouseButtonPressRL = false;
-
-//     if (hotKeyMode == HotKeyStandard)
-    {
-        mouseButtonPressRL = input->GetMouseButtonPress(MOUSEB_LEFT);
-        // #TODO It won't work
-        componentSelectQualifier = input->GetQualifierDown(QUAL_SHIFT);
-        multiselect = input->GetQualifierDown(QUAL_CTRL);
-    }
-//     else if (hotKeyMode == HotKeyBlender)
-    {
-        mouseButtonPressRL = input->GetMouseButtonPress(MOUSEB_RIGHT);
-        // #TODO It won't work
-        componentSelectQualifier = input->GetQualifierDown(QUAL_CTRL);
-        multiselect = input->GetQualifierDown(QUAL_SHIFT);
-    }
-
-    if (mouseClick && mouseButtonPressRL)
-    {
-        if (selectedComponent)
-        {
-            if (componentSelectQualifier)
-            {
-                // If we are selecting components, but have nodes in existing selection, do not multiselect to prevent confusion
-//                 if (!selectedNodes.empty)
-//                     multiselect = false;
-//                 SelectComponent(selectedComponent, multiselect);
-            }
-            else
-            {
-                // If we are selecting nodes, but have components in existing selection, do not multiselect to prevent confusion
-//                 if (!selectedComponents.empty)
-//                     multiselect = false;
-//                 SelectNode(selectedComponent->GetNode(), multiselect);
-            }
-        }
-        else
-        {
-            // If clicked on emptiness in non-multiselect mode, clear the selection
-//             if (!multiselect)
-//                 SelectComponent(null, false);
-        }
-    }
-
 }
 
 void SceneDocument::GatherSelectedNodes()

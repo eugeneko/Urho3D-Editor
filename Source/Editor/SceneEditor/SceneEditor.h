@@ -81,6 +81,9 @@ public:
     /// Controls material of Z axis (highlighted)
     static const QString VarMaterialBlueHighlight;
 
+    /// Controls type of objects that are picked by mouse.
+    static const QString VarPickMode;
+
 public:
     /// Construct.
     SceneEditor();

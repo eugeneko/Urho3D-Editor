@@ -1,5 +1,6 @@
 #include "SceneEditor.h"
 #include "Gizmo.h"
+#include "ObjectPicker.h"
 #include "SceneDocument.h"
 #include "SceneOverlay.h"
 #include "../Bridge.h"
@@ -31,7 +32,6 @@ static const QString CONFIG_DEBUG_RENDERING = "sceneeditor/debug/rendering";
 static const QString CONFIG_DEBUG_PHYSICS = "sceneeditor/debug/physics";
 static const QString CONFIG_DEBUG_OCTREE = "sceneeditor/debug/octree";
 static const QString CONFIG_DEBUG_NAVIGATION = "sceneeditor/debug/navigation";
-static const QString CONFIG_PICK_MODE = "sceneeditor/pickmode";
 
 const QString SceneEditor::VarHotKeyMode =                 "scene.camera/hotkey";
 const QString SceneEditor::VarCameraBaseSpeed =            "scene.camera/speedbase";
@@ -63,6 +63,8 @@ const QString SceneEditor::VarMaterialBlue =  "scene.gizmo/material.blue";
 const QString SceneEditor::VarMaterialRedHighlight =   "scene.gizmo/material.red.h";
 const QString SceneEditor::VarMaterialGreenHighlight = "scene.gizmo/material.green.h";
 const QString SceneEditor::VarMaterialBlueHighlight =  "scene.gizmo/material.blue.h";
+
+const QString SceneEditor::VarPickMode = "scene.select/pickmode";
 
 SceneEditor::SceneEditor()
 {
@@ -105,6 +107,7 @@ bool SceneEditor::Initialize()
     const QStringList hotkeyEnums = { "Standard", "Blender" };
     const QStringList gizmoTypeEnums = { "Position", "Rotation", "Scale", "Select" };
     const QStringList gizmoAxisModeEnums = { "Local", "World" };
+    const QStringList pickModeEnums = { "Geometries", "Lights", "Zones", "Rigidbodies" };
 
     config.RegisterVariable(VarHotKeyMode, (int)HotKeyMode::Standard, "Scene.Camera", "HotKey Mode", hotkeyEnums);
     config.RegisterVariable(VarCameraBaseSpeed, 5.0, "Scene.Camera", "Camera Speed");
@@ -137,6 +140,7 @@ bool SceneEditor::Initialize()
     config.RegisterVariable(VarMaterialGreenHighlight, "Materials/Editor/BrightGreenUnlit.xml", "Scene.Gizmo", "Material Green (Highlight)");
     config.RegisterVariable(VarMaterialBlueHighlight,  "Materials/Editor/BrightBlueUnlit.xml",  "Scene.Gizmo", "Material Blue (Highlight)");
 
+    config.RegisterVariable(VarPickMode, (int)ObjectPickMode::Geometries, "Scene.Camera", "Pick Mode", pickModeEnums);
 
     config.RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
     config.RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
@@ -144,7 +148,6 @@ bool SceneEditor::Initialize()
     config.RegisterVariable(CONFIG_DEBUG_PHYSICS, false);
     config.RegisterVariable(CONFIG_DEBUG_OCTREE, false);
     config.RegisterVariable(CONFIG_DEBUG_NAVIGATION, false);
-    config.RegisterVariable(CONFIG_PICK_MODE, SceneDocument::PickGeometries);
 
     return true;
 }
