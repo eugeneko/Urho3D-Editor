@@ -30,6 +30,17 @@ public:
     /// Return mouse ray in 3D.
     virtual Urho3D::Ray GetMouseRay() const = 0;
 
+    /// Consume mouse button input.
+    virtual void ConsumeMouseButton(Qt::MouseButton mouseButton) = 0;
+    /// Checks whether mouse button is consumed.
+    virtual bool IsMouseButtonConsumed(Qt::MouseButton mouseButton) const = 0;
+    /// Consume mouse button if possible.
+    bool TryConsumeMouseButton(Qt::MouseButton mouseButton);
+    /// Consume mouse move.
+    virtual void ConsumeMouseMove() = 0;
+    /// Checks whether mouse move is consumed.
+    virtual bool IsMouseMoveConsumed() const = 0;
+
 };
 
 /// Interface of scene overlay. Accepts some intersecting events and is able to react.

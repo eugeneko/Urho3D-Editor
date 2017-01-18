@@ -44,6 +44,7 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
     , input_(*GetSubsystem<Urho3D::Input>())
     , widget_(*mainWindow.GetUrho3DWidget())
     , wheelDelta_(0)
+    , mouseMoveConsumed_(false)
     , scene_(new Urho3D::Scene(context_))
     , viewportManager_(new SceneViewportManager(*this))
 {
@@ -301,6 +302,7 @@ void SceneDocument::HandleFocusOut()
         keysPressed_.clear();
         mouseButtonsDown_.clear();
         mouseButtonsPressed_.clear();
+        mouseButtonsConsumed_.clear();
     }
 }
 
@@ -341,7 +343,9 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
 
     keysPressed_.clear();
     mouseButtonsPressed_.clear();
+    mouseButtonsConsumed_.clear();
     wheelDelta_ = 0;
+    mouseMoveConsumed_ = false;
 
     DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
     const bool debugRendererDisabled = GetMainWindow().GetConfig().GetValue(CONFIG_DISABLE_DEBUG_RENDERER).toBool();
@@ -362,6 +366,7 @@ void SceneDocument::HandleCurrentPageChanged(Document* document)
         keysPressed_.clear();
         mouseButtonsDown_.clear();
         mouseButtonsPressed_.clear();
+        mouseButtonsConsumed_.clear();
     }
 }
 

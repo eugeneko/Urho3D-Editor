@@ -36,56 +36,59 @@ void ObjectPicker::PerformRaycast(SceneInputInterface& input)
     const Ray cameraRay = input.GetMouseRay();
     Component* selectedComponent = nullptr;
 
-    if (pickMode == ObjectPickMode::Rigidbodies)
+    if (!input.IsMouseMoveConsumed())
     {
-        PhysicsWorld* physicsWorld = scene.GetComponent<PhysicsWorld>();
-        if (!physicsWorld)
-            return;
+        if (pickMode == ObjectPickMode::Rigidbodies)
+        {
+            PhysicsWorld* physicsWorld = scene.GetComponent<PhysicsWorld>();
+            if (!physicsWorld)
+                return;
 
-        // If we are not running the actual physics update, refresh collisions before raycasting
-        //if (!runUpdate) #TODO Fixme
+            // If we are not running the actual physics update, refresh collisions before raycasting
+            //if (!runUpdate) #TODO Fixme
             physicsWorld->UpdateCollisions();
 
-        PhysicsRaycastResult result;
-        physicsWorld->RaycastSingle(result, cameraRay, camera.GetFarClip());
-        if (result.body_)
-        {
-            RigidBody* body = result.body_;
-            if (debug)
+            PhysicsRaycastResult result;
+            physicsWorld->RaycastSingle(result, cameraRay, camera.GetFarClip());
+            if (result.body_)
             {
-                debug->AddNode(body->GetNode(), 1.0, false);
-                body->DrawDebugGeometry(debug, false);
-            }
-            selectedComponent = body;
-        }
-    }
-    else
-    {
-        Octree* octree = scene.GetComponent<Octree>();
-        if (!octree)
-            return;
-
-        static int pickModeDrawableFlags[3] = { DRAWABLE_GEOMETRY, DRAWABLE_LIGHT, DRAWABLE_ZONE };
-        PODVector<RayQueryResult> result;
-        RayOctreeQuery query(result, cameraRay, RAY_TRIANGLE, camera.GetFarClip(), pickModeDrawableFlags[(int)pickMode], 0x7fffffff);
-        octree->RaycastSingle(query);
-
-        if (!result.Empty())
-        {
-            Drawable* drawable = result[0].drawable_;
-
-            // If selecting a terrain patch, select the parent terrain instead
-            if (drawable->GetTypeName() != "TerrainPatch")
-            {
-                selectedComponent = drawable;
+                RigidBody* body = result.body_;
                 if (debug)
                 {
-                    debug->AddNode(drawable->GetNode(), 1.0, false);
-                    drawable->DrawDebugGeometry(debug, false);
+                    debug->AddNode(body->GetNode(), 1.0, false);
+                    body->DrawDebugGeometry(debug, false);
                 }
+                selectedComponent = body;
             }
-            else if (drawable->GetNode()->GetParent())
-                selectedComponent = drawable->GetNode()->GetParent()->GetComponent("Terrain");
+        }
+        else
+        {
+            Octree* octree = scene.GetComponent<Octree>();
+            if (!octree)
+                return;
+
+            static int pickModeDrawableFlags[3] = { DRAWABLE_GEOMETRY, DRAWABLE_LIGHT, DRAWABLE_ZONE };
+            PODVector<RayQueryResult> result;
+            RayOctreeQuery query(result, cameraRay, RAY_TRIANGLE, camera.GetFarClip(), pickModeDrawableFlags[(int)pickMode], 0x7fffffff);
+            octree->RaycastSingle(query);
+
+            if (!result.Empty())
+            {
+                Drawable* drawable = result[0].drawable_;
+
+                // If selecting a terrain patch, select the parent terrain instead
+                if (drawable->GetTypeName() != "TerrainPatch")
+                {
+                    selectedComponent = drawable;
+                    if (debug)
+                    {
+                        debug->AddNode(drawable->GetNode(), 1.0, false);
+                        drawable->DrawDebugGeometry(debug, false);
+                    }
+                }
+                else if (drawable->GetNode()->GetParent())
+                    selectedComponent = drawable->GetNode()->GetParent()->GetComponent("Terrain");
+            }
         }
     }
 
@@ -95,13 +98,13 @@ void ObjectPicker::PerformRaycast(SceneInputInterface& input)
 
     if (hotKeyMode == HotKeyMode::Standard)
     {
-        mouseButtonPressRL = input.IsMouseButtonPressed(Qt::LeftButton);
+        mouseButtonPressRL = input.IsMouseButtonPressed(Qt::LeftButton) && input.TryConsumeMouseButton(Qt::LeftButton);
         componentSelectQualifier = input.IsKeyDown(Qt::Key_Shift);
         multiselect = input.IsKeyDown(Qt::Key_Control);
     }
     else if (hotKeyMode == HotKeyMode::Blender)
     {
-        mouseButtonPressRL = input.IsMouseButtonPressed(Qt::RightButton);
+        mouseButtonPressRL = input.IsMouseButtonPressed(Qt::RightButton) && input.TryConsumeMouseButton(Qt::RightButton);
         componentSelectQualifier = input.IsKeyDown(Qt::Key_Control);
         multiselect = input.IsKeyDown(Qt::Key_Shift);
     }

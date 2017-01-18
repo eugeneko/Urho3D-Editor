@@ -102,6 +102,9 @@ public:
     /// Get center point of selected nodes.
     Urho3D::Vector3 GetSelectedCenter();
 
+    // SceneInputInterface implementation
+    // {
+
     /// Set mouse mode.
     virtual void SetMouseMode(Urho3D::MouseMode mouseMode) override;
     /// Return whether the key is down.
@@ -120,6 +123,17 @@ public:
     virtual int GetMouseWheelMove() const override { return wheelDelta_; }
     /// Return mouse ray in 3D.
     virtual Urho3D::Ray GetMouseRay() const override;
+
+    /// Consume mouse button input.
+    virtual void ConsumeMouseButton(Qt::MouseButton mouseButton) override { mouseButtonsConsumed_.insert(mouseButton); }
+    /// Checks whether mouse button is consumed.
+    virtual bool IsMouseButtonConsumed(Qt::MouseButton mouseButton) const override { return mouseButtonsConsumed_.contains(mouseButton); }
+    /// Consume mouse move.
+    virtual void ConsumeMouseMove() override { mouseMoveConsumed_ = true; }
+    /// Checks whether mouse move is consumed.
+    virtual bool IsMouseMoveConsumed() const override { return mouseMoveConsumed_; }
+
+    // @}
 
     /// Return title of the document.
     virtual QString GetTitle() override { return GetRawTitle(); }
@@ -203,12 +217,16 @@ protected:
     QSet<Qt::MouseButton> mouseButtonsDown_;
     /// Mouse buttons are pressed.
     QSet<Qt::MouseButton> mouseButtonsPressed_;
+    /// Consumed mouse buttons.
+    QSet<Qt::MouseButton> mouseButtonsConsumed_;
     /// Keys are down.
     QSet<Qt::Key> keysDown_;
     /// Keys are pressed.
     QSet<Qt::Key> keysPressed_;
     /// Wheel delta.
     int wheelDelta_;
+    /// Shows whether mouse move is consumed.
+    bool mouseMoveConsumed_;
 
     /// Overlays.
     QList<SceneOverlay*> overlays_;

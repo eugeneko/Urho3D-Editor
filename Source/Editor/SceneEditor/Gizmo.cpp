@@ -95,6 +95,12 @@ void Gizmo::Update(SceneInputInterface& input, float timeStep)
     FinalizeUndo();
     PositionGizmo();
     ResizeGizmo();
+
+    if (axisX_.selected || axisY_.selected || axisZ_.selected)
+    {
+        input.ConsumeMouseButton(Qt::LeftButton);
+        input.ConsumeMouseMove();
+    }
 }
 
 Urho3D::Model* Gizmo::GetGizmoModel(GizmoType type)
@@ -165,7 +171,8 @@ void Gizmo::HideGizmo()
 void Gizmo::UpdateDragState(SceneInputInterface& input)
 {
     // Update mouse drag state
-    mouseDrag_ = input.IsMouseButtonDown(Qt::LeftButton);
+    mouseDrag_ = input.IsMouseButtonDown(Qt::LeftButton)
+        && !input.IsMouseButtonConsumed(Qt::LeftButton) && !input.IsMouseMoveConsumed();
 
     // Update keyboard drag state
     Configuration& config = document_.GetConfig();
