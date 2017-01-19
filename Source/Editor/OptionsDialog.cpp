@@ -9,8 +9,9 @@
 #include <QIntValidator>
 #include <QLineEdit>
 #include <QListWidget>
-#include <QScrollArea>
 #include <QPushButton>
+#include <QScrollArea>
+#include <QPlainTextEdit>
 #include <QVBoxLayout>
 
 namespace Urho3DEditor
@@ -153,6 +154,37 @@ private:
 
 };
 
+class StringListVariableImpl : public ConfigurationVariableImpl
+{
+public:
+    /// Construct.
+    StringListVariableImpl()
+        : widget_(new QPlainTextEdit())
+    {
+    }
+
+    /// Get widget.
+    virtual QWidget* GetWidget() const override { return widget_.data(); }
+    /// Get value.
+    virtual QVariant GetValue() const override
+    {
+        QStringList result = widget_->toPlainText().split(QRegExp("[\r\n]"), QString::SkipEmptyParts);
+        for (QString& string : result)
+            string = string.trimmed();
+        return result;
+    }
+    /// Set value.
+    virtual void SetValue(const QVariant& value) const override
+    {
+        widget_->setPlainText(value.toStringList().join("\n"));
+    }
+
+protected:
+    /// Widget.
+    QScopedPointer<QPlainTextEdit> widget_;
+
+};
+
 ConfigurationVariableImpl* CreateVariable(QVariant::Type type, const QVariant& decoration)
 {
     switch (type)
@@ -180,11 +212,13 @@ ConfigurationVariableImpl* CreateVariable(QVariant::Type type, const QVariant& d
     case QVariant::Double:
         return new DoubleVariableImpl();
 
+    case QVariant::StringList:
+        return new StringListVariableImpl();
+
     case QVariant::Invalid:
     case QVariant::Char:
     case QVariant::Map:
     case QVariant::List:
-    case QVariant::StringList:
     case QVariant::ByteArray:
     case QVariant::BitArray:
     case QVariant::Date:
