@@ -197,14 +197,6 @@ protected:
     virtual bool DoLoad(const QString& fileName) override;
 
 protected:
-    /// Check whether to draw debug geometry for node.
-    virtual bool ShallDrawNodeDebug(Urho3D::Node* node);
-    /// Draw node debug geometry.
-    virtual void DrawNodeDebug(Urho3D::Node* node, Urho3D::DebugRenderer* debug, bool drawNode = true);
-    /// Draw debug geometry.
-    virtual void DrawDebugGeometry();
-    /// Draw debug components.
-    virtual void DrawDebugComponents();
     /// Gather selected nodes.
     void GatherSelectedNodes();
 

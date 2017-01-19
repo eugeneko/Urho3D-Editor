@@ -6,37 +6,19 @@
 #include "../MainWindow.h"
 #include "../Widgets/Urho3DWidget.h"
 #include <Urho3D/Core/CoreEvents.h>
-#include <Urho3D/Graphics/DebugRenderer.h>
-#include <Urho3D/Graphics/Octree.h>
-#include <Urho3D/Graphics/OctreeQuery.h>
-#include <Urho3D/Graphics/Renderer.h>
-#include <Urho3D/Graphics/View.h>
+#include <Urho3D/Graphics/Drawable.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/Input/Input.h>
-#include <Urho3D/Navigation/CrowdManager.h>
-#include <Urho3D/Navigation/DynamicNavigationMesh.h>
-#include <Urho3D/Navigation/NavigationMesh.h>
-#include <Urho3D/Physics/RigidBody.h>
-#include <Urho3D/Physics/PhysicsWorld.h>
 #include <QFileInfo>
 #include <QKeyEvent>
 
 // #TODO Extract this code
+#include "DebugRenderer.h"
 #include "Gizmo.h"
 #include "ObjectPicker.h"
 
 namespace Urho3DEditor
 {
-
-// #TODO Remove copy-paste
-static const QString CONFIG_HOTKEY_MODE = "sceneeditor/hotkeymode";
-static const QString CONFIG_DISABLE_DEBUG_RENDERER = "sceneeditor/debug/disable";
-static const QString CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS = "sceneeditor/debug/disableforcomponents";
-static const QString CONFIG_DEBUG_RENDERING = "sceneeditor/debug/rendering";
-static const QString CONFIG_DEBUG_PHYSICS = "sceneeditor/debug/physics";
-static const QString CONFIG_DEBUG_OCTREE = "sceneeditor/debug/octree";
-static const QString CONFIG_DEBUG_NAVIGATION = "sceneeditor/debug/navigation";
-static const QString CONFIG_PICK_MODE = "sceneeditor/pickmode";
 
 SceneDocument::SceneDocument(MainWindow& mainWindow)
     : Document(mainWindow)
@@ -74,6 +56,7 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
     // #TODO Extract this code
     Get<Gizmo, SceneDocument>();
     Get<ObjectPicker, SceneDocument>();
+    Get<DebugRenderer, SceneDocument>();
 
 }
 
@@ -336,8 +319,6 @@ void SceneDocument::HandleMouseButton(Urho3D::StringHash eventType, Urho3D::Vari
 
 void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
-    using namespace Urho3D;
-
     for (SceneOverlay* overlay : overlays_)
         overlay->PostRenderUpdate(*this);
 
@@ -346,14 +327,6 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
     mouseButtonsConsumed_.clear();
     wheelDelta_ = 0;
     mouseMoveConsumed_ = false;
-
-    DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
-    const bool debugRendererDisabled = GetMainWindow().GetConfig().GetValue(CONFIG_DISABLE_DEBUG_RENDERER).toBool();
-    if (debug && !debugRendererDisabled)
-    {
-        DrawDebugGeometry();
-        DrawDebugComponents();
-    }
 }
 
 void SceneDocument::HandleCurrentPageChanged(Document* document)
@@ -394,98 +367,6 @@ bool SceneDocument::DoLoad(const QString& fileName)
     }
 
     return true;
-}
-
-bool SceneDocument::ShallDrawNodeDebug(Urho3D::Node* node)
-{
-    // Exception for the scene to avoid bringing the editor to its knees: drawing either the whole hierarchy or the subsystem-
-    // components can have a large performance hit. Also skip nodes with some components.
-    if (node == scene_)
-        return false;
-
-    const QStringList exceptionComponents =
-        GetMainWindow().GetConfig().GetValue(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS).toStringList();
-    for (const QString& componentName : exceptionComponents)
-        if (node->GetComponent(Cast(componentName)))
-            return false;
-
-    return true;
-}
-
-void SceneDocument::DrawNodeDebug(Urho3D::Node* node, Urho3D::DebugRenderer* debug, bool drawNode /*= true*/)
-{
-    using namespace Urho3D;
-
-    if (drawNode)
-        debug->AddNode(node, 1.0, false);
-
-    if (!ShallDrawNodeDebug(node))
-        return;
-
-    // Draw components
-    const Vector<SharedPtr<Component>>& components = node->GetComponents();
-    for (Component* component : components)
-        component->DrawDebugGeometry(debug, false);
-
-    // To avoid cluttering the view, do not draw the node axes for child nodes
-    const Vector<SharedPtr<Node>>& children = node->GetChildren();
-    for (Node* child : children)
-        DrawNodeDebug(child, debug, false);
-}
-
-void SceneDocument::DrawDebugGeometry()
-{
-    using namespace Urho3D;
-
-    DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
-    Renderer* renderer = GetSubsystem<Renderer>();
-
-    // Visualize the currently selected nodes
-    for (Node* node : selectedNodes_)
-        DrawNodeDebug(node, debug);
-
-    // Visualize the currently selected components
-    for (Component* component : selectedComponents_)
-        component->DrawDebugGeometry(debug, false);
-
-    const bool debugRendering = GetMainWindow().GetConfig().GetValue(CONFIG_DEBUG_RENDERING).toBool();
-    if (debugRendering)
-        renderer->DrawDebugGeometry(false);
-}
-
-void SceneDocument::DrawDebugComponents()
-{
-    using namespace Urho3D;
-
-    Configuration& config = GetMainWindow().GetConfig();
-    const bool debugPhysics = config.GetValue(CONFIG_DEBUG_PHYSICS).toBool();
-    const bool debugOctree = config.GetValue(CONFIG_DEBUG_OCTREE).toBool();
-    const bool debugNavigation = config.GetValue(CONFIG_DEBUG_NAVIGATION).toBool();
-
-    PhysicsWorld* physicsWorld = scene_->GetComponent<PhysicsWorld>();
-    Octree* octree = scene_->GetComponent<Octree>();
-    CrowdManager* crowdManager = scene_->GetComponent<CrowdManager>();
-
-    if (debugPhysics && physicsWorld)
-        physicsWorld->DrawDebugGeometry(true);
-
-    if (debugOctree && octree)
-        octree->DrawDebugGeometry(true);
-
-    if (debugNavigation && crowdManager)
-    {
-        crowdManager->DrawDebugGeometry(true);
-
-        PODVector<NavigationMesh*> navMeshes;
-        scene_->GetComponents(navMeshes, true);
-        for (NavigationMesh* navMesh : navMeshes)
-            navMesh->DrawDebugGeometry(true);
-
-        PODVector<DynamicNavigationMesh*> dynNavMeshes;
-        scene_->GetComponents(dynNavMeshes, true);
-        for (DynamicNavigationMesh* dynNavMesh : dynNavMeshes)
-            dynNavMesh->DrawDebugGeometry(true);
-    }
 }
 
 void SceneDocument::GatherSelectedNodes()

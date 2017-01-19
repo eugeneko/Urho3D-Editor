@@ -22,6 +22,9 @@
 #include <Urho3D/Physics/PhysicsWorld.h>
 #include <QFileInfo>
 
+// #TODO Extract this code
+#include "DebugRenderer.h"
+
 namespace Urho3DEditor
 {
 
@@ -142,12 +145,8 @@ bool SceneEditor::Initialize()
 
     config.RegisterVariable(VarPickMode, (int)ObjectPickMode::Geometries, "Scene.Camera", "Pick Mode", pickModeEnums);
 
-    config.RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER, false);
-    config.RegisterVariable(CONFIG_DISABLE_DEBUG_RENDERER_FOR_NODES_WITH_COMPONENTS, QStringList("Terrain"));
-    config.RegisterVariable(CONFIG_DEBUG_RENDERING, false);
-    config.RegisterVariable(CONFIG_DEBUG_PHYSICS, false);
-    config.RegisterVariable(CONFIG_DEBUG_OCTREE, false);
-    config.RegisterVariable(CONFIG_DEBUG_NAVIGATION, false);
+    // #TODO Extract this code
+    DebugRenderer::RegisterVariables(config);
 
     return true;
 }
