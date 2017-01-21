@@ -89,6 +89,8 @@ public:
     void ClearSelection();
     /// Select object.
     void SelectObject(Urho3D::Object* object, SelectionAction action, bool clearSelection);
+    /// Get selected objects.
+    const QSet<Urho3D::Object*>& GetSelected() const { return selectedObjects_; }
     /// Get selected nodes.
     const NodeSet& GetSelectedNodes() const { return selectedNodes_; }
     /// Get selected components.

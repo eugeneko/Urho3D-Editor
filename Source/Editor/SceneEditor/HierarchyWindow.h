@@ -34,11 +34,11 @@ public:
     /// Construct.
     HierarchyWindow();
 
-protected:
+private:
     /// Initialize module.
     virtual bool Initialize() override;
 
-protected slots:
+private slots:
     /// Handle 'View/Hierarchy Window'
     virtual void HandleViewHierarchyWindow(bool checked);
     /// Handle 'View/Hierarchy Window' is about to show.
@@ -92,7 +92,7 @@ public:
     /// Get number of this item.
     int GetChildNumber() { return parent_ ? parent_->children_.indexOf(this) : 0; }
 
-protected:
+private:
     /// Object.
     Urho3D::WeakPtr<Urho3D::Object> object_;
     /// Children.
@@ -106,13 +106,13 @@ protected:
 class ObjectHierarchyModel : public QAbstractItemModel
 {
 public:
-    /// Get node hierarchy. Note is the first, the root is the last.
-    static void GetNodeHierarchy(Urho3D::Node* node, QVector<Urho3D::Node*>& hierarchy);
+    /// Get hierarchy of the object.
+    static void GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy);
 
     /// Construct.
     ObjectHierarchyModel();
-    /// Get index of node.
-    QModelIndex FindIndex(Urho3D::Node* node);
+    /// Get index of object.
+    QModelIndex FindIndex(Urho3D::Object* object);
     /// Get item by index.
     ObjectHierarchyItem *GetItem(const QModelIndex &index) const;
 
@@ -137,7 +137,7 @@ public:
 
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-protected:
+private:
     /// Add component.
     void DoAddComponent(QModelIndex nodeIndex, Urho3D::Component* component);
     /// Remove component.
@@ -149,11 +149,11 @@ protected:
     /// Construct node item.
     void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node);
 
-protected:
+private:
     /// Root item.
     QScopedPointer<ObjectHierarchyItem> rootItem_;
-    /// Temporary storage of node hierarchy.
-    QVector<Urho3D::Node*> tempHierarchy_;
+    /// Temporary storage of object hierarchy.
+    QVector<Urho3D::Object*> tempHierarchy_;
 
 };
 
@@ -170,11 +170,17 @@ public:
     /// Get model.
     ObjectHierarchyModel& GetModel() { return *treeModel_; }
 
-protected slots:
-    /// Handle selection change.
-    virtual void HandleSelectionChanged();
+private slots:
+    /// Handle tree selection change.
+    void HandleTreeSelectionChanged();
+    /// Handle scene selection change.
+    void HandleSceneSelectionChanged();
 
-protected:
+private:
+    /// Gather selected objects.
+    QSet<Urho3D::Object*> GatherSelection();
+
+private:
     /// Document.
     SceneDocument& document_;
     /// Layout.
@@ -183,6 +189,9 @@ protected:
     QScopedPointer<QTreeView> treeView_;
     /// Tree model.
     QScopedPointer<ObjectHierarchyModel> treeModel_;
+    /// Set to suppress scene selection changed.
+    bool suppressSceneSelectionChanged_;
+
 };
 
 }

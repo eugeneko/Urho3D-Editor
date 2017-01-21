@@ -127,9 +127,22 @@ QColor ObjectHierarchyItem::GetColor() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-void ObjectHierarchyModel::GetNodeHierarchy(Urho3D::Node* node, QVector<Urho3D::Node*>& hierarchy)
+void ObjectHierarchyModel::GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy)
 {
     hierarchy.clear();
+
+    // Get child-most node
+    Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object);
+    if (!node)
+    {
+        Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object);
+        if (!component)
+            return;
+        hierarchy.push_back(component);
+        node = component->GetNode();
+    }
+
+    // Go to root
     do
     {
         hierarchy.push_back(node);
@@ -142,12 +155,12 @@ ObjectHierarchyModel::ObjectHierarchyModel()
 {
 }
 
-QModelIndex ObjectHierarchyModel::FindIndex(Urho3D::Node* node)
+QModelIndex ObjectHierarchyModel::FindIndex(Urho3D::Object* object)
 {
-    if (!node)
+    if (!object)
         return QModelIndex();
 
-    GetNodeHierarchy(node, tempHierarchy_);
+    GetObjectHierarchy(object, tempHierarchy_);
     QModelIndex result;
     while (!tempHierarchy_.empty())
     {
@@ -387,6 +400,7 @@ HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
     , layout_(new QGridLayout())
     , treeView_(new QTreeView())
     , treeModel_(new ObjectHierarchyModel())
+    , suppressSceneSelectionChanged_(false)
 {
     treeModel_->UpdateNode(&document.GetScene());
 
@@ -399,7 +413,8 @@ HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
     layout_->addWidget(treeView_.data(), 0, 0);
     setLayout(layout_.data());
 
-    connect(treeView_->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(HandleSelectionChanged()));
+    connect(treeView_->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(HandleTreeSelectionChanged()));
+    connect(&document_, SIGNAL(selectionChanged()), this, SLOT(HandleSceneSelectionChanged()));
 }
 
 HierarchyWindowWidget::~HierarchyWindowWidget()
@@ -407,7 +422,48 @@ HierarchyWindowWidget::~HierarchyWindowWidget()
 
 }
 
-void HierarchyWindowWidget::HandleSelectionChanged()
+void HierarchyWindowWidget::HandleTreeSelectionChanged()
+{
+    suppressSceneSelectionChanged_ = true;
+    document_.SetSelection(GatherSelection());
+    suppressSceneSelectionChanged_ = false;
+}
+
+void HierarchyWindowWidget::HandleSceneSelectionChanged()
+{
+    if (suppressSceneSelectionChanged_)
+        return;
+    QItemSelectionModel* selectionModel = treeView_->selectionModel();
+
+    using Selection = QSet<Urho3D::Object*>;
+    const Selection oldSelection = GatherSelection();
+    const Selection& newSelection = document_.GetSelected();
+    const Selection toUnselect = oldSelection - newSelection;
+    const Selection toSelect = newSelection - oldSelection;
+
+    // Deselect nodes
+    QModelIndexList selectedIndexes = selectionModel->selectedIndexes();
+    for (QModelIndex index : selectedIndexes)
+    {
+        if (toUnselect.contains(treeModel_->GetItem(index)->GetObject()))
+            selectionModel->select(index, QItemSelectionModel::Deselect);
+    }
+
+    // Select nodes
+    bool wasScrolled = false;
+    for (Urho3D::Object* object : toSelect)
+    {
+        QModelIndex index = treeModel_->FindIndex(object);
+        selectionModel->select(index, QItemSelectionModel::Select);
+        if (!wasScrolled)
+        {
+            wasScrolled = true;
+            treeView_->scrollTo(index);
+        }
+    }
+}
+
+QSet<Urho3D::Object*> HierarchyWindowWidget::GatherSelection()
 {
     const QModelIndexList selectedIndexes = treeView_->selectionModel()->selectedIndexes();
     QSet<Urho3D::Object*> selectedObjects;
@@ -417,8 +473,7 @@ void HierarchyWindowWidget::HandleSelectionChanged()
         if (Urho3D::Object* object = item->GetObject())
             selectedObjects.insert(object);
     }
-
-    document_.SetSelection(selectedObjects);
+    return selectedObjects;
 }
 
 }
