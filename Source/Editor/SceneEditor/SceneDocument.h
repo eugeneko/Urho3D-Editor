@@ -84,21 +84,19 @@ public:
     Urho3D::Camera& GetCurrentCamera();
 
     /// Set selection.
-    void SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents);
+    void SetSelection(const QSet<Urho3D::Object*>& objects);
     /// Clear selection.
     void ClearSelection();
-    /// Select node.
-    void SelectNode(Urho3D::Node* node, SelectionAction action, bool clearSelection);
-    /// Select component.
-    void SelectComponent(Urho3D::Component* component, SelectionAction action, bool clearSelection);
+    /// Select object.
+    void SelectObject(Urho3D::Object* object, SelectionAction action, bool clearSelection);
     /// Get selected nodes.
     const NodeSet& GetSelectedNodes() const { return selectedNodes_; }
     /// Get selected components.
     const ComponentSet& GetSelectedComponents() const { return selectedComponents_; }
     /// Get selected nodes and components.
-    const NodeSet& GetSelectedNodesAndComponents() const { return selectedNodesCombined_; }
+    const NodeSet& GetSelectedNodesAndComponents() const { return selectedNodesAndComponents_; }
     /// Returns whether there are selected nodes and/or components.
-    bool HasSelectedNodesOrComponents() const { return !selectedNodesCombined_.empty(); }
+    bool HasSelectedNodesOrComponents() const { return !selectedNodesAndComponents_.empty(); }
     /// Get center point of selected nodes.
     Urho3D::Vector3 GetSelectedCenter();
 
@@ -190,17 +188,17 @@ private:
     /// Handle post-render update.
     virtual void HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
 
-protected:
+private:
     /// Handle current document changed.
     virtual void HandleCurrentPageChanged(Document* document) override;
     /// Load the document from file.
     virtual bool DoLoad(const QString& fileName) override;
 
-protected:
-    /// Gather selected nodes.
-    void GatherSelectedNodes();
+private:
+    /// Gather nodes and components selection.
+    void GatherSelection();
 
-protected:
+private:
     /// Input subsystem.
     Urho3D::Input& input_;
     /// Widget.
@@ -233,12 +231,14 @@ protected:
     /// Redo actions.
     QVector<ActionGroup> redoActions_;
 
+    /// Selected objects.
+    QSet<Urho3D::Object*> selectedObjects_;
     /// Selected nodes.
     NodeSet selectedNodes_;
     /// Selected components.
     ComponentSet selectedComponents_;
     /// Selected nodes and components.
-    NodeSet selectedNodesCombined_;
+    NodeSet selectedNodesAndComponents_;
     /// Last center of selected nodes and components.
     Urho3D::Vector3 lastSelectedCenter_;
 

@@ -107,8 +107,8 @@ private:
     void FlushActions();
     /// Use gizmo (by keyboard).
     void UseGizmoKeyboard(SceneInputInterface& input, float timeStep);
-    /// Use gizmo (by mouse).
-    void UseGizmoMouse(const Urho3D::Ray& mouseRay);
+    /// Use gizmo (by mouse). Return true if selected.
+    bool UseGizmoMouse(const Urho3D::Ray& mouseRay);
 
     /// Move edited nodes.
     bool MoveNodes(Urho3D::Vector3 adjust);

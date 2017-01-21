@@ -91,16 +91,14 @@ void Gizmo::Update(SceneInputInterface& input, float timeStep)
     UpdateDragState(input);
     PrepareUndo();
     UseGizmoKeyboard(input, timeStep);
-    UseGizmoMouse(input.GetMouseRay());
-    FinalizeUndo();
-    PositionGizmo();
-    ResizeGizmo();
-
-    if (axisX_.selected || axisY_.selected || axisZ_.selected)
+    if (UseGizmoMouse(input.GetMouseRay()))
     {
         input.ConsumeMouseButton(Qt::LeftButton);
         input.ConsumeMouseMove();
     }
+    FinalizeUndo();
+    PositionGizmo();
+    ResizeGizmo();
 }
 
 Urho3D::Model* Gizmo::GetGizmoModel(GizmoType type)
@@ -448,7 +446,7 @@ void Gizmo::UseGizmoKeyboard(SceneInputInterface& input, float timeStep)
     }
 }
 
-void Gizmo::UseGizmoMouse(const Urho3D::Ray& mouseRay)
+bool Gizmo::UseGizmoMouse(const Urho3D::Ray& mouseRay)
 {
     using namespace Urho3D;
 
@@ -554,6 +552,9 @@ void Gizmo::UseGizmoMouse(const Urho3D::Ray& mouseRay)
     }
 
     lastMouseDrag_ = mouseDrag_;
+
+    return (axisX_.selected || axisY_.selected || axisZ_.selected)
+        && editMode != GizmoType::Select && gizmo_.IsEnabled();
 }
 
 bool Gizmo::MoveNodes(Urho3D::Vector3 adjust)

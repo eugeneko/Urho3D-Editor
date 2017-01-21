@@ -111,51 +111,30 @@ Urho3D::Camera& SceneDocument::GetCurrentCamera()
     return viewportManager_->GetCurrentCamera();
 }
 
-void SceneDocument::SetSelection(const NodeSet& selectedNodes, const ComponentSet& selectedComponents)
+void SceneDocument::SetSelection(const QSet<Urho3D::Object*>& objects)
 {
-    selectedNodes_ = selectedNodes;
-    selectedComponents_ = selectedComponents;
-    GatherSelectedNodes();
+    selectedObjects_ = objects;
+    GatherSelection();
     emit selectionChanged();
 }
 
 void SceneDocument::ClearSelection()
 {
-    selectedNodes_.clear();
-    selectedComponents_.clear();
-    GatherSelectedNodes();
+    selectedObjects_.clear();
+    GatherSelection();
     emit selectionChanged();
 }
 
-void SceneDocument::SelectNode(Urho3D::Node* node, SelectionAction action, bool clearSelection)
+void SceneDocument::SelectObject(Urho3D::Object* object, SelectionAction action, bool clearSelection)
 {
     if (clearSelection)
-    {
-        selectedNodes_.clear();
-        selectedComponents_.clear();
-    }
+        selectedObjects_.clear();
 
-    const bool wasSelected = selectedNodes_.remove(node);
+    const bool wasSelected = selectedObjects_.remove(object);
     if (!wasSelected && action != SelectionAction::Deselect)
-        selectedNodes_.insert(node);
+        selectedObjects_.insert(object);
 
-    GatherSelectedNodes();
-    emit selectionChanged();
-}
-
-void SceneDocument::SelectComponent(Urho3D::Component* component, SelectionAction action, bool clearSelection)
-{
-    if (clearSelection)
-    {
-        selectedNodes_.clear();
-        selectedComponents_.clear();
-    }
-
-    const bool wasSelected = selectedComponents_.remove(component);
-    if (!wasSelected && action != SelectionAction::Deselect)
-        selectedComponents_.insert(component);
-
-    GatherSelectedNodes();
+    GatherSelection();
     emit selectionChanged();
 }
 
@@ -369,11 +348,25 @@ bool SceneDocument::DoLoad(const QString& fileName)
     return true;
 }
 
-void SceneDocument::GatherSelectedNodes()
+void SceneDocument::GatherSelection()
 {
-    selectedNodesCombined_ = selectedNodes_;
-    for (Urho3D::Component* component : selectedComponents_)
-        selectedNodesCombined_.insert(component->GetNode());
+    using namespace Urho3D;
+    selectedNodes_.clear();
+    selectedComponents_.clear();
+    selectedNodesAndComponents_.clear();
+    for (Object* object : selectedObjects_)
+    {
+        if (Node* node = dynamic_cast<Node*>(object))
+        {
+            selectedNodes_.insert(node);
+            selectedNodesAndComponents_.insert(node);
+        }
+        if (Component* component = dynamic_cast<Component*>(object))
+        {
+            selectedComponents_.insert(component);
+            selectedNodesAndComponents_.insert(component->GetNode());
+        }
+    }
 }
 
 }

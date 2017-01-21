@@ -63,9 +63,7 @@ void HierarchyWindow::HandleCurrentPageChanged(Document* document)
 
 //////////////////////////////////////////////////////////////////////////
 ObjectHierarchyItem::ObjectHierarchyItem(ObjectHierarchyItem *parent /*= 0*/)
-    : node_(nullptr)
-    , component_(nullptr)
-    , parent_(parent)
+    : parent_(parent)
 {
 }
 
@@ -74,15 +72,9 @@ ObjectHierarchyItem::~ObjectHierarchyItem()
     qDeleteAll(children_);
 }
 
-void ObjectHierarchyItem::SetNode(Urho3D::Node* node)
+void ObjectHierarchyItem::SetObject(Urho3D::Object* object)
 {
-    node_ = node;
-}
-
-void ObjectHierarchyItem::SetComponent(Urho3D::Component* component)
-{
-    component_ = component;
-    node_ = component ? component->GetNode() : nullptr;
+    object_ = object;
 }
 
 bool ObjectHierarchyItem::InsertChild(int position, ObjectHierarchyItem* item)
@@ -105,30 +97,33 @@ bool ObjectHierarchyItem::RemoveChild(int position)
     return true;
 }
 
-int ObjectHierarchyItem::FindChild(Urho3D::Node* node) const
+int ObjectHierarchyItem::FindChild(Urho3D::Object* object) const
 {
     for (int i = 0; i < children_.size(); ++i)
-        if (!children_[i]->GetComponent() && children_[i]->GetNode() == node)
-            return i;
-    return -1;
-}
-
-int ObjectHierarchyItem::FindChild(Urho3D::Component* component) const
-{
-    for (int i = 0; i < children_.size(); ++i)
-        if (children_[i]->GetComponent() == component)
+        if (children_[i]->GetObject() == object)
             return i;
     return -1;
 }
 
 QString ObjectHierarchyItem::GetText() const
 {
-    if (component_)
-        return Cast(component_->GetTypeName());
-    else if (node_)
-        return Cast(node_->GetName().Empty() ? node_->GetTypeName() : node_->GetName());
+    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object_.Get()))
+        return Cast(component->GetTypeName());
+    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object_.Get()))
+        return Cast(node->GetName().Empty() ? node->GetTypeName() : node->GetName());
     else
-        return "!!! null !!!";
+        return "";
+}
+
+QColor ObjectHierarchyItem::GetColor() const
+{
+    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object_.Get()))
+        return QColor(178, 255, 178);
+    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object_.Get()))
+        return QColor(255, 255, 255);
+    else
+        return QColor(Qt::black);
+    // #TODO Make configurable
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -222,7 +217,7 @@ QVariant ObjectHierarchyModel::data(const QModelIndex &index, int role) const
     case Qt::DisplayRole:
         return item->GetText();
     case Qt::TextColorRole:
-        return item->GetComponent() ? QColor(178, 255, 178) : QColor(255, 255, 255); // #TODO Make configurable
+        return item->GetColor();
     default:
         return QVariant();
     }
@@ -290,7 +285,7 @@ void ObjectHierarchyModel::DoAddComponent(QModelIndex nodeIndex, Urho3D::Compone
         {
             const int componentRow = (int)i;
             ObjectHierarchyItem* componentItem = new ObjectHierarchyItem(nodeItem);
-            componentItem->SetComponent(component);
+            componentItem->SetObject(component);
             beginInsertRows(nodeIndex, componentRow, componentRow);
             nodeItem->InsertChild(componentRow, componentItem);
             endInsertRows();
@@ -320,7 +315,7 @@ void ObjectHierarchyModel::DoAddNode(QModelIndex parentIndex, Urho3D::Node* node
     if (!parentIndex.isValid())
     {
         ObjectHierarchyItem* nodeItem = new ObjectHierarchyItem(parentItem);
-        nodeItem->SetNode(node);
+        nodeItem->SetObject(node);
         ConstructNodeItem(nodeItem, node);
 
         beginInsertRows(parentIndex, 0, 0);
@@ -329,7 +324,7 @@ void ObjectHierarchyModel::DoAddNode(QModelIndex parentIndex, Urho3D::Node* node
     }
     else
     {
-        Node* parentNode = parentItem->GetNode();
+        Node* parentNode = dynamic_cast<Node*>(parentItem->GetObject());
         const Vector<SharedPtr<Node>>& children = parentNode->GetChildren();
         for (unsigned i = 0; i < children.Size(); ++i)
         {
@@ -337,7 +332,7 @@ void ObjectHierarchyModel::DoAddNode(QModelIndex parentIndex, Urho3D::Node* node
             {
                 const int nodeRow = (int)i;
                 ObjectHierarchyItem* nodeItem = new ObjectHierarchyItem(parentItem);
-                nodeItem->SetNode(node);
+                nodeItem->SetObject(node);
                 ConstructNodeItem(nodeItem, node);
 
                 beginInsertRows(parentIndex, nodeRow, nodeRow);
@@ -370,7 +365,7 @@ void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::
     for (unsigned i = 0; i < components.Size(); ++i)
     {
         ObjectHierarchyItem* componentItem = new ObjectHierarchyItem(item);
-        componentItem->SetComponent(components[i]);
+        componentItem->SetObject(components[i]);
         item->AppendChild(componentItem);
     }
 
@@ -379,7 +374,7 @@ void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::
     for (unsigned i = 0; i < children.Size(); ++i)
     {
         ObjectHierarchyItem* childItem = new ObjectHierarchyItem(item);
-        childItem->SetNode(children[i]);
+        childItem->SetObject(children[i]);
         item->AppendChild(childItem);
 
         ConstructNodeItem(childItem, children[i]);
@@ -415,18 +410,15 @@ HierarchyWindowWidget::~HierarchyWindowWidget()
 void HierarchyWindowWidget::HandleSelectionChanged()
 {
     const QModelIndexList selectedIndexes = treeView_->selectionModel()->selectedIndexes();
-    SceneDocument::NodeSet selectedNodes;
-    SceneDocument::ComponentSet selectedComponents;
+    QSet<Urho3D::Object*> selectedObjects;
     for (const QModelIndex& selectedIndex : selectedIndexes)
     {
         ObjectHierarchyItem* item = treeModel_->GetItem(selectedIndex);
-        if (item->GetComponent())
-            selectedComponents.insert(item->GetComponent());
-        else if (item->GetNode())
-            selectedNodes.insert(item->GetNode());
+        if (Urho3D::Object* object = item->GetObject())
+            selectedObjects.insert(object);
     }
 
-    document_.SetSelection(selectedNodes, selectedComponents);
+    document_.SetSelection(selectedObjects);
 }
 
 }

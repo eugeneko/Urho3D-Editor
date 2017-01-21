@@ -64,10 +64,8 @@ public:
     /// Destruct.
     ~ObjectHierarchyItem();
 
-    /// Set node.
-    void SetNode(Urho3D::Node* node);
-    /// Set component.
-    void SetComponent(Urho3D::Component* component);
+    /// Set object.
+    void SetObject(Urho3D::Object* object);
 
     /// Append child to item. Ownership is transferred to this item.
     void AppendChild(ObjectHierarchyItem* item) { children_.push_back(item); }
@@ -76,16 +74,14 @@ public:
     /// Remove child.
     bool RemoveChild(int position);
 
-    /// Find child with specified node.
-    int FindChild(Urho3D::Node* node) const;
-    /// Find child with specified component.
-    int FindChild(Urho3D::Component* component) const;
-    /// Get node.
-    Urho3D::Node* GetNode() const { return node_; }
-    /// Get component.
-    Urho3D::Component* GetComponent() const { return component_; }
+    /// Find child with specified object.
+    int FindChild(Urho3D::Object* object) const;
+    /// Get object.
+    Urho3D::Object* GetObject() const { return object_; }
     /// Get name of item.
-    QString GetText() const;
+    virtual QString GetText() const;
+    /// Get color of item.
+    virtual QColor GetColor() const;
 
     /// Get child item.
     ObjectHierarchyItem* GetChild(int number) { return children_.value(number); }
@@ -97,10 +93,8 @@ public:
     int GetChildNumber() { return parent_ ? parent_->children_.indexOf(this) : 0; }
 
 protected:
-    /// Node.
-    Urho3D::WeakPtr<Urho3D::Node> node_;
-    /// Component.
-    Urho3D::WeakPtr<Urho3D::Component> component_;
+    /// Object.
+    Urho3D::WeakPtr<Urho3D::Object> object_;
     /// Children.
     QList<ObjectHierarchyItem*> children_;
     /// Parent.

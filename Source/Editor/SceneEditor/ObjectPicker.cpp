@@ -118,7 +118,7 @@ void ObjectPicker::PerformRaycast(SceneInputInterface& input)
                 // If we are selecting components, but have nodes in existing selection, do not multiselect to prevent confusion
                 if (!document_.GetSelectedNodes().empty())
                     multiselect = false;
-                document_.SelectComponent(selectedComponent,
+                document_.SelectObject(selectedComponent,
                     multiselect ? SelectionAction::Flip : SelectionAction::Select, !multiselect);
             }
             else
@@ -126,7 +126,7 @@ void ObjectPicker::PerformRaycast(SceneInputInterface& input)
                 // If we are selecting nodes, but have components in existing selection, do not multiselect to prevent confusion
                 if (!document_.GetSelectedComponents().empty())
                     multiselect = false;
-                document_.SelectNode(selectedComponent->GetNode(),
+                document_.SelectObject(selectedComponent->GetNode(),
                     multiselect ? SelectionAction::Flip : SelectionAction::Select, !multiselect);
             }
         }
