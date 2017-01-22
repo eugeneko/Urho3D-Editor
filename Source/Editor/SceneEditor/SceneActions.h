@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Action.h"
 #include <Urho3D/Math/Vector3.h>
 #include <Urho3D/Math/Quaternion.h>
+#include <QUndoCommand>
 
 namespace Urho3D
 {
@@ -34,15 +34,17 @@ struct NodeTransform
 };
 
 /// Node transform edited.
-class EditNodeTransformAction : public Action
+class EditNodeTransformAction : public QUndoCommand
 {
 public:
     /// Construct.
-    EditNodeTransformAction(SceneDocument& document, const Urho3D::Node& node, const NodeTransform& oldTransform);
-    /// Undo action.
-    virtual void Undo() override;
-    /// Redo action.
-    virtual void Redo() override;
+    EditNodeTransformAction(SceneDocument& document,
+        const Urho3D::Node& node, const NodeTransform& oldTransform, QUndoCommand* parent = nullptr);
+
+    /// @see QUndoCommand::undo
+    virtual void undo() override;
+    /// @see QUndoCommand::redo
+    virtual void redo() override;
 
 private:
     /// Document.

@@ -313,15 +313,10 @@ void Gizmo::FlushActions()
 {
     if (moved_ && !editNodes_.isEmpty() && editNodes_.size() == oldTransforms_.size())
     {
-        ActionGroup group;
-
+        QScopedPointer<QUndoCommand> group(new QUndoCommand("Transform"));
         for (int i = 0; i < editNodes_.size(); ++i)
-        {
-            QSharedPointer<EditNodeTransformAction> action(new EditNodeTransformAction(document_, *editNodes_[i], oldTransforms_[i]));
-            group.actions_.push_back(action);
-        }
-
-        document_.AddAction(group);
+            new EditNodeTransformAction(document_, *editNodes_[i], oldTransforms_[i], group.data());
+        document_.AddAction(group.take());
     }
 
     moved_ = false;

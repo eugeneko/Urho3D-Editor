@@ -62,22 +62,12 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
 
 void SceneDocument::Undo()
 {
-    if (!undoActions_.empty())
-    {
-        ActionGroup group = undoActions_.takeLast();
-        group.Undo();
-        redoActions_.push_back(group);
-    }
+    undoStack_.undo();
 }
 
 void SceneDocument::Redo()
 {
-    if (!redoActions_.empty())
-    {
-        ActionGroup group = redoActions_.takeLast();
-        group.Redo();
-        undoActions_.push_back(group);
-    }
+    undoStack_.redo();
 }
 
 void SceneDocument::AddOverlay(SceneOverlay* overlay)
@@ -91,19 +81,9 @@ void SceneDocument::RemoveOverlay(SceneOverlay* overlay)
     overlays_.removeAll(overlay);
 }
 
-void SceneDocument::AddAction(const ActionGroup& actionGroup)
+void SceneDocument::AddAction(QUndoCommand* action)
 {
-    undoActions_.push_back(actionGroup);
-}
-
-void SceneDocument::UndoAction()
-{
-    // #TODO Implement me
-}
-
-void SceneDocument::RedoAction()
-{
-    // #TODO Implement me
+    undoStack_.push(action);
 }
 
 Urho3D::Camera& SceneDocument::GetCurrentCamera()

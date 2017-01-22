@@ -2,9 +2,9 @@
 
 #include "SceneOverlay.h"
 #include "../Document.h"
-#include "../Action.h"
 #include <QAction>
 #include <QSet>
+#include <QUndoStack>
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Viewport.h>
 #include <Urho3D/Scene/Node.h>
@@ -74,11 +74,7 @@ public:
     void RemoveOverlay(SceneOverlay* overlay);
 
     /// Add action.
-    void AddAction(const ActionGroup& actionGroup);
-    /// Undo action.
-    void UndoAction();
-    /// Redo action.
-    void RedoAction();
+    void AddAction(QUndoCommand* action);
 
     /// Get current camera.
     Urho3D::Camera& GetCurrentCamera();
@@ -228,10 +224,8 @@ private:
     /// Viewport manager.
     QScopedPointer<SceneViewportManager> viewportManager_;
 
-    /// Undo actions.
-    QVector<ActionGroup> undoActions_;
-    /// Redo actions.
-    QVector<ActionGroup> redoActions_;
+    /// Undo stack.
+    QUndoStack undoStack_;
 
     /// Selected objects.
     QSet<Urho3D::Object*> selectedObjects_;

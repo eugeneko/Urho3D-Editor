@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Module.h"
-#include "../Action.h"
 #include <QAction>
 
 namespace Urho3D

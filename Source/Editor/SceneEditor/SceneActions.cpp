@@ -19,15 +19,17 @@ void NodeTransform::Apply(Urho3D::Node& node)
 }
 
 //////////////////////////////////////////////////////////////////////////
-EditNodeTransformAction::EditNodeTransformAction(SceneDocument& document, const Urho3D::Node& node, const NodeTransform& oldTransform)
-    : document_(document)
+EditNodeTransformAction::EditNodeTransformAction(
+    SceneDocument& document, const Urho3D::Node& node, const NodeTransform& oldTransform, QUndoCommand* parent /*= nullptr*/)
+    : QUndoCommand(parent)
+    , document_(document)
     , nodeID_(node.GetID())
     , undoTransform_(oldTransform)
 {
     redoTransform_.Define(node);
 }
 
-void EditNodeTransformAction::Undo()
+void EditNodeTransformAction::undo()
 {
     Urho3D::Scene& scene = document_.GetScene();
     if (Urho3D::Node* node = scene.GetNode(nodeID_))
@@ -37,7 +39,7 @@ void EditNodeTransformAction::Undo()
     }
 }
 
-void EditNodeTransformAction::Redo()
+void EditNodeTransformAction::redo()
 {
     Urho3D::Scene& scene = document_.GetScene();
     if (Urho3D::Node* node = scene.GetNode(nodeID_))
