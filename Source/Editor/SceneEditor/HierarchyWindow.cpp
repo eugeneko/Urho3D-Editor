@@ -12,20 +12,15 @@
 namespace Urho3DEditor
 {
 
-HierarchyWindow::HierarchyWindow()
-{
-}
-
 bool HierarchyWindow::Initialize()
 {
     MainWindow& mainWindow = GetMainWindow();
 
     connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 
-    actionViewHierarchyWindow_.reset(new QAction("Hierarchy Window"));
+    actionViewHierarchyWindow_.reset(mainWindow.AddAction("View.HierarchyWindow"));
     actionViewHierarchyWindow_->setCheckable(true);
     connect(actionViewHierarchyWindow_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleViewHierarchyWindow(bool)));
-    mainWindow.AddAction("View.HierarchyWindow", actionViewHierarchyWindow_.data());
 
     actionViewHierarchyWindow_->activate(QAction::Trigger);
     return true;
@@ -33,31 +28,31 @@ bool HierarchyWindow::Initialize()
 
 void HierarchyWindow::HandleViewHierarchyWindow(bool checked)
 {
-    MainWindow& mainWindow = GetMainWindow();
     if (checked)
     {
-        hierarchyWindow_.reset(new QDockWidget("Hierarchy Window"));
-        mainWindow.AddDock(Qt::LeftDockWidgetArea, hierarchyWindow_.data());
+        MainWindow& mainWindow = GetMainWindow();
+        widget_.reset(new QDockWidget("Hierarchy Window"));
+        mainWindow.AddDock(Qt::LeftDockWidgetArea, widget_.data());
         HandleCurrentPageChanged(mainWindow.GetCurrentPage());
     }
     else
     {
-        hierarchyWindow_->close();
-        hierarchyWindow_.reset();
+        widget_->close();
+        widget_.reset();
     }
 }
 
 void HierarchyWindow::HandleViewHierarchyWindowAboutToShow()
 {
-    actionViewHierarchyWindow_->setChecked(!!hierarchyWindow_);
+    actionViewHierarchyWindow_->setChecked(!!widget_);
 }
 
 void HierarchyWindow::HandleCurrentPageChanged(Document* document)
 {
-    if (hierarchyWindow_)
+    if (widget_)
     {
-        HierarchyWindowWidget* pageWidget = document->Get<HierarchyWindowWidget, SceneDocument>(hierarchyWindow_.data());
-        hierarchyWindow_->setWidget(pageWidget);
+        HierarchyWindowWidget* pageWidget = document->Get<HierarchyWindowWidget, SceneDocument>(widget_.data());
+        widget_->setWidget(pageWidget);
     }
 }
 

@@ -30,10 +30,6 @@ class HierarchyWindow : public Module
 {
     Q_OBJECT
 
-public:
-    /// Construct.
-    HierarchyWindow();
-
 private:
     /// Initialize module.
     virtual bool Initialize() override;
@@ -50,8 +46,8 @@ private:
     /// 'View/Hierarchy Window' action.
     QScopedPointer<QAction> actionViewHierarchyWindow_;
 
-    /// Hierarchy Window.
-    QScopedPointer<QDockWidget> hierarchyWindow_;
+    /// Main dock widget.
+    QScopedPointer<QDockWidget> widget_;
 
 };
 

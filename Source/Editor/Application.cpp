@@ -9,6 +9,7 @@
 #include "Configuration.h"
 #include "MainWindow.h"
 #include "Urho3DProject.h"
+#include "SceneEditor/AttributeInspector.h"
 #include "SceneEditor/HierarchyWindow.h"
 #include "SceneEditor/SceneEditor.h"
 
@@ -51,6 +52,7 @@ bool Application::Initialize()
 
     moduleSystem_->AddModule(new SceneEditor());
     moduleSystem_->AddModule(new HierarchyWindow());
+    moduleSystem_->AddModule(new AttributeInspector());
 
     mainWindow_->LoadLayout();
     return true;

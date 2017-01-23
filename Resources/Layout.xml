@@ -22,6 +22,7 @@
             <action name="Delete" />
         </menu>
         <menu name="View">
+            <action name="Attribute Inspector" action="View.AttributeInspector" />
             <action name="Hierarchy Window" action="View.HierarchyWindow" />
         </menu>
         <menu name="Tools">
