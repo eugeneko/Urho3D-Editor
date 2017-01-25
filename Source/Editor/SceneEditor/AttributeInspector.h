@@ -31,7 +31,7 @@ private slots:
     /// Update menu.
     void UpdateMenu();
     /// Handle current document changed.
-    void HandleCurrentPageChanged(Document* document);
+    void HandleCurrentDocumentChanged(Document* document);
     /// Handle selection changed.
     void HandleSelectionChanged();
 

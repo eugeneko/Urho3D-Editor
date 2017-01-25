@@ -96,12 +96,8 @@ private slots:
     virtual void HandleFileNewScene();
     /// Handle 'File/Open Scene'
     virtual void HandleFileOpenScene();
-    /// Handle 'Create/Replicated Node'
-    virtual void HandleCreateReplicatedNode();
-    /// Handle 'Create/Local Node'
-    virtual void HandleCreateLocalNode();
     /// Handle current document changed.
-    virtual void HandleCurrentPageChanged(Document* document);
+    virtual void HandleCurrentDocumentChanged(Document* document);
 
 private:
     /// Update menu visibility.
@@ -112,10 +108,6 @@ private:
     QScopedPointer<QAction> actionFileNewScene_;
     /// 'File/Open Scene' action.
     QScopedPointer<QAction> actionFileOpenScene_;
-    /// 'Create/Replicated Node' action.
-    QScopedPointer<QAction> actionCreateReplicatedNode_;
-    /// 'Create/Local Node' action.
-    QScopedPointer<QAction> actionCreateLocalNode_;
 
 };
 

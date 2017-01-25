@@ -136,7 +136,7 @@ public:
     /// Return whether the document can be saved.
     virtual bool CanBeSaved() override { return true; }
     /// Return whether the document widget should be visible when the document is active.
-    virtual bool IsPageWidgetVisible() override { return false; }
+    virtual bool IsDocumentWidgetVisible() override { return false; }
     /// Return whether the Urho3D widget should be visible when the document is active.
     virtual bool IsUrho3DWidgetVisible() override { return true; }
     /// Get name filters for open and save dialogs.
@@ -188,7 +188,7 @@ private:
 
 private:
     /// Handle current document changed.
-    virtual void HandleCurrentPageChanged(Document* document) override;
+    virtual void HandleCurrentDocumentChanged(Document* document) override;
     /// Load the document from file.
     virtual bool DoLoad(const QString& fileName) override;
 

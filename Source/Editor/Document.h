@@ -78,7 +78,7 @@ public:
     /// Return whether the document can be saved.
     virtual bool CanBeSaved() { return false; }
     /// Return whether the document widget should be visible when the document is active.
-    virtual bool IsPageWidgetVisible() { return true; }
+    virtual bool IsDocumentWidgetVisible() { return true; }
     /// Return whether the Urho3D widget should be visible when the document is active.
     virtual bool IsUrho3DWidgetVisible() { return false; }
     /// Get name filters for open and save dialogs.
@@ -90,7 +90,7 @@ protected:
 
 protected slots:
     /// Handle current document changed.
-    virtual void HandleCurrentPageChanged(Document* document);
+    virtual void HandleCurrentDocumentChanged(Document* document);
 
 signals:
     /// Signals that title of the document has been changed.

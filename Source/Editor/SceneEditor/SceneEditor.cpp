@@ -77,7 +77,7 @@ SceneEditor::SceneEditor()
 bool SceneEditor::Initialize()
 {
     MainWindow& mainWindow = GetMainWindow();
-    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
+    connect(&mainWindow, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
 
     // Setup menu
     actionFileNewScene_.reset(mainWindow.AddAction("File.NewScene", Qt::CTRL + Qt::SHIFT + Qt::Key_N));
@@ -86,11 +86,8 @@ bool SceneEditor::Initialize()
     actionFileOpenScene_.reset(mainWindow.AddAction("File.OpenScene", Qt::CTRL + Qt::Key_O));
     connect(actionFileOpenScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileOpenScene()));
 
-    actionCreateReplicatedNode_.reset(mainWindow.AddAction("Create.ReplicatedNode"));
-    connect(actionCreateReplicatedNode_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleCreateReplicatedNode()));
-
-    actionCreateLocalNode_.reset(mainWindow.AddAction("Create.LocalNode"));
-    connect(actionCreateLocalNode_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleCreateLocalNode()));
+    mainWindow.AddAction("Create.ReplicatedNode");
+    mainWindow.AddAction("Create.LocalNode");
 
     QAction* action = nullptr;
 
@@ -154,36 +151,18 @@ bool SceneEditor::Initialize()
 void SceneEditor::HandleFileNewScene()
 {
     MainWindow& mainWindow = GetMainWindow();
-    mainWindow.AddPage(new SceneDocument(mainWindow));
+    mainWindow.AddDocument(new SceneDocument(mainWindow));
 }
 
 void SceneEditor::HandleFileOpenScene()
 {
     MainWindow& mainWindow = GetMainWindow();
-    QScopedPointer<SceneDocument> scenePage(new SceneDocument(mainWindow));
-    if (scenePage->Open())
-        mainWindow.AddPage(scenePage.take());
+    QScopedPointer<SceneDocument> sceneDocument(new SceneDocument(mainWindow));
+    if (sceneDocument->Open())
+        mainWindow.AddDocument(sceneDocument.take());
 }
 
-void SceneEditor::HandleCreateReplicatedNode()
-{
-    MainWindow& mainWindow = GetMainWindow();
-    if (SceneDocument* scenePage = dynamic_cast<SceneDocument*>(mainWindow.GetCurrentPage()))
-    {
-
-    }
-}
-
-void SceneEditor::HandleCreateLocalNode()
-{
-    MainWindow& mainWindow = GetMainWindow();
-    if (SceneDocument* scenePage = dynamic_cast<SceneDocument*>(mainWindow.GetCurrentPage()))
-    {
-
-    }
-}
-
-void SceneEditor::HandleCurrentPageChanged(Document* document)
+void SceneEditor::HandleCurrentDocumentChanged(Document* document)
 {
     UpdateMenuVisibility();
 }
@@ -191,7 +170,7 @@ void SceneEditor::HandleCurrentPageChanged(Document* document)
 void SceneEditor::UpdateMenuVisibility()
 {
     MainWindow& mainWindow = GetMainWindow();
-    Document* document = mainWindow.GetCurrentPage();
+    Document* document = mainWindow.GetCurrentDocument();
     SceneDocument* sceneDocument = dynamic_cast<SceneDocument*>(document);
 }
 

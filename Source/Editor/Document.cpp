@@ -9,7 +9,7 @@ namespace Urho3DEditor
 Document::Document(MainWindow& mainWindow)
     : mainWindow_(mainWindow)
 {
-    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
+    connect(&mainWindow, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
 }
 
 Document::~Document()
@@ -56,7 +56,7 @@ bool Document::Open()
 
 bool Document::IsActive() const
 {
-    return mainWindow_.GetCurrentPage() == this;
+    return mainWindow_.GetCurrentDocument() == this;
 }
 
 Configuration& Document::GetConfig()
@@ -64,7 +64,7 @@ Configuration& Document::GetConfig()
     return mainWindow_.GetConfig();
 }
 
-void Document::HandleCurrentPageChanged(Document* document)
+void Document::HandleCurrentDocumentChanged(Document* document)
 {
 
 }

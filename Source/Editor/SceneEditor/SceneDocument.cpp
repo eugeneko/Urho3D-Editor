@@ -288,7 +288,7 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
     mouseMoveConsumed_ = false;
 }
 
-void SceneDocument::HandleCurrentPageChanged(Document* document)
+void SceneDocument::HandleCurrentDocumentChanged(Document* document)
 {
     if (IsActive())
         viewportManager_->ApplyViewports();

@@ -19,7 +19,7 @@ bool AttributeInspector::Initialize()
     MainWindow& mainWindow = GetMainWindow();
 
     // Connect to signals
-    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
+    connect(&mainWindow, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
 
     // Create widget
     widget_.reset(new QDockWidget("Attribute Inspector"));
@@ -47,7 +47,7 @@ void AttributeInspector::UpdateMenu()
     showAction_->setChecked(widget_->isVisible());
 }
 
-void AttributeInspector::HandleCurrentPageChanged(Document* document)
+void AttributeInspector::HandleCurrentDocumentChanged(Document* document)
 {
     if (document_)
     {

@@ -88,7 +88,7 @@ Urho3D::Context& MainWindow::GetContext() const
     return context_;
 }
 
-Document* MainWindow::GetCurrentPage() const
+Document* MainWindow::GetCurrentDocument() const
 {
     return tabBar_->currentIndex() < 0 ? nullptr : documents_[tabBar_->currentIndex()];
 }
@@ -127,7 +127,7 @@ void MainWindow::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
     mainWindow_.addDockWidget(area, dock);
 }
 
-void MainWindow::AddPage(Document* document, bool bringToTop /*= true*/)
+void MainWindow::AddDocument(Document* document, bool bringToTop /*= true*/)
 {
     // Add new tab
     connect(document, SIGNAL(titleChanged(Document*)), this, SLOT(HandleTabTitleChanged(Document*)));
@@ -142,18 +142,18 @@ void MainWindow::AddPage(Document* document, bool bringToTop /*= true*/)
 
     // Activate
     if (bringToTop)
-        SelectPage(document);
+        SelectDocument(document);
 }
 
-void MainWindow::SelectPage(Document* document)
+void MainWindow::SelectDocument(Document* document)
 {
     const int index = documents_.indexOf(document);
     tabBar_->setCurrentIndex(index);
 }
 
-void MainWindow::ClosePage(Document* document)
+void MainWindow::CloseDocument(Document* document)
 {
-    emit pageClosed(document);
+    emit documentClosed(document);
 
     const int index = documents_.indexOf(document);
     documents_.remove(index);
@@ -162,7 +162,7 @@ void MainWindow::ClosePage(Document* document)
     if (documents_.isEmpty())
     {
         // Emit signal if all tabs are closed now
-        emit pageChanged(nullptr);
+        emit currentDocumentChanged(nullptr);
 
         // Ensure that Urho3D widget is invisible
         urho3DWidget_->setVisible(false);
@@ -255,7 +255,7 @@ QAction* MainWindow::ReadAction(const QDomNode& node)
 void MainWindow::HandleFileClose()
 {
     if (tabBar_->currentIndex() != -1)
-        ClosePage(documents_[tabBar_->currentIndex()]);
+        CloseDocument(documents_[tabBar_->currentIndex()]);
 }
 
 void MainWindow::HandleFileExit()
@@ -265,13 +265,13 @@ void MainWindow::HandleFileExit()
 
 void MainWindow::EditUndo()
 {
-    if (Document* document = GetCurrentPage())
+    if (Document* document = GetCurrentDocument())
         document->Undo();
 }
 
 void MainWindow::EditRedo()
 {
-    if (Document* document = GetCurrentPage())
+    if (Document* document = GetCurrentDocument())
         document->Redo();
 }
 
@@ -302,12 +302,12 @@ void MainWindow::HandleTabChanged(int index)
 
     // Show document
     Document* document = documents_[index];
-    document->setVisible(document->IsPageWidgetVisible());
+    document->setVisible(document->IsDocumentWidgetVisible());
     urho3DWidget_->setVisible(document->IsUrho3DWidgetVisible());
     if (document->IsUrho3DWidgetVisible())
         urho3DWidget_->setFocus(Qt::ActiveWindowFocusReason);
 
-    emit pageChanged(document);
+    emit currentDocumentChanged(document);
 }
 
 void MainWindow::HandleTabMoved(int from, int to)
@@ -317,7 +317,7 @@ void MainWindow::HandleTabMoved(int from, int to)
 
 void MainWindow::HandleTabClosed(int index)
 {
-    ClosePage(documents_[index]);
+    CloseDocument(documents_[index]);
 }
 
 void MainWindow::HandleTabTitleChanged(Document* document)

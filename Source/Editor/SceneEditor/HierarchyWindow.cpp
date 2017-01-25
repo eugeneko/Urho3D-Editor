@@ -17,7 +17,7 @@ bool HierarchyWindow::Initialize()
     MainWindow& mainWindow = GetMainWindow();
 
     // Connect to signals
-    connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
+    connect(&mainWindow, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
     connect(&mainWindow, SIGNAL(updateMenu(QMenu*)), this, SLOT(UpdateMenu()));
 
     // Create widget
@@ -32,7 +32,7 @@ bool HierarchyWindow::Initialize()
 
     // Launch
     showAction_->activate(QAction::Trigger);
-    CreateBody(mainWindow.GetCurrentPage());
+    CreateBody(mainWindow.GetCurrentDocument());
     return true;
 }
 
@@ -46,7 +46,7 @@ void HierarchyWindow::UpdateMenu()
     showAction_->setChecked(widget_->isVisible());
 }
 
-void HierarchyWindow::HandleCurrentPageChanged(Document* document)
+void HierarchyWindow::HandleCurrentDocumentChanged(Document* document)
 {
     CreateBody(document);
 }
@@ -56,9 +56,9 @@ void HierarchyWindow::CreateBody(Document* document)
     if (!widget_)
         return;
 
-    HierarchyWindowWidget* pageWidget = document->Get<HierarchyWindowWidget, SceneDocument>(widget_.data());
-    if (pageWidget)
-        widget_->setWidget(pageWidget);
+    HierarchyWindowWidget* bodyWidget = document->Get<HierarchyWindowWidget, SceneDocument>(widget_.data());
+    if (bodyWidget)
+        widget_->setWidget(bodyWidget);
     else
         widget_->setWidget(new QTreeView(widget_.data()));
 }

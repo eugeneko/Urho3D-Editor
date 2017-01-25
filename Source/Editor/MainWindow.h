@@ -40,7 +40,7 @@ public:
     /// Get context.
     Urho3D::Context& GetContext() const;
     /// Get current active document.
-    Document* GetCurrentPage() const;
+    Document* GetCurrentDocument() const;
     /// Get Urho3D widget.
     Urho3DWidget* GetUrho3DWidget() const;
     /// Get menu bar.
@@ -56,17 +56,17 @@ public:
     void AddDock(Qt::DockWidgetArea area, QDockWidget* dock);
 
     /// Add document.
-    void AddPage(Document* document, bool bringToTop = true);
+    void AddDocument(Document* document, bool bringToTop = true);
     /// Select document.
-    void SelectPage(Document* document);
+    void SelectDocument(Document* document);
     /// Close document.
-    void ClosePage(Document* document);
+    void CloseDocument(Document* document);
 
 signals:
     /// Signals that current document has been changed.
-    void pageChanged(Document* document);
+    void currentDocumentChanged(Document* document);
     /// Signals that document is closed.
-    void pageClosed(Document* document);
+    void documentClosed(Document* document);
     /// Signals that menu is about to show.
     void updateMenu(QMenu* menu);
 
@@ -124,7 +124,7 @@ private:
     /// Menu actions.
     QHash<QString, QAction*> menuActions_;
 
-    /// Pages.
+    /// Documents.
     QVector<Document*> documents_;
 
 };
