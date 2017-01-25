@@ -18,35 +18,33 @@ bool AttributeInspector::Initialize()
 {
     MainWindow& mainWindow = GetMainWindow();
 
+    // Connect to signals
     connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
 
+    // Create widget
+    widget_.reset(new QDockWidget("Attribute Inspector"));
+    widget_->hide();
+    mainWindow.AddDock(Qt::RightDockWidgetArea, widget_.data());
+
+    // Create actions
     showAction_.reset(mainWindow.AddAction("View.AttributeInspector"));
     showAction_->setCheckable(true);
     connect(showAction_.data(), SIGNAL(triggered(bool)), this, SLOT(ToggleShow(bool)));
 
+    // Launch
+    CreateBody();
     showAction_->activate(QAction::Trigger);
     return true;
 }
 
 void AttributeInspector::ToggleShow(bool checked)
 {
-    if (checked)
-    {
-        MainWindow& mainWindow = GetMainWindow();
-        widget_.reset(new QDockWidget("Attribute Inspector"));
-        mainWindow.AddDock(Qt::RightDockWidgetArea, widget_.data());
-        UpdateInspector();
-    }
-    else
-    {
-        widget_->close();
-        widget_.reset();
-    }
+    widget_->setVisible(checked);
 }
 
 void AttributeInspector::UpdateMenu()
 {
-
+    showAction_->setChecked(widget_->isVisible());
 }
 
 void AttributeInspector::HandleCurrentPageChanged(Document* document)
@@ -60,16 +58,16 @@ void AttributeInspector::HandleCurrentPageChanged(Document* document)
     {
         document_ = newDocument;
         connect(document_, SIGNAL(selectionChanged()), this, SLOT(HandleSelectionChanged()));
-        UpdateInspector();
+        CreateBody();
     }
 }
 
 void AttributeInspector::HandleSelectionChanged()
 {
-    UpdateInspector();
+    CreateBody();
 }
 
-void AttributeInspector::UpdateInspector()
+void AttributeInspector::CreateBody()
 {
     using namespace Urho3D;
     if (!widget_ || !document_)

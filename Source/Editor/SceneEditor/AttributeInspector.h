@@ -36,8 +36,8 @@ private slots:
     void HandleSelectionChanged();
 
 private:
-    /// Update attribute inspector.
-    void UpdateInspector();
+    /// Create body of inspector.
+    void CreateBody();
 
 private:
     /// Show action.

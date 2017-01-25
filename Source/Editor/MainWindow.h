@@ -67,6 +67,8 @@ signals:
     void pageChanged(Document* document);
     /// Signals that document is closed.
     void pageClosed(Document* document);
+    /// Signals that menu is about to show.
+    void updateMenu(QMenu* menu);
 
 private:
     /// Initialize layout.
@@ -99,6 +101,8 @@ private slots:
     void HandleTabClosed(int index);
     /// Handle tab title changed.
     void HandleTabTitleChanged(Document* document);
+    /// Handle that menu is about to show.
+    void HandleMenuAboutToShow();
 
 private:
     /// Configuration.

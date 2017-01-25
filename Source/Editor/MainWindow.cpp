@@ -233,6 +233,8 @@ QMenu* MainWindow::ReadMenu(const QDomNode& node)
         else if (type == "separator")
             menu->addSeparator();
     }
+
+    connect(menu.data(), SIGNAL(aboutToShow()), this, SLOT(HandleMenuAboutToShow()));
     return menu.take();
 }
 
@@ -322,6 +324,12 @@ void MainWindow::HandleTabTitleChanged(Document* document)
 {
     const int index = documents_.indexOf(document);
     tabBar_->setTabText(index, document->GetTitle());
+}
+
+void MainWindow::HandleMenuAboutToShow()
+{
+    if (QMenu* menu = dynamic_cast<QMenu*>(sender()))
+        emit updateMenu(menu);
 }
 
 }

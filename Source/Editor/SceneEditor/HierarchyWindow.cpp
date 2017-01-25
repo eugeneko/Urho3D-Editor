@@ -16,44 +16,56 @@ bool HierarchyWindow::Initialize()
 {
     MainWindow& mainWindow = GetMainWindow();
 
+    // Connect to signals
     connect(&mainWindow, SIGNAL(pageChanged(Document*)), this, SLOT(HandleCurrentPageChanged(Document*)));
+    connect(&mainWindow, SIGNAL(updateMenu(QMenu*)), this, SLOT(UpdateMenu()));
 
-    actionViewHierarchyWindow_.reset(mainWindow.AddAction("View.HierarchyWindow"));
-    actionViewHierarchyWindow_->setCheckable(true);
-    connect(actionViewHierarchyWindow_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleViewHierarchyWindow(bool)));
+    // Create widget
+    widget_.reset(new QDockWidget("Hierarchy Window"));
+    widget_->hide();
+    mainWindow.AddDock(Qt::LeftDockWidgetArea, widget_.data());
 
-    actionViewHierarchyWindow_->activate(QAction::Trigger);
+    // Create actions
+    showAction_.reset(mainWindow.AddAction("View.HierarchyWindow"));
+    showAction_->setCheckable(true);
+    connect(showAction_.data(), SIGNAL(triggered(bool)), this, SLOT(ToggleShow(bool)));
+
+    // Launch
+    showAction_->activate(QAction::Trigger);
+    CreateBody(mainWindow.GetCurrentPage());
     return true;
 }
 
-void HierarchyWindow::HandleViewHierarchyWindow(bool checked)
+void HierarchyWindow::ToggleShow(bool checked)
 {
-    if (checked)
-    {
-        MainWindow& mainWindow = GetMainWindow();
-        widget_.reset(new QDockWidget("Hierarchy Window"));
-        mainWindow.AddDock(Qt::LeftDockWidgetArea, widget_.data());
-        HandleCurrentPageChanged(mainWindow.GetCurrentPage());
-    }
-    else
-    {
-        widget_->close();
-        widget_.reset();
-    }
+    widget_->setVisible(checked);
 }
 
-void HierarchyWindow::HandleViewHierarchyWindowAboutToShow()
+void HierarchyWindow::UpdateMenu()
 {
-    actionViewHierarchyWindow_->setChecked(!!widget_);
+    showAction_->setChecked(widget_->isVisible());
 }
 
 void HierarchyWindow::HandleCurrentPageChanged(Document* document)
 {
-    if (widget_)
-    {
-        HierarchyWindowWidget* pageWidget = document->Get<HierarchyWindowWidget, SceneDocument>(widget_.data());
+    CreateBody(document);
+}
+
+void HierarchyWindow::CreateBody(Document* document)
+{
+    if (!widget_)
+        return;
+
+    HierarchyWindowWidget* pageWidget = document->Get<HierarchyWindowWidget, SceneDocument>(widget_.data());
+    if (pageWidget)
         widget_->setWidget(pageWidget);
-    }
+    else
+        widget_->setWidget(new QTreeView(widget_.data()));
+}
+
+void HierarchyWindow::HandleDockClosed()
+{
+    widget_.reset();
 }
 
 //////////////////////////////////////////////////////////////////////////

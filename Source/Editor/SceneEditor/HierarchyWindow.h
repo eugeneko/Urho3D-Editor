@@ -35,16 +35,22 @@ private:
     virtual bool Initialize() override;
 
 private slots:
-    /// Handle 'View/Hierarchy Window'
-    virtual void HandleViewHierarchyWindow(bool checked);
-    /// Handle 'View/Hierarchy Window' is about to show.
-    virtual void HandleViewHierarchyWindowAboutToShow();
+    /// Toggle show/hide.
+    void ToggleShow(bool checked);
+    /// Update menu.
+    void UpdateMenu();
     /// Handle current document changed.
-    virtual void HandleCurrentPageChanged(Document* document);
+    void HandleCurrentPageChanged(Document* document);
+    /// Handle dock closed.
+    void HandleDockClosed();
 
 private:
-    /// 'View/Hierarchy Window' action.
-    QScopedPointer<QAction> actionViewHierarchyWindow_;
+    /// Create body of the widget.
+    void CreateBody(Document* document);
+
+private:
+    /// Show action.
+    QScopedPointer<QAction> showAction_;
 
     /// Main dock widget.
     QScopedPointer<QDockWidget> widget_;
