@@ -416,12 +416,14 @@ HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
     treeView_->setDragDropMode(QAbstractItemView::DragDrop);
     treeView_->setDragEnabled(true);
     treeView_->setModel(treeModel_.data());
+    treeView_->setContextMenuPolicy(Qt::CustomContextMenu);
 
     layout_->addWidget(treeView_.data(), 0, 0);
     setLayout(layout_.data());
 
     connect(treeView_->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(HandleTreeSelectionChanged()));
     connect(&document_, SIGNAL(selectionChanged()), this, SLOT(HandleSceneSelectionChanged()));
+    connect(treeView_.data(), SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(HandleContextMenuRequested(const QPoint&)));
 }
 
 HierarchyWindowWidget::~HierarchyWindowWidget()
@@ -466,6 +468,27 @@ void HierarchyWindowWidget::HandleSceneSelectionChanged()
         {
             wasScrolled = true;
             treeView_->scrollTo(index);
+        }
+    }
+}
+
+void HierarchyWindowWidget::HandleContextMenuRequested(const QPoint& point)
+{
+    const QModelIndex index = treeView_->indexAt(point);
+    const QPoint globalPoint = treeView_->mapToGlobal(point);
+    treeView_->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
+    if (ObjectHierarchyItem* item = treeModel_->GetItem(index))
+    {
+        Urho3D::Object* object = item->GetObject();
+        if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        {
+            if (QMenu* menu = document_.GetMainWindow().GetMenu("HierarchyWindow.Node"))
+                menu->exec(globalPoint);
+        }
+        else if (Urho3D::Component* node = dynamic_cast<Urho3D::Component*>(object))
+        {
+            if (QMenu* menu = document_.GetMainWindow().GetMenu("HierarchyWindow.Component"))
+                menu->exec(globalPoint);
         }
     }
 }

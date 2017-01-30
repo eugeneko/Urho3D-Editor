@@ -86,10 +86,14 @@ bool SceneEditor::Initialize()
     actionFileOpenScene_.reset(mainWindow.AddAction("File.OpenScene", Qt::CTRL + Qt::Key_O));
     connect(actionFileOpenScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileOpenScene()));
 
+    mainWindow.AddAction("Edit.Cut");
+    mainWindow.AddAction("Edit.Duplicate");
+    mainWindow.AddAction("Edit.Copy");
+    mainWindow.AddAction("Edit.Paste");
+    mainWindow.AddAction("Edit.Delete");
+
     mainWindow.AddAction("Create.ReplicatedNode");
     mainWindow.AddAction("Create.LocalNode");
-
-    QAction* action = nullptr;
 
     mainWindow.AddAction("Scene.Camera.Single");
     mainWindow.AddAction("Scene.Camera.Vertical");
@@ -99,6 +103,7 @@ bool SceneEditor::Initialize()
     mainWindow.AddAction("Scene.Camera.Top2_Bottom1");
     mainWindow.AddAction("Scene.Camera.Left1_Right2");
     mainWindow.AddAction("Scene.Camera.Left2_Right1");
+    // #TODO Rename Camera to Viewport
 
     UpdateMenuVisibility();
 

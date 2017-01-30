@@ -47,6 +47,8 @@ public:
     QMenuBar* GetMenuBar() const;
     /// Get action by name.
     QAction* GetAction(const QString& name) const;
+    /// Get menu.
+    QMenu* GetMenu(const QString& name) const;
 
     /// Add menu action.
     QAction* AddAction(const QString& name, QAction* action);
@@ -123,6 +125,8 @@ private:
 
     /// Menu actions.
     QHash<QString, QAction*> menuActions_;
+    /// Secondary and context menus.
+    QHash<QString, QMenu*> menus_;
 
     /// Documents.
     QVector<Document*> documents_;

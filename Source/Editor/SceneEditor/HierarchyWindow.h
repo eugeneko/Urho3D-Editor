@@ -177,6 +177,8 @@ private slots:
     void HandleTreeSelectionChanged();
     /// Handle scene selection change.
     void HandleSceneSelectionChanged();
+    /// Handle context menu request.
+    void HandleContextMenuRequested(const QPoint& point);
 
 private:
     /// Gather selected objects.

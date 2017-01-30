@@ -16,10 +16,11 @@
             <action name="Undo" action="Edit.Undo" />
             <action name="Redo" action="Edit.Redo" />
             <separator/>
-            <action name="Cut" />
-            <action name="Copy" />
-            <action name="Paste" />
-            <action name="Delete" />
+            <action name="Cut" action="Edit.Cut" />
+            <action name="Duplicate" action="Edit.Duplicate" />
+            <action name="Copy" action="Edit.Copy" />
+            <action name="Paste" action="Edit.Paste" />
+            <action name="Delete" action="Edit.Delete" />
         </menu>
         <menu name="View">
             <action name="Attribute Inspector" action="View.AttributeInspector" />
@@ -42,5 +43,12 @@
         <menu name="Help">
             <action name="About..." action="Help.About" />
         </menu>
+    </menu>
+    <menu tag="HierarchyWindow.Node">
+        <action name="Cut" action="Edit.Cut" />
+        <action name="Duplicate" action="Edit.Duplicate" />
+        <action name="Copy" action="Edit.Copy" />
+        <action name="Paste" action="Edit.Paste" />
+        <action name="Delete" action="Edit.Delete" />
     </menu>
 </layout>

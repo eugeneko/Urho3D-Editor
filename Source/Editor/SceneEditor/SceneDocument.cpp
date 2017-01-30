@@ -6,7 +6,9 @@
 #include "../MainWindow.h"
 #include "../Widgets/Urho3DWidget.h"
 #include <Urho3D/Core/CoreEvents.h>
+#include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Graphics/Drawable.h>
+#include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/Input/Input.h>
 #include <QFileInfo>
@@ -16,6 +18,7 @@
 #include "DebugRenderer.h"
 #include "Gizmo.h"
 #include "ObjectPicker.h"
+#include <QMessageBox>
 
 namespace Urho3DEditor
 {
@@ -30,6 +33,9 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
     , scene_(new Urho3D::Scene(context_))
     , viewportManager_(new SceneViewportManager(*this))
 {
+    scene_->CreateComponent<Urho3D::Octree>();
+    scene_->CreateComponent<Urho3D::DebugRenderer>();
+
     AddOverlay(viewportManager_.data());
     SetTitle("New Scene");
 
@@ -43,6 +49,12 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
     connect(&widget_, SIGNAL(keyReleased(QKeyEvent*)), this, SLOT(HandleKeyRelease(QKeyEvent*)));
     connect(&widget_, SIGNAL(wheelMoved(QWheelEvent*)), this, SLOT(HandleMouseWheel(QWheelEvent*)));
     connect(&widget_, SIGNAL(focusOut()), this, SLOT(HandleFocusOut()));
+
+    connect(mainWindow.GetAction("Edit.Cut"), SIGNAL(triggered(bool)), this, SLOT(Cut()));
+    connect(mainWindow.GetAction("Edit.Duplicate"), SIGNAL(triggered(bool)), this, SLOT(Duplicate()));
+    connect(mainWindow.GetAction("Edit.Copy"), SIGNAL(triggered(bool)), this, SLOT(Copy()));
+    connect(mainWindow.GetAction("Edit.Paste"), SIGNAL(triggered(bool)), this, SLOT(Paste()));
+    connect(mainWindow.GetAction("Edit.Delete"), SIGNAL(triggered(bool)), this, SLOT(Delete()));
 
     connect(mainWindow.GetAction("Scene.Camera.Single"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraSingle()));
     connect(mainWindow.GetAction("Scene.Camera.Vertical"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraVertical()));
@@ -166,6 +178,33 @@ QString SceneDocument::GetNameFilters()
     return "Urho3D Scene (*.xml *.json *.bin);;All files (*.*)";
 }
 
+//////////////////////////////////////////////////////////////////////////
+void SceneDocument::Cut()
+{
+    QMessageBox::information(nullptr, "Cut", "Cut");
+}
+
+void SceneDocument::Duplicate()
+{
+    QMessageBox::information(nullptr, "Duplicate", "Duplicate");
+}
+
+void SceneDocument::Copy()
+{
+    QMessageBox::information(nullptr, "Copy", "Copy");
+}
+
+void SceneDocument::Paste()
+{
+    QMessageBox::information(nullptr, "Paste", "Paste");
+}
+
+void SceneDocument::Delete()
+{
+    QMessageBox::information(nullptr, "Delete", "Delete");
+}
+
+//////////////////////////////////////////////////////////////////////////
 void SceneDocument::HandleCameraSingle()
 {
     viewportManager_->SetLayout(SceneViewportLayout::Single);

@@ -71,9 +71,18 @@ void MainWindow::LoadLayout()
         const QDomNode node = children.at(i);
         if (node.nodeName() == "menu")
         {
-            const QDomNodeList menus = node.childNodes();
-            for (int j = 0; j < menus.count(); ++j)
-                mainWindow_.menuBar()->addMenu(ReadMenu(menus.at(j)));
+            const QString tag = node.attributes().namedItem("tag").nodeValue();
+            if (tag.isEmpty())
+            {
+                const QDomNodeList menus = node.childNodes();
+                for (int j = 0; j < menus.count(); ++j)
+                    mainWindow_.menuBar()->addMenu(ReadMenu(menus.at(j)));
+            }
+            else
+            {
+                if (!menus_.contains(tag))
+                    menus_[tag] = ReadMenu(node);
+            }
         }
     }
 }
@@ -106,6 +115,11 @@ QMenuBar* MainWindow::GetMenuBar() const
 QAction* MainWindow::GetAction(const QString& name) const
 {
     return menuActions_.value(name);
+}
+
+QMenu* MainWindow::GetMenu(const QString& name) const
+{
+    return menus_.value(name);
 }
 
 QAction* MainWindow::AddAction(const QString& name, QAction* action)

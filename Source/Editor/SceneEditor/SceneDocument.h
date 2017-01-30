@@ -149,6 +149,17 @@ signals:
     void nodeTransformChanged(const Urho3D::Node& node);
 
 private slots:
+    /// Cut.
+    void Cut();
+    /// Duplicate.
+    void Duplicate();
+    /// Copy.
+    void Copy();
+    /// Paste.
+    void Paste();
+    /// Delete.
+    void Delete();
+
     /// Handle 'Scene.Camera.Single'
     void HandleCameraSingle();
     /// Handle 'Scene.Camera.Vertical'
@@ -226,6 +237,8 @@ private:
 
     /// Undo stack.
     QUndoStack undoStack_;
+    /// Copy buffer.
+    QVector<Urho3D::SharedPtr<Urho3D::XMLFile>> copyBuffer_;
 
     /// Selected objects.
     QSet<Urho3D::Object*> selectedObjects_;
