@@ -1,4 +1,5 @@
 #include "SceneDocument.h"
+#include "SceneActions.h"
 #include "SceneOverlay.h"
 #include "SceneViewportManager.h"
 #include "../Bridge.h"
@@ -11,6 +12,7 @@
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/Input/Input.h>
+#include <Urho3D/Scene/SceneEvents.h>
 #include <QFileInfo>
 #include <QKeyEvent>
 
@@ -43,6 +45,9 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
     SubscribeToEvent(Urho3D::E_MOUSEBUTTONDOWN, URHO3D_HANDLER(SceneDocument, HandleMouseButton));
     SubscribeToEvent(Urho3D::E_MOUSEBUTTONUP, URHO3D_HANDLER(SceneDocument, HandleMouseButton));
     SubscribeToEvent(Urho3D::E_POSTRENDERUPDATE, URHO3D_HANDLER(SceneDocument, HandlePostRenderUpdate));
+
+    SubscribeToEvent(scene_, Urho3D::E_NODEREMOVED, URHO3D_HANDLER(SceneDocument, HandleNodeRemoved));
+    SubscribeToEvent(scene_, Urho3D::E_COMPONENTREMOVED, URHO3D_HANDLER(SceneDocument, HandleComponentRemoved));
 
     connect(viewportManager_.data(), SIGNAL(viewportsChanged()), this, SLOT(HandleViewportsChanged()));
     connect(&widget_, SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(HandleKeyPress(QKeyEvent*)));
@@ -117,6 +122,13 @@ void SceneDocument::ClearSelection()
     emit selectionChanged();
 }
 
+void SceneDocument::SelectObjects(const QSet<Urho3D::Object*>& objects)
+{
+    selectedObjects_ = objects;
+    GatherSelection();
+    emit selectionChanged();
+}
+
 void SceneDocument::SelectObject(Urho3D::Object* object, SelectionAction action, bool clearSelection)
 {
     if (clearSelection)
@@ -179,29 +191,150 @@ QString SceneDocument::GetNameFilters()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void SceneDocument::Cut()
+bool SceneDocument::Cut()
 {
-    QMessageBox::information(nullptr, "Cut", "Cut");
+    return Copy() && Delete();
 }
 
-void SceneDocument::Duplicate()
+bool SceneDocument::Duplicate()
 {
-    QMessageBox::information(nullptr, "Duplicate", "Duplicate");
+    QVector<Urho3D::SharedPtr<Urho3D::XMLFile>> copy = copyBuffer_;
+    const bool result = Copy() && Paste(true);
+    copyBuffer_ = copy;
+    return result;
 }
 
-void SceneDocument::Copy()
+bool SceneDocument::Copy()
 {
-    QMessageBox::information(nullptr, "Copy", "Copy");
+    using namespace Urho3D;
+    copyBuffer_.clear();
+
+    // Copy components
+    if (!GetSelectedComponents().empty())
+    {
+        for (Component* component : GetSelectedComponents())
+        {
+            SharedPtr<XMLFile> xml(new XMLFile(context_));
+            XMLElement rootElem = xml->CreateRoot("component");
+            component->SaveXML(rootElem);
+            rootElem.SetBool("local", component->GetID() >= FIRST_LOCAL_ID);
+            copyBuffer_.push_back(xml);
+        }
+    }
+    // Copy nodes
+    else
+    {
+        for (Node* node : GetSelectedNodes())
+        {
+            // Skip the root scene node as it cannot be copied
+            if (node == scene_)
+                continue;
+
+            SharedPtr<XMLFile> xml(new XMLFile(context_));
+            XMLElement rootElem = xml->CreateRoot("node");
+            node->SaveXML(rootElem);
+            rootElem.SetBool("local", node->GetID() >= FIRST_LOCAL_ID);
+            copyBuffer_.push_back(xml);
+        }
+    }
+    return true;
 }
 
-void SceneDocument::Paste()
+bool SceneDocument::Paste(bool duplication /*= false*/)
 {
-    QMessageBox::information(nullptr, "Paste", "Paste");
+    using namespace Urho3D;
+
+    // Group for storing undo actions
+    QScopedPointer<QUndoCommand> group(new QUndoCommand);
+
+    const NodeSet selectedNodes = GetSelectedNodes();
+    for (SharedPtr<XMLFile>& copyElement : copyBuffer_)
+    {
+        XMLElement rootElem = copyElement->GetRoot();
+        String mode = rootElem.GetName();
+        if (mode == "component" && !selectedNodes.empty())
+        {
+            for (Node* node : selectedNodes)
+            {
+                // If this is the root node, do not allow to create duplicate scene-global components
+                if (node == scene_ && CheckForExistingGlobalComponent(*node, rootElem.GetAttribute("type")))
+                    return false;
+
+                // Create an undo action
+                const unsigned componentId = scene_->GetFreeComponentID(rootElem.GetBool("local") ? LOCAL : REPLICATED);
+                new CreateComponentAction(*this, copyElement, componentId, node->GetID(), group.data());
+            }
+        }
+        else if (mode == "node")
+        {
+            Node* thisNode = scene_->GetNode(rootElem.GetUInt("id"));
+
+            QList<Node*> destNodes;
+            // Paste into scene if nothing selected
+            if (selectedNodes.empty())
+                destNodes.push_back(scene_);
+            // Paste into parent if duplicate or selected single node and paste onto itself
+            else if (duplication || copyBuffer_.size() == 1 && selectedNodes.contains(thisNode))
+                destNodes.push_back(thisNode->GetParent() ? thisNode->GetParent() : scene_);
+            // Paste into all selected nodes else
+            else
+                destNodes = selectedNodes.toList();
+
+            // Create actions
+            for (Node* destNode : destNodes)
+            {
+                const unsigned nodeId = scene_->GetFreeNodeID(rootElem.GetBool("local") ? LOCAL : REPLICATED);
+                new CreateNodeAction(*this, copyElement, nodeId, destNode->GetID(), group.data());
+            }
+        }
+    }
+
+    AddAction(group.take());
+    return true;
 }
 
-void SceneDocument::Delete()
+bool SceneDocument::Delete()
 {
-    QMessageBox::information(nullptr, "Delete", "Delete");
+    using namespace Urho3D;
+
+    // Group for storing undo actions
+    QScopedPointer<QUndoCommand> group(new QUndoCommand);
+
+    // Remove nodes
+    const NodeSet selectedNodes = GetSelectedNodes();
+    for (Node* node : selectedNodes)
+    {
+        if (!node->GetParent() || !node->GetScene())
+            continue; // Root or already deleted
+
+        // Create undo action
+        new DeleteNodeAction(*this, *node, group.data());
+
+        /// \todo If deleting only one node, select the next item in the same index
+    }
+
+    // Then remove components, if they still remain
+    const ComponentSet selectedComponents = GetSelectedComponents();
+    for (Component* component : selectedComponents)
+    {
+        Node* node = component->GetNode();
+        if (!node)
+            continue; // Already deleted
+
+        // Do not allow to remove the Octree, DebugRenderer or MaterialCache2D or DrawableProxy2D from the root node
+        if (node == scene_ && (component->GetTypeName() == "Octree" || component->GetTypeName() == "DebugRenderer" ||
+            component->GetTypeName() == "MaterialCache2D" || component->GetTypeName() == "DrawableProxy2D"))
+            continue;
+
+        // Create undo action
+        new DeleteComponentAction(*this, *component, group.data());
+
+        /// \todo If deleting only one component, select the next item in the same index
+    }
+
+    AddAction(group.take());
+    ClearSelection();
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -327,6 +460,28 @@ void SceneDocument::HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D:
     mouseMoveConsumed_ = false;
 }
 
+void SceneDocument::HandleNodeRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+{
+    using namespace Urho3D;
+    Object* object = dynamic_cast<Object*>(eventData[NodeRemoved::P_NODE].GetPtr());
+    if (selectedObjects_.remove(object))
+    {
+        GatherSelection();
+        emit selectionChanged();
+    }
+}
+
+void SceneDocument::HandleComponentRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+{
+    using namespace Urho3D;
+    Object* object = dynamic_cast<Object*>(eventData[ComponentRemoved::P_COMPONENT].GetPtr());
+    if (selectedObjects_.remove(object))
+    {
+        GatherSelection();
+        emit selectionChanged();
+    }
+}
+
 void SceneDocument::HandleCurrentDocumentChanged(Document* document)
 {
     if (IsActive())
@@ -386,6 +541,14 @@ void SceneDocument::GatherSelection()
             selectedNodesAndComponents_.insert(component->GetNode());
         }
     }
+}
+
+bool SceneDocument::CheckForExistingGlobalComponent(Urho3D::Node& node, const Urho3D::String& typeName)
+{
+    if (typeName != "Octree" && typeName != "PhysicsWorld" && typeName != "DebugRenderer")
+        return false;
+    else
+        return node.HasComponent(typeName);
 }
 
 }

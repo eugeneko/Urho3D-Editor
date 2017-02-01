@@ -83,6 +83,8 @@ public:
     void SetSelection(const QSet<Urho3D::Object*>& objects);
     /// Clear selection.
     void ClearSelection();
+    /// Select objects.
+    void SelectObjects(const QSet<Urho3D::Object*>& objects);
     /// Select object.
     void SelectObject(Urho3D::Object* object, SelectionAction action, bool clearSelection);
     /// Get selected objects.
@@ -150,15 +152,15 @@ signals:
 
 private slots:
     /// Cut.
-    void Cut();
+    bool Cut();
     /// Duplicate.
-    void Duplicate();
+    bool Duplicate();
     /// Copy.
-    void Copy();
+    bool Copy();
     /// Paste.
-    void Paste();
+    bool Paste(bool duplication = false);
     /// Delete.
-    void Delete();
+    bool Delete();
 
     /// Handle 'Scene.Camera.Single'
     void HandleCameraSingle();
@@ -196,6 +198,10 @@ private:
     virtual void HandleMouseButton(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
     /// Handle post-render update.
     virtual void HandlePostRenderUpdate(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
+    /// Handle node removed.
+    void HandleNodeRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
+    /// Handle component removed.
+    void HandleComponentRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
 
 private:
     /// Handle current document changed.
@@ -206,6 +212,8 @@ private:
 private:
     /// Gather nodes and components selection.
     void GatherSelection();
+    /// Check for existing global component.
+    bool CheckForExistingGlobalComponent(Urho3D::Node& node, const Urho3D::String& typeName);
 
 private:
     /// Input subsystem.
