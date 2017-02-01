@@ -60,6 +60,8 @@ public:
 public:
     /// Construct.
     SceneDocument(MainWindow& mainWindow);
+    /// Destruct.
+    virtual ~SceneDocument();
     /// Get scene.
     Urho3D::Scene& GetScene() const { return *scene_; }
 

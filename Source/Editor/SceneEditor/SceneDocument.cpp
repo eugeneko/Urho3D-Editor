@@ -77,6 +77,11 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
 
 }
 
+SceneDocument::~SceneDocument()
+{
+    scene_.Reset();
+}
+
 void SceneDocument::Undo()
 {
     undoStack_.undo();

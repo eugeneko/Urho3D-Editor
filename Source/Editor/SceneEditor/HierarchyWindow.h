@@ -160,9 +160,10 @@ private:
 };
 
 /// Hierarchy Window Widget.
-class HierarchyWindowWidget : public QWidget
+class HierarchyWindowWidget : public QWidget, public Urho3D::Object
 {
     Q_OBJECT
+    URHO3D_OBJECT(HierarchyWindowWidget, Urho3D::Object);
 
 public:
     /// Construct.
@@ -179,6 +180,17 @@ private slots:
     void HandleSceneSelectionChanged();
     /// Handle context menu request.
     void HandleContextMenuRequested(const QPoint& point);
+
+private:
+    /// Handle node added.
+    void HandleNodeAdded(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
+    /// Handle node removed.
+    void HandleNodeRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
+    /// Handle component added.
+    void HandleComponentAdded(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
+    /// Handle component removed.
+    void HandleComponentRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData);
+
 
 private:
     /// Gather selected objects.

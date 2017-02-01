@@ -5,6 +5,7 @@
 #include "../Bridge.h"
 #include <Urho3D/Scene/Component.h>
 #include <Urho3D/Scene/Node.h>
+#include <Urho3D/Scene/SceneEvents.h>
 #include <QTreeView>
 #include <QVBoxLayout>
 #include <QHeaderView>
@@ -318,7 +319,7 @@ void ObjectHierarchyModel::DoRemoveComponent(QModelIndex nodeIndex, Urho3D::Comp
 {
     ObjectHierarchyItem* nodeItem = GetItem(nodeIndex);
     const int componentIndex = nodeItem->FindChild(component);
-    if (componentIndex > 0)
+    if (componentIndex >= 0)
     {
         beginRemoveRows(nodeIndex, componentIndex, componentIndex);
         nodeItem->RemoveChild(componentIndex);
@@ -350,7 +351,7 @@ void ObjectHierarchyModel::DoAddNode(QModelIndex parentIndex, Urho3D::Node* node
         {
             if (children[i] == node)
             {
-                const int nodeRow = (int)i;
+                const int nodeRow = (int)i + parentNode->GetNumComponents();
                 ObjectHierarchyItem* nodeItem = new ObjectHierarchyItem(parentItem);
                 nodeItem->SetObject(node);
                 ConstructNodeItem(nodeItem, node);
@@ -368,7 +369,7 @@ void ObjectHierarchyModel::DoRemoveNode(QModelIndex parentIndex, Urho3D::Node* n
 {
     ObjectHierarchyItem* parentItem = GetItem(parentIndex);
     const int nodeIndex = parentItem->FindChild(node);
-    if (nodeIndex > 0)
+    if (nodeIndex >= 0)
     {
         beginRemoveRows(parentIndex, nodeIndex, nodeIndex);
         parentItem->RemoveChild(nodeIndex);
@@ -403,7 +404,8 @@ void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::
 
 //////////////////////////////////////////////////////////////////////////
 HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
-    : document_(document)
+    : Object(document.GetContext())
+    , document_(document)
     , layout_(new QGridLayout())
     , treeView_(new QTreeView())
     , treeModel_(new ObjectHierarchyModel())
@@ -424,6 +426,13 @@ HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
     connect(treeView_->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(HandleTreeSelectionChanged()));
     connect(&document_, SIGNAL(selectionChanged()), this, SLOT(HandleSceneSelectionChanged()));
     connect(treeView_.data(), SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(HandleContextMenuRequested(const QPoint&)));
+
+    Urho3D::Scene& scene = document_.GetScene();
+    SubscribeToEvent(&scene, Urho3D::E_NODEADDED, URHO3D_HANDLER(HierarchyWindowWidget, HandleNodeAdded));
+    SubscribeToEvent(&scene, Urho3D::E_NODEREMOVED, URHO3D_HANDLER(HierarchyWindowWidget, HandleNodeRemoved));
+    SubscribeToEvent(&scene, Urho3D::E_COMPONENTADDED, URHO3D_HANDLER(HierarchyWindowWidget, HandleComponentAdded));
+    SubscribeToEvent(&scene, Urho3D::E_COMPONENTREMOVED, URHO3D_HANDLER(HierarchyWindowWidget, HandleComponentRemoved));
+
 }
 
 HierarchyWindowWidget::~HierarchyWindowWidget()
@@ -491,6 +500,34 @@ void HierarchyWindowWidget::HandleContextMenuRequested(const QPoint& point)
                 menu->exec(globalPoint);
         }
     }
+}
+
+void HierarchyWindowWidget::HandleNodeAdded(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+{
+    using namespace Urho3D;
+    Node* node = dynamic_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
+    treeModel_->UpdateNode(node);
+}
+
+void HierarchyWindowWidget::HandleNodeRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+{
+    using namespace Urho3D;
+    Node* node = dynamic_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
+    treeModel_->RemoveNode(node);
+}
+
+void HierarchyWindowWidget::HandleComponentAdded(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+{
+    using namespace Urho3D;
+    Component* component = dynamic_cast<Component*>(eventData[ComponentAdded::P_COMPONENT].GetPtr());
+    treeModel_->UpdateComponent(component);
+}
+
+void HierarchyWindowWidget::HandleComponentRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+{
+    using namespace Urho3D;
+    Component* component = dynamic_cast<Component*>(eventData[ComponentRemoved::P_COMPONENT].GetPtr());
+    treeModel_->RemoveComponent(component);
 }
 
 QSet<Urho3D::Object*> HierarchyWindowWidget::GatherSelection()
