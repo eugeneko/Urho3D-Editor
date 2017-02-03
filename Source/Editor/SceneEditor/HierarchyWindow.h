@@ -110,6 +110,12 @@ class ObjectHierarchyModel : public QAbstractItemModel
 public:
     /// Get hierarchy of the object.
     static void GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy);
+    /// Get parent object.
+    static Urho3D::Object* GetParentObject(Urho3D::Object* object);
+    /// Get index of child.
+    static int GetChildIndex(Urho3D::Object* object, Urho3D::Object* parent);
+    /// Construct object item.
+    static ObjectHierarchyItem* ConstructObjectItem(Urho3D::Object* object, ObjectHierarchyItem* parentItem);
 
     /// Construct.
     ObjectHierarchyModel();
@@ -118,14 +124,10 @@ public:
     /// Get item by index.
     ObjectHierarchyItem *GetItem(const QModelIndex &index) const;
 
-    /// Add or update component.
-    void UpdateComponent(Urho3D::Component* component);
-    /// Remove component.
-    void RemoveComponent(Urho3D::Component* component);
-    /// Add or update node.
-    void UpdateNode(Urho3D::Node* node);
-    /// Remove node.
-    void RemoveNode(Urho3D::Node* node);
+    /// Update object.
+    void UpdateObject(Urho3D::Object* object);
+    /// Remove object.
+    void RemoveObject(Urho3D::Object* object, QModelIndex hint = QModelIndex());
 
 public:
     virtual QVariant data(const QModelIndex &index, int role) const override;
@@ -144,16 +146,12 @@ public:
     virtual Qt::DropActions supportedDragActions() const override { return Qt::MoveAction; }
 
 private:
-    /// Add component.
-    void DoAddComponent(QModelIndex nodeIndex, Urho3D::Component* component);
-    /// Remove component.
-    void DoRemoveComponent(QModelIndex nodeIndex, Urho3D::Component* component);
-    /// Add node.
-    void DoAddNode(QModelIndex parentIndex, Urho3D::Node* node);
-    /// Remove node.
-    void DoRemoveNode(QModelIndex parentIndex, Urho3D::Node* node);
+    /// Add object.
+    void DoAddObject(QModelIndex parentIndex, Urho3D::Object* object);
+    /// Remove object.
+    void DoRemoveObject(QModelIndex parentIndex, Urho3D::Object* object);
     /// Construct node item.
-    void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node);
+    static void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node);
 
 private:
     /// Root item.

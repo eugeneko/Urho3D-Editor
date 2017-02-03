@@ -158,6 +158,50 @@ void ObjectHierarchyModel::GetObjectHierarchy(Urho3D::Object* object, QVector<Ur
     } while (node);
 }
 
+Urho3D::Object* ObjectHierarchyModel::GetParentObject(Urho3D::Object* object)
+{
+    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        return node->GetParent();
+    else if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
+        return component->GetNode();
+    else
+        return nullptr;
+}
+
+int ObjectHierarchyModel::GetChildIndex(Urho3D::Object* object, Urho3D::Object* parent)
+{
+    using namespace Urho3D;
+    if (Node* parentNode = dynamic_cast<Node*>(parent))
+    {
+        if (Component* component = dynamic_cast<Component*>(object))
+        {
+            const Vector<SharedPtr<Component>>& components = parentNode->GetComponents();
+            for (unsigned i = 0; i < components.Size(); ++i)
+                if (components[i] == component)
+                    return (int)i;
+        }
+        else if (Node* node = dynamic_cast<Node*>(object))
+        {
+            const Vector<SharedPtr<Node>>& children = parentNode->GetChildren();
+            for (unsigned i = 0; i < children.Size(); ++i)
+                if (children[i] == node)
+                    return (int)i + parentNode->GetNumComponents();
+        }
+    }
+    return -1;
+}
+
+ObjectHierarchyItem* ObjectHierarchyModel::ConstructObjectItem(Urho3D::Object* object, ObjectHierarchyItem* parentItem)
+{
+    QScopedPointer<ObjectHierarchyItem> item(new ObjectHierarchyItem(parentItem));
+    item->SetObject(object);
+
+    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        ConstructNodeItem(item.data(), node);
+
+    return item.take();
+}
+
 ObjectHierarchyModel::ObjectHierarchyModel()
     : rootItem_(new ObjectHierarchyItem(nullptr))
 {
@@ -191,40 +235,19 @@ ObjectHierarchyItem* ObjectHierarchyModel::GetItem(const QModelIndex &index) con
     return rootItem_.data();
 }
 
-void ObjectHierarchyModel::UpdateComponent(Urho3D::Component* component)
+void ObjectHierarchyModel::UpdateObject(Urho3D::Object* object)
 {
-    Urho3D::Node* node = component->GetNode();
-    QModelIndex nodeIndex = FindIndex(node);
-    if (nodeIndex.isValid())
-    {
-        DoRemoveComponent(nodeIndex, component);
-        DoAddComponent(nodeIndex, component);
-    }
+    Urho3D::Object* parentObject = GetParentObject(object);
+    const QModelIndex parentIndex = FindIndex(parentObject);
+    DoRemoveObject(parentIndex, object);
+    DoAddObject(parentIndex, object);
 }
 
-void ObjectHierarchyModel::RemoveComponent(Urho3D::Component* component)
+void ObjectHierarchyModel::RemoveObject(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
 {
-    Urho3D::Node* node = component->GetNode();
-    QModelIndex nodeIndex = FindIndex(node);
-    if (nodeIndex.isValid())
-        DoRemoveComponent(nodeIndex, component);
-}
-
-void ObjectHierarchyModel::RemoveNode(Urho3D::Node* node)
-{
-    using namespace Urho3D;
-
-    Urho3D::Node* parent = node->GetParent();
-    QModelIndex parentIndex = FindIndex(parent);
-    DoRemoveNode(parentIndex, node);
-}
-
-void ObjectHierarchyModel::UpdateNode(Urho3D::Node* node)
-{
-    Urho3D::Node* parent = node->GetParent();
-    QModelIndex parentIndex = FindIndex(parent);
-    DoRemoveNode(parentIndex, node);
-    DoAddNode(parentIndex, node);
+    Urho3D::Object* parentObject = GetParentObject(object);
+    const QModelIndex parentIndex = FindIndex(parentObject);
+    DoRemoveObject(parentIndex, object);
 }
 
 QVariant ObjectHierarchyModel::data(const QModelIndex &index, int role) const
@@ -311,41 +334,7 @@ bool ObjectHierarchyModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
     return true;
 }
 
-void ObjectHierarchyModel::DoAddComponent(QModelIndex nodeIndex, Urho3D::Component* component)
-{
-    using namespace Urho3D;
-
-    Node* node = component->GetNode();
-    ObjectHierarchyItem* nodeItem = GetItem(nodeIndex);
-    const Vector<SharedPtr<Component>>& components = node->GetComponents();
-    for (unsigned i = 0; i < components.Size(); ++i)
-    {
-        if (components[i] == component)
-        {
-            const int componentRow = (int)i;
-            ObjectHierarchyItem* componentItem = new ObjectHierarchyItem(nodeItem);
-            componentItem->SetObject(component);
-            beginInsertRows(nodeIndex, componentRow, componentRow);
-            nodeItem->InsertChild(componentRow, componentItem);
-            endInsertRows();
-            break;
-        }
-    }
-}
-
-void ObjectHierarchyModel::DoRemoveComponent(QModelIndex nodeIndex, Urho3D::Component* component)
-{
-    ObjectHierarchyItem* nodeItem = GetItem(nodeIndex);
-    const int componentIndex = nodeItem->FindChild(component);
-    if (componentIndex >= 0)
-    {
-        beginRemoveRows(nodeIndex, componentIndex, componentIndex);
-        nodeItem->RemoveChild(componentIndex);
-        endRemoveRows();
-    }
-}
-
-void ObjectHierarchyModel::DoAddNode(QModelIndex parentIndex, Urho3D::Node* node)
+void ObjectHierarchyModel::DoAddObject(QModelIndex parentIndex, Urho3D::Object* object)
 {
     using namespace Urho3D;
 
@@ -353,44 +342,30 @@ void ObjectHierarchyModel::DoAddNode(QModelIndex parentIndex, Urho3D::Node* node
 
     if (!parentIndex.isValid())
     {
-        ObjectHierarchyItem* nodeItem = new ObjectHierarchyItem(parentItem);
-        nodeItem->SetObject(node);
-        ConstructNodeItem(nodeItem, node);
-
         beginInsertRows(parentIndex, 0, 0);
-        parentItem->InsertChild(0, nodeItem);
+        parentItem->InsertChild(0, ConstructObjectItem(object, parentItem));
         endInsertRows();
     }
     else
     {
-        Node* parentNode = dynamic_cast<Node*>(parentItem->GetObject());
-        const Vector<SharedPtr<Node>>& children = parentNode->GetChildren();
-        for (unsigned i = 0; i < children.Size(); ++i)
+        const int childIndex = GetChildIndex(object, parentItem->GetObject());
+        if (childIndex >= 0)
         {
-            if (children[i] == node)
-            {
-                const int nodeRow = (int)i + parentNode->GetNumComponents();
-                ObjectHierarchyItem* nodeItem = new ObjectHierarchyItem(parentItem);
-                nodeItem->SetObject(node);
-                ConstructNodeItem(nodeItem, node);
-
-                beginInsertRows(parentIndex, nodeRow, nodeRow);
-                parentItem->InsertChild(nodeRow, nodeItem);
-                endInsertRows();
-                break;
-            }
+            beginInsertRows(parentIndex, childIndex, childIndex);
+            parentItem->InsertChild(childIndex, ConstructObjectItem(object, parentItem));
+            endInsertRows();
         }
     }
 }
 
-void ObjectHierarchyModel::DoRemoveNode(QModelIndex parentIndex, Urho3D::Node* node)
+void ObjectHierarchyModel::DoRemoveObject(QModelIndex parentIndex, Urho3D::Object* object)
 {
     ObjectHierarchyItem* parentItem = GetItem(parentIndex);
-    const int nodeIndex = parentItem->FindChild(node);
-    if (nodeIndex >= 0)
+    const int objectIndex = parentItem->FindChild(object);
+    if (objectIndex >= 0)
     {
-        beginRemoveRows(parentIndex, nodeIndex, nodeIndex);
-        parentItem->RemoveChild(nodeIndex);
+        beginRemoveRows(parentIndex, objectIndex, objectIndex);
+        parentItem->RemoveChild(objectIndex);
         endRemoveRows();
     }
 }
@@ -429,7 +404,7 @@ HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
     , treeModel_(new ObjectHierarchyModel())
     , suppressSceneSelectionChanged_(false)
 {
-    treeModel_->UpdateNode(&document.GetScene());
+    treeModel_->UpdateObject(&document.GetScene());
 
     treeView_->header()->hide();
     treeView_->setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -524,28 +499,28 @@ void HierarchyWindowWidget::HandleNodeAdded(Urho3D::StringHash eventType, Urho3D
 {
     using namespace Urho3D;
     Node* node = dynamic_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
-    treeModel_->UpdateNode(node);
+    treeModel_->UpdateObject(node);
 }
 
 void HierarchyWindowWidget::HandleNodeRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
     Node* node = dynamic_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
-    treeModel_->RemoveNode(node);
+    treeModel_->RemoveObject(node);
 }
 
 void HierarchyWindowWidget::HandleComponentAdded(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
     Component* component = dynamic_cast<Component*>(eventData[ComponentAdded::P_COMPONENT].GetPtr());
-    treeModel_->UpdateComponent(component);
+    treeModel_->UpdateObject(component);
 }
 
 void HierarchyWindowWidget::HandleComponentRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
     Component* component = dynamic_cast<Component*>(eventData[ComponentRemoved::P_COMPONENT].GetPtr());
-    treeModel_->RemoveComponent(component);
+    treeModel_->RemoveObject(component);
 }
 
 QSet<Urho3D::Object*> HierarchyWindowWidget::GatherSelection()
