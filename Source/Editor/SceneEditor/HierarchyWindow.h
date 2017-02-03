@@ -138,6 +138,10 @@ public:
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override { return 1; }
 
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
+    virtual bool dropMimeData(const QMimeData* data, Qt::DropAction action,
+        int row, int column, const QModelIndex& parent) override;
+    virtual Qt::DropActions supportedDropActions() const override { return Qt::MoveAction | Qt::LinkAction; }
+    virtual Qt::DropActions supportedDragActions() const override { return Qt::MoveAction; }
 
 private:
     /// Add component.

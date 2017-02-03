@@ -290,7 +290,25 @@ Qt::ItemFlags ObjectHierarchyModel::flags(const QModelIndex &index) const
     if (!index.isValid())
         return 0;
 
-    return /*Qt::ItemIsEditable |*/ Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+    ObjectHierarchyItem* item = GetItem(index);
+
+    Qt::ItemFlags result = QAbstractItemModel::flags(index);
+    if (!item->GetObject()->IsInstanceOf<Urho3D::Scene>())
+    {
+        result |= Qt::ItemIsDragEnabled;
+        if (item->GetObject()->IsInstanceOf<Urho3D::Node>())
+            result |= Qt::ItemIsDropEnabled;
+    }
+    else
+        result |= Qt::ItemIsDropEnabled;
+
+    return result;
+}
+
+bool ObjectHierarchyModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
+    int row, int column, const QModelIndex& parent)
+{
+    return true;
 }
 
 void ObjectHierarchyModel::DoAddComponent(QModelIndex nodeIndex, Urho3D::Component* component)
