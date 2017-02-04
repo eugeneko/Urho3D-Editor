@@ -76,8 +76,8 @@ public:
     /// Remove child.
     bool RemoveChild(int position);
 
-    /// Find child with specified object.
-    int FindChild(Urho3D::Object* object) const;
+    /// Find child with specified object. O(1) if hint is correct, O(num_children) otherwise.
+    int FindChild(Urho3D::Object* object, int hintRow = -1) const;
     /// Get object.
     Urho3D::Object* GetObject() const { return object_; }
     /// Get name of item.
@@ -119,13 +119,15 @@ public:
 
     /// Construct.
     ObjectHierarchyModel();
-    /// Get index of object.
-    QModelIndex FindIndex(Urho3D::Object* object);
+    /// Get index of object. O(1) if hint is correct, O(object_depth*average_num_children) otherwise.
+    QModelIndex FindIndex(Urho3D::Object* object, QModelIndex hint = QModelIndex());
     /// Get item by index.
-    ObjectHierarchyItem *GetItem(const QModelIndex &index) const;
+    ObjectHierarchyItem* GetItem(const QModelIndex& index) const;
+    /// Get object by index.
+    Urho3D::Object* GetObject(const QModelIndex& index) const;
 
     /// Update object.
-    void UpdateObject(Urho3D::Object* object);
+    void UpdateObject(Urho3D::Object* object, QModelIndex hint = QModelIndex());
     /// Remove object.
     void RemoveObject(Urho3D::Object* object, QModelIndex hint = QModelIndex());
 
@@ -149,7 +151,7 @@ private:
     /// Add object.
     void DoAddObject(QModelIndex parentIndex, Urho3D::Object* object);
     /// Remove object.
-    void DoRemoveObject(QModelIndex parentIndex, Urho3D::Object* object);
+    void DoRemoveObject(QModelIndex parentIndex, Urho3D::Object* object, int hintRow = -1);
     /// Construct node item.
     static void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node);
 

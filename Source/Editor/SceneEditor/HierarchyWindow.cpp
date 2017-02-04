@@ -105,8 +105,13 @@ bool ObjectHierarchyItem::RemoveChild(int position)
     return true;
 }
 
-int ObjectHierarchyItem::FindChild(Urho3D::Object* object) const
+int ObjectHierarchyItem::FindChild(Urho3D::Object* object, int hintRow /*= -1*/) const
 {
+    // Try hint first
+    if (hintRow >= 0 && hintRow < children_.size())
+        if (children_[hintRow]->GetObject() == object)
+            return hintRow;
+
     for (int i = 0; i < children_.size(); ++i)
         if (children_[i]->GetObject() == object)
             return i;
@@ -207,24 +212,28 @@ ObjectHierarchyModel::ObjectHierarchyModel()
 {
 }
 
-QModelIndex ObjectHierarchyModel::FindIndex(Urho3D::Object* object)
+QModelIndex ObjectHierarchyModel::FindIndex(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
 {
     if (!object)
         return QModelIndex();
+    if (hint.isValid() && GetObject(hint) == object)
+        return hint;
 
     GetObjectHierarchy(object, tempHierarchy_);
     QModelIndex result;
     while (!tempHierarchy_.empty())
     {
-        const int row = GetItem(result)->FindChild(tempHierarchy_.takeLast());
+        Urho3D::Object* child = tempHierarchy_.takeLast();
+        const int row = GetItem(result)->FindChild(child);
         if (row < 0)
             return QModelIndex();
         result = index(row, 0, result);
+        assert(GetItem(result)->GetObject() == child);
     }
     return result;
 }
 
-ObjectHierarchyItem* ObjectHierarchyModel::GetItem(const QModelIndex &index) const
+ObjectHierarchyItem* ObjectHierarchyModel::GetItem(const QModelIndex& index) const
 {
     if (index.isValid())
     {
@@ -235,19 +244,25 @@ ObjectHierarchyItem* ObjectHierarchyModel::GetItem(const QModelIndex &index) con
     return rootItem_.data();
 }
 
-void ObjectHierarchyModel::UpdateObject(Urho3D::Object* object)
+Urho3D::Object* ObjectHierarchyModel::GetObject(const QModelIndex& index) const
+{
+    ObjectHierarchyItem* item = GetItem(index);
+    return item ? item->GetObject() : nullptr;
+}
+
+void ObjectHierarchyModel::UpdateObject(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
 {
     Urho3D::Object* parentObject = GetParentObject(object);
-    const QModelIndex parentIndex = FindIndex(parentObject);
-    DoRemoveObject(parentIndex, object);
+    const QModelIndex parentIndex = FindIndex(parentObject, hint.parent());
+    DoRemoveObject(parentIndex, object, hint.row());
     DoAddObject(parentIndex, object);
 }
 
 void ObjectHierarchyModel::RemoveObject(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
 {
     Urho3D::Object* parentObject = GetParentObject(object);
-    const QModelIndex parentIndex = FindIndex(parentObject);
-    DoRemoveObject(parentIndex, object);
+    const QModelIndex parentIndex = FindIndex(parentObject, hint.parent());
+    DoRemoveObject(parentIndex, object, hint.row());
 }
 
 QVariant ObjectHierarchyModel::data(const QModelIndex &index, int role) const
@@ -358,10 +373,10 @@ void ObjectHierarchyModel::DoAddObject(QModelIndex parentIndex, Urho3D::Object* 
     }
 }
 
-void ObjectHierarchyModel::DoRemoveObject(QModelIndex parentIndex, Urho3D::Object* object)
+void ObjectHierarchyModel::DoRemoveObject(QModelIndex parentIndex, Urho3D::Object* object, int hintRow /*= -1*/)
 {
     ObjectHierarchyItem* parentItem = GetItem(parentIndex);
-    const int objectIndex = parentItem->FindChild(object);
+    const int objectIndex = parentItem->FindChild(object, hintRow);
     if (objectIndex >= 0)
     {
         beginRemoveRows(parentIndex, objectIndex, objectIndex);
@@ -456,7 +471,7 @@ void HierarchyWindowWidget::HandleSceneSelectionChanged()
     QModelIndexList selectedIndexes = selectionModel->selectedIndexes();
     for (QModelIndex index : selectedIndexes)
     {
-        if (toUnselect.contains(treeModel_->GetItem(index)->GetObject()))
+        if (toUnselect.contains(treeModel_->GetObject(index)))
             selectionModel->select(index, QItemSelectionModel::Deselect);
     }
 
@@ -479,9 +494,8 @@ void HierarchyWindowWidget::HandleContextMenuRequested(const QPoint& point)
     const QModelIndex index = treeView_->indexAt(point);
     const QPoint globalPoint = treeView_->mapToGlobal(point);
     treeView_->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-    if (ObjectHierarchyItem* item = treeModel_->GetItem(index))
+    if (Urho3D::Object* object = treeModel_->GetObject(index))
     {
-        Urho3D::Object* object = item->GetObject();
         if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
         {
             if (QMenu* menu = document_.GetMainWindow().GetMenu("HierarchyWindow.Node"))
@@ -529,8 +543,7 @@ QSet<Urho3D::Object*> HierarchyWindowWidget::GatherSelection()
     QSet<Urho3D::Object*> selectedObjects;
     for (const QModelIndex& selectedIndex : selectedIndexes)
     {
-        ObjectHierarchyItem* item = treeModel_->GetItem(selectedIndex);
-        if (Urho3D::Object* object = item->GetObject())
+        if (Urho3D::Object* object = treeModel_->GetObject(selectedIndex))
             selectedObjects.insert(object);
     }
     return selectedObjects;
