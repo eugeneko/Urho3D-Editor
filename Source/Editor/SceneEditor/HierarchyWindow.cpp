@@ -13,6 +13,119 @@
 namespace Urho3DEditor
 {
 
+namespace
+{
+
+/// Get hierarchy of the object.
+void GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy)
+{
+    hierarchy.clear();
+
+    // Get child-most node
+    Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object);
+    if (!node)
+    {
+        Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object);
+        if (!component)
+            return;
+        hierarchy.push_back(component);
+        node = component->GetNode();
+    }
+
+    // Go to root
+    do
+    {
+        hierarchy.push_back(node);
+        node = node->GetParent();
+    } while (node);
+}
+
+/// Get parent object.
+Urho3D::Object* GetParentObject(Urho3D::Object* object)
+{
+    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        return node->GetParent();
+    else if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
+        return component->GetNode();
+    else
+        return nullptr;
+}
+
+/// Get index of child.
+int GetChildIndex(Urho3D::Object* object, Urho3D::Object* parent)
+{
+    using namespace Urho3D;
+    if (Node* parentNode = dynamic_cast<Node*>(parent))
+    {
+        if (Component* component = dynamic_cast<Component*>(object))
+        {
+            const Vector<SharedPtr<Component>>& components = parentNode->GetComponents();
+            for (unsigned i = 0; i < components.Size(); ++i)
+                if (components[i] == component)
+                    return (int)i;
+        }
+        else if (Node* node = dynamic_cast<Node*>(object))
+        {
+            const Vector<SharedPtr<Node>>& children = parentNode->GetChildren();
+            for (unsigned i = 0; i < children.Size(); ++i)
+                if (children[i] == node)
+                    return (int)i + parentNode->GetNumComponents();
+        }
+    }
+    return -1;
+}
+
+/// Construct node item.
+void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node)
+{
+    using namespace Urho3D;
+
+    // Add components
+    const Vector<SharedPtr<Component>>& components = node->GetComponents();
+    for (unsigned i = 0; i < components.Size(); ++i)
+    {
+        ObjectHierarchyItem* componentItem = new ObjectHierarchyItem(item);
+        componentItem->SetObject(components[i]);
+        item->AppendChild(componentItem);
+    }
+
+    // Add children
+    const Vector<SharedPtr<Node>>& children = node->GetChildren();
+    for (unsigned i = 0; i < children.Size(); ++i)
+    {
+        ObjectHierarchyItem* childItem = new ObjectHierarchyItem(item);
+        childItem->SetObject(children[i]);
+        item->AppendChild(childItem);
+
+        ConstructNodeItem(childItem, children[i]);
+    }
+}
+
+/// Construct object item.
+ObjectHierarchyItem* ConstructObjectItem(Urho3D::Object* object, ObjectHierarchyItem* parentItem)
+{
+    QScopedPointer<ObjectHierarchyItem> item(new ObjectHierarchyItem(parentItem));
+    item->SetObject(object);
+
+    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        ConstructNodeItem(item.data(), node);
+
+    return item.take();
+}
+
+/// Get object name.
+QString GetObjectName(Urho3D::Object* object)
+{
+    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
+        return Cast(component->GetTypeName());
+    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        return Cast(node->GetName().Empty() ? node->GetTypeName() : node->GetName());
+    else
+        return "";
+}
+
+}
+
 bool HierarchyWindow::Initialize()
 {
     MainWindow& mainWindow = GetMainWindow();
@@ -120,12 +233,7 @@ int ObjectHierarchyItem::FindChild(Urho3D::Object* object, int hintRow /*= -1*/)
 
 QString ObjectHierarchyItem::GetText() const
 {
-    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object_.Get()))
-        return Cast(component->GetTypeName());
-    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object_.Get()))
-        return Cast(node->GetName().Empty() ? node->GetTypeName() : node->GetName());
-    else
-        return "";
+    return GetObjectName(object_.Get());
 }
 
 QColor ObjectHierarchyItem::GetColor() const
@@ -140,73 +248,6 @@ QColor ObjectHierarchyItem::GetColor() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-void ObjectHierarchyModel::GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy)
-{
-    hierarchy.clear();
-
-    // Get child-most node
-    Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object);
-    if (!node)
-    {
-        Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object);
-        if (!component)
-            return;
-        hierarchy.push_back(component);
-        node = component->GetNode();
-    }
-
-    // Go to root
-    do
-    {
-        hierarchy.push_back(node);
-        node = node->GetParent();
-    } while (node);
-}
-
-Urho3D::Object* ObjectHierarchyModel::GetParentObject(Urho3D::Object* object)
-{
-    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
-        return node->GetParent();
-    else if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
-        return component->GetNode();
-    else
-        return nullptr;
-}
-
-int ObjectHierarchyModel::GetChildIndex(Urho3D::Object* object, Urho3D::Object* parent)
-{
-    using namespace Urho3D;
-    if (Node* parentNode = dynamic_cast<Node*>(parent))
-    {
-        if (Component* component = dynamic_cast<Component*>(object))
-        {
-            const Vector<SharedPtr<Component>>& components = parentNode->GetComponents();
-            for (unsigned i = 0; i < components.Size(); ++i)
-                if (components[i] == component)
-                    return (int)i;
-        }
-        else if (Node* node = dynamic_cast<Node*>(object))
-        {
-            const Vector<SharedPtr<Node>>& children = parentNode->GetChildren();
-            for (unsigned i = 0; i < children.Size(); ++i)
-                if (children[i] == node)
-                    return (int)i + parentNode->GetNumComponents();
-        }
-    }
-    return -1;
-}
-
-ObjectHierarchyItem* ObjectHierarchyModel::ConstructObjectItem(Urho3D::Object* object, ObjectHierarchyItem* parentItem)
-{
-    QScopedPointer<ObjectHierarchyItem> item(new ObjectHierarchyItem(parentItem));
-    item->SetObject(object);
-
-    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
-        ConstructNodeItem(item.data(), node);
-
-    return item.take();
-}
-
 ObjectHierarchyModel::ObjectHierarchyModel()
     : rootItem_(new ObjectHierarchyItem(nullptr))
 {
@@ -382,31 +423,6 @@ void ObjectHierarchyModel::DoRemoveObject(QModelIndex parentIndex, Urho3D::Objec
         beginRemoveRows(parentIndex, objectIndex, objectIndex);
         parentItem->RemoveChild(objectIndex);
         endRemoveRows();
-    }
-}
-
-void ObjectHierarchyModel::ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node)
-{
-    using namespace Urho3D;
-
-    // Add components
-    const Vector<SharedPtr<Component>>& components = node->GetComponents();
-    for (unsigned i = 0; i < components.Size(); ++i)
-    {
-        ObjectHierarchyItem* componentItem = new ObjectHierarchyItem(item);
-        componentItem->SetObject(components[i]);
-        item->AppendChild(componentItem);
-    }
-
-    // Add children
-    const Vector<SharedPtr<Node>>& children = node->GetChildren();
-    for (unsigned i = 0; i < children.Size(); ++i)
-    {
-        ObjectHierarchyItem* childItem = new ObjectHierarchyItem(item);
-        childItem->SetObject(children[i]);
-        item->AppendChild(childItem);
-
-        ConstructNodeItem(childItem, children[i]);
     }
 }
 

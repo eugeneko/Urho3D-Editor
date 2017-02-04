@@ -108,15 +108,6 @@ private:
 class ObjectHierarchyModel : public QAbstractItemModel
 {
 public:
-    /// Get hierarchy of the object.
-    static void GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy);
-    /// Get parent object.
-    static Urho3D::Object* GetParentObject(Urho3D::Object* object);
-    /// Get index of child.
-    static int GetChildIndex(Urho3D::Object* object, Urho3D::Object* parent);
-    /// Construct object item.
-    static ObjectHierarchyItem* ConstructObjectItem(Urho3D::Object* object, ObjectHierarchyItem* parentItem);
-
     /// Construct.
     ObjectHierarchyModel();
     /// Get index of object. O(1) if hint is correct, O(object_depth*average_num_children) otherwise.
@@ -152,8 +143,6 @@ private:
     void DoAddObject(QModelIndex parentIndex, Urho3D::Object* object);
     /// Remove object.
     void DoRemoveObject(QModelIndex parentIndex, Urho3D::Object* object, int hintRow = -1);
-    /// Construct node item.
-    static void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node);
 
 private:
     /// Root item.
