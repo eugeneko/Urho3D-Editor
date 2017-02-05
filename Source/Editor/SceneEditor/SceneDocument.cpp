@@ -252,7 +252,7 @@ bool SceneDocument::Paste(bool duplication /*= false*/)
     // Group for storing undo actions
     QScopedPointer<QUndoCommand> group(new QUndoCommand);
 
-    const NodeSet selectedNodes = GetSelectedNodes();
+    const NodeSet selectedNodes = GetSelectedNodesAndComponents();
     for (SharedPtr<XMLFile>& copyElement : copyBuffer_)
     {
         XMLElement rootElem = copyElement->GetRoot();

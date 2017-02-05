@@ -51,4 +51,11 @@
         <action name="Paste" action="Edit.Paste" />
         <action name="Delete" action="Edit.Delete" />
     </menu>
+    <menu tag="HierarchyWindow.Component">
+        <action name="Cut" action="Edit.Cut" />
+        <action name="Duplicate" action="Edit.Duplicate" />
+        <action name="Copy" action="Edit.Copy" />
+        <action name="Paste" action="Edit.Paste" />
+        <action name="Delete" action="Edit.Delete" />
+    </menu>
 </layout>

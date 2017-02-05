@@ -1,9 +1,10 @@
 #pragma once
 
 #include "../Module.h"
+#include <QAbstractItemModel>
 #include <QDockWidget>
 #include <QGridLayout>
-#include <QAbstractItemModel>
+#include <QMimeData>
 
 class QTreeView;
 class QVBoxLayout;
@@ -58,8 +59,10 @@ private:
 };
 
 /// Item of object hierarchy.
-class ObjectHierarchyItem
+class ObjectHierarchyItem : public QObject
 {
+    Q_OBJECT
+
 public:
     /// Construct.
     explicit ObjectHierarchyItem(ObjectHierarchyItem *parent = 0);
@@ -104,9 +107,25 @@ private:
 
 };
 
+/// Mime data of object hierarchy.
+class ObjectHierarchyMime : public QMimeData
+{
+    Q_OBJECT
+
+public:
+    /// Objects.
+    QVector<QPair<QPersistentModelIndex, Urho3D::Object*>> objects_;
+    /// Objects: nodes.
+    QVector<QPair<QPersistentModelIndex, Urho3D::Node*>> nodes_;
+    /// Objects: components.
+    QVector<QPair<QPersistentModelIndex, Urho3D::Component*>> components_;
+};
+
 /// Model of object hierarchy.
 class ObjectHierarchyModel : public QAbstractItemModel
 {
+    Q_OBJECT
+
 public:
     /// Construct.
     ObjectHierarchyModel();
@@ -116,6 +135,8 @@ public:
     ObjectHierarchyItem* GetItem(const QModelIndex& index) const;
     /// Get object by index.
     Urho3D::Object* GetObject(const QModelIndex& index) const;
+    /// Get objects by index list.
+    QVector<Urho3D::Object*> GetObjects(const QModelIndexList& indices) const;
 
     /// Update object.
     void UpdateObject(Urho3D::Object* object, QModelIndex hint = QModelIndex());
@@ -123,16 +144,20 @@ public:
     void RemoveObject(Urho3D::Object* object, QModelIndex hint = QModelIndex());
 
 public:
-    virtual QVariant data(const QModelIndex &index, int role) const override;
+    virtual QVariant data(const QModelIndex& index, int role) const override;
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-    virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
-    virtual QModelIndex parent(const QModelIndex &index) const override;
+    virtual QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
+    virtual QModelIndex parent(const QModelIndex& index) const override;
 
-    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override { return 1; }
+    virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override { return 1; }
 
-    virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
+    virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
+    virtual QStringList mimeTypes() const override;
+    virtual QMimeData *mimeData(const QModelIndexList& indexes) const override;
+    virtual bool canDropMimeData(const QMimeData* data, Qt::DropAction action,
+        int row, int column, const QModelIndex& parent) const override;
     virtual bool dropMimeData(const QMimeData* data, Qt::DropAction action,
         int row, int column, const QModelIndex& parent) override;
     virtual Qt::DropActions supportedDropActions() const override { return Qt::MoveAction | Qt::LinkAction; }

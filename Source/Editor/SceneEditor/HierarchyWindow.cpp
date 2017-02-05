@@ -124,6 +124,17 @@ QString GetObjectName(Urho3D::Object* object)
         return "";
 }
 
+/// Get object ID.
+unsigned GetObjectID(Urho3D::Object* object)
+{
+    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
+        return component->GetID();
+    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        return node->GetID();
+    else
+        return 0;
+}
+
 }
 
 bool HierarchyWindow::Initialize()
@@ -291,6 +302,15 @@ Urho3D::Object* ObjectHierarchyModel::GetObject(const QModelIndex& index) const
     return item ? item->GetObject() : nullptr;
 }
 
+QVector<Urho3D::Object*> ObjectHierarchyModel::GetObjects(const QModelIndexList& indices) const
+{
+    QVector<Urho3D::Object*> objects;
+    objects.reserve(indices.size());
+    for (const QModelIndex& index : indices)
+        objects.push_back(GetObject(index));
+    return objects;
+}
+
 void ObjectHierarchyModel::UpdateObject(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
 {
     Urho3D::Object* parentObject = GetParentObject(object);
@@ -323,8 +343,7 @@ QVariant ObjectHierarchyModel::data(const QModelIndex &index, int role) const
     }
 }
 
-QVariant ObjectHierarchyModel::headerData(int section, Qt::Orientation orientation,
-    int role) const
+QVariant ObjectHierarchyModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     return QVariant();
 }
@@ -384,9 +403,119 @@ Qt::ItemFlags ObjectHierarchyModel::flags(const QModelIndex &index) const
     return result;
 }
 
+QStringList ObjectHierarchyModel::mimeTypes() const
+{
+    return QStringList("text/plain");
+}
+
+QMimeData* ObjectHierarchyModel::mimeData(const QModelIndexList& indexes) const
+{
+    QScopedPointer<ObjectHierarchyMime> mime(new ObjectHierarchyMime);
+    QString text;
+    for (const QModelIndex& index : indexes)
+        if (ObjectHierarchyItem* item = GetItem(index))
+            if (Urho3D::Object* object = item->GetObject())
+            {
+                const QPersistentModelIndex persistentIndex = index;
+
+                mime->objects_.push_back(qMakePair(persistentIndex, object));
+                if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+                    mime->nodes_.push_back(qMakePair(persistentIndex, node));
+                if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
+                    mime->components_.push_back(qMakePair(persistentIndex, component));
+
+                text += QString::number(GetObjectID(object)) + " ";
+            }
+
+    mime->setText(text);
+    return mime.take();
+}
+
+bool ObjectHierarchyModel::canDropMimeData(const QMimeData* data, Qt::DropAction action,
+    int row, int column, const QModelIndex& parent) const
+{
+    using namespace Urho3D;
+    const ObjectHierarchyMime* mime = qobject_cast<const ObjectHierarchyMime*>(data);
+    if (!mime)
+        return false;
+
+    if (Node* parentNode = dynamic_cast<Node*>(GetObject(parent)))
+    {
+        // No node cycles
+        for (const auto& item : mime->nodes_)
+        {
+            Node* node = item.second;
+            if (parentNode->IsChildOf(node))
+                return false;
+        }
+
+        // No component re-parenting
+        if (mime->nodes_.empty())
+        {
+            for (const auto& item : mime->components_)
+            {
+                Component* component = item.second;
+                if (component->GetNode() != parentNode)
+                    return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 bool ObjectHierarchyModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
     int row, int column, const QModelIndex& parent)
 {
+    using namespace Urho3D;
+    const ObjectHierarchyMime* mime = qobject_cast<const ObjectHierarchyMime*>(data);
+    if (!mime)
+        return false;
+
+    if (Node* parentNode = dynamic_cast<Node*>(GetObject(parent)))
+    {
+        if (!mime->nodes_.empty())
+        {
+            const unsigned numComponents = parentNode->GetNumComponents();
+            if (row < (int)numComponents)
+                row = (int)numComponents;
+
+            for (const auto& item : mime->nodes_)
+            {
+                // Re-parent if needed
+                SharedPtr<Node> node(item.second);
+                if (node->GetParent() != parentNode)
+                    node->SetParent(parentNode);
+
+                // Re-order if needed
+                const unsigned desiredChildIndex = (unsigned)row - numComponents;
+                if (parentNode->GetChild(desiredChildIndex) != node)
+                {
+                    const unsigned oldId = node->GetID();
+                    node->Remove();
+                    parentNode->AddChild(node, desiredChildIndex);
+                }
+
+                ++row;
+            }
+        }
+        else if (!mime->components_.empty())
+        {
+            // Re-order components
+            for (const auto& item : mime->components_)
+            {
+                const QPersistentModelIndex componentIndex = item.first;
+                Component* component = item.second;
+                if (component->GetNode() == parentNode)
+                {
+                    parentNode->ReorderComponent(component, (unsigned)row);
+                    UpdateObject(component, componentIndex);
+                    ++row;
+                }
+            }
+        }
+    }
+
     return true;
 }
 
