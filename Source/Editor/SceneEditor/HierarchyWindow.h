@@ -174,6 +174,8 @@ private:
     QScopedPointer<ObjectHierarchyItem> rootItem_;
     /// Temporary storage of object hierarchy.
     QVector<Urho3D::Object*> tempHierarchy_;
+    /// Whether to suppress all updates.
+    bool suppressUpdates_;
 
 };
 
@@ -223,7 +225,7 @@ private:
     QScopedPointer<QTreeView> treeView_;
     /// Tree model.
     QScopedPointer<ObjectHierarchyModel> treeModel_;
-    /// Set to suppress scene selection changed.
+    /// Whether to suppress scene selection changed.
     bool suppressSceneSelectionChanged_;
 
 };

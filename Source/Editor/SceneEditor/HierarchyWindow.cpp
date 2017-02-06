@@ -261,6 +261,7 @@ QColor ObjectHierarchyItem::GetColor() const
 //////////////////////////////////////////////////////////////////////////
 ObjectHierarchyModel::ObjectHierarchyModel()
     : rootItem_(new ObjectHierarchyItem(nullptr))
+    , suppressUpdates_(false)
 {
 }
 
@@ -313,6 +314,8 @@ QVector<Urho3D::Object*> ObjectHierarchyModel::GetObjects(const QModelIndexList&
 
 void ObjectHierarchyModel::UpdateObject(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
 {
+    if (suppressUpdates_)
+        return;
     Urho3D::Object* parentObject = GetParentObject(object);
     const QModelIndex parentIndex = FindIndex(parentObject, hint.parent());
     DoRemoveObject(parentIndex, object, hint.row());
@@ -321,6 +324,8 @@ void ObjectHierarchyModel::UpdateObject(Urho3D::Object* object, QModelIndex hint
 
 void ObjectHierarchyModel::RemoveObject(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
 {
+    if (suppressUpdates_)
+        return;
     Urho3D::Object* parentObject = GetParentObject(object);
     const QModelIndex parentIndex = FindIndex(parentObject, hint.parent());
     DoRemoveObject(parentIndex, object, hint.row());
@@ -482,8 +487,11 @@ bool ObjectHierarchyModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
 
             for (const auto& item : mime->nodes_)
             {
-                // Re-parent if needed
                 SharedPtr<Node> node(item.second);
+                RemoveObject(node, item.first);
+                suppressUpdates_ = true;
+
+                // Re-parent if needed
                 if (node->GetParent() != parentNode)
                     node->SetParent(parentNode);
 
@@ -496,6 +504,8 @@ bool ObjectHierarchyModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
                     parentNode->AddChild(node, desiredChildIndex);
                 }
 
+                suppressUpdates_ = false;
+                UpdateObject(node, parent.child(row, 0));
                 ++row;
             }
         }
