@@ -16,65 +16,6 @@ namespace Urho3DEditor
 namespace
 {
 
-/// Get hierarchy of the object.
-void GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy)
-{
-    hierarchy.clear();
-
-    // Get child-most node
-    Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object);
-    if (!node)
-    {
-        Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object);
-        if (!component)
-            return;
-        hierarchy.push_back(component);
-        node = component->GetNode();
-    }
-
-    // Go to root
-    do
-    {
-        hierarchy.push_back(node);
-        node = node->GetParent();
-    } while (node);
-}
-
-/// Get parent object.
-Urho3D::Object* GetParentObject(Urho3D::Object* object)
-{
-    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
-        return node->GetParent();
-    else if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
-        return component->GetNode();
-    else
-        return nullptr;
-}
-
-/// Get index of child.
-int GetChildIndex(Urho3D::Object* object, Urho3D::Object* parent)
-{
-    using namespace Urho3D;
-    if (Node* parentNode = dynamic_cast<Node*>(parent))
-    {
-        if (Component* component = dynamic_cast<Component*>(object))
-        {
-            const Vector<SharedPtr<Component>>& components = parentNode->GetComponents();
-            for (unsigned i = 0; i < components.Size(); ++i)
-                if (components[i] == component)
-                    return (int)i;
-        }
-        else if (Node* node = dynamic_cast<Node*>(object))
-        {
-            const Vector<SharedPtr<Node>>& children = parentNode->GetChildren();
-            for (unsigned i = 0; i < children.Size(); ++i)
-                if (children[i] == node)
-                    return (int)i + parentNode->GetNumComponents();
-        }
-    }
-    return -1;
-}
-
 /// Construct node item.
 void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node)
 {
@@ -99,40 +40,6 @@ void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node)
 
         ConstructNodeItem(childItem, children[i]);
     }
-}
-
-/// Construct object item.
-ObjectHierarchyItem* ConstructObjectItem(Urho3D::Object* object, ObjectHierarchyItem* parentItem)
-{
-    QScopedPointer<ObjectHierarchyItem> item(new ObjectHierarchyItem(parentItem));
-    item->SetObject(object);
-
-    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
-        ConstructNodeItem(item.data(), node);
-
-    return item.take();
-}
-
-/// Get object name.
-QString GetObjectName(Urho3D::Object* object)
-{
-    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
-        return Cast(component->GetTypeName());
-    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
-        return Cast(node->GetName().Empty() ? node->GetTypeName() : node->GetName());
-    else
-        return "";
-}
-
-/// Get object ID.
-unsigned GetObjectID(Urho3D::Object* object)
-{
-    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
-        return component->GetID();
-    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
-        return node->GetID();
-    else
-        return 0;
 }
 
 }
@@ -194,384 +101,12 @@ void HierarchyWindow::HandleDockClosed()
 }
 
 //////////////////////////////////////////////////////////////////////////
-ObjectHierarchyItem::ObjectHierarchyItem(ObjectHierarchyItem *parent /*= 0*/)
-    : parent_(parent)
-{
-}
-
-ObjectHierarchyItem::~ObjectHierarchyItem()
-{
-    qDeleteAll(children_);
-}
-
-void ObjectHierarchyItem::SetObject(Urho3D::Object* object)
-{
-    object_ = object;
-}
-
-bool ObjectHierarchyItem::InsertChild(int position, ObjectHierarchyItem* item)
-{
-    if (position < 0 || position > children_.size())
-        return false;
-
-    children_.insert(position, item);
-    return true;
-
-}
-
-bool ObjectHierarchyItem::RemoveChild(int position)
-{
-    if (position < 0 || position >= children_.size())
-        return false;
-
-    delete children_.takeAt(position);
-
-    return true;
-}
-
-int ObjectHierarchyItem::FindChild(Urho3D::Object* object, int hintRow /*= -1*/) const
-{
-    // Try hint first
-    if (hintRow >= 0 && hintRow < children_.size())
-        if (children_[hintRow]->GetObject() == object)
-            return hintRow;
-
-    for (int i = 0; i < children_.size(); ++i)
-        if (children_[i]->GetObject() == object)
-            return i;
-    return -1;
-}
-
-QString ObjectHierarchyItem::GetText() const
-{
-    return GetObjectName(object_.Get());
-}
-
-QColor ObjectHierarchyItem::GetColor() const
-{
-    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object_.Get()))
-        return QColor(178, 255, 178);
-    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object_.Get()))
-        return QColor(255, 255, 255);
-    else
-        return QColor(Qt::black);
-    // #TODO Make configurable
-}
-
-//////////////////////////////////////////////////////////////////////////
-ObjectHierarchyModel::ObjectHierarchyModel()
-    : rootItem_(new ObjectHierarchyItem(nullptr))
-    , suppressUpdates_(false)
-{
-}
-
-QModelIndex ObjectHierarchyModel::FindIndex(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
-{
-    if (!object)
-        return QModelIndex();
-    if (hint.isValid() && GetObject(hint) == object)
-        return hint;
-
-    GetObjectHierarchy(object, tempHierarchy_);
-    QModelIndex result;
-    while (!tempHierarchy_.empty())
-    {
-        Urho3D::Object* child = tempHierarchy_.takeLast();
-        const int row = GetItem(result)->FindChild(child);
-        if (row < 0)
-            return QModelIndex();
-        result = index(row, 0, result);
-        assert(GetItem(result)->GetObject() == child);
-    }
-    return result;
-}
-
-ObjectHierarchyItem* ObjectHierarchyModel::GetItem(const QModelIndex& index) const
-{
-    if (index.isValid())
-    {
-        ObjectHierarchyItem* item = static_cast<ObjectHierarchyItem*>(index.internalPointer());
-        if (item)
-            return item;
-    }
-    return rootItem_.data();
-}
-
-Urho3D::Object* ObjectHierarchyModel::GetObject(const QModelIndex& index) const
-{
-    ObjectHierarchyItem* item = GetItem(index);
-    return item ? item->GetObject() : nullptr;
-}
-
-QVector<Urho3D::Object*> ObjectHierarchyModel::GetObjects(const QModelIndexList& indices) const
-{
-    QVector<Urho3D::Object*> objects;
-    objects.reserve(indices.size());
-    for (const QModelIndex& index : indices)
-        objects.push_back(GetObject(index));
-    return objects;
-}
-
-void ObjectHierarchyModel::UpdateObject(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
-{
-    if (suppressUpdates_)
-        return;
-    Urho3D::Object* parentObject = GetParentObject(object);
-    const QModelIndex parentIndex = FindIndex(parentObject, hint.parent());
-    DoRemoveObject(parentIndex, object, hint.row());
-    DoAddObject(parentIndex, object);
-}
-
-void ObjectHierarchyModel::RemoveObject(Urho3D::Object* object, QModelIndex hint /*= QModelIndex()*/)
-{
-    if (suppressUpdates_)
-        return;
-    Urho3D::Object* parentObject = GetParentObject(object);
-    const QModelIndex parentIndex = FindIndex(parentObject, hint.parent());
-    DoRemoveObject(parentIndex, object, hint.row());
-}
-
-QVariant ObjectHierarchyModel::data(const QModelIndex &index, int role) const
-{
-    if (!index.isValid())
-        return QVariant();
-
-    ObjectHierarchyItem* item = GetItem(index);
-    switch (role)
-    {
-    case Qt::DisplayRole:
-        return item->GetText();
-    case Qt::TextColorRole:
-        return item->GetColor();
-    default:
-        return QVariant();
-    }
-}
-
-QVariant ObjectHierarchyModel::headerData(int section, Qt::Orientation orientation, int role) const
-{
-    return QVariant();
-}
-
-QModelIndex ObjectHierarchyModel::index(int row, int column, const QModelIndex &parent) const
-{
-    if (parent.isValid() && parent.column() != 0)
-        return QModelIndex();
-
-    ObjectHierarchyItem* parentItem = GetItem(parent);
-
-    ObjectHierarchyItem* childItem = parentItem->GetChild(row);
-    if (childItem)
-        return createIndex(row, column, childItem);
-    else
-        return QModelIndex();
-}
-
-QModelIndex ObjectHierarchyModel::parent(const QModelIndex &index) const
-{
-    if (!index.isValid())
-        return QModelIndex();
-
-    ObjectHierarchyItem* childItem = GetItem(index);
-    ObjectHierarchyItem* parentItem = childItem->GetParent();
-
-    if (parentItem == rootItem_.data())
-        return QModelIndex();
-
-    return createIndex(parentItem->GetChildNumber(), 0, parentItem);
-}
-
-int ObjectHierarchyModel::rowCount(const QModelIndex &parent) const
-{
-    ObjectHierarchyItem* parentItem = GetItem(parent);
-
-    return parentItem->GetChildCount();
-}
-
-Qt::ItemFlags ObjectHierarchyModel::flags(const QModelIndex &index) const
-{
-    if (!index.isValid())
-        return 0;
-
-    ObjectHierarchyItem* item = GetItem(index);
-
-    Qt::ItemFlags result = QAbstractItemModel::flags(index);
-    if (!item->GetObject()->IsInstanceOf<Urho3D::Scene>())
-    {
-        result |= Qt::ItemIsDragEnabled;
-        if (item->GetObject()->IsInstanceOf<Urho3D::Node>())
-            result |= Qt::ItemIsDropEnabled;
-    }
-    else
-        result |= Qt::ItemIsDropEnabled;
-
-    return result;
-}
-
-QStringList ObjectHierarchyModel::mimeTypes() const
-{
-    return QStringList("text/plain");
-}
-
-QMimeData* ObjectHierarchyModel::mimeData(const QModelIndexList& indexes) const
-{
-    QScopedPointer<ObjectHierarchyMime> mime(new ObjectHierarchyMime);
-    QString text;
-    for (const QModelIndex& index : indexes)
-        if (ObjectHierarchyItem* item = GetItem(index))
-            if (Urho3D::Object* object = item->GetObject())
-            {
-                const QPersistentModelIndex persistentIndex = index;
-
-                mime->objects_.push_back(qMakePair(persistentIndex, object));
-                if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
-                    mime->nodes_.push_back(qMakePair(persistentIndex, node));
-                if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
-                    mime->components_.push_back(qMakePair(persistentIndex, component));
-
-                text += QString::number(GetObjectID(object)) + " ";
-            }
-
-    mime->setText(text);
-    return mime.take();
-}
-
-bool ObjectHierarchyModel::canDropMimeData(const QMimeData* data, Qt::DropAction action,
-    int row, int column, const QModelIndex& parent) const
-{
-    using namespace Urho3D;
-    const ObjectHierarchyMime* mime = qobject_cast<const ObjectHierarchyMime*>(data);
-    if (!mime)
-        return false;
-
-    if (Node* parentNode = dynamic_cast<Node*>(GetObject(parent)))
-    {
-        // No node cycles
-        for (const auto& item : mime->nodes_)
-        {
-            Node* node = item.second;
-            if (parentNode->IsChildOf(node))
-                return false;
-        }
-
-        // No component re-parenting
-        if (mime->nodes_.empty())
-        {
-            for (const auto& item : mime->components_)
-            {
-                Component* component = item.second;
-                if (component->GetNode() != parentNode)
-                    return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool ObjectHierarchyModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
-    int row, int column, const QModelIndex& parent)
-{
-    using namespace Urho3D;
-    const ObjectHierarchyMime* mime = qobject_cast<const ObjectHierarchyMime*>(data);
-    if (!mime)
-        return false;
-
-    if (Node* parentNode = dynamic_cast<Node*>(GetObject(parent)))
-    {
-        if (!mime->nodes_.empty())
-        {
-            const unsigned numComponents = parentNode->GetNumComponents();
-            if (row < (int)numComponents)
-                row = (int)numComponents;
-
-            for (const auto& item : mime->nodes_)
-            {
-                SharedPtr<Node> node(item.second);
-                RemoveObject(node, item.first);
-                suppressUpdates_ = true;
-
-                // Re-parent if needed
-                if (node->GetParent() != parentNode)
-                    node->SetParent(parentNode);
-
-                // Re-order if needed
-                const unsigned desiredChildIndex = (unsigned)row - numComponents;
-                if (parentNode->GetChild(desiredChildIndex) != node)
-                {
-                    const unsigned oldId = node->GetID();
-                    node->Remove();
-                    parentNode->AddChild(node, desiredChildIndex);
-                }
-
-                suppressUpdates_ = false;
-                UpdateObject(node, parent.child(row, 0));
-                ++row;
-            }
-        }
-        else if (!mime->components_.empty())
-        {
-            // Re-order components
-            for (const auto& item : mime->components_)
-            {
-                const QPersistentModelIndex componentIndex = item.first;
-                Component* component = item.second;
-                if (component->GetNode() == parentNode)
-                {
-                    parentNode->ReorderComponent(component, (unsigned)row);
-                    UpdateObject(component, componentIndex);
-                    ++row;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-void ObjectHierarchyModel::DoAddObject(QModelIndex parentIndex, Urho3D::Object* object)
-{
-    using namespace Urho3D;
-
-    ObjectHierarchyItem* parentItem = GetItem(parentIndex);
-
-    if (!parentIndex.isValid())
-    {
-        beginInsertRows(parentIndex, 0, 0);
-        parentItem->InsertChild(0, ConstructObjectItem(object, parentItem));
-        endInsertRows();
-    }
-    else
-    {
-        const int childIndex = GetChildIndex(object, parentItem->GetObject());
-        if (childIndex >= 0)
-        {
-            beginInsertRows(parentIndex, childIndex, childIndex);
-            parentItem->InsertChild(childIndex, ConstructObjectItem(object, parentItem));
-            endInsertRows();
-        }
-    }
-}
-
-void ObjectHierarchyModel::DoRemoveObject(QModelIndex parentIndex, Urho3D::Object* object, int hintRow /*= -1*/)
-{
-    ObjectHierarchyItem* parentItem = GetItem(parentIndex);
-    const int objectIndex = parentItem->FindChild(object, hintRow);
-    if (objectIndex >= 0)
-    {
-        beginRemoveRows(parentIndex, objectIndex, objectIndex);
-        parentItem->RemoveChild(objectIndex);
-        endRemoveRows();
-    }
-}
-
-//////////////////////////////////////////////////////////////////////////
 HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
     : Object(document.GetContext())
     , document_(document)
     , layout_(new QGridLayout())
     , treeView_(new QTreeView())
-    , treeModel_(new ObjectHierarchyModel())
+    , treeModel_(new ObjectHierarchyModel(*this))
     , suppressSceneSelectionChanged_(false)
 {
     treeModel_->UpdateObject(&document.GetScene());
@@ -702,6 +237,222 @@ QSet<Urho3D::Object*> HierarchyWindowWidget::GatherSelection()
             selectedObjects.insert(object);
     }
     return selectedObjects;
+}
+
+//////////////////////////////////////////////////////////////////////////
+Urho3DEditor::ObjectHierarchyItem* HierarchyWindowWidget::ConstructObjectItem(Urho3D::Object* object, ObjectHierarchyItem* parentItem)
+{
+    QScopedPointer<ObjectHierarchyItem> item(new ObjectHierarchyItem(parentItem));
+    item->SetObject(object);
+
+    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        ConstructNodeItem(item.data(), node);
+
+    return item.take();
+}
+
+void HierarchyWindowWidget::GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy)
+{
+    hierarchy.clear();
+
+    // Get child-most node
+    Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object);
+    if (!node)
+    {
+        Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object);
+        if (!component)
+            return;
+        hierarchy.push_back(component);
+        node = component->GetNode();
+    }
+
+    // Go to root
+    do
+    {
+        hierarchy.push_back(node);
+        node = node->GetParent();
+    } while (node);
+}
+
+Urho3D::Object* HierarchyWindowWidget::GetParentObject(Urho3D::Object* object)
+{
+    if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        return node->GetParent();
+    else if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
+        return component->GetNode();
+    else
+        return nullptr;
+}
+
+int HierarchyWindowWidget::GetChildIndex(Urho3D::Object* object, Urho3D::Object* parent)
+{
+    using namespace Urho3D;
+    if (Node* parentNode = dynamic_cast<Node*>(parent))
+    {
+        if (Component* component = dynamic_cast<Component*>(object))
+        {
+            const Vector<SharedPtr<Component>>& components = parentNode->GetComponents();
+            for (unsigned i = 0; i < components.Size(); ++i)
+                if (components[i] == component)
+                    return (int)i;
+        }
+        else if (Node* node = dynamic_cast<Node*>(object))
+        {
+            const Vector<SharedPtr<Node>>& children = parentNode->GetChildren();
+            for (unsigned i = 0; i < children.Size(); ++i)
+                if (children[i] == node)
+                    return (int)i + parentNode->GetNumComponents();
+        }
+    }
+    return -1;
+}
+
+QString HierarchyWindowWidget::GetObjectName(Urho3D::Object* object)
+{
+    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
+        return Cast(component->GetTypeName());
+    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        return Cast(node->GetName().Empty() ? node->GetTypeName() : node->GetName());
+    else
+        return "";
+}
+
+QString HierarchyWindowWidget::GetObjectText(Urho3D::Object* object)
+{
+    return GetObjectName(object);
+}
+
+QColor HierarchyWindowWidget::GetObjectColor(Urho3D::Object* object)
+{
+    if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
+        return QColor(178, 255, 178);
+    else if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+        return QColor(255, 255, 255);
+    else
+        return QColor(Qt::black);
+    // #TODO Make configurable
+}
+
+bool HierarchyWindowWidget::IsDragable(Urho3D::Object* object)
+{
+    return !object->IsInstanceOf<Urho3D::Scene>();
+}
+
+bool HierarchyWindowWidget::IsDropable(Urho3D::Object* object)
+{
+    return object->IsInstanceOf<Urho3D::Scene>() || object->IsInstanceOf<Urho3D::Node>();
+}
+
+QMimeData* HierarchyWindowWidget::ConstructMimeData(const QModelIndexList& indexes)
+{
+    QScopedPointer<ObjectHierarchyMime> mime(new ObjectHierarchyMime);
+    QString text;
+    for (const QModelIndex& index : indexes)
+        if (Urho3D::Object* object = treeModel_->GetObject(index))
+        {
+            const QPersistentModelIndex persistentIndex = index;
+
+            if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
+            {
+                mime->nodes_.push_back(qMakePair(persistentIndex, node));
+                text += QString::number(node->GetID());
+            }
+            else if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
+            {
+                mime->components_.push_back(qMakePair(persistentIndex, component));
+                text += QString::number(component->GetID());
+            }
+        }
+
+    mime->setText(text);
+    return mime.take();
+}
+
+bool HierarchyWindowWidget::CanDropMime(const QMimeData* data, const QModelIndex& parent, int row)
+{
+    using namespace Urho3D;
+    const ObjectHierarchyMime* mime = qobject_cast<const ObjectHierarchyMime*>(data);
+    if (!mime)
+        return false;
+
+    if (Node* parentNode = dynamic_cast<Node*>(treeModel_->GetObject(parent)))
+    {
+        // No node cycles
+        for (const auto& item : mime->nodes_)
+        {
+            Node* node = item.second;
+            if (parentNode->IsChildOf(node))
+                return false;
+        }
+
+        // No component re-parenting
+        if (mime->nodes_.empty())
+        {
+            for (const auto& item : mime->components_)
+            {
+                Component* component = item.second;
+                if (component->GetNode() != parentNode)
+                    return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool HierarchyWindowWidget::DropMime(const QMimeData* data, const QModelIndex& parent, int row)
+{
+    using namespace Urho3D;
+    const ObjectHierarchyMime* mime = qobject_cast<const ObjectHierarchyMime*>(data);
+    if (!mime)
+        return false;
+
+    if (Node* parentNode = dynamic_cast<Node*>(treeModel_->GetObject(parent)))
+    {
+        if (!mime->nodes_.empty())
+        {
+            const unsigned numComponents = parentNode->GetNumComponents();
+            if (row < (int)numComponents)
+                row = (int)numComponents;
+
+            for (const auto& item : mime->nodes_)
+            {
+                SharedPtr<Node> node(item.second);
+
+                // Re-parent if needed
+                if (node->GetParent() != parentNode)
+                    node->SetParent(parentNode);
+
+                // Re-order if needed
+                const unsigned desiredChildIndex = (unsigned)row - numComponents;
+                if (parentNode->GetChild(desiredChildIndex) != node)
+                {
+                    const unsigned oldId = node->GetID();
+                    node->Remove();
+                    parentNode->AddChild(node, desiredChildIndex);
+                }
+
+                ++row;
+            }
+        }
+        else if (!mime->components_.empty())
+        {
+            // Re-order components
+            for (const auto& item : mime->components_)
+            {
+                const QPersistentModelIndex componentIndex = item.first;
+                Component* component = item.second;
+                if (component->GetNode() == parentNode)
+                {
+                    parentNode->ReorderComponent(component, (unsigned)row);
+                    treeModel_->UpdateObject(component, componentIndex);
+                    ++row;
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 }
