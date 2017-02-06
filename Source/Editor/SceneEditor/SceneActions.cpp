@@ -210,4 +210,92 @@ void DeleteComponentAction::redo()
         node->RemoveComponent(component);
 }
 
+//////////////////////////////////////////////////////////////////////////
+NodeHierarchyAction::NodeHierarchyAction(SceneDocument& document,
+    unsigned nodeId, unsigned oldParentId, unsigned oldIndex, unsigned newParentId, unsigned newIndex,
+    QUndoCommand* parent /*= nullptr*/)
+    : QUndoCommand(parent)
+    , document_(document)
+    , nodeId(nodeId)
+    , oldParentId(oldParentId)
+    , oldIndex(oldIndex)
+    , newParentId(newParentId)
+    , newIndex(newIndex)
+{
+}
+
+void NodeHierarchyAction::undo()
+{
+    MoveNode(oldParentId, oldIndex);
+}
+
+void NodeHierarchyAction::redo()
+{
+    MoveNode(newParentId, newIndex);
+}
+
+void NodeHierarchyAction::MoveNode(unsigned parentId, unsigned index) const
+{
+    using namespace Urho3D;
+    Scene& scene = document_.GetScene();
+
+    Node* node = scene.GetNode(nodeId);
+    Node* parent = scene.GetNode(parentId);
+    if (node && parent)
+    {
+        // Re-parent if needed
+        if (node->GetParent() != parent)
+            node->SetParent(parent);
+
+        // Re-order if needed
+        if (parent->GetChild(index) != node)
+        {
+            // Store node to prevent destruction.
+            SharedPtr<Node> nodeHolder(node);
+
+            // Removal from scene zeroes the ID. Be prepared to restore it.
+            const unsigned oldId = node->GetID();
+            node->Remove();
+            node->SetID(oldId);
+            parent->AddChild(node, index);
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////
+ComponentHierarchyAction::ComponentHierarchyAction(SceneDocument& document,
+    unsigned nodeId, unsigned componentId, unsigned oldIndex, unsigned newIndex, QUndoCommand* parent /*= nullptr*/)
+    : QUndoCommand(parent)
+    , document_(document)
+    , nodeId(nodeId)
+    , componentId(componentId)
+    , oldIndex(oldIndex)
+    , newIndex(newIndex)
+{
+}
+
+void ComponentHierarchyAction::undo()
+{
+    MoveComponent(oldIndex);
+}
+
+void ComponentHierarchyAction::redo()
+{
+    MoveComponent(newIndex);
+}
+
+void ComponentHierarchyAction::MoveComponent(unsigned index)
+{
+    using namespace Urho3D;
+    Scene& scene = document_.GetScene();
+
+    Node* node = scene.GetNode(nodeId);
+    Component* component = scene.GetComponent(componentId);
+    if (node && component)
+    {
+        node->ReorderComponent(component, index);
+        emit document_.componentReordered(*component, index);
+    }
+}
+
 }

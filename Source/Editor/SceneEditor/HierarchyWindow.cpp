@@ -1,6 +1,7 @@
 #include "HierarchyWindow.h"
 // #include "Configuration.h"
 #include "SceneDocument.h"
+#include "SceneActions.h"
 #include "../MainWindow.h"
 #include "../Bridge.h"
 #include <Urho3D/Scene/Component.h>
@@ -227,6 +228,11 @@ void HierarchyWindowWidget::HandleComponentRemoved(Urho3D::StringHash eventType,
     treeModel_->RemoveObject(component);
 }
 
+void HierarchyWindowWidget::HandleComponentReordered(Urho3D::Component& component)
+{
+    treeModel_->UpdateObject(&component);
+}
+
 QSet<Urho3D::Object*> HierarchyWindowWidget::GatherSelection()
 {
     const QModelIndexList selectedIndexes = treeView_->selectionModel()->selectedIndexes();
@@ -350,16 +356,14 @@ QMimeData* HierarchyWindowWidget::ConstructMimeData(const QModelIndexList& index
     for (const QModelIndex& index : indexes)
         if (Urho3D::Object* object = treeModel_->GetObject(index))
         {
-            const QPersistentModelIndex persistentIndex = index;
-
             if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
             {
-                mime->nodes_.push_back(qMakePair(persistentIndex, node));
+                mime->nodes_.push_back(node);
                 text += QString::number(node->GetID());
             }
             else if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
             {
-                mime->components_.push_back(qMakePair(persistentIndex, component));
+                mime->components_.push_back(component);
                 text += QString::number(component->GetID());
             }
         }
@@ -378,22 +382,16 @@ bool HierarchyWindowWidget::CanDropMime(const QMimeData* data, const QModelIndex
     if (Node* parentNode = dynamic_cast<Node*>(treeModel_->GetObject(parent)))
     {
         // No node cycles
-        for (const auto& item : mime->nodes_)
-        {
-            Node* node = item.second;
+        for (Node* node : mime->nodes_)
             if (parentNode->IsChildOf(node))
                 return false;
-        }
 
         // No component re-parenting
         if (mime->nodes_.empty())
         {
-            for (const auto& item : mime->components_)
-            {
-                Component* component = item.second;
+            for (Component* component : mime->components_)
                 if (component->GetNode() != parentNode)
                     return false;
-            }
         }
     }
 
@@ -409,28 +407,24 @@ bool HierarchyWindowWidget::DropMime(const QMimeData* data, const QModelIndex& p
 
     if (Node* parentNode = dynamic_cast<Node*>(treeModel_->GetObject(parent)))
     {
+        QScopedPointer<QUndoCommand> group(new QUndoCommand);
+        // \todo Use suppressUpdates_ to optimize operations
         if (!mime->nodes_.empty())
         {
             const unsigned numComponents = parentNode->GetNumComponents();
             if (row < (int)numComponents)
                 row = (int)numComponents;
 
-            for (const auto& item : mime->nodes_)
+            for (Node* node : mime->nodes_)
             {
-                SharedPtr<Node> node(item.second);
+                Node* oldParent = node->GetParent();
+                assert(oldParent);
+                const unsigned oldIndex = oldParent->GetChildren().IndexOf(SharedPtr<Node>(node));
+                const unsigned newIndex = (unsigned)row - numComponents;
 
-                // Re-parent if needed
-                if (node->GetParent() != parentNode)
-                    node->SetParent(parentNode);
-
-                // Re-order if needed
-                const unsigned desiredChildIndex = (unsigned)row - numComponents;
-                if (parentNode->GetChild(desiredChildIndex) != node)
-                {
-                    const unsigned oldId = node->GetID();
-                    node->Remove();
-                    parentNode->AddChild(node, desiredChildIndex);
-                }
+                new NodeHierarchyAction(document_,
+                    node->GetID(), oldParent->GetID(), oldIndex, parentNode->GetID(), newIndex,
+                    group.data());
 
                 ++row;
             }
@@ -438,18 +432,20 @@ bool HierarchyWindowWidget::DropMime(const QMimeData* data, const QModelIndex& p
         else if (!mime->components_.empty())
         {
             // Re-order components
-            for (const auto& item : mime->components_)
+            for (Component* component : mime->components_)
             {
-                const QPersistentModelIndex componentIndex = item.first;
-                Component* component = item.second;
-                if (component->GetNode() == parentNode)
-                {
-                    parentNode->ReorderComponent(component, (unsigned)row);
-                    treeModel_->UpdateObject(component, componentIndex);
-                    ++row;
-                }
+                Node* node = component->GetNode();
+                const unsigned oldIndex = node->GetComponents().IndexOf(SharedPtr<Component>(component));
+
+                new ComponentHierarchyAction(document_,
+                    node->GetID(), component->GetID(), oldIndex, (unsigned)row,
+                    group.data());
+
+                ++row;
             }
         }
+
+        document_.AddAction(group.take());
     }
 
     return true;

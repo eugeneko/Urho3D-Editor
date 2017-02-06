@@ -65,9 +65,9 @@ class ObjectHierarchyMime : public QMimeData
 
 public:
     /// Objects: nodes.
-    QVector<QPair<QPersistentModelIndex, Urho3D::Node*>> nodes_;
+    QVector<Urho3D::Node*> nodes_;
     /// Objects: components.
-    QVector<QPair<QPersistentModelIndex, Urho3D::Component*>> components_;
+    QVector<Urho3D::Component*> components_;
 };
 
 /// Hierarchy Window Widget.
@@ -91,6 +91,8 @@ private slots:
     void HandleSceneSelectionChanged();
     /// Handle context menu request.
     void HandleContextMenuRequested(const QPoint& point);
+    /// Handle component re-ordered.
+    void HandleComponentReordered(Urho3D::Component& component);
 
 private:
     /// Handle node added.

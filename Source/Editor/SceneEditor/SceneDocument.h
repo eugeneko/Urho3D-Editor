@@ -151,6 +151,8 @@ signals:
     void selectionChanged();
     /// Signals that node transforms has been changed.
     void nodeTransformChanged(const Urho3D::Node& node);
+    /// Signals that component has been re-ordered.
+    void componentReordered(const Urho3D::Component& component, unsigned index);
 
 private slots:
     /// Cut.

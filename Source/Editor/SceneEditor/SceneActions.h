@@ -169,4 +169,71 @@ private:
 
 };
 
+/// Node re-parented or re-ordered.
+class NodeHierarchyAction : public QUndoCommand
+{
+public:
+    /// Construct.
+    NodeHierarchyAction(SceneDocument& document,
+        unsigned nodeId, unsigned oldParentId, unsigned oldIndex,
+        unsigned newParentId, unsigned newIndex,
+        QUndoCommand* parent = nullptr);
+
+    /// @see QUndoCommand::undo
+    virtual void undo() override;
+
+    /// @see QUndoCommand::redo
+    virtual void redo() override;
+
+private:
+    /// Move node to specified parent and index.
+    void MoveNode(unsigned parentId, unsigned index) const;
+
+private:
+    /// Document.
+    SceneDocument& document_;
+    /// Node ID.
+    unsigned nodeId;
+    /// Old parent node ID.
+    unsigned oldParentId;
+    /// Old index of node.
+    unsigned oldIndex;
+    /// New parent node ID.
+    unsigned newParentId;
+    /// New index of node.
+    unsigned newIndex;
+};
+
+/// Component re-ordered.
+class ComponentHierarchyAction : public QUndoCommand
+{
+public:
+    /// Construct.
+    ComponentHierarchyAction(SceneDocument& document,
+        unsigned nodeId, unsigned componentId, unsigned oldIndex, unsigned newIndex,
+        QUndoCommand* parent = nullptr);
+
+    /// @see QUndoCommand::undo
+    virtual void undo() override;
+
+    /// @see QUndoCommand::redo
+    virtual void redo() override;
+
+private:
+    /// Move component.
+    void MoveComponent(unsigned index);
+
+private:
+    /// Document.
+    SceneDocument& document_;
+    /// Node ID.
+    unsigned nodeId;
+    /// Component ID.
+    unsigned componentId;
+    /// Old index.
+    unsigned oldIndex;
+    /// New index.
+    unsigned newIndex;
+};
+
 }
