@@ -53,7 +53,7 @@ private:
     /// Document.
     SceneDocument& document_;
     /// Node ID.
-    unsigned nodeID_;
+    unsigned nodeId_;
     /// Old transform.
     NodeTransform undoTransform_;
     /// New transform.
@@ -105,11 +105,11 @@ private:
     /// Document.
     SceneDocument& document_;
     /// Node ID.
-    uint nodeID;
+    uint nodeId_;
     /// Parent node ID.
-    uint parentID;
+    uint parentId_;
     /// Node data.
-    Urho3D::SharedPtr<Urho3D::XMLFile> nodeData;
+    Urho3D::SharedPtr<Urho3D::XMLFile> nodeData_;
     /// Node index in parent.
     unsigned index_;
 
@@ -159,11 +159,11 @@ private:
     /// Document.
     SceneDocument& document_;
     /// Component ID.
-    uint componentID;
+    uint componentId_;
     /// Parent node ID.
-    uint nodeID;
+    uint nodeId_;
     /// Component data.
-    Urho3D::SharedPtr<Urho3D::XMLFile> componentData;
+    Urho3D::SharedPtr<Urho3D::XMLFile> componentData_;
     /// Node index in parent.
     unsigned index_;
 
@@ -193,15 +193,15 @@ private:
     /// Document.
     SceneDocument& document_;
     /// Node ID.
-    unsigned nodeId;
+    unsigned nodeId_;
     /// Old parent node ID.
-    unsigned oldParentId;
+    unsigned oldParentId_;
     /// Old index of node.
-    unsigned oldIndex;
+    unsigned oldIndex_;
     /// New parent node ID.
-    unsigned newParentId;
+    unsigned newParentId_;
     /// New index of node.
-    unsigned newIndex;
+    unsigned newIndex_;
 };
 
 /// Component re-ordered.
@@ -227,13 +227,13 @@ private:
     /// Document.
     SceneDocument& document_;
     /// Node ID.
-    unsigned nodeId;
+    unsigned nodeId_;
     /// Component ID.
-    unsigned componentId;
+    unsigned componentId_;
     /// Old index.
-    unsigned oldIndex;
+    unsigned oldIndex_;
     /// New index.
-    unsigned newIndex;
+    unsigned newIndex_;
 };
 
 }

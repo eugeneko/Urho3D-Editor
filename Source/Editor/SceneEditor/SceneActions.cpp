@@ -23,7 +23,7 @@ EditNodeTransformAction::EditNodeTransformAction(
     SceneDocument& document, const Urho3D::Node& node, const NodeTransform& oldTransform, QUndoCommand* parent /*= nullptr*/)
     : QUndoCommand(parent)
     , document_(document)
-    , nodeID_(node.GetID())
+    , nodeId_(node.GetID())
     , undoTransform_(oldTransform)
 {
     redoTransform_.Define(node);
@@ -32,7 +32,7 @@ EditNodeTransformAction::EditNodeTransformAction(
 void EditNodeTransformAction::undo()
 {
     Urho3D::Scene& scene = document_.GetScene();
-    if (Urho3D::Node* node = scene.GetNode(nodeID_))
+    if (Urho3D::Node* node = scene.GetNode(nodeId_))
     {
         undoTransform_.Apply(*node);
         emit document_.nodeTransformChanged(*node);
@@ -42,7 +42,7 @@ void EditNodeTransformAction::undo()
 void EditNodeTransformAction::redo()
 {
     Urho3D::Scene& scene = document_.GetScene();
-    if (Urho3D::Node* node = scene.GetNode(nodeID_))
+    if (Urho3D::Node* node = scene.GetNode(nodeId_))
     {
         redoTransform_.Apply(*node);
         emit document_.nodeTransformChanged(*node);
@@ -90,12 +90,12 @@ void CreateNodeAction::redo()
 DeleteNodeAction::DeleteNodeAction(SceneDocument& document, Urho3D::Node& node, QUndoCommand* parent /*= nullptr*/)
     : QUndoCommand(parent)
     , document_(document)
-    , nodeID(node.GetID())
-    , parentID(node.GetParent()->GetID())
-    , nodeData(new Urho3D::XMLFile(document.GetContext()))
+    , nodeId_(node.GetID())
+    , parentId_(node.GetParent()->GetID())
+    , nodeData_(new Urho3D::XMLFile(document.GetContext()))
     , index_(node.GetParent()->GetChildren().IndexOf(Urho3D::SharedPtr<Urho3D::Node>(&node)))
 {
-    Urho3D::XMLElement rootElem = nodeData->CreateRoot("node");
+    Urho3D::XMLElement rootElem = nodeData_->CreateRoot("node");
     node.SaveXML(rootElem);
 }
 
@@ -104,11 +104,11 @@ void DeleteNodeAction::undo()
     using namespace Urho3D;
     Scene& scene = document_.GetScene();
 
-    Node* parent = scene.GetNode(parentID);
+    Node* parent = scene.GetNode(parentId_);
     if (parent)
     {
-        Node* node = parent->CreateChild("", nodeID < FIRST_LOCAL_ID ? REPLICATED : LOCAL, nodeID);
-        node->LoadXML(nodeData->GetRoot());
+        Node* node = parent->CreateChild("", nodeId_ < FIRST_LOCAL_ID ? REPLICATED : LOCAL, nodeId_);
+        node->LoadXML(nodeData_->GetRoot());
         parent->AddChild(node, index_);
         /// \todo Do we need focusing?
         //FocusNode(node);
@@ -120,8 +120,8 @@ void DeleteNodeAction::redo()
     using namespace Urho3D;
     Scene& scene = document_.GetScene();
 
-    Node* parent = scene.GetNode(parentID);
-    Node* node = scene.GetNode(nodeID);
+    Node* parent = scene.GetNode(parentId_);
+    Node* node = scene.GetNode(nodeId_);
     if (parent && node)
         parent->RemoveChild(node);
 }
@@ -172,12 +172,12 @@ void CreateComponentAction::redo()
 DeleteComponentAction::DeleteComponentAction(SceneDocument& document, Urho3D::Component& component, QUndoCommand* parent /*= nullptr*/)
     : QUndoCommand(parent)
     , document_(document)
-    , componentID(component.GetID())
-    , nodeID(component.GetNode()->GetID())
-    , componentData(new Urho3D::XMLFile(document.GetContext()))
+    , componentId_(component.GetID())
+    , nodeId_(component.GetNode()->GetID())
+    , componentData_(new Urho3D::XMLFile(document.GetContext()))
     , index_(component.GetNode()->GetComponents().IndexOf(Urho3D::SharedPtr<Urho3D::Component>(&component)))
 {
-    Urho3D::XMLElement rootElem = componentData->CreateRoot("component");
+    Urho3D::XMLElement rootElem = componentData_->CreateRoot("component");
     component.SaveXML(rootElem);
 }
 
@@ -186,12 +186,12 @@ void DeleteComponentAction::undo()
     using namespace Urho3D;
     Scene& scene = document_.GetScene();
 
-    Node* node = scene.GetNode(nodeID);
+    Node* node = scene.GetNode(nodeId_);
     if (node)
     {
-        Component* component = node->CreateComponent(componentData->GetRoot().GetAttribute("type"),
-            componentID < FIRST_LOCAL_ID ? REPLICATED : LOCAL, componentID);
-        component->LoadXML(componentData->GetRoot());
+        Component* component = node->CreateComponent(componentData_->GetRoot().GetAttribute("type"),
+            componentId_ < FIRST_LOCAL_ID ? REPLICATED : LOCAL, componentId_);
+        component->LoadXML(componentData_->GetRoot());
         component->ApplyAttributes();
         node->ReorderComponent(component, index_);
         /// \todo Do we need focusing?
@@ -204,8 +204,8 @@ void DeleteComponentAction::redo()
     using namespace Urho3D;
     Scene& scene = document_.GetScene();
 
-    Node* node = scene.GetNode(nodeID);
-    Component* component = scene.GetComponent(componentID);
+    Node* node = scene.GetNode(nodeId_);
+    Component* component = scene.GetComponent(componentId_);
     if (node && component)
         node->RemoveComponent(component);
 }
@@ -216,22 +216,22 @@ NodeHierarchyAction::NodeHierarchyAction(SceneDocument& document,
     QUndoCommand* parent /*= nullptr*/)
     : QUndoCommand(parent)
     , document_(document)
-    , nodeId(nodeId)
-    , oldParentId(oldParentId)
-    , oldIndex(oldIndex)
-    , newParentId(newParentId)
-    , newIndex(newIndex)
+    , nodeId_(nodeId)
+    , oldParentId_(oldParentId)
+    , oldIndex_(oldIndex)
+    , newParentId_(newParentId)
+    , newIndex_(newIndex)
 {
 }
 
 void NodeHierarchyAction::undo()
 {
-    MoveNode(oldParentId, oldIndex);
+    MoveNode(oldParentId_, oldIndex_);
 }
 
 void NodeHierarchyAction::redo()
 {
-    MoveNode(newParentId, newIndex);
+    MoveNode(newParentId_, newIndex_);
 }
 
 void NodeHierarchyAction::MoveNode(unsigned parentId, unsigned index) const
@@ -239,7 +239,7 @@ void NodeHierarchyAction::MoveNode(unsigned parentId, unsigned index) const
     using namespace Urho3D;
     Scene& scene = document_.GetScene();
 
-    Node* node = scene.GetNode(nodeId);
+    Node* node = scene.GetNode(nodeId_);
     Node* parent = scene.GetNode(parentId);
     if (node && parent)
     {
@@ -267,21 +267,21 @@ ComponentHierarchyAction::ComponentHierarchyAction(SceneDocument& document,
     unsigned nodeId, unsigned componentId, unsigned oldIndex, unsigned newIndex, QUndoCommand* parent /*= nullptr*/)
     : QUndoCommand(parent)
     , document_(document)
-    , nodeId(nodeId)
-    , componentId(componentId)
-    , oldIndex(oldIndex)
-    , newIndex(newIndex)
+    , nodeId_(nodeId)
+    , componentId_(componentId)
+    , oldIndex_(oldIndex)
+    , newIndex_(newIndex)
 {
 }
 
 void ComponentHierarchyAction::undo()
 {
-    MoveComponent(oldIndex);
+    MoveComponent(oldIndex_);
 }
 
 void ComponentHierarchyAction::redo()
 {
-    MoveComponent(newIndex);
+    MoveComponent(newIndex_);
 }
 
 void ComponentHierarchyAction::MoveComponent(unsigned index)
@@ -289,8 +289,8 @@ void ComponentHierarchyAction::MoveComponent(unsigned index)
     using namespace Urho3D;
     Scene& scene = document_.GetScene();
 
-    Node* node = scene.GetNode(nodeId);
-    Component* component = scene.GetComponent(componentId);
+    Node* node = scene.GetNode(nodeId_);
+    Component* component = scene.GetComponent(componentId_);
     if (node && component)
     {
         node->ReorderComponent(component, index);
