@@ -89,7 +89,7 @@ void HierarchyWindow::CreateBody(Document* document)
     if (!widget_)
         return;
 
-    HierarchyWindowWidget* bodyWidget = document->Get<HierarchyWindowWidget, SceneDocument>(widget_.data());
+    SceneHierarchyWidget* bodyWidget = document->Get<SceneHierarchyWidget, SceneDocument>(widget_.data());
     if (bodyWidget)
         widget_->setWidget(bodyWidget);
     else
@@ -102,7 +102,7 @@ void HierarchyWindow::HandleDockClosed()
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
+SceneHierarchyWidget::SceneHierarchyWidget(SceneDocument& document)
     : Object(document.GetContext())
     , document_(document)
     , layout_(new QGridLayout())
@@ -127,26 +127,26 @@ HierarchyWindowWidget::HierarchyWindowWidget(SceneDocument& document)
     connect(treeView_.data(), SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(HandleContextMenuRequested(const QPoint&)));
 
     Urho3D::Scene& scene = document_.GetScene();
-    SubscribeToEvent(&scene, Urho3D::E_NODEADDED, URHO3D_HANDLER(HierarchyWindowWidget, HandleNodeAdded));
-    SubscribeToEvent(&scene, Urho3D::E_NODEREMOVED, URHO3D_HANDLER(HierarchyWindowWidget, HandleNodeRemoved));
-    SubscribeToEvent(&scene, Urho3D::E_COMPONENTADDED, URHO3D_HANDLER(HierarchyWindowWidget, HandleComponentAdded));
-    SubscribeToEvent(&scene, Urho3D::E_COMPONENTREMOVED, URHO3D_HANDLER(HierarchyWindowWidget, HandleComponentRemoved));
+    SubscribeToEvent(&scene, Urho3D::E_NODEADDED, URHO3D_HANDLER(SceneHierarchyWidget, HandleNodeAdded));
+    SubscribeToEvent(&scene, Urho3D::E_NODEREMOVED, URHO3D_HANDLER(SceneHierarchyWidget, HandleNodeRemoved));
+    SubscribeToEvent(&scene, Urho3D::E_COMPONENTADDED, URHO3D_HANDLER(SceneHierarchyWidget, HandleComponentAdded));
+    SubscribeToEvent(&scene, Urho3D::E_COMPONENTREMOVED, URHO3D_HANDLER(SceneHierarchyWidget, HandleComponentRemoved));
 
 }
 
-HierarchyWindowWidget::~HierarchyWindowWidget()
+SceneHierarchyWidget::~SceneHierarchyWidget()
 {
 
 }
 
-void HierarchyWindowWidget::HandleTreeSelectionChanged()
+void SceneHierarchyWidget::HandleTreeSelectionChanged()
 {
     suppressSceneSelectionChanged_ = true;
     document_.SetSelection(GatherSelection());
     suppressSceneSelectionChanged_ = false;
 }
 
-void HierarchyWindowWidget::HandleSceneSelectionChanged()
+void SceneHierarchyWidget::HandleSceneSelectionChanged()
 {
     if (suppressSceneSelectionChanged_)
         return;
@@ -180,7 +180,7 @@ void HierarchyWindowWidget::HandleSceneSelectionChanged()
     }
 }
 
-void HierarchyWindowWidget::HandleContextMenuRequested(const QPoint& point)
+void SceneHierarchyWidget::HandleContextMenuRequested(const QPoint& point)
 {
     const QModelIndex index = treeView_->indexAt(point);
     const QPoint globalPoint = treeView_->mapToGlobal(point);
@@ -200,40 +200,40 @@ void HierarchyWindowWidget::HandleContextMenuRequested(const QPoint& point)
     }
 }
 
-void HierarchyWindowWidget::HandleNodeAdded(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+void SceneHierarchyWidget::HandleNodeAdded(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
     Node* node = dynamic_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
     treeModel_->UpdateObject(node);
 }
 
-void HierarchyWindowWidget::HandleNodeRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+void SceneHierarchyWidget::HandleNodeRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
     Node* node = dynamic_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
     treeModel_->RemoveObject(node);
 }
 
-void HierarchyWindowWidget::HandleComponentAdded(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+void SceneHierarchyWidget::HandleComponentAdded(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
     Component* component = dynamic_cast<Component*>(eventData[ComponentAdded::P_COMPONENT].GetPtr());
     treeModel_->UpdateObject(component);
 }
 
-void HierarchyWindowWidget::HandleComponentRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
+void SceneHierarchyWidget::HandleComponentRemoved(Urho3D::StringHash eventType, Urho3D::VariantMap& eventData)
 {
     using namespace Urho3D;
     Component* component = dynamic_cast<Component*>(eventData[ComponentRemoved::P_COMPONENT].GetPtr());
     treeModel_->RemoveObject(component);
 }
 
-void HierarchyWindowWidget::HandleComponentReordered(Urho3D::Component& component)
+void SceneHierarchyWidget::HandleComponentReordered(Urho3D::Component& component)
 {
     treeModel_->UpdateObject(&component);
 }
 
-QSet<Urho3D::Object*> HierarchyWindowWidget::GatherSelection()
+QSet<Urho3D::Object*> SceneHierarchyWidget::GatherSelection()
 {
     const QModelIndexList selectedIndexes = treeView_->selectionModel()->selectedIndexes();
     QSet<Urho3D::Object*> selectedObjects;
@@ -246,7 +246,7 @@ QSet<Urho3D::Object*> HierarchyWindowWidget::GatherSelection()
 }
 
 //////////////////////////////////////////////////////////////////////////
-Urho3DEditor::ObjectHierarchyItem* HierarchyWindowWidget::ConstructObjectItem(Urho3D::Object* object, ObjectHierarchyItem* parentItem)
+Urho3DEditor::ObjectHierarchyItem* SceneHierarchyWidget::ConstructObjectItem(Urho3D::Object* object, ObjectHierarchyItem* parentItem)
 {
     QScopedPointer<ObjectHierarchyItem> item(new ObjectHierarchyItem(parentItem));
     item->SetObject(object);
@@ -257,7 +257,7 @@ Urho3DEditor::ObjectHierarchyItem* HierarchyWindowWidget::ConstructObjectItem(Ur
     return item.take();
 }
 
-void HierarchyWindowWidget::GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy)
+void SceneHierarchyWidget::GetObjectHierarchy(Urho3D::Object* object, QVector<Urho3D::Object*>& hierarchy)
 {
     hierarchy.clear();
 
@@ -280,7 +280,7 @@ void HierarchyWindowWidget::GetObjectHierarchy(Urho3D::Object* object, QVector<U
     } while (node);
 }
 
-Urho3D::Object* HierarchyWindowWidget::GetParentObject(Urho3D::Object* object)
+Urho3D::Object* SceneHierarchyWidget::GetParentObject(Urho3D::Object* object)
 {
     if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
         return node->GetParent();
@@ -290,7 +290,7 @@ Urho3D::Object* HierarchyWindowWidget::GetParentObject(Urho3D::Object* object)
         return nullptr;
 }
 
-int HierarchyWindowWidget::GetChildIndex(Urho3D::Object* object, Urho3D::Object* parent)
+int SceneHierarchyWidget::GetChildIndex(Urho3D::Object* object, Urho3D::Object* parent)
 {
     using namespace Urho3D;
     if (Node* parentNode = dynamic_cast<Node*>(parent))
@@ -313,7 +313,7 @@ int HierarchyWindowWidget::GetChildIndex(Urho3D::Object* object, Urho3D::Object*
     return -1;
 }
 
-QString HierarchyWindowWidget::GetObjectName(Urho3D::Object* object)
+QString SceneHierarchyWidget::GetObjectName(Urho3D::Object* object)
 {
     if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
         return Cast(component->GetTypeName());
@@ -323,12 +323,12 @@ QString HierarchyWindowWidget::GetObjectName(Urho3D::Object* object)
         return "";
 }
 
-QString HierarchyWindowWidget::GetObjectText(Urho3D::Object* object)
+QString SceneHierarchyWidget::GetObjectText(Urho3D::Object* object)
 {
     return GetObjectName(object);
 }
 
-QColor HierarchyWindowWidget::GetObjectColor(Urho3D::Object* object)
+QColor SceneHierarchyWidget::GetObjectColor(Urho3D::Object* object)
 {
     if (Urho3D::Component* component = dynamic_cast<Urho3D::Component*>(object))
         return QColor(178, 255, 178);
@@ -339,19 +339,19 @@ QColor HierarchyWindowWidget::GetObjectColor(Urho3D::Object* object)
     // #TODO Make configurable
 }
 
-bool HierarchyWindowWidget::IsDragable(Urho3D::Object* object)
+bool SceneHierarchyWidget::IsDragable(Urho3D::Object* object)
 {
     return !object->IsInstanceOf<Urho3D::Scene>();
 }
 
-bool HierarchyWindowWidget::IsDropable(Urho3D::Object* object)
+bool SceneHierarchyWidget::IsDropable(Urho3D::Object* object)
 {
     return object->IsInstanceOf<Urho3D::Scene>() || object->IsInstanceOf<Urho3D::Node>();
 }
 
-QMimeData* HierarchyWindowWidget::ConstructMimeData(const QModelIndexList& indexes)
+QMimeData* SceneHierarchyWidget::ConstructMimeData(const QModelIndexList& indexes)
 {
-    QScopedPointer<ObjectHierarchyMime> mime(new ObjectHierarchyMime);
+    QScopedPointer<SceneHierarchyMimeData> mime(new SceneHierarchyMimeData);
     QString text;
     for (const QModelIndex& index : indexes)
         if (Urho3D::Object* object = treeModel_->GetObject(index))
@@ -372,10 +372,10 @@ QMimeData* HierarchyWindowWidget::ConstructMimeData(const QModelIndexList& index
     return mime.take();
 }
 
-bool HierarchyWindowWidget::CanDropMime(const QMimeData* data, const QModelIndex& parent, int row)
+bool SceneHierarchyWidget::CanDropMime(const QMimeData* data, const QModelIndex& parent, int row)
 {
     using namespace Urho3D;
-    const ObjectHierarchyMime* mime = qobject_cast<const ObjectHierarchyMime*>(data);
+    const SceneHierarchyMimeData* mime = qobject_cast<const SceneHierarchyMimeData*>(data);
     if (!mime)
         return false;
 
@@ -398,10 +398,10 @@ bool HierarchyWindowWidget::CanDropMime(const QMimeData* data, const QModelIndex
     return true;
 }
 
-bool HierarchyWindowWidget::DropMime(const QMimeData* data, const QModelIndex& parent, int row)
+bool SceneHierarchyWidget::DropMime(const QMimeData* data, const QModelIndex& parent, int row)
 {
     using namespace Urho3D;
-    const ObjectHierarchyMime* mime = qobject_cast<const ObjectHierarchyMime*>(data);
+    const SceneHierarchyMimeData* mime = qobject_cast<const SceneHierarchyMimeData*>(data);
     if (!mime)
         return false;
 

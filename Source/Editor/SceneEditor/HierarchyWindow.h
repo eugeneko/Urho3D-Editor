@@ -23,7 +23,7 @@ namespace Urho3DEditor
 class Configuration;
 class MainWindow;
 class Document;
-class HierarchyWindowWidget;
+class SceneHierarchyWidget;
 class SceneDocument;
 
 /// Hierarchy Window module.
@@ -58,8 +58,8 @@ private:
 
 };
 
-/// Mime data of object hierarchy.
-class ObjectHierarchyMime : public QMimeData
+/// Mime data of scene hierarchy.
+class SceneHierarchyMimeData : public QMimeData
 {
     Q_OBJECT
 
@@ -70,17 +70,17 @@ public:
     QVector<Urho3D::Component*> components_;
 };
 
-/// Hierarchy Window Widget.
-class HierarchyWindowWidget : public QWidget, public Urho3D::Object, private ObjectHierarchySpecialization
+/// Scene Hierarchy Widget.
+class SceneHierarchyWidget : public QWidget, public Urho3D::Object, private ObjectHierarchySpecialization
 {
     Q_OBJECT
-    URHO3D_OBJECT(HierarchyWindowWidget, Urho3D::Object);
+    URHO3D_OBJECT(SceneHierarchyWidget, Urho3D::Object);
 
 public:
     /// Construct.
-    HierarchyWindowWidget(SceneDocument& document);
+    SceneHierarchyWidget(SceneDocument& document);
     /// Destruct.
-    virtual ~HierarchyWindowWidget();
+    virtual ~SceneHierarchyWidget();
     /// Get model.
     ObjectHierarchyModel& GetModel() { return *treeModel_; }
 
@@ -149,4 +149,3 @@ private:
 };
 
 }
-
