@@ -5,6 +5,7 @@
 #include <QScopedPointer>
 
 class QDockWidget;
+class QGridLayout;
 
 namespace Urho3DEditor
 {
@@ -38,6 +39,8 @@ private slots:
 private:
     /// Create body of inspector.
     void CreateBody();
+    /// Create node panel.
+    QGridLayout* CreateNodePanel();
 
 private:
     /// Show action.

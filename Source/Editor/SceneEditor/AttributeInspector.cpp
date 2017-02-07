@@ -1,9 +1,11 @@
 #include "AttributeInspector.h"
 #include "SceneDocument.h"
 #include "../MainWindow.h"
+#include "../Widgets/CollapsiblePanelWidget.h"
 #include <Urho3D/Scene/Node.h>
 #include <QDockWidget>
 #include <QGridLayout>
+#include <QVBoxLayout>
 #include <QLabel>
 
 namespace Urho3DEditor
@@ -53,6 +55,7 @@ void AttributeInspector::HandleCurrentDocumentChanged(Document* document)
     {
         disconnect(document_, 0, this, 0);
         document_ = nullptr;
+        delete widget_->widget();
     }
     if (SceneDocument* newDocument = dynamic_cast<SceneDocument*>(document))
     {
@@ -73,10 +76,24 @@ void AttributeInspector::CreateBody()
     if (!widget_ || !document_)
         return;
 
-    // Get selection
+    QScopedPointer<QWidget> bodyWidget(new QWidget);
+    QScopedPointer<QVBoxLayout> bodyLayout(new QVBoxLayout);
+
+    QScopedPointer<CollapsiblePanelWidget> nodePanel(new CollapsiblePanelWidget("Node", true));
+    nodePanel->SetContentLayout(CreateNodePanel());
+    bodyLayout->addWidget(nodePanel.take());
+    bodyLayout->addStretch(1);
+
+    bodyWidget->setLayout(bodyLayout.take());
+    widget_->setWidget(bodyWidget.take());
+}
+
+QGridLayout* AttributeInspector::CreateNodePanel()
+{
+    using namespace Urho3D;
     const SceneDocument::NodeSet& selectedNodes = document_->GetSelectedNodesAndComponents();
 
-    QScopedPointer<QGridLayout> layout(new QGridLayout);
+    QScopedPointer<QGridLayout> layout(new QGridLayout());
 
     // List nodes
     QString nodesLabel;
@@ -115,9 +132,7 @@ void AttributeInspector::CreateBody()
     layout->addWidget(new QLabel(nodesLabel), 0, 0);
     layout->setRowStretch(1, 1);
 
-    QScopedPointer<QWidget> body(new QWidget);
-    body->setLayout(layout.data());
-    widget_->setWidget(body.take());
+    return layout.take();
 }
 
 }
