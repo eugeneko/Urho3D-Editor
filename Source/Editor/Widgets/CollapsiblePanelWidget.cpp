@@ -9,7 +9,7 @@ namespace Urho3DEditor
 {
 
 CollapsiblePanelWidget::CollapsiblePanelWidget(const QString& title /*= ""*/, bool expanded /*= false*/,
-    QWidget* parent /*= 0*/)
+    QWidget* parent /*= nullptr*/)
     : QWidget(parent)
     , mainLayout_(new QGridLayout(this))
     , toggleButton_(new QToolButton(this))
@@ -35,12 +35,12 @@ CollapsiblePanelWidget::CollapsiblePanelWidget(const QString& title /*= ""*/, bo
     mainLayout_->setVerticalSpacing(0);
     mainLayout_->setContentsMargins(0, 0, 0, 0);
 
-    mainLayout_->addWidget(toggleButton_.data(), 0, 0, 1, 1, Qt::AlignLeft);
-    mainLayout_->addWidget(headerLine_.data(), 0, 2, 1, 1);
-    mainLayout_->addWidget(body_.data(), 1, 0, 1, 3);
-    setLayout(mainLayout_.data());
+    mainLayout_->addWidget(toggleButton_, 0, 0, 1, 1, Qt::AlignLeft);
+    mainLayout_->addWidget(headerLine_, 0, 2, 1, 1);
+    mainLayout_->addWidget(body_, 1, 0, 1, 3);
+    setLayout(mainLayout_);
 
-    connect(toggleButton_.data(), SIGNAL(clicked(bool)), this, SLOT(SetCollapsed(bool)));
+    connect(toggleButton_, SIGNAL(clicked(bool)), this, SLOT(SetCollapsed(bool)));
     if (expanded)
         toggleButton_->click();
 }
@@ -48,12 +48,13 @@ CollapsiblePanelWidget::CollapsiblePanelWidget(const QString& title /*= ""*/, bo
 void CollapsiblePanelWidget::SetContentLayout(QLayout* contentLayout)
 {
     body_->setLayout(contentLayout);
+    SetCollapsed(toggleButton_->isChecked());
 }
 
 void CollapsiblePanelWidget::SetCollapsed(bool checked)
 {
     const int collapsedHeight = sizeHint().height() - body_->maximumHeight();
-    const int contentHeight = layout() ? layout()->sizeHint().height() : 0;
+    const int contentHeight = body_->layout() ? body_->layout()->sizeHint().height() : 0;
 
     toggleButton_->setArrowType(checked ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
     setMinimumHeight(checked ? collapsedHeight + contentHeight : collapsedHeight);

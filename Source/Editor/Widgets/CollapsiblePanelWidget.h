@@ -17,7 +17,7 @@ class CollapsiblePanelWidget : public QWidget
 
 public:
     /// Construct.
-    CollapsiblePanelWidget(const QString& title = "", bool expanded = false, QWidget* parent = 0);
+    CollapsiblePanelWidget(const QString& title = "", bool expanded = false, QWidget* parent = nullptr);
     /// Set content layout.
     void SetContentLayout(QLayout* contentLayout);
 
@@ -27,13 +27,13 @@ private slots:
 
 private:
     /// Main layout.
-    QScopedPointer<QGridLayout> mainLayout_;
+    QGridLayout* mainLayout_;
     /// Button.
-    QScopedPointer<QToolButton> toggleButton_;
+    QToolButton* toggleButton_;
     /// Line.
-    QScopedPointer<QFrame> headerLine_;
+    QFrame* headerLine_;
     /// Body.
-    QScopedPointer<QScrollArea> body_;
+    QScrollArea* body_;
 };
 
 }

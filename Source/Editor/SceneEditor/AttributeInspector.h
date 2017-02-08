@@ -41,6 +41,8 @@ private:
     void CreateBody();
     /// Create node panel.
     QGridLayout* CreateNodePanel();
+    /// Create node title string.
+    QString CreateNodePanelTitle();
 
 private:
     /// Show action.

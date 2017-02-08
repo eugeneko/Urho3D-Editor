@@ -2,6 +2,7 @@
 #include "SceneDocument.h"
 #include "../MainWindow.h"
 #include "../Widgets/CollapsiblePanelWidget.h"
+#include "../Widgets/VariantEditorWidgetImpl.h"
 #include <Urho3D/Scene/Node.h>
 #include <QDockWidget>
 #include <QGridLayout>
@@ -76,12 +77,17 @@ void AttributeInspector::CreateBody()
     if (!widget_ || !document_)
         return;
 
+    const SceneDocument::NodeSet& selectedNodes = document_->GetSelectedNodesAndComponents();
+
     QScopedPointer<QWidget> bodyWidget(new QWidget);
     QScopedPointer<QVBoxLayout> bodyLayout(new QVBoxLayout);
 
-    QScopedPointer<CollapsiblePanelWidget> nodePanel(new CollapsiblePanelWidget("Node", true));
-    nodePanel->SetContentLayout(CreateNodePanel());
-    bodyLayout->addWidget(nodePanel.take());
+    if (!selectedNodes.empty())
+    {
+        QScopedPointer<CollapsiblePanelWidget> nodePanel(new CollapsiblePanelWidget(CreateNodePanelTitle(), true));
+        nodePanel->SetContentLayout(CreateNodePanel());
+        bodyLayout->addWidget(nodePanel.take());
+    }
     bodyLayout->addStretch(1);
 
     bodyWidget->setLayout(bodyLayout.take());
@@ -95,16 +101,24 @@ QGridLayout* AttributeInspector::CreateNodePanel()
 
     QScopedPointer<QGridLayout> layout(new QGridLayout());
 
-    // List nodes
+    QScopedPointer<StringEditorWidget> nameEdit(new StringEditorWidget());
+
+    layout->addWidget(new QLabel("Name:"), 0, 0);
+    layout->addWidget(nameEdit.take(), 0, 1);
+
+    return layout.take();
+}
+
+QString AttributeInspector::CreateNodePanelTitle()
+{
+    using namespace Urho3D;
+    const SceneDocument::NodeSet& selectedNodes = document_->GetSelectedNodesAndComponents();
+
     QString nodesLabel;
-    if (selectedNodes.empty())
-    {
-        nodesLabel = "Nothing selected";
-    }
-    else if (selectedNodes.size() == 1)
+    if (selectedNodes.size() == 1)
     {
         const Node* node = *selectedNodes.begin();
-        nodesLabel = "Node (ID " + QString::number(node->GetID()) + ")";
+        nodesLabel = "Node (" + QString::number(node->GetID()) + ")";
     }
     else
     {
@@ -115,8 +129,8 @@ QGridLayout* AttributeInspector::CreateNodePanel()
         qSort(ids);
 
         // Take first IDs
-        static const int MAX_IDS = 5;
-        nodesLabel = "Nodes (IDs ";
+        static const int MAX_IDS = 1;
+        nodesLabel = "Nodes (";
         for (int i = 0; i < qMin(ids.size(), MAX_IDS); ++i)
         {
             if (i != 0)
@@ -129,10 +143,8 @@ QGridLayout* AttributeInspector::CreateNodePanel()
             nodesLabel += ", ...";
         nodesLabel += ")";
     }
-    layout->addWidget(new QLabel(nodesLabel), 0, 0);
-    layout->setRowStretch(1, 1);
 
-    return layout.take();
+    return nodesLabel;
 }
 
 }
