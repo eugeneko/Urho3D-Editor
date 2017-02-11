@@ -1,29 +1,29 @@
 #pragma once
 
-#include "VariantEditorWidget.h"
+#include "AttributeWidget.h"
 #include <QGridLayout>
 #include <QLineEdit>
 
 namespace Urho3DEditor
 {
 
-/// Variant Editor Widget: String.
-class StringEditorWidget : public VariantEditorWidget
+/// String Attribute Editor.
+class StringAttributeWidget : public AttributeWidget
 {
     Q_OBJECT
 
 public:
     /// Construct.
-    StringEditorWidget(QWidget* parent = nullptr);
+    StringAttributeWidget(QWidget* parent = nullptr);
 
     /// Mark/unmark value as undefined.
     void SetUndefined(bool undefined);
 
-    /// @see VariantEditorWidget::GetVariantType
+    /// @see AttributeWidget::GetVariantType
     virtual Urho3D::VariantType GetVariantType() const override { return Urho3D::VAR_STRING; }
-    /// @see VariantEditorWidget::GetValue
+    /// @see AttributeWidget::GetValue
     virtual void GetValue(Urho3D::Variant& result) const override;
-    /// @see VariantEditorWidget::SetValue
+    /// @see AttributeWidget::SetValue
     virtual void SetValue(const Urho3D::Variant& value) override;
 
 private slots:

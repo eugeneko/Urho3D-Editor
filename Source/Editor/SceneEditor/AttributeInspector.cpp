@@ -2,7 +2,8 @@
 #include "SceneDocument.h"
 #include "../MainWindow.h"
 #include "../Widgets/CollapsiblePanelWidget.h"
-#include "../Widgets/VariantEditorWidgetImpl.h"
+#include "../Widgets/AttributeWidgetImpl.h"
+#include "../Widgets/SerializableWidget.h"
 #include <Urho3D/Scene/Node.h>
 #include <QDockWidget>
 #include <QGridLayout>
@@ -85,7 +86,7 @@ void AttributeInspector::CreateBody()
     if (!selectedNodes.empty())
     {
         QScopedPointer<CollapsiblePanelWidget> nodePanel(new CollapsiblePanelWidget(CreateNodePanelTitle(), true));
-        nodePanel->SetContentLayout(CreateNodePanel());
+        nodePanel->SetCentralWidget(CreateNodePanel());
         bodyLayout->addWidget(nodePanel.take());
     }
     bodyLayout->addStretch(1);
@@ -94,19 +95,12 @@ void AttributeInspector::CreateBody()
     widget_->setWidget(bodyWidget.take());
 }
 
-QGridLayout* AttributeInspector::CreateNodePanel()
+QWidget* AttributeInspector::CreateNodePanel()
 {
     using namespace Urho3D;
     const SceneDocument::NodeSet& selectedNodes = document_->GetSelectedNodesAndComponents();
 
-    QScopedPointer<QGridLayout> layout(new QGridLayout());
-
-    QScopedPointer<StringEditorWidget> nameEdit(new StringEditorWidget());
-
-    layout->addWidget(new QLabel("Name:"), 0, 0);
-    layout->addWidget(nameEdit.take(), 0, 1);
-
-    return layout.take();
+    return new SerializableWidget(GatherSerializables(selectedNodes));
 }
 
 QString AttributeInspector::CreateNodePanelTitle()

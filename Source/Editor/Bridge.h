@@ -1,8 +1,17 @@
 #pragma once
 
 #include <QString>
+#include <QVector>
 #include <Urho3D/Container/Str.h>
 #include <Urho3D/Input/InputEvents.h>
+#include <Urho3D/Container/Ptr.h>
+
+namespace Urho3D
+{
+
+class Serializable;
+
+}
 
 namespace Urho3DEditor
 {
@@ -25,6 +34,19 @@ inline Qt::MouseButton ConvertMouseButton(int button)
     case Urho3D::MOUSEB_X2: return Qt::XButton2;
     default: return Qt::NoButton;
     }
+}
+
+/// Vector of serializables.
+using SerializableVector = QVector<Urho3D::WeakPtr<Urho3D::Serializable>>;
+
+/// Gather serializables from container.
+template <class T>
+SerializableVector GatherSerializables(const T& container)
+{
+    SerializableVector result;
+    for (Urho3D::Serializable* item : container)
+        result.push_back(Urho3D::WeakPtr<Urho3D::Serializable>(item));
+    return result;
 }
 
 }

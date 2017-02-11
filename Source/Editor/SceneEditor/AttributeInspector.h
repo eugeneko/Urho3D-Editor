@@ -40,7 +40,7 @@ private:
     /// Create body of inspector.
     void CreateBody();
     /// Create node panel.
-    QGridLayout* CreateNodePanel();
+    QWidget* CreateNodePanel();
     /// Create node title string.
     QString CreateNodePanelTitle();
 

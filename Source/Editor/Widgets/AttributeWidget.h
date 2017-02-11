@@ -3,17 +3,27 @@
 #include <Urho3D/Core/Variant.h>
 #include <QWidget>
 
+namespace Urho3D
+{
+
+struct AttributeInfo;
+
+}
+
 namespace Urho3DEditor
 {
 
-/// Interface of Urho3D::Variant editor widget.
-class VariantEditorWidget : public QWidget
+/// Interface of Urho3D::Serializable attribute editor widget.
+class AttributeWidget : public QWidget
 {
     Q_OBJECT
 
 public:
+    /// Construct widget for attribute.
+    static AttributeWidget* Construct(const Urho3D::AttributeInfo& attribute);
+
     /// Construct.
-    VariantEditorWidget(QWidget* parent = nullptr);
+    AttributeWidget(QWidget* parent = nullptr);
     /// Get variant type.
     virtual Urho3D::VariantType GetVariantType() const = 0;
     /// Get variant value. Value of result variant may be partially or fully re-written.

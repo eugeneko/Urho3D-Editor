@@ -18,12 +18,16 @@ class CollapsiblePanelWidget : public QWidget
 public:
     /// Construct.
     CollapsiblePanelWidget(const QString& title = "", bool expanded = false, QWidget* parent = nullptr);
-    /// Set content layout.
-    void SetContentLayout(QLayout* contentLayout);
+    /// Set central widget.
+    void SetCentralWidget(QWidget* widget);
 
 private slots:
     /// Handle collapsed state changed.
     void SetCollapsed(bool checked);
+
+private:
+    /// Update sizes.
+    void UpdateSizes();
 
 private:
     /// Main layout.
@@ -34,6 +38,13 @@ private:
     QFrame* headerLine_;
     /// Body.
     QScrollArea* body_;
+    /// Is expanded?
+    bool expanded_;
+    /// Height of the header.
+    int headerHeight_;
+    /// Height of the body.
+    int bodyHeight_;
+
 };
 
 }

@@ -1,12 +1,12 @@
-#include "VariantEditorWidgetImpl.h"
+#include "AttributeWidgetImpl.h"
 #include "../Bridge.h"
 
 #include <QLabel>
 namespace Urho3DEditor
 {
 
-StringEditorWidget::StringEditorWidget(QWidget* parent /*= nullptr*/)
-    : VariantEditorWidget(parent)
+StringAttributeWidget::StringAttributeWidget(QWidget* parent /*= nullptr*/)
+    : AttributeWidget(parent)
     , layout_(new QGridLayout(this))
     , widget_(new QLineEdit(this))
     , undefined_(false)
@@ -17,25 +17,25 @@ StringEditorWidget::StringEditorWidget(QWidget* parent /*= nullptr*/)
     SetUndefined(false);
 }
 
-void StringEditorWidget::SetUndefined(bool undefined)
+void StringAttributeWidget::SetUndefined(bool undefined)
 {
     undefined_ = undefined;
     widget_->setPlaceholderText(undefined_ ? "(undefined)" : "(empty)");
 }
 
-void StringEditorWidget::GetValue(Urho3D::Variant& result) const
+void StringAttributeWidget::GetValue(Urho3D::Variant& result) const
 {
     if (!undefined_)
         result = value_;
 }
 
-void StringEditorWidget::SetValue(const Urho3D::Variant& value)
+void StringAttributeWidget::SetValue(const Urho3D::Variant& value)
 {
     value_ = value.ToString();
     widget_->setText(Cast(value_));
 }
 
-void StringEditorWidget::HandleTextEdited()
+void StringAttributeWidget::HandleTextEdited()
 {
     SetUndefined(false);
     value_ = Cast(widget_->text());

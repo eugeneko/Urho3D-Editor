@@ -8,13 +8,16 @@
 namespace Urho3DEditor
 {
 
-CollapsiblePanelWidget::CollapsiblePanelWidget(const QString& title /*= ""*/, bool expanded /*= false*/,
-    QWidget* parent /*= nullptr*/)
+CollapsiblePanelWidget::CollapsiblePanelWidget(const QString& title /*= ""*/,
+    bool expanded /*= false*/, QWidget* parent /*= nullptr*/)
     : QWidget(parent)
     , mainLayout_(new QGridLayout(this))
     , toggleButton_(new QToolButton(this))
     , headerLine_(new QFrame(this))
     , body_(new QScrollArea(this))
+    , expanded_(expanded)
+    , headerHeight_(0)
+    , bodyHeight_(0)
 {
     toggleButton_->setStyleSheet("QToolButton {border: none;}");
     toggleButton_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
@@ -32,6 +35,10 @@ CollapsiblePanelWidget::CollapsiblePanelWidget(const QString& title /*= ""*/, bo
     body_->setMaximumHeight(0);
     body_->setMinimumHeight(0);
 
+    body_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    body_->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    body_->setWidgetResizable(true);
+
     mainLayout_->setVerticalSpacing(0);
     mainLayout_->setContentsMargins(0, 0, 0, 0);
 
@@ -40,26 +47,31 @@ CollapsiblePanelWidget::CollapsiblePanelWidget(const QString& title /*= ""*/, bo
     mainLayout_->addWidget(body_, 1, 0, 1, 3);
     setLayout(mainLayout_);
 
+    headerHeight_ = mainLayout_->sizeHint().height();
+
     connect(toggleButton_, SIGNAL(clicked(bool)), this, SLOT(SetCollapsed(bool)));
-    if (expanded)
-        toggleButton_->click();
+    UpdateSizes();
 }
 
-void CollapsiblePanelWidget::SetContentLayout(QLayout* contentLayout)
+void CollapsiblePanelWidget::SetCentralWidget(QWidget* widget)
 {
-    body_->setLayout(contentLayout);
-    SetCollapsed(toggleButton_->isChecked());
+    body_->setWidget(widget);
+    bodyHeight_ = widget->sizeHint().height();
+    UpdateSizes();
 }
 
 void CollapsiblePanelWidget::SetCollapsed(bool checked)
 {
-    const int collapsedHeight = sizeHint().height() - body_->maximumHeight();
-    const int contentHeight = body_->layout() ? body_->layout()->sizeHint().height() : 0;
+    expanded_ = checked;
+    UpdateSizes();
+}
 
-    toggleButton_->setArrowType(checked ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
-    setMinimumHeight(checked ? collapsedHeight + contentHeight : collapsedHeight);
-    setMaximumHeight(checked ? collapsedHeight + contentHeight : collapsedHeight);
-    body_->setMaximumHeight(checked ? contentHeight : 0);
+void CollapsiblePanelWidget::UpdateSizes()
+{
+    toggleButton_->setArrowType(expanded_ ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
+    setMinimumHeight(expanded_ ? headerHeight_ + bodyHeight_ : headerHeight_);
+    setMaximumHeight(expanded_ ? headerHeight_ + bodyHeight_ : headerHeight_);
+    body_->setMaximumHeight(expanded_ ? bodyHeight_ : 0);
 }
 
 }
