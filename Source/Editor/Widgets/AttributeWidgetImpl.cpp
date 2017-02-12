@@ -11,6 +11,9 @@ StringAttributeWidget::StringAttributeWidget(QWidget* parent /*= nullptr*/)
     , widget_(new QLineEdit(this))
     , undefined_(false)
 {
+    connect(widget_, &QLineEdit::textEdited, this, &StringAttributeWidget::HandleTextEdited);
+    connect(widget_, &QLineEdit::returnPressed, this, &StringAttributeWidget::valueCommitted);
+
     layout_->addWidget(widget_, 0, 0);
     setLayout(layout_);
 
@@ -33,6 +36,28 @@ void StringAttributeWidget::SetValue(const Urho3D::Variant& value)
 {
     value_ = value.ToString();
     widget_->setText(Cast(value_));
+}
+
+void StringAttributeWidget::SetMergedValue(const QVector<Urho3D::Variant>& value)
+{
+    if (value.empty())
+    {
+        SetValue("");
+        SetUndefined(false);
+    }
+    else
+    {
+        bool undefined = false;
+        for (int i = 1; i < value.size(); ++i)
+            if (value[i] != value[0])
+            {
+                undefined = true;
+                break;
+            }
+
+        SetUndefined(undefined);
+        SetValue(undefined ? "" : value[0]);
+    }
 }
 
 void StringAttributeWidget::HandleTextEdited()

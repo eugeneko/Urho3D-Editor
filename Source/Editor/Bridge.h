@@ -37,7 +37,7 @@ inline Qt::MouseButton ConvertMouseButton(int button)
 }
 
 /// Vector of serializables.
-using SerializableVector = QVector<Urho3D::WeakPtr<Urho3D::Serializable>>;
+using SerializableVector = QVector<Urho3D::Serializable*>;
 
 /// Gather serializables from container.
 template <class T>
@@ -45,7 +45,7 @@ SerializableVector GatherSerializables(const T& container)
 {
     SerializableVector result;
     for (Urho3D::Serializable* item : container)
-        result.push_back(Urho3D::WeakPtr<Urho3D::Serializable>(item));
+        result.push_back(item);
     return result;
 }
 

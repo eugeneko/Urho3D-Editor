@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Module.h"
+#include "../Bridge.h"
 #include <QAction>
 #include <QScopedPointer>
 
@@ -12,6 +13,7 @@ namespace Urho3DEditor
 
 class Document;
 class SceneDocument;
+class SerializableWidget;
 
 /// Attribute Inspector.
 class AttributeInspector : public Module
@@ -36,11 +38,19 @@ private slots:
     /// Handle selection changed.
     void HandleSelectionChanged();
 
+    /// Handle attribute changed (by any reason).
+    void HandleAttributeChanged();
+    /// Handle attribute edited (from editor widgets).
+    void HandleAttributeEdited(const SerializableVector& serializables, unsigned attributeIndex,
+        const QVector<Urho3D::Variant>& newValues);
+    /// Handle attribute edit committed.
+    void HandleAttributeEditCommitted();
+
 private:
     /// Create body of inspector.
     void CreateBody();
     /// Create node panel.
-    QWidget* CreateNodePanel();
+    SerializableWidget* CreateNodePanel();
     /// Create node title string.
     QString CreateNodePanelTitle();
 
@@ -52,6 +62,12 @@ private:
     /// Current document.
     SceneDocument* document_;
 
+    /// Whether to suppress updates.
+    bool suppressUpdates_;
+    /// Serializable editors.
+    QVector<SerializableWidget*> serializableEditors_;
+    /// Generation of attribute changes. Changes within one generation are squashed.
+    unsigned generation_;
 };
 
 }

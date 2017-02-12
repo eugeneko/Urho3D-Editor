@@ -1,5 +1,6 @@
 #include "AttributeInspector.h"
 #include "SceneDocument.h"
+#include "SceneActions.h"
 #include "../MainWindow.h"
 #include "../Widgets/CollapsiblePanelWidget.h"
 #include "../Widgets/AttributeWidgetImpl.h"
@@ -15,6 +16,8 @@ namespace Urho3DEditor
 
 AttributeInspector::AttributeInspector()
     : document_(nullptr)
+    , suppressUpdates_(false)
+    , generation_(0)
 {
 }
 
@@ -58,11 +61,14 @@ void AttributeInspector::HandleCurrentDocumentChanged(Document* document)
         disconnect(document_, 0, this, 0);
         document_ = nullptr;
         delete widget_->widget();
+        serializableEditors_.clear();
     }
     if (SceneDocument* newDocument = dynamic_cast<SceneDocument*>(document))
     {
         document_ = newDocument;
-        connect(document_, SIGNAL(selectionChanged()), this, SLOT(HandleSelectionChanged()));
+        connect(document_, &SceneDocument::selectionChanged, this, &AttributeInspector::HandleSelectionChanged);
+        connect(document_, &SceneDocument::attributeChanged, this, &AttributeInspector::HandleAttributeChanged);
+        connect(document_, &SceneDocument::nodeTransformChanged, this, &AttributeInspector::HandleAttributeChanged);
         CreateBody();
     }
 }
@@ -72,9 +78,72 @@ void AttributeInspector::HandleSelectionChanged()
     CreateBody();
 }
 
+void AttributeInspector::HandleAttributeChanged()
+{
+    if (suppressUpdates_)
+        return;
+    for (SerializableWidget* editor : serializableEditors_)
+        editor->Update();
+}
+
+void AttributeInspector::HandleAttributeEdited(const SerializableVector& serializables,
+    unsigned attributeIndex, const QVector<Urho3D::Variant>& newValues)
+{
+    assert(serializables.size() == newValues.size());
+
+    using namespace Urho3D;
+    if (!document_)
+        return;
+    suppressUpdates_ = true;
+
+    const SerializableType type = GetSerializableType(*serializables[0]);
+    QVector<EditSerializableAttributeAction> actions;
+    actions.resize(serializables.size());
+
+    // Gather IDs
+    switch (type)
+    {
+    case SerializableType::Node:
+        for (int i = 0; i < serializables.size(); ++i)
+        {
+            Node* node = dynamic_cast<Node*>(serializables[i]);
+            assert(node);
+            actions[i].serializableId_ = node->GetID();
+        }
+        break;
+    case SerializableType::Component:
+        for (int i = 0; i < serializables.size(); ++i)
+        {
+            Component* component = dynamic_cast<Component*>(serializables[i]);
+            assert(component);
+            actions[i].serializableId_ = component->GetID();
+        }
+        break;
+    }
+
+    // Gather values
+    for (int i = 0; i < serializables.size(); ++i)
+    {
+        actions[i].oldValue_ = serializables[i]->GetAttribute(attributeIndex);
+        actions[i].newValue_ = newValues[i];
+    }
+
+    // Add action
+    document_->AddAction(new EditMultipleSerializableAttributeAction(*document_,
+        type, generation_, attributeIndex, actions));
+    
+    suppressUpdates_ = false;
+}
+
+void AttributeInspector::HandleAttributeEditCommitted()
+{
+    ++generation_;
+}
+
 void AttributeInspector::CreateBody()
 {
     using namespace Urho3D;
+    serializableEditors_.clear();
     if (!widget_ || !document_)
         return;
 
@@ -86,7 +155,13 @@ void AttributeInspector::CreateBody()
     if (!selectedNodes.empty())
     {
         QScopedPointer<CollapsiblePanelWidget> nodePanel(new CollapsiblePanelWidget(CreateNodePanelTitle(), true));
-        nodePanel->SetCentralWidget(CreateNodePanel());
+        QScopedPointer<SerializableWidget> nodePanelBody(CreateNodePanel());
+
+        connect(&*nodePanelBody, &SerializableWidget::attributeChanged, this, &AttributeInspector::HandleAttributeEdited);
+        connect(&*nodePanelBody, &SerializableWidget::attributeCommitted, this, &AttributeInspector::HandleAttributeEditCommitted);
+
+        serializableEditors_.push_back(&*nodePanelBody);
+        nodePanel->SetCentralWidget(nodePanelBody.take());
         bodyLayout->addWidget(nodePanel.take());
     }
     bodyLayout->addStretch(1);
@@ -95,7 +170,7 @@ void AttributeInspector::CreateBody()
     widget_->setWidget(bodyWidget.take());
 }
 
-QWidget* AttributeInspector::CreateNodePanel()
+SerializableWidget* AttributeInspector::CreateNodePanel()
 {
     using namespace Urho3D;
     const SceneDocument::NodeSet& selectedNodes = document_->GetSelectedNodesAndComponents();

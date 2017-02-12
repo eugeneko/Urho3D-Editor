@@ -25,6 +25,8 @@ public:
     virtual void GetValue(Urho3D::Variant& result) const override;
     /// @see AttributeWidget::SetValue
     virtual void SetValue(const Urho3D::Variant& value) override;
+    /// @see AttributeWidget::SetMergedValue
+    virtual void SetMergedValue(const QVector<Urho3D::Variant>& value) override;
 
 private slots:
     /// Handle text edited.

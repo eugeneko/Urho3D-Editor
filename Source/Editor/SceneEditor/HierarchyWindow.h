@@ -93,6 +93,8 @@ private slots:
     void HandleContextMenuRequested(const QPoint& point);
     /// Handle component re-ordered.
     void HandleComponentReordered(Urho3D::Component& component);
+    /// Handle attribute changed.
+    void HandleAttributeChanged();
 
 private:
     /// Handle node added.

@@ -7,43 +7,93 @@
 namespace Urho3DEditor
 {
 
+const Urho3D::Vector<Urho3D::AttributeInfo> SerializableWidget::emptyAttribArray;
+
 SerializableWidget::SerializableWidget(const SerializableVector& serializables, QWidget* parent /*= nullptr*/)
     : QWidget(parent)
     , layout_(new QGridLayout(this))
-    , serializables_(serializables)
+    , attributes_(&emptyAttribArray)
 {
     using namespace Urho3D;
     setLayout(layout_);
 
     // Enumerate attributes
-    String serializableType;
-    const Vector<AttributeInfo>* attributes = nullptr;
-    for (Urho3D::Serializable* serializable : serializables_)
+    for (Urho3D::Serializable* serializable : serializables)
     {
-        if (serializable && serializableType.Empty())
-        {
-            serializableType = serializable->GetTypeName();
-            attributes = serializable->GetAttributes();
-            break;
-        }
-    }
-    if (!attributes)
-        return;
+        assert(serializable);
 
-    int row = layout_->rowCount();
-    for (const AttributeInfo& attrib : *attributes)
+        if (serializableType_.Empty())
+        {
+            serializableType_ = serializable->GetTypeName();
+            attributes_ = serializable->GetAttributes();
+        }
+        if (serializable->GetTypeName() == serializableType_)
+            serializables_.push_back(serializable);
+    }
+
+    // Create widgets
+    for (unsigned i = 0; i < attributes_->Size(); ++i)
     {
+        const AttributeInfo& attrib = attributes_->At(i);
         if (attrib.mode_ & Urho3D::AM_NOEDIT)
             continue;
 
+        const int row = layout_->rowCount();
         layout_->addWidget(new QLabel(Cast(attrib.name_)), row, 0);
-        if (AttributeWidget* attribWidget = AttributeWidget::Construct(attrib))
+        if (AttributeWidget* attribWidget = AttributeWidget::Create(attrib, i))
         {
             layout_->addWidget(attribWidget, row, 1);
-            attributes_.push_back(attribWidget);
+            attributeWidgets_.push_back(attribWidget);
+            connect(attribWidget, &AttributeWidget::valueChanged, this, &SerializableWidget::HandleAttributeChanged);
+            connect(attribWidget, &AttributeWidget::valueCommitted, this, &SerializableWidget::HandleAttributeCommitted);
         }
-        ++row;
     }
+
+    // Setup values
+    Update();
+}
+
+void SerializableWidget::Update()
+{
+    for (AttributeWidget* widget : attributeWidgets_)
+        widget->SetMergedValue(GatherAttribute(widget->GetIndex()));
+}
+
+void SerializableWidget::HandleAttributeChanged()
+{
+    AttributeWidget* attribWidget = qobject_cast<AttributeWidget*>(sender());
+    if (!attribWidget || serializables_.empty())
+        return;
+
+    const unsigned attribIndex = attribWidget->GetIndex();
+    QVector<Urho3D::Variant> newValues;
+    for (Urho3D::Serializable* serializable : serializables_)
+    {
+        Urho3D::Variant oldValue = serializable->GetAttribute(attribIndex);
+        attribWidget->GetValue(oldValue);
+        newValues.push_back(oldValue);
+    }
+
+    emit attributeChanged(serializables_, attribIndex, newValues);
+}
+
+void SerializableWidget::HandleAttributeCommitted()
+{
+    AttributeWidget* attribWidget = qobject_cast<AttributeWidget*>(sender());
+    if (!attribWidget || serializables_.empty())
+        return;
+
+    const unsigned attribIndex = attribWidget->GetIndex();
+    emit attributeCommitted(serializables_, attribIndex);
+}
+
+QVector<Urho3D::Variant> SerializableWidget::GatherAttribute(unsigned attribIndex) const
+{
+    QVector<Urho3D::Variant> result;
+    result.resize(serializables_.size());
+    for (int i = 0; i < serializables_.size(); ++i)
+        result[i] = serializables_[i]->GetAttribute(attribIndex);
+    return result;
 }
 
 }

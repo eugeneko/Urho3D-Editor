@@ -298,4 +298,83 @@ void ComponentHierarchyAction::MoveComponent(unsigned index)
     }
 }
 
+//////////////////////////////////////////////////////////////////////////
+SerializableType GetSerializableType(Urho3D::Serializable& serializable)
+{
+    if (dynamic_cast<Urho3D::Node*>(&serializable))
+        return SerializableType::Node;
+    else if (dynamic_cast<Urho3D::Component*>(&serializable))
+        return SerializableType::Component;
+
+    assert(0);
+    return SerializableType::Node;
+}
+
+//////////////////////////////////////////////////////////////////////////
+EditMultipleSerializableAttributeAction::EditMultipleSerializableAttributeAction(SceneDocument& document,
+    SerializableType type, unsigned generation, unsigned attribute, const QVector<EditSerializableAttributeAction>& actions)
+    : document_(document)
+    , type_(type)
+    , generation_(generation)
+    , attribute_(attribute)
+    , actions_(actions)
+{
+}
+
+bool EditMultipleSerializableAttributeAction::mergeWith(const QUndoCommand* other)
+{
+    // Check basic compatibility
+    const EditMultipleSerializableAttributeAction* next = dynamic_cast<const EditMultipleSerializableAttributeAction*>(other);
+    if (!next || next->generation_ != generation_ || next->actions_.size() != actions_.size() || next->type_ != type_)
+        return false;
+
+    // Check serializables matching
+    for (int i = 0; i < actions_.size(); ++i)
+        if (next->actions_[i].serializableId_ != actions_[i].serializableId_)
+            return false;
+
+    // Merge
+    for (int i = 0; i < actions_.size(); ++i)
+    {
+        assert(actions_[i].newValue_ == next->actions_[i].oldValue_);
+        actions_[i].newValue_ = next->actions_[i].newValue_;
+    }
+    return true;
+}
+
+void EditMultipleSerializableAttributeAction::undo()
+{
+    for (int i = actions_.size() - 1; i >= 0; --i)
+        SetAttribute(actions_[i].serializableId_, actions_[i].oldValue_);
+}
+
+void EditMultipleSerializableAttributeAction::redo()
+{
+    for (int i = 0; i < actions_.size(); ++i)
+        SetAttribute(actions_[i].serializableId_, actions_[i].newValue_);
+}
+
+Urho3D::Serializable* EditMultipleSerializableAttributeAction::GetSerializable(unsigned id)
+{
+    Urho3D::Scene& scene = document_.GetScene();
+    switch (type_)
+    {
+    case SerializableType::Node:
+        return scene.GetNode(id);
+    case SerializableType::Component:
+        return scene.GetComponent(id);
+    }
+    return nullptr;
+}
+
+void EditMultipleSerializableAttributeAction::SetAttribute(unsigned serializableId, const Urho3D::Variant& value)
+{
+    if (Urho3D::Serializable* serializable = GetSerializable(serializableId))
+    {
+        assert(attribute_ < serializable->GetNumAttributes());
+        serializable->SetAttribute(attribute_, value);
+        emit document_.attributeChanged(*serializable, attribute_);
+    }
+}
+
 }

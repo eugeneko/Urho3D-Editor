@@ -124,6 +124,7 @@ SceneHierarchyWidget::SceneHierarchyWidget(SceneDocument& document)
 
     connect(treeView_->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(HandleTreeSelectionChanged()));
     connect(&document_, SIGNAL(selectionChanged()), this, SLOT(HandleSceneSelectionChanged()));
+    connect(&document_, &SceneDocument::attributeChanged, this, &SceneHierarchyWidget::HandleAttributeChanged);
     connect(treeView_.data(), SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(HandleContextMenuRequested(const QPoint&)));
 
     Urho3D::Scene& scene = document_.GetScene();
@@ -231,6 +232,11 @@ void SceneHierarchyWidget::HandleComponentRemoved(Urho3D::StringHash eventType, 
 void SceneHierarchyWidget::HandleComponentReordered(Urho3D::Component& component)
 {
     treeModel_->UpdateObject(&component);
+}
+
+void SceneHierarchyWidget::HandleAttributeChanged()
+{
+    update();
 }
 
 QSet<Urho3D::Object*> SceneHierarchyWidget::GatherSelection()

@@ -5,6 +5,7 @@
 #include <Urho3D/Container/Ptr.h>
 #include <Urho3D/Resource/XMLFile.h>
 #include <QUndoCommand>
+#include <QVector>
 
 namespace Urho3D
 {
@@ -12,6 +13,7 @@ namespace Urho3D
 class Scene;
 class Node;
 class Component;
+class Serializable;
 
 }
 
@@ -234,6 +236,67 @@ private:
     unsigned oldIndex_;
     /// New index.
     unsigned newIndex_;
+};
+
+/// Serializable type.
+enum class SerializableType
+{
+    /// Node.
+    Node,
+    /// Component.
+    Component
+};
+
+/// Get serializable type.
+SerializableType GetSerializableType(Urho3D::Serializable& serializable);
+
+/// Serializable attribute modified.
+struct EditSerializableAttributeAction
+{
+    /// Serializable ID.
+    unsigned serializableId_;
+    /// Old value.
+    Urho3D::Variant oldValue_;
+    /// New value.
+    Urho3D::Variant newValue_;
+};
+
+/// Multiple serializables attribute modified.
+class EditMultipleSerializableAttributeAction : public QUndoCommand
+{
+public:
+    /// Construct.
+    EditMultipleSerializableAttributeAction(SceneDocument& document,
+        SerializableType type, unsigned generation, unsigned attribute,
+        const QVector<EditSerializableAttributeAction>& actions);
+
+    /// @see QUndoCommand::id
+    virtual int id() const override { return 0; }
+    /// @see QUndoCommand::mergeWith
+    virtual bool mergeWith(const QUndoCommand* other) override;
+    /// @see QUndoCommand::undo
+    virtual void undo() override;
+    /// @see QUndoCommand::redo
+    virtual void redo() override;
+
+private:
+    /// Get serializable by ID.
+    Urho3D::Serializable* GetSerializable(unsigned id);
+    /// Set attribute value.
+    void SetAttribute(unsigned serializableId, const Urho3D::Variant& value);
+
+private:
+    /// Document.
+    SceneDocument& document_;
+    /// Serializable type.
+    SerializableType type_;
+    /// Generation.
+    unsigned generation_;
+    /// Attribute.
+    unsigned attribute_;
+    /// Actions.
+    QVector<EditSerializableAttributeAction> actions_;
+
 };
 
 }
