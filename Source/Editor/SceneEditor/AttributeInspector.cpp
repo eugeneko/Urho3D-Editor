@@ -27,6 +27,7 @@ bool AttributeInspector::Initialize()
 
     // Connect to signals
     connect(&mainWindow, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
+    connect(&mainWindow, SIGNAL(updateMenu(QMenu*)), this, SLOT(UpdateMenu()));
 
     // Create widget
     widget_.reset(new QDockWidget("Attribute Inspector"));
