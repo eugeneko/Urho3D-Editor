@@ -325,7 +325,8 @@ bool EditMultipleSerializableAttributeAction::mergeWith(const QUndoCommand* othe
 {
     // Check basic compatibility
     const EditMultipleSerializableAttributeAction* next = dynamic_cast<const EditMultipleSerializableAttributeAction*>(other);
-    if (!next || next->generation_ != generation_ || next->actions_.size() != actions_.size() || next->type_ != type_)
+    if (!next || next->generation_ != generation_ || next->attribute_ != attribute_
+        || next->actions_.size() != actions_.size() || next->type_ != type_)
         return false;
 
     // Check serializables matching
