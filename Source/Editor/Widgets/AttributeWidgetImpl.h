@@ -108,7 +108,7 @@ public:
     /// @see AttributeWidget::SetValue
     virtual bool SetValue(const Urho3D::Variant& value) override;
     /// @see AttributeWidget::SetMergedValue
-    virtual void SetMergedValue(const VariantArray& value) override;
+    virtual void SetMergedValue(const VariantArray& values) override;
 
 private:
     /// Set value if defined.
@@ -124,6 +124,24 @@ private:
     QGridLayout* layout_;
     /// Field widget.
     QVector<DoubleAttributeWidget*> fieldWidgets_;
+};
+
+/// Quaternion Attribute Editor.
+class QuaternionAttributeWidget : public FloatVectorAttributeWidget
+{
+    Q_OBJECT
+
+public:
+    /// Construct.
+    QuaternionAttributeWidget(QWidget* parent = nullptr);
+
+    /// @see AttributeWidget::GetValue
+    virtual void GetValue(Urho3D::Variant& result) const override;
+    /// @see AttributeWidget::SetValue
+    virtual bool SetValue(const Urho3D::Variant& value) override;
+    /// @see AttributeWidget::SetMergedValue
+    virtual void SetMergedValue(const VariantArray& values) override;
+
 };
 
 }

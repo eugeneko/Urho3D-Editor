@@ -70,7 +70,7 @@ public:
     /// Set undefined flag.
     virtual void SetUndefined(bool undefined);
     /// Set variant value by merging multiple values.
-    virtual void SetMergedValue(const VariantArray& value) override;
+    virtual void SetMergedValue(const VariantArray& values) override;
     /// Return if the value is undefined.
     bool IsUndefined() const { return undefined_; }
 

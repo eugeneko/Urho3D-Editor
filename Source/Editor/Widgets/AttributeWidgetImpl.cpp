@@ -216,8 +216,8 @@ void DoubleAttributeWidget::HandleMouseMoveEvent(QMouseEvent* event)
     static const QPair<int, int> scalesArray[] =
     {
         qMakePair(1,  1),
-        qMakePair(3,  5),
-        qMakePair(5, 10),
+//         qMakePair(3,  5),
+//         qMakePair(5, 10),
     };
 
     const QPoint delta = event->globalPos() - prevPosition_;
@@ -340,15 +340,15 @@ bool FloatVectorAttributeWidget::SetValue(const Urho3D::Variant& value)
     return true;
 }
 
-void FloatVectorAttributeWidget::SetMergedValue(const VariantArray& value)
+void FloatVectorAttributeWidget::SetMergedValue(const VariantArray& values)
 {
-    if (value.empty())
+    if (values.empty())
     {
         SetValue(Urho3D::Variant::EMPTY);
     }
     else
     {
-        const QVector<VariantArray> elements = SliceVectorVariantArray(value);
+        const QVector<VariantArray> elements = SliceVectorVariantArray(values);
         for (int i = 0; i < qMin(elements.size(), fieldWidgets_.size()); ++i)
             fieldWidgets_[i]->SetMergedValue(elements[i]);
         for (int i = elements.size(); i < fieldWidgets_.size(); ++i)
@@ -364,6 +364,35 @@ void FloatVectorAttributeWidget::SetIfDefined(int index, float& value) const
     if (fieldWidgets_.size() > index && !fieldWidgets_[index]->IsUndefined())
         value = static_cast<float>(fieldWidgets_[index]->GetRawValue());
 
+}
+
+//////////////////////////////////////////////////////////////////////////
+QuaternionAttributeWidget::QuaternionAttributeWidget(QWidget* parent /*= nullptr*/)
+    : FloatVectorAttributeWidget(Urho3D::VAR_VECTOR3, parent)
+{
+}
+
+void QuaternionAttributeWidget::GetValue(Urho3D::Variant& result) const
+{
+    // Get Euler angles
+    Urho3D::Variant eulerAngles = result.GetQuaternion().EulerAngles();
+    FloatVectorAttributeWidget::GetValue(eulerAngles);
+
+    const Urho3D::Vector3 xyz = eulerAngles.GetVector3();
+    result = Urho3D::Quaternion(xyz.x_, xyz.y_, xyz.z_);
+}
+
+bool QuaternionAttributeWidget::SetValue(const Urho3D::Variant& value)
+{
+    return FloatVectorAttributeWidget::SetValue(value.GetQuaternion().EulerAngles());
+}
+
+void QuaternionAttributeWidget::SetMergedValue(const VariantArray& values)
+{
+    VariantArray anglesArray(values.size());
+    for (int i = 0; i < values.size(); ++i)
+        anglesArray[i] = values[i].GetQuaternion().EulerAngles();
+    FloatVectorAttributeWidget::SetMergedValue(anglesArray);
 }
 
 }

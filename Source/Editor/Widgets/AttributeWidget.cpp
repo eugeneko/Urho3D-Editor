@@ -21,6 +21,8 @@ AttributeWidget* AttributeWidget::Construct(const Urho3D::AttributeInfo& info, Q
     case VAR_RECT:
     case VAR_COLOR:
         return new FloatVectorAttributeWidget(info.type_, parent);
+    case VAR_QUATERNION:
+        return new QuaternionAttributeWidget(parent);
     default:
         return nullptr;
     }
@@ -59,9 +61,9 @@ void SolidAttributeWidget::SetUndefined(bool undefined)
     undefined_ = undefined;
 }
 
-void SolidAttributeWidget::SetMergedValue(const VariantArray& value)
+void SolidAttributeWidget::SetMergedValue(const VariantArray& values)
 {
-    if (value.empty())
+    if (values.empty())
     {
         SetValue(Urho3D::Variant::EMPTY);
         SetUndefined(false);
@@ -69,15 +71,15 @@ void SolidAttributeWidget::SetMergedValue(const VariantArray& value)
     else
     {
         bool undefined = false;
-        for (int i = 1; i < value.size(); ++i)
-            if (value[i] != value[0])
+        for (int i = 1; i < values.size(); ++i)
+            if (values[i] != values[0])
             {
                 undefined = true;
                 break;
             }
 
         SetUndefined(undefined);
-        SetValue(undefined ? Urho3D::Variant::EMPTY : value[0]);
+        SetValue(undefined ? Urho3D::Variant::EMPTY : values[0]);
     }
 }
 
