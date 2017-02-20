@@ -337,7 +337,7 @@ bool EditMultipleSerializableAttributeAction::mergeWith(const QUndoCommand* othe
     // Merge
     for (int i = 0; i < actions_.size(); ++i)
     {
-        assert(actions_[i].newValue_ == next->actions_[i].oldValue_);
+        assert(actions_[i].newValue_.GetType() == next->actions_[i].newValue_.GetType());
         actions_[i].newValue_ = next->actions_[i].newValue_;
     }
     return true;

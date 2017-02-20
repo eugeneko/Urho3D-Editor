@@ -126,7 +126,7 @@ DoubleAttributeWidget::DoubleAttributeWidget(Urho3D::VariantType type, QWidget* 
 {
     labelWidget_->setAttribute(Qt::WA_TranslucentBackground);
     labelWidget_->installEventFilter(this);
-    labelWidget_->setCursor(Qt::SizeVerCursor);
+    labelWidget_->setCursor(Qt::SizeHorCursor);
     widget_->setValidator(new QDoubleValidator(-Urho3D::M_INFINITY, Urho3D::M_INFINITY, 2, this));
 
     connect(widget_, &QLineEdit::textEdited, this, &DoubleAttributeWidget::HandleTextEdited);
@@ -182,58 +182,65 @@ bool DoubleAttributeWidget::eventFilter(QObject* watched, QEvent* event)
     switch (event->type())
     {
     case QEvent::MouseMove:
-        HandleMouseMoveEvent(static_cast<QMouseEvent*>(event));
-        break;
+        return HandleMouseMoveEvent(static_cast<QMouseEvent*>(event));
     case QEvent::MouseButtonPress:
-        HandleMouseButtonPressEvent(static_cast<QMouseEvent*>(event));
-        break;
+        return HandleMouseButtonPressEvent(static_cast<QMouseEvent*>(event));
     case QEvent::MouseButtonRelease:
-        HandleMouseButtonReleaseEvent(static_cast<QMouseEvent*>(event));
-        break;
+        return HandleMouseButtonReleaseEvent(static_cast<QMouseEvent*>(event));
     }
     return QObject::eventFilter(watched, event);
 }
 
-void DoubleAttributeWidget::HandleMouseButtonPressEvent(QMouseEvent* event)
+bool DoubleAttributeWidget::HandleMouseButtonPressEvent(QMouseEvent* event)
 {
     prevPosition_ = event->globalPos();
     isMouseDragging_ = true;
+    event->accept();
+    return true;
 }
 
-void DoubleAttributeWidget::HandleMouseButtonReleaseEvent(QMouseEvent* event)
+bool DoubleAttributeWidget::HandleMouseButtonReleaseEvent(QMouseEvent* event)
 {
     if (isMouseDragging_)
         emit valueCommitted();
     isMouseDragging_ = false;
+    event->accept();
+    return true;
 }
 
-void DoubleAttributeWidget::HandleMouseMoveEvent(QMouseEvent* event)
+bool DoubleAttributeWidget::HandleMouseMoveEvent(QMouseEvent* event)
 {
     if (!event->buttons().testFlag(Qt::LeftButton) || !isMouseDragging_)
-        return;
+        return false;
 
-    static const double step = 0.01;
-    static const QPair<int, int> scalesArray[] =
-    {
-        qMakePair(1,  1),
-//         qMakePair(3,  5),
-//         qMakePair(5, 10),
-    };
-
+    // Compute delta
     const QPoint delta = event->globalPos() - prevPosition_;
-    QCursor::setPos(prevPosition_);
+    prevPosition_ = event->globalPos();
 
-    const int dY = delta.y();
-    int acceleration = 0;
-    for (const QPair<int, int>& elem : scalesArray)
+    // Wrap mouse
+    const QPoint windowSize(window()->width() - 2, window()->height() - 2);
+    const QPoint windowPosition = window()->mapToGlobal(QPoint(1, 1));
+    const QRect windowRect(windowPosition, windowPosition + windowSize);
+    if (prevPosition_.x() < windowRect.left())
     {
-        if (qAbs(dY) < elem.first)
-            break;
-        acceleration = elem.second;
+        prevPosition_.setX(windowRect.right());
+        QCursor::setPos(prevPosition_);
     }
-    value_ = Urho3D::Round((value_ - dY * acceleration * step) / step) * step;
+    else if (prevPosition_.x() > windowRect.right())
+    {
+        prevPosition_.setX(windowRect.left());
+        QCursor::setPos(prevPosition_);
+    }
+
+    // Apply changes
+    static const double step = 0.01;
+    const int dX = delta.x() % windowSize.x();
+    value_ = Urho3D::Round((value_ + dX * step) / step) * step;
     SetValue(value_);
     emit valueChanged();
+
+    event->accept();
+    return true;
 }
 
 void DoubleAttributeWidget::resizeEvent(QResizeEvent* event)

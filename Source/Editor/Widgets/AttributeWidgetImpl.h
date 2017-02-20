@@ -64,11 +64,11 @@ private slots:
 
 private:
     /// Mouse button press.
-    void HandleMouseButtonPressEvent(QMouseEvent* event);
+    bool HandleMouseButtonPressEvent(QMouseEvent* event);
     /// Mouse button release.
-    void HandleMouseButtonReleaseEvent(QMouseEvent* event);
+    bool HandleMouseButtonReleaseEvent(QMouseEvent* event);
     /// Mouse event.
-    void HandleMouseMoveEvent(QMouseEvent* event);
+    bool HandleMouseMoveEvent(QMouseEvent* event);
     /// @see QObject::mouseMoveEvent
     virtual bool eventFilter(QObject* watched, QEvent* event) override;
     /// @see QWidget::resizeEvent
