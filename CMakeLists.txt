@@ -57,8 +57,7 @@ target_link_libraries (Urho3DEditor Qt5::Widgets Qt5::Xml)
 #
 
 qt5_add_resources(RESOURCES ${CMAKE_SOURCE_DIR}/Resources/QDarkStyle/style.qrc ${CMAKE_SOURCE_DIR}/Resources/Resources.qrc)
-add_executable (Urho3DEditorLauncher WIN32 ${CMAKE_SOURCE_DIR}/Source/EditorLauncher/Main.cpp ${RESOURCES})
-target_link_libraries (Urho3DEditorLauncher Urho3DEditor)
+set (SOURCE_FILES ${CMAKE_SOURCE_DIR}/Source/EditorLauncher/Main.cpp ${RESOURCES})
 set (TARGET_NAME Urho3DEditorLauncher)
-define_dependency_libs (Urho3D)
-setup_target ()
+setup_main_executable ()
+target_link_libraries (Urho3DEditorLauncher Urho3DEditor)
