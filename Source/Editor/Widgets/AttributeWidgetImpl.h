@@ -9,6 +9,23 @@
 namespace Urho3DEditor
 {
 
+/// Line Widget that doesn't costume Undo & Redo shortcuts.
+/// \todo Revise this place when https://bugreports.qt.io/browse/QTBUG-16774 is resolved.
+class LineEdit : public QLineEdit
+{
+    Q_OBJECT
+
+public:
+    /// Construct.
+    explicit LineEdit(QWidget* parent = nullptr) : QLineEdit(parent) { }
+    /// Construct.
+    explicit LineEdit(const QString& text, QWidget* parent = nullptr) : QLineEdit(text, parent) { }
+
+private:
+    virtual bool event(QEvent* event) override;
+
+};
+
 /// String Attribute Editor.
 class StringAttributeWidget : public SolidAttributeWidget
 {
@@ -34,7 +51,7 @@ private:
     /// Layout.
     QGridLayout* layout_;
     /// Widget.
-    QLineEdit* widget_;
+    LineEdit* widget_;
     /// Value.
     Urho3D::String value_;
 };
@@ -81,7 +98,7 @@ private:
     /// Layout.
     QGridLayout* layout_;
     /// Widget.
-    QLineEdit* widget_;
+    LineEdit* widget_;
     /// Control label.
     QLabel* labelWidget_;
     /// Value.

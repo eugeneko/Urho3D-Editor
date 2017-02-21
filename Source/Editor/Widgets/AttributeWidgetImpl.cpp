@@ -75,13 +75,26 @@ int GetVaraintComponentsCount(Urho3D::VariantType type)
 }
 
 //////////////////////////////////////////////////////////////////////////
+bool LineEdit::event(QEvent* event)
+{
+    if (event->type() == QEvent::ShortcutOverride)
+    {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        if (keyEvent->modifiers().testFlag(Qt::ControlModifier)
+            && (keyEvent->key() == Qt::Key_Z || keyEvent->key() == Qt::Key_Y))
+            return false;
+    }
+    return QLineEdit::event(event);
+}
+
+//////////////////////////////////////////////////////////////////////////
 StringAttributeWidget::StringAttributeWidget(QWidget* parent /*= nullptr*/)
     : SolidAttributeWidget(parent)
     , layout_(new QGridLayout(this))
-    , widget_(new QLineEdit(this))
+    , widget_(new LineEdit(this))
 {
-    connect(widget_, &QLineEdit::textEdited, this, &StringAttributeWidget::HandleTextEdited);
-    connect(widget_, &QLineEdit::returnPressed, this, &StringAttributeWidget::valueCommitted);
+    connect(widget_, &LineEdit::textEdited, this, &StringAttributeWidget::HandleTextEdited);
+    connect(widget_, &LineEdit::returnPressed, this, &StringAttributeWidget::valueCommitted);
 
     layout_->setContentsMargins(0, 0, 0, 0);
     layout_->addWidget(widget_, 0, 0);
@@ -121,7 +134,7 @@ DoubleAttributeWidget::DoubleAttributeWidget(Urho3D::VariantType type, QWidget* 
     : SolidAttributeWidget(parent)
     , type_(type)
     , layout_(new QGridLayout(this))
-    , widget_(new QLineEdit(this))
+    , widget_(new LineEdit(this))
     , labelWidget_(new QLabel(QChar(0x00B1), widget_))
 {
     labelWidget_->setAttribute(Qt::WA_TranslucentBackground);
@@ -129,8 +142,8 @@ DoubleAttributeWidget::DoubleAttributeWidget(Urho3D::VariantType type, QWidget* 
     labelWidget_->setCursor(Qt::SizeHorCursor);
     widget_->setValidator(new QDoubleValidator(-Urho3D::M_INFINITY, Urho3D::M_INFINITY, 2, this));
 
-    connect(widget_, &QLineEdit::textEdited, this, &DoubleAttributeWidget::HandleTextEdited);
-    connect(widget_, &QLineEdit::returnPressed, this, &DoubleAttributeWidget::valueCommitted);
+    connect(widget_, &LineEdit::textEdited, this, &DoubleAttributeWidget::HandleTextEdited);
+    connect(widget_, &LineEdit::returnPressed, this, &DoubleAttributeWidget::valueCommitted);
 
     layout_->setContentsMargins(0, 0, 0, 0);
     layout_->addWidget(widget_, 0, 0);
@@ -179,14 +192,17 @@ void DoubleAttributeWidget::HandleTextEdited()
 
 bool DoubleAttributeWidget::eventFilter(QObject* watched, QEvent* event)
 {
-    switch (event->type())
+    if (watched == labelWidget_)
     {
-    case QEvent::MouseMove:
-        return HandleMouseMoveEvent(static_cast<QMouseEvent*>(event));
-    case QEvent::MouseButtonPress:
-        return HandleMouseButtonPressEvent(static_cast<QMouseEvent*>(event));
-    case QEvent::MouseButtonRelease:
-        return HandleMouseButtonReleaseEvent(static_cast<QMouseEvent*>(event));
+        switch (event->type())
+        {
+        case QEvent::MouseMove:
+            return HandleMouseMoveEvent(static_cast<QMouseEvent*>(event));
+        case QEvent::MouseButtonPress:
+            return HandleMouseButtonPressEvent(static_cast<QMouseEvent*>(event));
+        case QEvent::MouseButtonRelease:
+            return HandleMouseButtonReleaseEvent(static_cast<QMouseEvent*>(event));
+        }
     }
     return QObject::eventFilter(watched, event);
 }
