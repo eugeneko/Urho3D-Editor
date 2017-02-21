@@ -24,7 +24,7 @@ CollapsiblePanelWidget::CollapsiblePanelWidget(const QString& title /*= ""*/,
     toggleButton_->setArrowType(Qt::ArrowType::RightArrow);
     toggleButton_->setText(title);
     toggleButton_->setCheckable(true);
-    toggleButton_->setChecked(false);
+    toggleButton_->setChecked(expanded_);
 
     headerLine_->setFrameShape(QFrame::HLine);
     headerLine_->setFrameShadow(QFrame::Sunken);

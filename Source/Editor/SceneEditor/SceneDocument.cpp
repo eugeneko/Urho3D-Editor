@@ -37,6 +37,7 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
 {
     scene_->CreateComponent<Urho3D::Octree>();
     scene_->CreateComponent<Urho3D::DebugRenderer>();
+    scene_->SetUpdateEnabled(false);
 
     AddOverlay(viewportManager_.data());
     SetTitle("New Scene");
@@ -524,6 +525,7 @@ bool SceneDocument::DoLoad(const QString& fileName)
             return false;
     }
 
+    scene_->SetUpdateEnabled(false);
     return true;
 }
 
