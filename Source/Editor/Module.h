@@ -17,14 +17,12 @@ class ModuleSystem
 {
 public:
     /// Construct.
-    ModuleSystem(Configuration& config, MainWindow& mainWindow, Urho3D::Context& context);
+    ModuleSystem(Configuration& config, MainWindow& mainWindow);
 
     /// Get config.
     Configuration& GetConfig() { return config_; }
     /// Get main window.
     MainWindow& GetMainWindow() { return mainWindow_; }
-    /// Get context.
-    Urho3D::Context& GetContext() const { return context_; }
 
     /// Add module. Ownership is passed to ModuleSystem.
     void AddModule(const QString& name, Module* module);
@@ -48,8 +46,6 @@ private:
     Configuration& config_;
     /// Main window.
     MainWindow& mainWindow_;
-    /// Context.
-    Urho3D::Context& context_;
     /// Modules.
     QHash<QString, QSharedPointer<Module>> modules_;
 
@@ -70,8 +66,6 @@ public:
     Configuration& GetConfig() { return system_->GetConfig(); }
     /// Get main window.
     MainWindow& GetMainWindow() { return system_->GetMainWindow(); }
-    /// Get context.
-    Urho3D::Context& GetContext() { return system_->GetContext(); }
     /// Get module by name.
     Module* GetModule(const QString& name) const;
     /// Get module by type.

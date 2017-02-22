@@ -11,30 +11,61 @@
 #include <QMessageBox>
 #include <QTabBar>
 #include <QVBoxLayout>
+#include <QMdiArea>
 #include <QtXml/QDomDocument>
+
+#include <QLabel>
 
 namespace Urho3DEditor
 {
 
+DocumentWindow::DocumentWindow(Document* document, QWidget* parent /*= nullptr*/)
+    : QMdiSubWindow(parent)
+    , document_(document)
+{
+    updateTitle();
+    connect(document, &Document::titleChanged, this, &DocumentWindow::updateTitle);
+    setWidget(document);
+}
+
+void DocumentWindow::updateTitle()
+{
+    setWindowTitle(document_->GetTitle());
+}
+
+void DocumentWindow::closeEvent(QCloseEvent *event)
+{
+    emit aboutToClose();
+}
+
+//////////////////////////////////////////////////////////////////////////
 const QString MainWindow::VarLayoutFileName = "global/layout";
 
-MainWindow::MainWindow(Configuration& config, QMainWindow& mainWindow, Urho3D::Context& context)
+MainWindow::MainWindow(Configuration& config, QMainWindow& mainWindow)
     : config_(config)
     , mainWindow_(mainWindow)
-    , context_(context)
-    , widget_(new QWidget())
-    , layout_(new QVBoxLayout())
-    , tabBar_(new QTabBar())
-    , urho3DWidget_(new Urho3DWidget(context_))
+    , mdiArea_(new QMdiArea(&mainWindow_))
+    , urhoHost_(new Urho3DHost(&mainWindow_))
 {
-    urho3DWidget_->setVisible(false);
+    mdiArea_->setViewMode(QMdiArea::TabbedView);
+    mdiArea_->setTabsMovable(true);
+    mdiArea_->setTabsClosable(true);
+    mainWindow_.setCentralWidget(mdiArea_);
+
+    connect(mdiArea_, &QMdiArea::subWindowActivated, this,
+        [this](QMdiSubWindow* subWindow) { ChangeDocument(qobject_cast<DocumentWindow*>(subWindow)); });
 
     config.RegisterVariable(VarLayoutFileName, ":/Layout.xml", ".Global", "Layout");
 }
 
+MainWindow::~MainWindow()
+{
+    delete mdiArea_;
+    delete urhoHost_;
+}
+
 bool MainWindow::Initialize()
 {
-    InitializeLayout();
     InitializeMenu();
     return true;
 }
@@ -87,24 +118,31 @@ void MainWindow::LoadLayout()
     }
 }
 
+Urho3DClientWidget* MainWindow::CreateUrho3DClientWidget(QWidget* parent /*= nullptr*/)
+{
+    return new Urho3DClientWidget(*urhoHost_, parent);
+}
+
 Configuration& MainWindow::GetConfig() const
 {
     return config_;
 }
 
-Urho3D::Context& MainWindow::GetContext() const
-{
-    return context_;
-}
-
 Document* MainWindow::GetCurrentDocument() const
 {
-    return tabBar_->currentIndex() < 0 ? nullptr : documents_[tabBar_->currentIndex()];
+    if (QMdiSubWindow* subWindow = mdiArea_->activeSubWindow())
+    {
+        if (DocumentWindow* document = qobject_cast<DocumentWindow*>(subWindow))
+        {
+            return document->GetDocument();
+        }
+    }
+    return false;
 }
 
 Urho3DWidget* MainWindow::GetUrho3DWidget() const
 {
-    return urho3DWidget_.data();
+    return urhoHost_->GetWidget();
 }
 
 QMenuBar* MainWindow::GetMenuBar() const
@@ -143,63 +181,24 @@ void MainWindow::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
 
 void MainWindow::AddDocument(Document* document, bool bringToTop /*= true*/)
 {
-    // Add new tab
-    connect(document, SIGNAL(titleChanged(Document*)), this, SLOT(HandleTabTitleChanged(Document*)));
-    document->setVisible(false);
-    layout_->addWidget(document);
-    documents_.push_back(document);
-    const int index = tabBar_->addTab(document->GetTitle());
+    // #TODO Do something with bringToTop
 
-    // Emit signal for first tab
-    if (documents_.size() == 1)
-        HandleTabChanged(tabBar_->currentIndex());
-
-    // Activate
-    if (bringToTop)
-        SelectDocument(document);
+    DocumentWindow* widget = new DocumentWindow(document, &mainWindow_);
+    connect(widget, &DocumentWindow::aboutToClose, this, [this, widget]() { CloseDocument(widget); });
+    mdiArea_->addSubWindow(widget);
+    widget->show();
 }
 
-void MainWindow::SelectDocument(Document* document)
+void MainWindow::CloseDocument(DocumentWindow* widget)
 {
-    const int index = documents_.indexOf(document);
-    tabBar_->setCurrentIndex(index);
+    emit documentClosed(widget->GetDocument());
+    emit currentDocumentChanged(nullptr);
+    delete widget;
 }
 
-void MainWindow::CloseDocument(Document* document)
+void MainWindow::ChangeDocument(DocumentWindow* widget)
 {
-    emit documentClosed(document);
-
-    const int index = documents_.indexOf(document);
-    documents_.remove(index);
-    tabBar_->removeTab(index);
-
-    if (documents_.isEmpty())
-    {
-        // Emit signal if all tabs are closed now
-        emit currentDocumentChanged(nullptr);
-
-        // Ensure that Urho3D widget is invisible
-        urho3DWidget_->setVisible(false);
-    }
-}
-
-void MainWindow::InitializeLayout()
-{
-    widget_->setLayout(layout_.data());
-
-    layout_->addWidget(tabBar_.data());
-    layout_->addWidget(urho3DWidget_.data());
-
-    tabBar_->setMovable(true);
-    tabBar_->setDocumentMode(true);
-    tabBar_->setExpanding(false);
-    tabBar_->setTabsClosable(true);
-
-    mainWindow_.setCentralWidget(widget_.data());
-
-    connect(tabBar_.data(), SIGNAL(currentChanged(int)), this, SLOT(HandleTabChanged(int)));
-    connect(tabBar_.data(), SIGNAL(tabMoved(int, int)), this, SLOT(HandleTabMoved(int, int)));
-    connect(tabBar_.data(), SIGNAL(tabCloseRequested(int)), this, SLOT(HandleTabClosed(int)));
+    emit currentDocumentChanged(widget ? widget->GetDocument() : nullptr);
 }
 
 void MainWindow::InitializeMenu()
@@ -266,12 +265,6 @@ QAction* MainWindow::ReadAction(const QDomNode& node)
     return action;
 }
 
-void MainWindow::HandleFileClose()
-{
-    if (tabBar_->currentIndex() != -1)
-        CloseDocument(documents_[tabBar_->currentIndex()]);
-}
-
 void MainWindow::HandleFileExit()
 {
     mainWindow_.close();
@@ -302,42 +295,6 @@ void MainWindow::HandleHelpAbout()
     messageBox.setInformativeText("I promise it will be better...");
     messageBox.setStandardButtons(QMessageBox::Ok);
     messageBox.exec();
-}
-
-void MainWindow::HandleTabChanged(int index)
-{
-    if (index < 0)
-        return;
-    Q_ASSERT(index < documents_.size());
-
-    // Hide all documents
-    for (Document* document : documents_)
-        document->setVisible(false);
-
-    // Show document
-    Document* document = documents_[index];
-    document->setVisible(document->IsDocumentWidgetVisible());
-    urho3DWidget_->setVisible(document->IsUrho3DWidgetVisible());
-    if (document->IsUrho3DWidgetVisible())
-        urho3DWidget_->setFocus(Qt::ActiveWindowFocusReason);
-
-    emit currentDocumentChanged(document);
-}
-
-void MainWindow::HandleTabMoved(int from, int to)
-{
-    documents_.move(from, to);
-}
-
-void MainWindow::HandleTabClosed(int index)
-{
-    CloseDocument(documents_[index]);
-}
-
-void MainWindow::HandleTabTitleChanged(Document* document)
-{
-    const int index = documents_.indexOf(document);
-    tabBar_->setTabText(index, document->GetTitle());
 }
 
 void MainWindow::HandleMenuAboutToShow()

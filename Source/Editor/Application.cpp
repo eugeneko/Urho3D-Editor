@@ -16,9 +16,8 @@
 namespace Urho3DEditor
 {
 
-Application::Application(int argc, char** argv, Urho3D::Context* context)
+Application::Application(int argc, char** argv)
     : QApplication(argc, argv)
-    , context_(context)
 {
 }
 
@@ -43,8 +42,8 @@ bool Application::Initialize()
 
     mainWindowWidget_.reset(new QMainWindow());
     config_.reset(new Configuration());
-    mainWindow_.reset(new MainWindow(*config_, *mainWindowWidget_, *context_));
-    moduleSystem_.reset(new ModuleSystem(*config_, *mainWindow_, *context_));
+    mainWindow_.reset(new MainWindow(*config_, *mainWindowWidget_));
+    moduleSystem_.reset(new ModuleSystem(*config_, *mainWindow_));
     if (!mainWindow_->Initialize())
         return false;
 

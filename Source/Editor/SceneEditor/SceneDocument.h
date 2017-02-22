@@ -22,7 +22,7 @@ namespace Urho3DEditor
 
 class MainWindow;
 class SceneOverlay;
-class Urho3DWidget;
+class Urho3DClientWidget;
 class SceneViewportManager;
 
 /// Hot key mode. Affects camera, gizmo and selection control.
@@ -139,10 +139,6 @@ public:
     virtual QString GetTitle() override { return GetRawTitle(); }
     /// Return whether the document can be saved.
     virtual bool CanBeSaved() override { return true; }
-    /// Return whether the document widget should be visible when the document is active.
-    virtual bool IsDocumentWidgetVisible() override { return false; }
-    /// Return whether the Urho3D widget should be visible when the document is active.
-    virtual bool IsUrho3DWidgetVisible() override { return true; }
     /// Get name filters for open and save dialogs.
     virtual QString GetNameFilters() override;
 
@@ -224,8 +220,8 @@ private:
 private:
     /// Input subsystem.
     Urho3D::Input& input_;
-    /// Widget.
-    Urho3DWidget& widget_;
+    /// Urho3D Client Widget
+    Urho3DClientWidget* mainWidget_;
     /// Mouse buttons are down.
     QSet<Qt::MouseButton> mouseButtonsDown_;
     /// Mouse buttons are pressed.

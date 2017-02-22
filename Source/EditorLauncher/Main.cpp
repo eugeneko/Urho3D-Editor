@@ -6,8 +6,7 @@ int Main()
 {
     int argc = 0;
     char** argv = 0;
-    Urho3D::SharedPtr<Urho3D::Context> context(new Urho3D::Context());
-    Urho3DEditor::Application editor(argc, argv, context);
+    Urho3DEditor::Application editor(argc, argv);
 //     editor.AddPlugin(Urho3D::MakeShared<Urho3DEditor::SceneEditorPlugin>());
 
     return editor.Run();

@@ -9,8 +9,8 @@
 namespace Urho3DEditor
 {
 
-Urho3DWidget::Urho3DWidget(Urho3D::Context& context)
-    : QWidget()
+Urho3DWidget::Urho3DWidget(Urho3D::Context& context, QWidget* parent /*= nullptr*/)
+    : QWidget(parent)
     , Object(&context)
     , engine_(Urho3D::MakeShared<Urho3D::Engine>(context_))
 {
@@ -75,6 +75,62 @@ void Urho3DWidget::RunFrame()
 {
     if (!engine_->IsExiting())
         engine_->RunFrame();
+}
+
+//////////////////////////////////////////////////////////////////////////
+Urho3DHost::Urho3DHost(QWidget* parent /*= nullptr*/)
+    : QWidget(parent)
+    , context_(new Urho3D::Context())
+    , urhoWidget_(new Urho3DWidget(*context_, this))
+{
+    setVisible(false);
+}
+
+void Urho3DHost::SetOwner(Urho3DClientWidget* client)
+{
+    client_ = client;
+    if (!client_)
+        urhoWidget_->setParent(this);
+}
+
+//////////////////////////////////////////////////////////////////////////
+Urho3DClientWidget::Urho3DClientWidget(Urho3DHost& host, QWidget* parent /*= nullptr*/)
+    : QWidget(parent)
+    , host_(host)
+    , layout_(new QVBoxLayout(this))
+    , placeholder_(new QLabel("Select to activate", this))
+{
+    placeholder_->setAlignment(Qt::AlignCenter);
+    layout_->setContentsMargins(0, 0, 0, 0);
+    layout_->addWidget(placeholder_);
+    setLayout(layout_);
+}
+
+Urho3DClientWidget::~Urho3DClientWidget()
+{
+    Release();
+}
+
+void Urho3DClientWidget::Acquire()
+{
+    Urho3DClientWidget* oldOwner = host_.GetOwner();
+    if (oldOwner == this)
+        return;
+
+    if (oldOwner)
+        oldOwner->Release();
+    host_.SetOwner(this);
+    layout_->removeWidget(placeholder_);
+    layout_->addWidget(host_.GetWidget());
+}
+
+void Urho3DClientWidget::Release()
+{
+    if (host_.GetOwner() != this)
+        return;
+    host_.SetOwner(nullptr);
+    layout_->removeWidget(host_.GetWidget());
+    layout_->addWidget(placeholder_);
 }
 
 }

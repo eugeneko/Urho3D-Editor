@@ -6,17 +6,48 @@
 #include <Urho3D/Core/Context.h>
 #include <QApplication>
 #include <QMainWindow>
+#include <QMdiSubWindow>
 
 class QDockWidget;
 class QMainWindow;
 class QDomNode;
 class QVBoxLayout;
+class QMdiArea;
 
 namespace Urho3DEditor
 {
 
 class Configuration;
 class Document;
+
+/// Document window.
+class DocumentWindow : public QMdiSubWindow
+{
+    Q_OBJECT
+
+public:
+    /// Construct.
+    DocumentWindow(Document* document, QWidget* parent = nullptr);
+    /// Get document.
+    Document* GetDocument() const { return document_.data(); }
+
+signals:
+    /// Signals that document is about to be closed.
+    void aboutToClose();
+
+private slots:
+    /// Update title.
+    void updateTitle();
+
+private:
+    /// @see QWidget::closeEvent
+    virtual void closeEvent(QCloseEvent *event) override;
+
+private:
+    /// Document.
+    QScopedPointer<Document> document_;
+
+};
 
 /// Main window.
 class MainWindow : public QObject
@@ -29,16 +60,19 @@ public:
 
 public:
     /// Construct.
-    MainWindow(Configuration& config, QMainWindow& mainWindow, Urho3D::Context& context);
+    MainWindow(Configuration& config, QMainWindow& mainWindow);
+    /// Destruct.
+    virtual ~MainWindow();
     /// Initialize.
     virtual bool Initialize();
     /// Load layout.
     virtual void LoadLayout();
 
+    /// Create Urho3D client widget.
+    Urho3DClientWidget* CreateUrho3DClientWidget(QWidget* parent = nullptr);
+
     /// Get configuration.
     Configuration& GetConfig() const;
-    /// Get context.
-    Urho3D::Context& GetContext() const;
     /// Get current active document.
     Document* GetCurrentDocument() const;
     /// Get Urho3D widget.
@@ -59,10 +93,6 @@ public:
 
     /// Add document.
     void AddDocument(Document* document, bool bringToTop = true);
-    /// Select document.
-    void SelectDocument(Document* document);
-    /// Close document.
-    void CloseDocument(Document* document);
 
 signals:
     /// Signals that current document has been changed.
@@ -73,8 +103,6 @@ signals:
     void updateMenu(QMenu* menu);
 
 private:
-    /// Initialize layout.
-    void InitializeLayout();
     /// Initialize menu.
     void InitializeMenu();
     /// Read menu.
@@ -83,8 +111,11 @@ private:
     QAction* ReadAction(const QDomNode& node);
 
 private slots:
-    /// Handle 'File/Close'
-    void HandleFileClose();
+    /// Close document.
+    void CloseDocument(DocumentWindow* widget);
+    /// Change document.
+    void ChangeDocument(DocumentWindow* widget);
+
     /// Handle 'File/Exit'
     void HandleFileExit();
     /// Handle 'Edit/Undo'
@@ -95,14 +126,6 @@ private slots:
     void HandleToolsOptions();
     /// Handle 'Help/About'
     void HandleHelpAbout();
-    /// Handle tab changed.
-    void HandleTabChanged(int index);
-    /// Handle tab moved.
-    void HandleTabMoved(int from, int to);
-    /// Handle tab closed.
-    void HandleTabClosed(int index);
-    /// Handle tab title changed.
-    void HandleTabTitleChanged(Document* document);
     /// Handle that menu is about to show.
     void HandleMenuAboutToShow();
 
@@ -111,25 +134,16 @@ private:
     Configuration& config_;
     /// Main window.
     QMainWindow& mainWindow_;
-    /// Urho3D context.
-    Urho3D::Context& context_;
 
     /// Central widget.
-    QScopedPointer<QWidget> widget_;
-    /// Main window layout.
-    QScopedPointer<QVBoxLayout> layout_;
-    /// Tab bar widget.
-    QScopedPointer<QTabBar> tabBar_;
+    QMdiArea* mdiArea_;
     /// Urho3D Widget.
-    QScopedPointer<Urho3DWidget> urho3DWidget_;
+    Urho3DHost* urhoHost_;
 
     /// Menu actions.
     QHash<QString, QAction*> menuActions_;
     /// Secondary and context menus.
     QHash<QString, QMenu*> menus_;
-
-    /// Documents.
-    QVector<Document*> documents_;
 
 };
 

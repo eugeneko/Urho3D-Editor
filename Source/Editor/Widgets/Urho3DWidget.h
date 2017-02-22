@@ -6,12 +6,15 @@
 #include <QSet>
 #include <QTimer>
 #include <QWidget>
+#include <QLabel>
+#include <QVBoxLayout>
 
 namespace Urho3DEditor
 {
 
 class Urho3DProject;
 
+/// Urho3D widget that owns context and all systems.
 class Urho3DWidget : public QWidget, public Urho3D::Object
 {
     Q_OBJECT
@@ -19,7 +22,7 @@ class Urho3DWidget : public QWidget, public Urho3D::Object
 
 public:
     /// Construct.
-    Urho3DWidget(Urho3D::Context& context);
+    Urho3DWidget(Urho3D::Context& context, QWidget* parent = nullptr);
     /// Initialize widget with optional configuration.
     bool SetCurrentProject(Urho3DProject* project);
 
@@ -54,6 +57,60 @@ private:
     /// Main timer.
     QTimer timer_;
 
+};
+
+class Urho3DClientWidget;
+
+/// Urho3D host that holds Urho3D widget. Shan't be used as display widget.
+class Urho3DHost : public QWidget
+{
+    Q_OBJECT
+
+public:
+    /// Construct.
+    Urho3DHost(QWidget* parent = nullptr);
+    /// Get widget.
+    Urho3DWidget* GetWidget() const { return urhoWidget_.data(); }
+
+    /// Get current client.
+    Urho3DClientWidget* GetOwner() const { return client_; }
+    /// Set current client.
+    void SetOwner(Urho3DClientWidget* client);
+
+private:
+    using QWidget::setVisible;
+
+    /// Urho3D context.
+    Urho3D::SharedPtr<Urho3D::Context> context_;
+    /// Urho3D widget.
+    QScopedPointer<Urho3DWidget> urhoWidget_;
+    /// Owner.
+    Urho3DClientWidget* client_ = nullptr;
+};
+
+/// Urho3D client widget. Multiple clients may share single host. However, only one client is able to display host content.
+class Urho3DClientWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    /// Construct.
+    Urho3DClientWidget(Urho3DHost& host, QWidget* parent = nullptr);
+    /// Destroy.
+    virtual ~Urho3DClientWidget();
+
+    /// Acquire ownership over host.
+    void Acquire();
+    /// Release ownership.
+    void Release();
+
+private:
+    /// Host.
+    Urho3DHost& host_;
+    /// Layout.
+    QVBoxLayout* layout_;
+    /// Placeholder.
+    QLabel* placeholder_;
 };
 
 }

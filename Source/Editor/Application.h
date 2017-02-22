@@ -20,7 +20,7 @@ class Application : public QApplication
 
 public:
     /// Construct.
-    Application(int argc, char** argv, Urho3D::Context* context);
+    Application(int argc, char** argv);
     /// Destruct.
     virtual ~Application();
     /// Run!
@@ -31,8 +31,6 @@ protected:
     virtual bool Initialize();
 
 protected:
-    /// Context.
-    Urho3D::SharedPtr<Urho3D::Context> context_;
     /// Main window widget.
     QScopedPointer<QMainWindow> mainWindowWidget_;
     /// Configuration.

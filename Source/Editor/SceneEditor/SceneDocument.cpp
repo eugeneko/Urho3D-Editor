@@ -27,14 +27,19 @@ namespace Urho3DEditor
 
 SceneDocument::SceneDocument(MainWindow& mainWindow)
     : Document(mainWindow)
-    , Object(&mainWindow.GetContext())
+    , Object(mainWindow.GetUrho3DWidget()->GetContext())
     , input_(*GetSubsystem<Urho3D::Input>())
-    , widget_(*mainWindow.GetUrho3DWidget())
+    , mainWidget_(mainWindow.CreateUrho3DClientWidget(this))
     , wheelDelta_(0)
     , mouseMoveConsumed_(false)
     , scene_(new Urho3D::Scene(context_))
     , viewportManager_(new SceneViewportManager(*this))
 {
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->addWidget(mainWidget_);
+    layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(layout);
+
     scene_->CreateComponent<Urho3D::Octree>();
     scene_->CreateComponent<Urho3D::DebugRenderer>();
     scene_->SetUpdateEnabled(false);
@@ -51,10 +56,12 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
     SubscribeToEvent(scene_, Urho3D::E_COMPONENTREMOVED, URHO3D_HANDLER(SceneDocument, HandleComponentRemoved));
 
     connect(viewportManager_.data(), SIGNAL(viewportsChanged()), this, SLOT(HandleViewportsChanged()));
-    connect(&widget_, SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(HandleKeyPress(QKeyEvent*)));
-    connect(&widget_, SIGNAL(keyReleased(QKeyEvent*)), this, SLOT(HandleKeyRelease(QKeyEvent*)));
-    connect(&widget_, SIGNAL(wheelMoved(QWheelEvent*)), this, SLOT(HandleMouseWheel(QWheelEvent*)));
-    connect(&widget_, SIGNAL(focusOut()), this, SLOT(HandleFocusOut()));
+
+    Urho3DWidget* urhoWidget = mainWindow.GetUrho3DWidget();
+    connect(urhoWidget, SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(HandleKeyPress(QKeyEvent*)));
+    connect(urhoWidget, SIGNAL(keyReleased(QKeyEvent*)), this, SLOT(HandleKeyRelease(QKeyEvent*)));
+    connect(urhoWidget, SIGNAL(wheelMoved(QWheelEvent*)), this, SLOT(HandleMouseWheel(QWheelEvent*)));
+    connect(urhoWidget, SIGNAL(focusOut()), this, SLOT(HandleFocusOut()));
 
     connect(mainWindow.GetAction("Edit.Cut"), SIGNAL(triggered(bool)), this, SLOT(Cut()));
     connect(mainWindow.GetAction("Edit.Duplicate"), SIGNAL(triggered(bool)), this, SLOT(Duplicate()));
@@ -491,7 +498,10 @@ void SceneDocument::HandleComponentRemoved(Urho3D::StringHash eventType, Urho3D:
 void SceneDocument::HandleCurrentDocumentChanged(Document* document)
 {
     if (IsActive())
+    {
+        mainWidget_->Acquire();
         viewportManager_->ApplyViewports();
+    }
     else
     {
         keysDown_.clear();
