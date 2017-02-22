@@ -4,11 +4,7 @@
 
 int Main()
 {
-    int argc = 0;
-    char** argv = 0;
-    Urho3DEditor::Application editor(argc, argv);
-//     editor.AddPlugin(Urho3D::MakeShared<Urho3DEditor::SceneEditorPlugin>());
-
+    Urho3DEditor::Application editor(0, nullptr);
     return editor.Run();
 }
 

@@ -49,15 +49,15 @@ foreach (SOURCE_FILE ${EDITOR_SOURCE})
     endif ()
 endforeach ()
 
-add_library (Urho3DEditor ${EDITOR_SOURCE})
+qt5_add_resources(EDITOR_RESOURCES ${CMAKE_SOURCE_DIR}/Resources/QDarkStyle/QDarkStyle.qrc ${CMAKE_SOURCE_DIR}/Resources/Editor/Editor.qrc)
+add_library (Urho3DEditor ${EDITOR_SOURCE} ${EDITOR_RESOURCES})
 target_link_libraries (Urho3DEditor Qt5::Widgets Qt5::Xml) 
 
 #
 # Setup Editor Launcher
 #
 
-qt5_add_resources(RESOURCES ${CMAKE_SOURCE_DIR}/Resources/QDarkStyle/style.qrc ${CMAKE_SOURCE_DIR}/Resources/Resources.qrc)
-set (SOURCE_FILES ${CMAKE_SOURCE_DIR}/Source/EditorLauncher/Main.cpp ${RESOURCES})
+set (SOURCE_FILES ${CMAKE_SOURCE_DIR}/Source/EditorLauncher/Main.cpp)
 set (TARGET_NAME Urho3DEditorLauncher)
 setup_main_executable ()
 target_link_libraries (Urho3DEditorLauncher Urho3DEditor)

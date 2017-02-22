@@ -5,6 +5,7 @@
 #include <QHBoxLayout>
 #include <QTabBar>
 #include <QTimer>
+#include <QResource>
 
 #include "Configuration.h"
 #include "MainWindow.h"
@@ -19,6 +20,8 @@ namespace Urho3DEditor
 Application::Application(int argc, char** argv)
     : QApplication(argc, argv)
 {
+    Q_INIT_RESOURCE(Editor);
+    Q_INIT_RESOURCE(QDarkStyle);
 }
 
 Application::~Application()
