@@ -139,6 +139,8 @@ private:
     QMdiArea* mdiArea_;
     /// Urho3D Widget.
     Urho3DHost* urhoHost_;
+    /// Current document. Used to suppress redundant notifications.
+    DocumentWindow* currentDocument_ = nullptr;
 
     /// Menu actions.
     QHash<QString, QAction*> menuActions_;

@@ -191,14 +191,22 @@ void MainWindow::AddDocument(Document* document, bool bringToTop /*= true*/)
 
 void MainWindow::CloseDocument(DocumentWindow* widget)
 {
+    if (currentDocument_ == widget)
+    {
+        emit currentDocumentChanged(nullptr);
+        currentDocument_ = nullptr;
+    }
     emit documentClosed(widget->GetDocument());
-    emit currentDocumentChanged(nullptr);
     delete widget;
 }
 
 void MainWindow::ChangeDocument(DocumentWindow* widget)
 {
-    emit currentDocumentChanged(widget ? widget->GetDocument() : nullptr);
+    if (currentDocument_ != widget)
+    {
+        currentDocument_ = widget;
+        emit currentDocumentChanged(widget ? widget->GetDocument() : nullptr);
+    }
 }
 
 void MainWindow::InitializeMenu()
