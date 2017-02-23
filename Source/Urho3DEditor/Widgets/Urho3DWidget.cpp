@@ -12,7 +12,7 @@ namespace Urho3DEditor
 Urho3DWidget::Urho3DWidget(Urho3D::Context& context, QWidget* parent /*= nullptr*/)
     : QWidget(parent)
     , Object(&context)
-    , engine_(Urho3D::MakeShared<Urho3D::Engine>(context_))
+    , engine_(new Urho3D::Engine(context_))
 {
     // Initialize engine
     Urho3D::VariantMap engineParameters = Urho3D::Engine::ParseParameters(Urho3D::GetArguments());

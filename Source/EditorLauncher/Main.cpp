@@ -1,4 +1,4 @@
-#include "../Editor/Application.h"
+#include "../Urho3DEditor/Application.h"
 
 #include <Urho3D/Core/Main.h>
 

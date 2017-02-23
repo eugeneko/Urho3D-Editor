@@ -151,7 +151,7 @@ bool Urho3DProject::Save(Urho3D::Serializer& dest) const
 //////////////////////////////////////////////////////////////////////////
 Urho3DProjectPage::Urho3DProjectPage(Urho3D::Context* context)
     : AbstractPage(context)
-    , project_(Urho3D::MakeShared<Urho3DProject>(context))
+    , project_(new Urho3DProject(context))
     , layout_(new QGridLayout())
     , buttonSetAsCurrent_(new QPushButton())
     , fieldResourcePrefixPaths_(new QLineEdit("."))

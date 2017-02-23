@@ -1,63 +1,34 @@
-cmake_minimum_required(VERSION 3.2.3)
-
 project (Urho3DEditor)
 
-#
+# Setup CMake
+
+cmake_minimum_required(VERSION 3.2.3)
+cmake_policy (SET CMP0003 NEW)
+# INTERFACE_LINK_LIBRARIES defines the link interface
+cmake_policy (SET CMP0022 NEW)
+# Disallow use of the LOCATION target property - so we set to OLD as we still need it
+cmake_policy (SET CMP0026 OLD)
+# MACOSX_RPATH is enabled by default
+cmake_policy (SET CMP0042 NEW)
+
 # Setup Qt
-#
 
-set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
-find_package (Qt5Widgets)
-find_package (Qt5Xml)
+find_package (Qt5Core)
 
-#
 # Setup Urho3D
-#
 
-if (COMMAND cmake_policy)
-    cmake_policy (SET CMP0003 NEW)
-    # INTERFACE_LINK_LIBRARIES defines the link interface
-    cmake_policy (SET CMP0022 NEW)
-    # Disallow use of the LOCATION target property - so we set to OLD as we still need it
-    cmake_policy (SET CMP0026 OLD)
-    # MACOSX_RPATH is enabled by default
-    cmake_policy (SET CMP0042 NEW)
-endif ()
-
-set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
+set (CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake/Modules)
 include (Urho3D-CMake-common)
 
-#
-# Setup Editor Library
-#
+# Setup Editor
 
-set (SOURCE_DIR ${CMAKE_SOURCE_DIR}/Source)
-file (GLOB_RECURSE EDITOR_SOURCE
-    ${SOURCE_DIR}/Editor/*.h
-    ${SOURCE_DIR}/Editor/*.cpp
-)
+add_subdirectory (${PROJECT_SOURCE_DIR}/Source/Urho3DEditor)
 
-foreach (SOURCE_FILE ${EDITOR_SOURCE})
-    string (REPLACE "${SOURCE_DIR}" "" PATH ${SOURCE_FILE})
-    get_filename_component (PATH ${PATH} PATH)
-    if (PATH)
-        string (REPLACE / \\ PATH ${PATH})
-        source_group ("${PATH}" FILES ${SOURCE_FILE})
-    else ()
-        source_group ("Source" FILES ${SOURCE_FILE})
-    endif ()
-endforeach ()
+# Setup Launcher
 
-qt5_add_resources(EDITOR_RESOURCES ${CMAKE_SOURCE_DIR}/Resources/QDarkStyle/QDarkStyle.qrc ${CMAKE_SOURCE_DIR}/Resources/Editor/Editor.qrc)
-add_library (Urho3DEditor ${EDITOR_SOURCE} ${EDITOR_RESOURCES})
-target_link_libraries (Urho3DEditor Qt5::Widgets Qt5::Xml) 
-
-#
-# Setup Editor Launcher
-#
-
-set (SOURCE_FILES ${CMAKE_SOURCE_DIR}/Source/EditorLauncher/Main.cpp)
-set (TARGET_NAME Urho3DEditorLauncher)
+qt5_add_resources(EDITOR_RESOURCES ${PROJECT_SOURCE_DIR}/Resources/QDarkStyle/QDarkStyle.qrc ${PROJECT_SOURCE_DIR}/Resources/Editor/Editor.qrc)
+set (SOURCE_FILES ${PROJECT_SOURCE_DIR}/Source/EditorLauncher/Main.cpp ${EDITOR_RESOURCES})
+set (TARGET_NAME EditorLauncher)
 setup_main_executable ()
-target_link_libraries (Urho3DEditorLauncher Urho3DEditor)
+target_link_libraries (EditorLauncher Urho3DEditor)
