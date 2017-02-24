@@ -1,8 +1,8 @@
 project (Urho3DEditor)
+cmake_minimum_required(VERSION 3.2.3)
 
 # Setup CMake
 
-cmake_minimum_required(VERSION 3.2.3)
 cmake_policy (SET CMP0003 NEW)
 # INTERFACE_LINK_LIBRARIES defines the link interface
 cmake_policy (SET CMP0022 NEW)

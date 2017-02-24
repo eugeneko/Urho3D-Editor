@@ -1,7 +1,12 @@
 project (Urho3DEditor)
+cmake_minimum_required(VERSION 3.2.3)
+
+# Automatically link Qt executables to qtmain target on Windows - don't need it.
+cmake_policy (SET CMP0020 OLD)
 
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
+find_package (Qt5Core)
 find_package (Qt5Widgets)
 find_package (Qt5Xml)
 
