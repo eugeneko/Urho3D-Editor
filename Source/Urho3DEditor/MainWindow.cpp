@@ -40,9 +40,9 @@ void DocumentWindow::closeEvent(QCloseEvent *event)
 }
 
 //////////////////////////////////////////////////////////////////////////
-const QString MainWindow::VarLayoutFileName = "global/layout";
+const QString Core::VarLayoutFileName = "global/layout";
 
-MainWindow::MainWindow(Configuration& config, QMainWindow& mainWindow)
+Core::Core(Configuration& config, QMainWindow& mainWindow)
     : config_(config)
     , mainWindow_(mainWindow)
     , mdiArea_(new QMdiArea(&mainWindow_))
@@ -59,19 +59,19 @@ MainWindow::MainWindow(Configuration& config, QMainWindow& mainWindow)
     config.RegisterVariable(VarLayoutFileName, ":/Layout.xml", ".Global", "Layout");
 }
 
-MainWindow::~MainWindow()
+Core::~Core()
 {
     delete mdiArea_;
     delete urhoHost_;
 }
 
-bool MainWindow::Initialize()
+bool Core::Initialize()
 {
     InitializeMenu();
     return true;
 }
 
-void MainWindow::LoadLayout()
+void Core::LoadLayout()
 {
     const QString fileName = config_.GetValue(VarLayoutFileName).toString();
     QFile file(fileName);
@@ -80,7 +80,7 @@ void MainWindow::LoadLayout()
     if (!file.open(QFile::ReadOnly | QFile::Text))
     {
         const QMessageBox::StandardButton button = QMessageBox::critical(&mainWindow_,
-            "Main Window error",
+            "Urho3D Editor error",
             "Failed to load layout " + fileName + "\nReset to default?",
             QMessageBox::Yes | QMessageBox::No);
 
@@ -119,17 +119,17 @@ void MainWindow::LoadLayout()
     }
 }
 
-Urho3DClientWidget* MainWindow::CreateUrho3DClientWidget(QWidget* parent /*= nullptr*/)
+Urho3DClientWidget* Core::CreateUrho3DClientWidget(QWidget* parent /*= nullptr*/)
 {
     return new Urho3DClientWidget(*urhoHost_, parent);
 }
 
-Configuration& MainWindow::GetConfig() const
+Configuration& Core::GetConfig() const
 {
     return config_;
 }
 
-Document* MainWindow::GetCurrentDocument() const
+Document* Core::GetCurrentDocument() const
 {
     if (QMdiSubWindow* subWindow = mdiArea_->activeSubWindow())
     {
@@ -141,46 +141,46 @@ Document* MainWindow::GetCurrentDocument() const
     return false;
 }
 
-Urho3DWidget* MainWindow::GetUrho3DWidget() const
+Urho3DWidget* Core::GetUrho3DWidget() const
 {
     return urhoHost_->GetWidget();
 }
 
-QMenuBar* MainWindow::GetMenuBar() const
+QMenuBar* Core::GetMenuBar() const
 {
     return mainWindow_.menuBar();
 }
 
-QAction* MainWindow::GetAction(const QString& name) const
+QAction* Core::GetAction(const QString& name) const
 {
     return menuActions_.value(name);
 }
 
-QMenu* MainWindow::GetMenu(const QString& name) const
+QMenu* Core::GetMenu(const QString& name) const
 {
     return menus_.value(name);
 }
 
-QAction* MainWindow::AddAction(const QString& name, QAction* action)
+QAction* Core::AddAction(const QString& name, QAction* action)
 {
     action->setParent(this);
     menuActions_[name] = action;
     return action;
 }
 
-QAction* MainWindow::AddAction(const QString& name, const QKeySequence& shortcut /*= QKeySequence()*/)
+QAction* Core::AddAction(const QString& name, const QKeySequence& shortcut /*= QKeySequence()*/)
 {
     QScopedPointer<QAction> action(new QAction);
     action->setShortcut(shortcut);
     return AddAction(name, action.take());
 }
 
-void MainWindow::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
+void Core::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
 {
     mainWindow_.addDockWidget(area, dock);
 }
 
-void MainWindow::AddDocument(Document* document, bool bringToTop /*= true*/)
+void Core::AddDocument(Document* document, bool bringToTop /*= true*/)
 {
     // #TODO Do something with bringToTop
 
@@ -190,7 +190,7 @@ void MainWindow::AddDocument(Document* document, bool bringToTop /*= true*/)
     widget->show();
 }
 
-void MainWindow::CloseDocument(DocumentWindow* widget)
+void Core::CloseDocument(DocumentWindow* widget)
 {
     if (currentDocument_ == widget)
     {
@@ -201,7 +201,7 @@ void MainWindow::CloseDocument(DocumentWindow* widget)
     delete widget;
 }
 
-void MainWindow::ChangeDocument(DocumentWindow* widget)
+void Core::ChangeDocument(DocumentWindow* widget)
 {
     if (currentDocument_ != widget)
     {
@@ -210,19 +210,19 @@ void MainWindow::ChangeDocument(DocumentWindow* widget)
     }
 }
 
-void MainWindow::NewProject()
+void Core::NewProject()
 {
     QScopedPointer<ProjectDocument> document(new ProjectDocument(*this));
     if (document->SaveAs())
         AddDocument(document.take());
 }
 
-void MainWindow::InitializeMenu()
+void Core::InitializeMenu()
 {
     QAction* action = nullptr;
 
     action = AddAction("File.NewProject");
-    connect(action, &QAction::triggered, this, &MainWindow::NewProject);
+    connect(action, &QAction::triggered, this, &Core::NewProject);
 
     action = AddAction("File.Close", Qt::CTRL + Qt::Key_W);
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
@@ -247,7 +247,7 @@ void MainWindow::InitializeMenu()
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleHelpAbout()));
 }
 
-QMenu* MainWindow::ReadMenu(const QDomNode& node)
+QMenu* Core::ReadMenu(const QDomNode& node)
 {
     const QDomNamedNodeMap attributes = node.attributes();
     const QString name = attributes.namedItem("name").nodeValue();
@@ -270,7 +270,7 @@ QMenu* MainWindow::ReadMenu(const QDomNode& node)
     return menu.take();
 }
 
-QAction* MainWindow::ReadAction(const QDomNode& node)
+QAction* Core::ReadAction(const QDomNode& node)
 {
     const QDomNamedNodeMap attributes = node.attributes();
     const QString name = attributes.namedItem("name").nodeValue();
@@ -284,30 +284,30 @@ QAction* MainWindow::ReadAction(const QDomNode& node)
     return action;
 }
 
-void MainWindow::HandleFileExit()
+void Core::HandleFileExit()
 {
     mainWindow_.close();
 }
 
-void MainWindow::EditUndo()
+void Core::EditUndo()
 {
     if (Document* document = GetCurrentDocument())
         document->Undo();
 }
 
-void MainWindow::EditRedo()
+void Core::EditRedo()
 {
     if (Document* document = GetCurrentDocument())
         document->Redo();
 }
 
-void MainWindow::HandleToolsOptions()
+void Core::HandleToolsOptions()
 {
     OptionsDialog dialog(config_);
     dialog.exec();
 }
 
-void MainWindow::HandleHelpAbout()
+void Core::HandleHelpAbout()
 {
     QMessageBox messageBox;
     messageBox.setText("Urho3D Editor v0.0");
@@ -316,7 +316,7 @@ void MainWindow::HandleHelpAbout()
     messageBox.exec();
 }
 
-void MainWindow::HandleMenuAboutToShow()
+void Core::HandleMenuAboutToShow()
 {
     if (QMenu* menu = dynamic_cast<QMenu*>(sender()))
         emit updateMenu(menu);

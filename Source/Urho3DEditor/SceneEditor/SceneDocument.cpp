@@ -25,18 +25,18 @@
 namespace Urho3DEditor
 {
 
-SceneDocument::SceneDocument(MainWindow& mainWindow)
-    : Document(mainWindow)
-    , Object(mainWindow.GetUrho3DWidget()->GetContext())
+SceneDocument::SceneDocument(Core& core)
+    : Document(core)
+    , Object(core.GetUrho3DWidget()->GetContext())
     , input_(*GetSubsystem<Urho3D::Input>())
-    , mainWidget_(mainWindow.CreateUrho3DClientWidget(this))
+    , core_(core.CreateUrho3DClientWidget(this))
     , wheelDelta_(0)
     , mouseMoveConsumed_(false)
     , scene_(new Urho3D::Scene(context_))
     , viewportManager_(new SceneViewportManager(*this))
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->addWidget(mainWidget_);
+    layout->addWidget(core_);
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
 
@@ -57,26 +57,26 @@ SceneDocument::SceneDocument(MainWindow& mainWindow)
 
     connect(viewportManager_.data(), SIGNAL(viewportsChanged()), this, SLOT(HandleViewportsChanged()));
 
-    Urho3DWidget* urhoWidget = mainWindow.GetUrho3DWidget();
+    Urho3DWidget* urhoWidget = core.GetUrho3DWidget();
     connect(urhoWidget, SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(HandleKeyPress(QKeyEvent*)));
     connect(urhoWidget, SIGNAL(keyReleased(QKeyEvent*)), this, SLOT(HandleKeyRelease(QKeyEvent*)));
     connect(urhoWidget, SIGNAL(wheelMoved(QWheelEvent*)), this, SLOT(HandleMouseWheel(QWheelEvent*)));
     connect(urhoWidget, SIGNAL(focusOut()), this, SLOT(HandleFocusOut()));
 
-    connect(mainWindow.GetAction("Edit.Cut"), SIGNAL(triggered(bool)), this, SLOT(Cut()));
-    connect(mainWindow.GetAction("Edit.Duplicate"), SIGNAL(triggered(bool)), this, SLOT(Duplicate()));
-    connect(mainWindow.GetAction("Edit.Copy"), SIGNAL(triggered(bool)), this, SLOT(Copy()));
-    connect(mainWindow.GetAction("Edit.Paste"), SIGNAL(triggered(bool)), this, SLOT(Paste()));
-    connect(mainWindow.GetAction("Edit.Delete"), SIGNAL(triggered(bool)), this, SLOT(Delete()));
+    connect(core.GetAction("Edit.Cut"), SIGNAL(triggered(bool)), this, SLOT(Cut()));
+    connect(core.GetAction("Edit.Duplicate"), SIGNAL(triggered(bool)), this, SLOT(Duplicate()));
+    connect(core.GetAction("Edit.Copy"), SIGNAL(triggered(bool)), this, SLOT(Copy()));
+    connect(core.GetAction("Edit.Paste"), SIGNAL(triggered(bool)), this, SLOT(Paste()));
+    connect(core.GetAction("Edit.Delete"), SIGNAL(triggered(bool)), this, SLOT(Delete()));
 
-    connect(mainWindow.GetAction("Scene.Camera.Single"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraSingle()));
-    connect(mainWindow.GetAction("Scene.Camera.Vertical"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraVertical()));
-    connect(mainWindow.GetAction("Scene.Camera.Horizontal"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraHorizontal()));
-    connect(mainWindow.GetAction("Scene.Camera.Quad"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraQuad()));
-    connect(mainWindow.GetAction("Scene.Camera.Top1_Bottom2"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraTop1Bottom2()));
-    connect(mainWindow.GetAction("Scene.Camera.Top2_Bottom1"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraTop2Bottom1()));
-    connect(mainWindow.GetAction("Scene.Camera.Left1_Right2"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraLeft1Right2()));
-    connect(mainWindow.GetAction("Scene.Camera.Left2_Right1"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraLeft2Right1()));
+    connect(core.GetAction("Scene.Camera.Single"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraSingle()));
+    connect(core.GetAction("Scene.Camera.Vertical"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraVertical()));
+    connect(core.GetAction("Scene.Camera.Horizontal"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraHorizontal()));
+    connect(core.GetAction("Scene.Camera.Quad"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraQuad()));
+    connect(core.GetAction("Scene.Camera.Top1_Bottom2"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraTop1Bottom2()));
+    connect(core.GetAction("Scene.Camera.Top2_Bottom1"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraTop2Bottom1()));
+    connect(core.GetAction("Scene.Camera.Left1_Right2"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraLeft1Right2()));
+    connect(core.GetAction("Scene.Camera.Left2_Right1"), SIGNAL(triggered(bool)), this, SLOT(HandleCameraLeft2Right1()));
 
     // #TODO Extract this code
     Get<Gizmo, SceneDocument>();
@@ -499,7 +499,7 @@ void SceneDocument::HandleCurrentDocumentChanged(Document* document)
 {
     if (IsActive())
     {
-        mainWidget_->Acquire();
+        core_->Acquire();
         viewportManager_->ApplyViewports();
     }
     else

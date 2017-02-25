@@ -6,10 +6,10 @@
 namespace Urho3DEditor
 {
 
-Document::Document(MainWindow& mainWindow)
-    : mainWindow_(mainWindow)
+Document::Document(Core& core)
+    : core_(core)
 {
-    connect(&mainWindow, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
+    connect(&core, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
 }
 
 Document::~Document()
@@ -52,7 +52,7 @@ bool Document::LaunchFileDialog(bool open)
     dialog.setAcceptMode(open ? QFileDialog::AcceptOpen : QFileDialog::AcceptSave);
     dialog.setFileMode(open ? QFileDialog::ExistingFile : QFileDialog::AnyFile);
     dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    dialog.setDirectory(mainWindow_.GetConfig().GetLastDirectory());
+    dialog.setDirectory(core_.GetConfig().GetLastDirectory());
     dialog.setNameFilter(GetNameFilters());
     if (!dialog.exec())
         return false;
@@ -62,7 +62,7 @@ bool Document::LaunchFileDialog(bool open)
         return false;
 
     fileName_ = files[0];
-    mainWindow_.GetConfig().SetLastDirectoryByFileName(fileName_);
+    core_.GetConfig().SetLastDirectoryByFileName(fileName_);
     SetTitle(QFileInfo(fileName_).fileName());
     return true;
 }
@@ -98,12 +98,12 @@ bool Document::Save()
 
 bool Document::IsActive() const
 {
-    return mainWindow_.GetCurrentDocument() == this;
+    return core_.GetCurrentDocument() == this;
 }
 
 Configuration& Document::GetConfig()
 {
-    return mainWindow_.GetConfig();
+    return core_.GetConfig();
 }
 
 void Document::HandleCurrentDocumentChanged(Document* document)

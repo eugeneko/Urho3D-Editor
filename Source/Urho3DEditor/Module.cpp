@@ -14,9 +14,9 @@
 namespace Urho3DEditor
 {
 
-ModuleSystem::ModuleSystem(Configuration& config, MainWindow& mainWindow)
+ModuleSystem::ModuleSystem(Configuration& config, Core& core)
     : config_(config)
-    , mainWindow_(mainWindow)
+    , core_(core)
 {
 
 }

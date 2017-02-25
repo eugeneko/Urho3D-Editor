@@ -45,16 +45,16 @@ bool Application::Initialize()
 
     mainWindowWidget_.reset(new QMainWindow());
     config_.reset(new Configuration());
-    mainWindow_.reset(new MainWindow(*config_, *mainWindowWidget_));
-    moduleSystem_.reset(new ModuleSystem(*config_, *mainWindow_));
-    if (!mainWindow_->Initialize())
+    core_.reset(new Core(*config_, *mainWindowWidget_));
+    moduleSystem_.reset(new ModuleSystem(*config_, *core_));
+    if (!core_->Initialize())
         return false;
 
     moduleSystem_->AddModule(new SceneEditor());
     moduleSystem_->AddModule(new HierarchyWindow());
     moduleSystem_->AddModule(new AttributeInspector());
 
-    mainWindow_->LoadLayout();
+    core_->LoadLayout();
     return true;
 }
 

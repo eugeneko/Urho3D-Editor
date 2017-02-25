@@ -20,7 +20,7 @@ class Input;
 namespace Urho3DEditor
 {
 
-class MainWindow;
+class Core;
 class SceneOverlay;
 class Urho3DClientWidget;
 class SceneViewportManager;
@@ -59,7 +59,7 @@ public:
 
 public:
     /// Construct.
-    SceneDocument(MainWindow& mainWindow);
+    SceneDocument(Core& core);
     /// Destruct.
     virtual ~SceneDocument();
     /// Get scene.
@@ -221,7 +221,7 @@ private:
     /// Input subsystem.
     Urho3D::Input& input_;
     /// Urho3D Client Widget
-    Urho3DClientWidget* mainWidget_;
+    Urho3DClientWidget* core_;
     /// Mouse buttons are down.
     QSet<Qt::MouseButton> mouseButtonsDown_;
     /// Mouse buttons are pressed.

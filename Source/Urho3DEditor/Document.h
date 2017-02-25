@@ -8,16 +8,16 @@ namespace Urho3DEditor
 
 class Configuration;
 class Document;
-class MainWindow;
+class Core;
 
-/// Document of the main window.
+/// Interface of document that can be placed as sub-window of main window area.
 class Document : public QWidget
 {
     Q_OBJECT
 
 public:
     /// Construct.
-    Document(MainWindow& mainWindow);
+    Document(Core& core);
     /// Destruct.
     virtual ~Document();
 
@@ -47,8 +47,8 @@ public:
     QString GetRawTitle() { return title_; }
     /// Return file name of the document.
     QString GetFileName() { return fileName_; }
-    /// Get main window.
-    MainWindow& GetMainWindow() { return mainWindow_; }
+    /// Get editor core.
+    Core& GetCore() { return core_; }
     /// Get configuration.
     Configuration& GetConfig();
     /// Get (and create if not exist) object of specified type. Type shall be constructible from this casted to U&.
@@ -105,8 +105,8 @@ signals:
     void titleChanged();
 
 private:
-    /// Main window.
-    MainWindow& mainWindow_;
+    /// Editor core.
+    Core& core_;
     /// File name.
     QString fileName_;
     /// Title.

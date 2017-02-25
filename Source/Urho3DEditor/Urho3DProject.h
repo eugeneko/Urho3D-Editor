@@ -13,7 +13,7 @@
 namespace Urho3DEditor
 {
 
-class MainWindow;
+class Core;
 
 /// Urho3D Project document.
 class Urho3DProject : public Urho3D::Resource
@@ -69,7 +69,7 @@ class ProjectDocument : public Document
 
 public:
     /// Construct.
-    ProjectDocument(MainWindow& mainWindow);
+    ProjectDocument(Core& core);
     /// Get project.
     Urho3D::SharedPtr<Urho3DProject> GetProject() { return project_; }
 

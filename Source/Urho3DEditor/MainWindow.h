@@ -49,8 +49,9 @@ private:
 
 };
 
-/// Main window.
-class MainWindow : public QObject
+/// Core singleton of Urho3D Editor.
+/// #TODO Rename files
+class Core : public QObject
 {
     Q_OBJECT
 
@@ -60,9 +61,9 @@ public:
 
 public:
     /// Construct.
-    MainWindow(Configuration& config, QMainWindow& mainWindow);
+    Core(Configuration& config, QMainWindow& mainWindow);
     /// Destruct.
-    virtual ~MainWindow();
+    virtual ~Core();
     /// Initialize.
     virtual bool Initialize();
     /// Load layout.

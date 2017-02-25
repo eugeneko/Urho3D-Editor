@@ -76,32 +76,32 @@ SceneEditor::SceneEditor()
 
 bool SceneEditor::Initialize()
 {
-    MainWindow& mainWindow = GetMainWindow();
+    Core& core = GetCore();
 
     // Setup menu
-    actionFileNewScene_.reset(mainWindow.AddAction("File.NewScene", Qt::CTRL + Qt::SHIFT + Qt::Key_N));
+    actionFileNewScene_.reset(core.AddAction("File.NewScene", Qt::CTRL + Qt::SHIFT + Qt::Key_N));
     connect(actionFileNewScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileNewScene()));
 
-    actionFileOpenScene_.reset(mainWindow.AddAction("File.OpenScene", Qt::CTRL + Qt::Key_O));
+    actionFileOpenScene_.reset(core.AddAction("File.OpenScene", Qt::CTRL + Qt::Key_O));
     connect(actionFileOpenScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileOpenScene()));
 
-    mainWindow.AddAction("Edit.Cut");
-    mainWindow.AddAction("Edit.Duplicate");
-    mainWindow.AddAction("Edit.Copy");
-    mainWindow.AddAction("Edit.Paste");
-    mainWindow.AddAction("Edit.Delete");
+    core.AddAction("Edit.Cut");
+    core.AddAction("Edit.Duplicate");
+    core.AddAction("Edit.Copy");
+    core.AddAction("Edit.Paste");
+    core.AddAction("Edit.Delete");
 
-    mainWindow.AddAction("Create.ReplicatedNode");
-    mainWindow.AddAction("Create.LocalNode");
+    core.AddAction("Create.ReplicatedNode");
+    core.AddAction("Create.LocalNode");
 
-    mainWindow.AddAction("Scene.Camera.Single");
-    mainWindow.AddAction("Scene.Camera.Vertical");
-    mainWindow.AddAction("Scene.Camera.Horizontal");
-    mainWindow.AddAction("Scene.Camera.Quad");
-    mainWindow.AddAction("Scene.Camera.Top1_Bottom2");
-    mainWindow.AddAction("Scene.Camera.Top2_Bottom1");
-    mainWindow.AddAction("Scene.Camera.Left1_Right2");
-    mainWindow.AddAction("Scene.Camera.Left2_Right1");
+    core.AddAction("Scene.Camera.Single");
+    core.AddAction("Scene.Camera.Vertical");
+    core.AddAction("Scene.Camera.Horizontal");
+    core.AddAction("Scene.Camera.Quad");
+    core.AddAction("Scene.Camera.Top1_Bottom2");
+    core.AddAction("Scene.Camera.Top2_Bottom1");
+    core.AddAction("Scene.Camera.Left1_Right2");
+    core.AddAction("Scene.Camera.Left2_Right1");
     // #TODO Rename Camera to Viewport
 
     // Setup config
@@ -152,16 +152,16 @@ bool SceneEditor::Initialize()
 
 void SceneEditor::HandleFileNewScene()
 {
-    MainWindow& mainWindow = GetMainWindow();
-    mainWindow.AddDocument(new SceneDocument(mainWindow));
+    Core& core = GetCore();
+    core.AddDocument(new SceneDocument(core));
 }
 
 void SceneEditor::HandleFileOpenScene()
 {
-    MainWindow& mainWindow = GetMainWindow();
-    QScopedPointer<SceneDocument> sceneDocument(new SceneDocument(mainWindow));
+    Core& core = GetCore();
+    QScopedPointer<SceneDocument> sceneDocument(new SceneDocument(core));
     if (sceneDocument->Open())
-        mainWindow.AddDocument(sceneDocument.take());
+        core.AddDocument(sceneDocument.take());
 }
 
 }

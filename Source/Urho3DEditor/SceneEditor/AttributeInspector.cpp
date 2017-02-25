@@ -23,19 +23,19 @@ AttributeInspector::AttributeInspector()
 
 bool AttributeInspector::Initialize()
 {
-    MainWindow& mainWindow = GetMainWindow();
+    Core& core = GetCore();
 
     // Connect to signals
-    connect(&mainWindow, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
-    connect(&mainWindow, SIGNAL(updateMenu(QMenu*)), this, SLOT(UpdateMenu()));
+    connect(&core, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
+    connect(&core, SIGNAL(updateMenu(QMenu*)), this, SLOT(UpdateMenu()));
 
     // Create widget
     widget_.reset(new QDockWidget("Attribute Inspector"));
     widget_->hide();
-    mainWindow.AddDock(Qt::RightDockWidgetArea, widget_.data());
+    core.AddDock(Qt::RightDockWidgetArea, widget_.data());
 
     // Create actions
-    showAction_.reset(mainWindow.AddAction("View.AttributeInspector"));
+    showAction_.reset(core.AddAction("View.AttributeInspector"));
     showAction_->setCheckable(true);
     connect(showAction_.data(), SIGNAL(triggered(bool)), this, SLOT(ToggleShow(bool)));
 

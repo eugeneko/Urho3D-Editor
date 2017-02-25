@@ -21,7 +21,7 @@ namespace Urho3DEditor
 {
 
 class Configuration;
-class MainWindow;
+class Core;
 class Document;
 class SceneHierarchyWidget;
 class SceneDocument;

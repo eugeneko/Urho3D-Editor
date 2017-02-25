@@ -113,9 +113,9 @@ bool Urho3DProject::Save(Urho3D::Serializer& dest) const
 }
 
 //////////////////////////////////////////////////////////////////////////
-ProjectDocument::ProjectDocument(MainWindow& mainWindow)
-    : Document(mainWindow)
-    , project_(new Urho3DProject(mainWindow.GetUrho3DWidget()->GetContext()))
+ProjectDocument::ProjectDocument(Core& core)
+    : Document(core)
+    , project_(new Urho3DProject(core.GetUrho3DWidget()->GetContext()))
     , layout_(new QGridLayout())
     , buttonSetAsCurrent_(new QPushButton())
     , fieldResourcePrefixPaths_(new QLineEdit("."))

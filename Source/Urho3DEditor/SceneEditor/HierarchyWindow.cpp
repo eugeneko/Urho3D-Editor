@@ -48,25 +48,25 @@ void ConstructNodeItem(ObjectHierarchyItem* item, Urho3D::Node* node)
 
 bool HierarchyWindow::Initialize()
 {
-    MainWindow& mainWindow = GetMainWindow();
+    Core& core = GetCore();
 
     // Connect to signals
-    connect(&mainWindow, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
-    connect(&mainWindow, SIGNAL(updateMenu(QMenu*)), this, SLOT(UpdateMenu()));
+    connect(&core, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
+    connect(&core, SIGNAL(updateMenu(QMenu*)), this, SLOT(UpdateMenu()));
 
     // Create widget
     widget_.reset(new QDockWidget("Hierarchy Window"));
     widget_->hide();
-    mainWindow.AddDock(Qt::LeftDockWidgetArea, widget_.data());
+    core.AddDock(Qt::LeftDockWidgetArea, widget_.data());
 
     // Create actions
-    showAction_.reset(mainWindow.AddAction("View.HierarchyWindow"));
+    showAction_.reset(core.AddAction("View.HierarchyWindow"));
     showAction_->setCheckable(true);
     connect(showAction_.data(), SIGNAL(triggered(bool)), this, SLOT(ToggleShow(bool)));
 
     // Launch
     showAction_->activate(QAction::Trigger);
-    CreateBody(mainWindow.GetCurrentDocument());
+    CreateBody(core.GetCurrentDocument());
     return true;
 }
 
@@ -191,12 +191,12 @@ void SceneHierarchyWidget::HandleContextMenuRequested(const QPoint& point)
     {
         if (Urho3D::Node* node = dynamic_cast<Urho3D::Node*>(object))
         {
-            if (QMenu* menu = document_.GetMainWindow().GetMenu("HierarchyWindow.Node"))
+            if (QMenu* menu = document_.GetCore().GetMenu("HierarchyWindow.Node"))
                 menu->exec(globalPoint);
         }
         else if (Urho3D::Component* node = dynamic_cast<Urho3D::Component*>(object))
         {
-            if (QMenu* menu = document_.GetMainWindow().GetMenu("HierarchyWindow.Component"))
+            if (QMenu* menu = document_.GetCore().GetMenu("HierarchyWindow.Component"))
                 menu->exec(globalPoint);
         }
     }

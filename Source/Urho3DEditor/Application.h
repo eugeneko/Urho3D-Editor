@@ -11,7 +11,7 @@ namespace Urho3DEditor
 {
 
 class Configuration;
-class MainWindow;
+class Core;
 
 /// Main class of Editor application.
 class Application : public QApplication
@@ -35,8 +35,8 @@ protected:
     QScopedPointer<QMainWindow> mainWindowWidget_;
     /// Configuration.
     QScopedPointer<Configuration> config_;
-    /// Main window manager.
-    QScopedPointer<MainWindow> mainWindow_;
+    /// Editor core.
+    QScopedPointer<Core> core_;
     /// Modules.
     QScopedPointer<ModuleSystem> moduleSystem_;
 

@@ -9,7 +9,7 @@ namespace Urho3DEditor
 {
 
 class Configuration;
-class MainWindow;
+class Core;
 class Module;
 
 /// Module system of Editor.
@@ -17,12 +17,12 @@ class ModuleSystem
 {
 public:
     /// Construct.
-    ModuleSystem(Configuration& config, MainWindow& mainWindow);
+    ModuleSystem(Configuration& config, Core& core);
 
     /// Get config.
     Configuration& GetConfig() { return config_; }
-    /// Get main window.
-    MainWindow& GetMainWindow() { return mainWindow_; }
+    /// Get editor core.
+    Core& GetCore() { return core_; }
 
     /// Add module. Ownership is passed to ModuleSystem.
     void AddModule(const QString& name, Module* module);
@@ -44,8 +44,8 @@ public:
 private:
     /// Configuration.
     Configuration& config_;
-    /// Main window.
-    MainWindow& mainWindow_;
+    /// Editor core.
+    Core& core_;
     /// Modules.
     QHash<QString, QSharedPointer<Module>> modules_;
 
@@ -64,8 +64,8 @@ public:
 
     /// Get config.
     Configuration& GetConfig() { return system_->GetConfig(); }
-    /// Get main window.
-    MainWindow& GetMainWindow() { return system_->GetMainWindow(); }
+    /// Get editor core.
+    Core& GetCore() { return system_->GetCore(); }
     /// Get module by name.
     Module* GetModule(const QString& name) const;
     /// Get module by type.

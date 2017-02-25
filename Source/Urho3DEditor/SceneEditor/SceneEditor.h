@@ -14,7 +14,7 @@ namespace Urho3DEditor
 {
 
 class Document;
-class MainWindow;
+class Core;
 class SceneOverlay;
 class Urho3DWidget;
 
