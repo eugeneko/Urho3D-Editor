@@ -116,6 +116,8 @@ private slots:
     /// Change document.
     void ChangeDocument(DocumentWindow* widget);
 
+    /// Create new project.
+    void NewProject();
     /// Handle 'File/Exit'
     void HandleFileExit();
     /// Handle 'Edit/Undo'

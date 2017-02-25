@@ -8,10 +8,11 @@
 #include <Urho3D/Resource/ResourceCache.h>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QMdiArea>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QTabBar>
 #include <QVBoxLayout>
-#include <QMdiArea>
 #include <QtXml/QDomDocument>
 
 #include <QLabel>
@@ -209,9 +210,19 @@ void MainWindow::ChangeDocument(DocumentWindow* widget)
     }
 }
 
+void MainWindow::NewProject()
+{
+    QScopedPointer<ProjectDocument> document(new ProjectDocument(*this));
+    if (document->SaveAs())
+        AddDocument(document.take());
+}
+
 void MainWindow::InitializeMenu()
 {
     QAction* action = nullptr;
+
+    action = AddAction("File.NewProject");
+    connect(action, &QAction::triggered, this, &MainWindow::NewProject);
 
     action = AddAction("File.Close", Qt::CTRL + Qt::Key_W);
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));

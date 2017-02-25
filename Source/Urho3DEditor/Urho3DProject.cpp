@@ -1,53 +1,17 @@
 #include "Urho3DProject.h"
 #include "MainWindow.h"
-// #include "AbstractDocument.h"
-// #include "EditorSettings.h"
-// #include "Urho3DWidget.h"
-// #include <Urho3D/Core/CoreEvents.h>
-// #include <Urho3D/Graphics/Camera.h>
-// #include <Urho3D/Graphics/Renderer.h>
-// #include <Urho3D/Input/Input.h>
-// #include <Urho3D/IO/IOEvents.h>
+#include "Bridge.h"
 #include <Urho3D/IO/File.h>
-// #include <Urho3D/Scene/Scene.h>
-// #include <Urho3D/Scene/SceneEvents.h>
 #include <Urho3D/Resource/XMLFile.h>
-// #include <QVBoxLayout>
-// #include <QFileDialog>
+#include <QAction>
 #include <QDirIterator>
 #include <QFileInfo>
-#include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
-#include <QListWidget>
-#include <QListWidgetItem>
 
 namespace Urho3DEditor
 {
 
-ProjectManager::ProjectManager()
-{
-
-}
-
-bool ProjectManager::Initialize()
-{
-    MainWindow& mainWindow = GetMainWindow();
-
-    actionFileNewProject_.reset(new QAction("New Project"));
-    connect(actionFileNewProject_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileNewProject()));
-    mainWindow.AddAction("File.NewProject", actionFileNewProject_.data());
-
-    return true;
-}
-
-
-void ProjectManager::HandleFileNewProject()
-{
-
-}
-
-//////////////////////////////////////////////////////////////////////////
 Urho3DProject::Urho3DProject(Urho3D::Context* context)
     : Urho3D::Resource(context)
     , resourcePrefixPaths_(".")
@@ -149,20 +113,20 @@ bool Urho3DProject::Save(Urho3D::Serializer& dest) const
 }
 
 //////////////////////////////////////////////////////////////////////////
-Urho3DProjectPage::Urho3DProjectPage(Urho3D::Context* context)
-    : AbstractPage(context)
-    , project_(new Urho3DProject(context))
+ProjectDocument::ProjectDocument(MainWindow& mainWindow)
+    : Document(mainWindow)
+    , project_(new Urho3DProject(mainWindow.GetUrho3DWidget()->GetContext()))
     , layout_(new QGridLayout())
     , buttonSetAsCurrent_(new QPushButton())
     , fieldResourcePrefixPaths_(new QLineEdit("."))
     , fieldResourcePaths_(new QLineEdit("CoreData;Data"))
 {
     SetTitle("New project");
-    MarkUnsaved();
+    MarkDirty();
 
     setLayout(layout_);
-    connect(fieldResourcePrefixPaths_, SIGNAL(textEdited(const QString&)), this, SLOT(OnResourcePrefixPathsEdited(const QString&)));
-    connect(fieldResourcePaths_,       SIGNAL(textEdited(const QString&)), this, SLOT(OnResourcePathsEdited(const QString&)));
+    connect(fieldResourcePrefixPaths_, &QLineEdit::textEdited, this, [this]() { MarkDirty(); });
+    connect(fieldResourcePaths_,       &QLineEdit::textEdited, this, [this]() { MarkDirty(); });
 
     layout_->addWidget(buttonSetAsCurrent_,                  0, 0);
     layout_->addWidget(new QLabel("Resource Prefix Paths:"), 1, 0);
@@ -172,41 +136,24 @@ Urho3DProjectPage::Urho3DProjectPage(Urho3D::Context* context)
     layout_->setRowStretch(3, 1);
 }
 
-QString Urho3DProjectPage::GetFilters() const
+bool ProjectDocument::DoLoad(const QString& fileName)
 {
-    return "Urho3D Project (*.urho);;All files (*.*)";
-}
-
-bool Urho3DProjectPage::DoSave()
-{
-    project_->SetResourcePrefixPaths(fieldResourcePrefixPaths_->text());
-    project_->SetResourcePaths(fieldResourcePaths_->text());
-
-    const Urho3D::String fileName = GetFileName().toStdString().c_str();
-    project_->SetName(fileName);
-    return project_->SaveFile(fileName);
-}
-
-bool Urho3DProjectPage::DoLoad()
-{
-    const Urho3D::String fileName = GetFileName().toStdString().c_str();
-    if (!project_->LoadFile(fileName))
+    if (!project_->LoadFile(Cast(fileName)))
         return false;
-    project_->SetName(fileName);
+    project_->SetName(Cast(fileName));
 
     fieldResourcePrefixPaths_->setText(project_->GetResourcePrefixPaths());
     fieldResourcePaths_->setText(project_->GetResourcePaths());
     return true;
 }
 
-void Urho3DProjectPage::OnResourcePrefixPathsEdited(const QString& value)
+bool ProjectDocument::DoSave(const QString& fileName)
 {
-    MarkUnsaved();
-}
+    project_->SetResourcePrefixPaths(fieldResourcePrefixPaths_->text());
+    project_->SetResourcePaths(fieldResourcePaths_->text());
 
-void Urho3DProjectPage::OnResourcePathsEdited(const QString& value)
-{
-    MarkUnsaved();
+    project_->SetName(Cast(fileName));
+    return project_->SaveFile(Cast(fileName));
 }
 
 }

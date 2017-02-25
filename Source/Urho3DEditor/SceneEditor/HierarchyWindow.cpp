@@ -10,6 +10,7 @@
 #include <QTreeView>
 #include <QVBoxLayout>
 #include <QHeaderView>
+#include <QMenu>
 
 namespace Urho3DEditor
 {

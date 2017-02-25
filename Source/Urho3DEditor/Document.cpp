@@ -17,18 +17,38 @@ Document::~Document()
 
 }
 
+void Document::MarkDirty()
+{
+    if (!dirty_)
+    {
+        dirty_ = true;
+        emit titleChanged();
+    }
+}
+
+void Document::ResetDirty()
+{
+    if (dirty_)
+    {
+        dirty_ = false;
+        emit titleChanged();
+    }
+}
+
 void Document::SetTitle(const QString& title)
 {
     if (title != title_)
     {
         title_ = title;
-        emit titleChanged(this);
+        emit titleChanged();
     }
 }
 
 bool Document::LaunchFileDialog(bool open)
 {
     QFileDialog dialog;
+    if (!open)
+        dialog.selectFile(GetDefaultName());
     dialog.setAcceptMode(open ? QFileDialog::AcceptOpen : QFileDialog::AcceptSave);
     dialog.setFileMode(open ? QFileDialog::ExistingFile : QFileDialog::AnyFile);
     dialog.setOption(QFileDialog::DontUseNativeDialog, true);
@@ -49,9 +69,31 @@ bool Document::LaunchFileDialog(bool open)
 
 bool Document::Open()
 {
-    if (LaunchFileDialog(true))
-        return DoLoad(fileName_);
+    if (!LaunchFileDialog(true))
+        return false;
+    return DoLoad(fileName_);
+}
+
+bool Document::SaveAs()
+{
+    if (!LaunchFileDialog(false))
+        return false;
+    if (DoSave(fileName_))
+    {
+        ResetDirty();
+        return true;
+    }
     return false;
+}
+
+bool Document::Save()
+{
+    if (!fileName_.isEmpty() && DoSave(fileName_))
+    {
+        ResetDirty();
+        return true;
+    }
+    return SaveAs();
 }
 
 bool Document::IsActive() const
@@ -70,6 +112,11 @@ void Document::HandleCurrentDocumentChanged(Document* document)
 }
 
 bool Document::DoLoad(const QString& /*fileName*/)
+{
+    return true;
+}
+
+bool Document::DoSave(const QString& /*fileName*/)
 {
     return true;
 }

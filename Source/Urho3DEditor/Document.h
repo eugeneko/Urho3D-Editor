@@ -21,12 +21,20 @@ public:
     /// Destruct.
     virtual ~Document();
 
+    /// Mark document as dirty.
+    void MarkDirty();
+    /// Reset document dirtiness.
+    void ResetDirty();
     /// Set title of the document.
     virtual void SetTitle(const QString& title);
     /// Launch file dialog and get the file name.
     virtual bool LaunchFileDialog(bool open);
     /// Open document from file.
     virtual bool Open();
+    /// Save document to file. Old file name is never used.
+    virtual bool SaveAs();
+    /// Save document to file. Old file name is used if possible.
+    virtual bool Save();
 
     /// Undo.
     virtual void Undo() {}
@@ -44,7 +52,7 @@ public:
     /// Get configuration.
     Configuration& GetConfig();
     /// Get (and create if not exist) object of specified type. Type shall be constructible from this casted to U&.
-    /// Nullptr will be returned only if document is not convertible to U.
+    /// Null will be returned only if document is not convertible to U.
     template <class TObject, class TDocument = Document, class TParent = QObject>
     TObject* Get(TParent* parent = nullptr)
     {
@@ -74,15 +82,19 @@ public:
     }
 
     /// Return title of the document.
-    virtual QString GetTitle() { return title_; }
+    virtual QString GetTitle() { return title_ + (dirty_ ? " *" : ""); }
     /// Return whether the document can be saved.
     virtual bool CanBeSaved() { return false; }
-    /// Get name filters for open and save dialogs.
+    /// Return default file name for save.
+    virtual QString GetDefaultName() { return ""; }
+    /// Return name filters for open and save dialogs.
     virtual QString GetNameFilters() { return "All files (*.*)"; }
 
-protected:
+private:
     /// Load the document from file.
     virtual bool DoLoad(const QString& fileName);
+    /// Save the document to file.
+    virtual bool DoSave(const QString& fileName);
 
 protected slots:
     /// Handle current document changed.
@@ -90,7 +102,7 @@ protected slots:
 
 signals:
     /// Signals that title of the document has been changed.
-    void titleChanged(Document* document);
+    void titleChanged();
 
 private:
     /// Main window.
@@ -101,6 +113,8 @@ private:
     QString title_;
     /// Stored objects.
     QHash<QString, QPointer<QObject>> objects_;
+    /// Dirty flag.
+    bool dirty_ = false;
 
 };
 

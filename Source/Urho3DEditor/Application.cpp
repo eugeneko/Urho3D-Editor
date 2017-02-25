@@ -50,8 +50,6 @@ bool Application::Initialize()
     if (!mainWindow_->Initialize())
         return false;
 
-    moduleSystem_->AddModule(new ProjectManager());
-
     moduleSystem_->AddModule(new SceneEditor());
     moduleSystem_->AddModule(new HierarchyWindow());
     moduleSystem_->AddModule(new AttributeInspector());

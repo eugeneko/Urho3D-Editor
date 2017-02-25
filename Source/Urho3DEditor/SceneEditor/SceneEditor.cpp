@@ -77,7 +77,6 @@ SceneEditor::SceneEditor()
 bool SceneEditor::Initialize()
 {
     MainWindow& mainWindow = GetMainWindow();
-    connect(&mainWindow, SIGNAL(currentDocumentChanged(Document*)), this, SLOT(HandleCurrentDocumentChanged(Document*)));
 
     // Setup menu
     actionFileNewScene_.reset(mainWindow.AddAction("File.NewScene", Qt::CTRL + Qt::SHIFT + Qt::Key_N));
@@ -104,8 +103,6 @@ bool SceneEditor::Initialize()
     mainWindow.AddAction("Scene.Camera.Left1_Right2");
     mainWindow.AddAction("Scene.Camera.Left2_Right1");
     // #TODO Rename Camera to Viewport
-
-    UpdateMenuVisibility();
 
     // Setup config
     Configuration& config = GetConfig();
@@ -165,18 +162,6 @@ void SceneEditor::HandleFileOpenScene()
     QScopedPointer<SceneDocument> sceneDocument(new SceneDocument(mainWindow));
     if (sceneDocument->Open())
         mainWindow.AddDocument(sceneDocument.take());
-}
-
-void SceneEditor::HandleCurrentDocumentChanged(Document* document)
-{
-    UpdateMenuVisibility();
-}
-
-void SceneEditor::UpdateMenuVisibility()
-{
-    MainWindow& mainWindow = GetMainWindow();
-    Document* document = mainWindow.GetCurrentDocument();
-    SceneDocument* sceneDocument = dynamic_cast<SceneDocument*>(document);
 }
 
 }

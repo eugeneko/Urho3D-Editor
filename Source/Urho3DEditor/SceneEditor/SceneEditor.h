@@ -96,12 +96,6 @@ private slots:
     virtual void HandleFileNewScene();
     /// Handle 'File/Open Scene'
     virtual void HandleFileOpenScene();
-    /// Handle current document changed.
-    virtual void HandleCurrentDocumentChanged(Document* document);
-
-private:
-    /// Update menu visibility.
-    virtual void UpdateMenuVisibility();
 
 private:
     /// 'File/New Scene' action.

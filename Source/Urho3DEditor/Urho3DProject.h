@@ -1,50 +1,19 @@
 #pragma once
 
 #include "Module.h"
-#include "AbstractDocument.h"
+#include "Document.h"
 #include <Urho3D/Core/Context.h>
-// #include <Urho3D/Engine/Engine.h>
-// #include <Urho3D/Graphics/Viewport.h>
-// #include <Urho3D/Scene/Node.h>
 #include <Urho3D/Resource/Resource.h>
-// #include <QApplication>
-// #include <QMainWindow>
-// #include <QMenuBar>
+#include <QPushButton>
+#include <QGridLayout>
+#include <QLineEdit>
 #include <QString>
 #include <QStringList>
-
-class QFormLayout;
-class QLineEdit;
-class QListWidget;
-class QListWidgetItem;
 
 namespace Urho3DEditor
 {
 
 class MainWindow;
-
-/// Project support.
-class ProjectManager : public Module
-{
-    Q_OBJECT
-
-public:
-    /// Construct.
-    ProjectManager();
-
-protected:
-    /// Initialize module.
-    virtual bool Initialize() override;
-
-protected slots:
-    /// Handle 'File/New Project'
-    virtual void HandleFileNewProject();
-
-private:
-    /// 'File/New Project' action.
-    QScopedPointer<QAction> actionFileNewProject_;
-
-};
 
 /// Urho3D Project document.
 class Urho3DProject : public Urho3D::Resource
@@ -93,34 +62,27 @@ private:
 
 };
 
-/// Urho3D Project properties page.
-class Urho3DProjectPage : public AbstractPage
+/// Document that shows project content.
+class ProjectDocument : public Document
 {
     Q_OBJECT
-    URHO3D_OBJECT(Urho3DProjectPage, AbstractPage);
 
 public:
     /// Construct.
-    Urho3DProjectPage(Urho3D::Context* context);
+    ProjectDocument(MainWindow& mainWindow);
     /// Get project.
     Urho3D::SharedPtr<Urho3DProject> GetProject() { return project_; }
 
-    /// Return default file name for save dialog.
-    virtual QString GetDefaultFileName() const { return "Project.urho"; }
-    /// Return filters.
-    virtual QString GetFilters() const override;
+    /// @see Document::GetDefaultName
+    virtual QString GetDefaultName() override { return "Project.urho"; }
+    /// @see Document::GetNameFilters
+    virtual QString GetNameFilters() override { return "Urho3D Project (*.urho);;All files (*.*)"; }
 
-protected:
-    /// Save document.
-    virtual bool DoSave() override;
-    /// Load document.
-    virtual bool DoLoad() override;
-
-private slots:
-    /// Handle 'Resource Prefix Paths' edited.
-    void OnResourcePrefixPathsEdited(const QString& value);
-    /// Handle 'Resource Paths' edited.
-    void OnResourcePathsEdited(const QString& value);
+private:
+    /// Load the document from file.
+    virtual bool DoLoad(const QString& fileName);
+    /// Save the document to file.
+    virtual bool DoSave(const QString& fileName);
 
 private:
     /// Project.
