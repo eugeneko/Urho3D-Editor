@@ -7,6 +7,7 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QMdiSubWindow>
+#include <QMessageBox>
 
 class QDockWidget;
 class QMainWindow;
@@ -20,7 +21,54 @@ namespace Urho3DEditor
 class Configuration;
 class Document;
 
+/// Ordered map from type to object.
+template <class T>
+class TypeMap
+{
+public:
+    /// Iterator.
+    using Iterator = typename QVector<QPair<QString, T>>::ConstIterator;
+
+    /// Insert new value.
+    bool Insert(const QString& typeName, const T& value)
+    {
+        if (map_.contains(typeName))
+            return false;
+        map_.insert(typeName, storage_.size());
+        storage_.push_back(qMakePair(typeName, value));
+        return true;
+    }
+    /// Find value by type name.
+    const T* Find(const QString& typeName) const
+    {
+        const int index = map_.value(typeName, -1);
+        return index >= 0 && index < storage_.size() ? &storage_[index].second : nullptr;
+    }
+    /// Get value by type name.
+    const T& Get(const QString& typeName)
+    {
+        const T* value = Find(typeName);
+        assert(value);
+        return value->second;
+    }
+    /// Begin iterator.
+    Iterator Begin() const { return storage_.cbegin(); }
+    /// End iterator.
+    Iterator End() const { return storage_.cend(); }
+
+private:
+    /// Vector storage.
+    QVector<QPair<QString, T>> storage_;
+    /// Map.
+    QHash<QString, int> map_;
+};
+
+template <class T> typename TypeMap<T>::Iterator begin(const TypeMap<T>& map) { return map.Begin(); }
+
+template <class T> typename TypeMap<T>::Iterator end(const TypeMap<T>& map) { return map.End(); }
+
 /// Document window.
+/// #TODO Move to separate file
 class DocumentWindow : public QMdiSubWindow
 {
     Q_OBJECT
@@ -64,6 +112,27 @@ public:
     Core(Configuration& config, QMainWindow& mainWindow);
     /// Destruct.
     virtual ~Core();
+
+    /// Show error message.
+    QMessageBox::StandardButton Error(const QString& text,
+        QMessageBox::StandardButtons buttons = QMessageBox::Ok, QMessageBox::StandardButton defaultButton = QMessageBox::Ok);
+
+    /// Register document.
+    bool RegisterDocument(const DocumentDescription& desc);
+    /// Create new document by type name.
+    bool NewDocument(const QString& typeName);
+    /// Open document file. If type name is not specified, first successfully loaded document will be opened.
+    bool OpenDocument(const QString& fileName, const QString& typeName = "");
+    /// Launch open dialog and open selected documents. If type name is not specified, all document types are allowed.
+    bool OpenDocumentDialog(const QString& typeName, bool allowMultiselect);
+    /// Save document. Launch save dialog if file name is unknown.
+    bool SaveDocument(Document& document, bool saveAs = false);
+
+    /// Create new document by type.
+    template <class T> bool NewDocument() { return NewDocument(T::staticMetaObject.className()); }
+    /// Launch generic open dialog and try to open all selected files.
+    bool Open() { return OpenDocumentDialog("", true); }
+
     /// Initialize.
     virtual bool Initialize();
     /// Load layout.
@@ -117,8 +186,6 @@ private slots:
     /// Change document.
     void ChangeDocument(DocumentWindow* widget);
 
-    /// Create new project.
-    void NewProject();
     /// Handle 'File/Exit'
     void HandleFileExit();
     /// Handle 'Edit/Undo'
@@ -137,6 +204,13 @@ private:
     Configuration& config_;
     /// Main window.
     QMainWindow& mainWindow_;
+
+    /// Registered documents.
+    TypeMap<DocumentDescription> registeredDocuments_;
+    /// Registered document filters.
+    QStringList registeredDocumentFilters_;
+    /// Registered document filters mapped to document type.
+    QHash<QString, QString> filterToDocumentType_;
 
     /// Central widget.
     QMdiArea* mdiArea_;

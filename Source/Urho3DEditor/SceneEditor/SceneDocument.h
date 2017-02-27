@@ -49,7 +49,16 @@ enum class SelectionAction
 class SceneDocument : public Document, public Urho3D::Object, public SceneInputInterface
 {
     Q_OBJECT
+    URHO3DEDITOR_DOCUMENT
     URHO3D_OBJECT(SceneDocument, Urho3D::Object);
+
+    static DocumentDescription CreateDescription()
+    {
+        DocumentDescriptionT<SceneDocument> desc;
+        desc.fileNameFilters_ << "Urho3D Scene (*.xml *.json *.bin)";
+        desc.defaultFileName_ = "Scene.xml";
+        return desc;
+    }
 
 public:
     /// Set of nodes.
@@ -137,10 +146,6 @@ public:
 
     /// Return title of the document.
     virtual QString GetTitle() override { return GetRawTitle(); }
-    /// Return whether the document can be saved.
-    virtual bool CanBeSaved() override { return true; }
-    /// Get name filters for open and save dialogs.
-    virtual QString GetNameFilters() override;
 
 signals:
     /// Signals that selection has been changed.

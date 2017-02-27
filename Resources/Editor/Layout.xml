@@ -4,8 +4,7 @@
             <action name="New Project" action="File.NewProject" />
             <action name="New Scene" action="File.NewScene" />
             <separator/>
-            <action name="Open Scene..." action="File.OpenScene"/>
-            <separator/>
+            <action name="Open..." action="File.Open"/>
             <action name="Save" action="File.Save" />
             <action name="Save As..." action="File.SaveAs" />
             <action name="Close" action="File.Close" />

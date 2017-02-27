@@ -13,6 +13,7 @@
 #include "SceneEditor/AttributeInspector.h"
 #include "SceneEditor/HierarchyWindow.h"
 #include "SceneEditor/SceneEditor.h"
+#include "SceneEditor/SceneDocument.h"
 
 namespace Urho3DEditor
 {
@@ -49,6 +50,8 @@ bool Application::Initialize()
     moduleSystem_.reset(new ModuleSystem(*config_, *core_));
     if (!core_->Initialize())
         return false;
+
+    core_->RegisterDocument(SceneDocument::GetStaticDescription());
 
     moduleSystem_->AddModule(new SceneEditor());
     moduleSystem_->AddModule(new HierarchyWindow());

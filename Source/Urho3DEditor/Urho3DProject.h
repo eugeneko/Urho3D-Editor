@@ -66,17 +66,23 @@ private:
 class ProjectDocument : public Document
 {
     Q_OBJECT
+    URHO3DEDITOR_DOCUMENT
+
+    /// Create description.
+    static DocumentDescription CreateDescription()
+    {
+        DocumentDescriptionT<ProjectDocument> desc;
+        desc.saveOnCreate_ = true;
+        desc.fileNameFilters_ << "Urho3D Project (*.urho)";
+        desc.defaultFileName_ = "Project.urho";
+        return desc;
+    }
 
 public:
     /// Construct.
     ProjectDocument(Core& core);
     /// Get project.
     Urho3D::SharedPtr<Urho3DProject> GetProject() { return project_; }
-
-    /// @see Document::GetDefaultName
-    virtual QString GetDefaultName() override { return "Project.urho"; }
-    /// @see Document::GetNameFilters
-    virtual QString GetNameFilters() override { return "Urho3D Project (*.urho);;All files (*.*)"; }
 
 private:
     /// Load the document from file.

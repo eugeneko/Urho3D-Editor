@@ -94,8 +94,6 @@ protected:
 private slots:
     /// Handle 'File/New Scene'
     virtual void HandleFileNewScene();
-    /// Handle 'File/Open Scene'
-    virtual void HandleFileOpenScene();
 
 private:
     /// 'File/New Scene' action.

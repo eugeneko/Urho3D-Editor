@@ -6,9 +6,15 @@
 namespace Urho3DEditor
 {
 
+struct DocumentDescription;
 class Configuration;
-class Document;
 class Core;
+
+/// Macro to define Document helper functions.
+#define URHO3DEDITOR_DOCUMENT \
+public: \
+    static const DocumentDescription& GetStaticDescription() { static const DocumentDescription desc = CreateDescription(); return desc; } \
+    virtual const DocumentDescription& GetDescription() const override { return GetStaticDescription(); }
 
 /// Interface of document that can be placed as sub-window of main window area.
 class Document : public QWidget
@@ -20,21 +26,19 @@ public:
     Document(Core& core);
     /// Destruct.
     virtual ~Document();
+    /// Get description.
+    virtual const DocumentDescription& GetDescription() const = 0;
 
     /// Mark document as dirty.
     void MarkDirty();
     /// Reset document dirtiness.
     void ResetDirty();
     /// Set title of the document.
-    virtual void SetTitle(const QString& title);
-    /// Launch file dialog and get the file name.
-    virtual bool LaunchFileDialog(bool open);
+    void SetTitle(const QString& title);
     /// Open document from file.
-    virtual bool Open();
-    /// Save document to file. Old file name is never used.
-    virtual bool SaveAs();
+    virtual bool Open(const QString& fileName);
     /// Save document to file. Old file name is used if possible.
-    virtual bool Save();
+    virtual bool Save(const QString& fileName);
 
     /// Undo.
     virtual void Undo() {}
@@ -83,12 +87,6 @@ public:
 
     /// Return title of the document.
     virtual QString GetTitle() { return title_ + (dirty_ ? " *" : ""); }
-    /// Return whether the document can be saved.
-    virtual bool CanBeSaved() { return false; }
-    /// Return default file name for save.
-    virtual QString GetDefaultName() { return ""; }
-    /// Return name filters for open and save dialogs.
-    virtual QString GetNameFilters() { return "All files (*.*)"; }
 
 private:
     /// Load the document from file.
@@ -116,6 +114,42 @@ private:
     /// Dirty flag.
     bool dirty_ = false;
 
+};
+
+/// Document description.
+struct DocumentDescription
+{
+    /// Factory callback.
+    using Factory = Document*(*)(Core& core);
+    /// Construct default.
+    DocumentDescription() {}
+    /// Construct.
+    DocumentDescription(const QString& typeName, Factory factory) : typeName_(typeName), factory_(factory) {}
+
+    /// Document type.
+    QString typeName_;
+    /// Factory.
+    Factory factory_ = nullptr;
+
+    /// Whether the document is save-able.
+    bool saveable_ = false;
+    /// Whether the document shall be saved on creation before further actions.
+    bool saveOnCreate_ = false;
+    /// Default save file name.
+    QString defaultFileName_;
+    /// File name filters.
+    QStringList fileNameFilters_;
+};
+
+/// Helper wrapper for DocumentDescription.
+template <class TDocument>
+struct DocumentDescriptionT : DocumentDescription
+{
+    /// Construct.
+    DocumentDescriptionT()
+        : DocumentDescription(TDocument::staticMetaObject.className(), [](Core& core) -> Document* { return new TDocument(core); })
+    {
+    }
 };
 
 }

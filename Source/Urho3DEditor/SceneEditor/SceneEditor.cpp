@@ -82,9 +82,6 @@ bool SceneEditor::Initialize()
     actionFileNewScene_.reset(core.AddAction("File.NewScene", Qt::CTRL + Qt::SHIFT + Qt::Key_N));
     connect(actionFileNewScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileNewScene()));
 
-    actionFileOpenScene_.reset(core.AddAction("File.OpenScene", Qt::CTRL + Qt::Key_O));
-    connect(actionFileOpenScene_.data(), SIGNAL(triggered(bool)), this, SLOT(HandleFileOpenScene()));
-
     core.AddAction("Edit.Cut");
     core.AddAction("Edit.Duplicate");
     core.AddAction("Edit.Copy");
@@ -154,14 +151,6 @@ void SceneEditor::HandleFileNewScene()
 {
     Core& core = GetCore();
     core.AddDocument(new SceneDocument(core));
-}
-
-void SceneEditor::HandleFileOpenScene()
-{
-    Core& core = GetCore();
-    QScopedPointer<SceneDocument> sceneDocument(new SceneDocument(core));
-    if (sceneDocument->Open())
-        core.AddDocument(sceneDocument.take());
 }
 
 }

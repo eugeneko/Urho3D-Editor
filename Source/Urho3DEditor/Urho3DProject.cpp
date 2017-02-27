@@ -96,6 +96,9 @@ bool Urho3DProject::BeginLoad(Urho3D::Deserializer& source)
         return false;
 
     XMLElement root = xmlFile.GetRoot("project");
+    if (root.IsNull())
+        return false;
+
     resourcePrefixPaths_ = root.GetChild("resourceprefixpaths").GetValue().CString();
     resourcePaths_ = root.GetChild("resourcepaths").GetValue().CString();
     return true;

@@ -10,7 +10,6 @@
 #include <QFileInfo>
 #include <QMdiArea>
 #include <QMenuBar>
-#include <QMessageBox>
 #include <QTabBar>
 #include <QVBoxLayout>
 #include <QtXml/QDomDocument>
@@ -57,12 +56,194 @@ Core::Core(Configuration& config, QMainWindow& mainWindow)
         [this](QMdiSubWindow* subWindow) { ChangeDocument(qobject_cast<DocumentWindow*>(subWindow)); });
 
     config.RegisterVariable(VarLayoutFileName, ":/Layout.xml", ".Global", "Layout");
+
+    // Register default filter
+    const QString anyFilter = "Any files (*.*)";
+    registeredDocumentFilters_.push_back(anyFilter);
+    filterToDocumentType_.insert(anyFilter, "");
+
+    // Register project
+    RegisterDocument(ProjectDocument::GetStaticDescription());
 }
 
 Core::~Core()
 {
     delete mdiArea_;
     delete urhoHost_;
+}
+
+QMessageBox::StandardButton Core::Error(const QString& text,
+    QMessageBox::StandardButtons buttons /*= QMessageBox::Ok*/, QMessageBox::StandardButton defaultButton /*= QMessageBox::Ok*/)
+{
+    return QMessageBox::critical(&mainWindow_, "Urho3D Editor Error", text, buttons, defaultButton);
+}
+
+bool Core::RegisterDocument(const DocumentDescription& desc)
+{
+    if (!desc.factory_ || desc.typeName_.isEmpty())
+    {
+        Error(tr("Document description is corrupted"));
+        return false;
+    }
+    if (!registeredDocuments_.Insert(desc.typeName_, desc))
+    {
+        Error(tr("Document %1 is already registered").arg(desc.typeName_));
+        return false;
+    }
+
+    for (QString filter : desc.fileNameFilters_)
+    {
+        if (filter.contains(";;"))
+        {
+            Error(tr("Document %1 has invalid filter %2: ';;' is not allowed").arg(desc.typeName_, filter));
+            continue;
+        }
+        if (filterToDocumentType_.contains(filter))
+        {
+            Error(tr("Document %1 has already used file name filter %2").arg(desc.typeName_, filter));
+            continue;
+        }
+
+        filterToDocumentType_.insert(filter, desc.typeName_);
+        registeredDocumentFilters_.push_back(filter);
+    }
+
+    return true;
+}
+
+bool Core::NewDocument(const QString& typeName)
+{
+    const DocumentDescription* desc = registeredDocuments_.Find(typeName);
+    if (!desc)
+    {
+        Error(tr("Document %1 is not registered").arg(typeName));
+        return false;
+    }
+
+    QScopedPointer<Document> document((*desc->factory_)(*this));
+    assert(document);
+    if (desc->saveable_ && desc->saveOnCreate_ && !SaveDocument(*document, true))
+        return false;
+
+    AddDocument(document.take());
+    return true;
+}
+
+bool Core::OpenDocument(const QString& fileName, const QString& typeName /*= ""*/)
+{
+    if (fileName.isEmpty())
+    {
+        Error(tr("File name mustn't be empty"));
+        return false;
+    }
+    if (typeName.isEmpty())
+    {
+        for (const auto& elem : registeredDocuments_)
+        {
+            QScopedPointer<Document> document((*elem.second.factory_)(*this));
+            if (document->Open(fileName))
+            {
+                AddDocument(document.take());
+                return true;
+            }
+        }
+    }
+    else
+    {
+        const DocumentDescription* desc = registeredDocuments_.Find(typeName);
+        if (!desc)
+        {
+            Error(tr("Document %1 is not registered").arg(typeName));
+            return false;
+        }
+
+        QScopedPointer<Document> document((*desc->factory_)(*this));
+        assert(document);
+        if (document->Open(fileName))
+        {
+            AddDocument(document.take());
+            return true;
+        }
+    }
+    Error(tr("Cannot open document %1").arg(fileName));
+    return false;
+}
+
+bool Core::OpenDocumentDialog(const QString& typeName, bool allowMultiselect)
+{
+    // Initialize dialog
+    QFileDialog dialog;
+    dialog.setAcceptMode(QFileDialog::AcceptOpen);
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    dialog.setDirectory(GetConfig().GetLastDirectory());
+
+    // Prepare filters.
+    if (typeName.isEmpty())
+    {
+        dialog.setNameFilters(registeredDocumentFilters_);
+    }
+    else
+    {
+        const DocumentDescription* desc = registeredDocuments_.Find(typeName);
+        if (!desc)
+        {
+            Error(tr("Document %1 is not registered").arg(typeName));
+            return false;
+        }
+        dialog.setNameFilters(desc->fileNameFilters_);
+    }
+
+    if (!dialog.exec())
+        return false;
+
+    const QStringList fileNames = dialog.selectedFiles();
+    if (fileNames.isEmpty())
+        return false;
+
+    QString selectedType = typeName;
+    if (typeName.isEmpty())
+        selectedType = filterToDocumentType_.value(dialog.selectedNameFilter(), "");
+
+    GetConfig().SetLastDirectoryByFileName(fileNames[0]);
+    if (allowMultiselect)
+        for (const QString& fileName : fileNames)
+            OpenDocument(fileName, selectedType);
+    else
+        OpenDocument(fileNames[0], selectedType);
+    return true;
+}
+
+bool Core::SaveDocument(Document& document, bool saveAs /*= false*/)
+{
+    if (!document.GetFileName().isEmpty() && !saveAs)
+    {
+        if (document.Save(document.GetFileName()))
+            return true;
+        Error(tr("Failed to save %1, try different location").arg(document.GetFileName()));
+    }
+
+    // Save as
+    QFileDialog dialog;
+    dialog.selectFile(document.GetDescription().defaultFileName_);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    dialog.setDirectory(GetConfig().GetLastDirectory());
+    dialog.setNameFilters(document.GetDescription().fileNameFilters_);
+    if (!dialog.exec())
+        return false;
+
+    const QStringList files = dialog.selectedFiles();
+    if (files.isEmpty())
+        return false;
+
+    if (!document.Save(files[0]))
+    {
+        Error(tr("Failed to save %1").arg(document.GetFileName()));
+        return false;
+    }
+    return true;
 }
 
 bool Core::Initialize()
@@ -210,26 +391,22 @@ void Core::ChangeDocument(DocumentWindow* widget)
     }
 }
 
-void Core::NewProject()
-{
-    QScopedPointer<ProjectDocument> document(new ProjectDocument(*this));
-    if (document->SaveAs())
-        AddDocument(document.take());
-}
-
 void Core::InitializeMenu()
 {
     QAction* action = nullptr;
 
     action = AddAction("File.NewProject");
-    connect(action, &QAction::triggered, this, &Core::NewProject);
+    connect(action, &QAction::triggered, this, &Core::NewDocument<ProjectDocument>);
 
-    action = AddAction("File.Close", Qt::CTRL + Qt::Key_W);
-    connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
+    action = AddAction("File.Open", Qt::CTRL + Qt::Key_O);
+    connect(action, &QAction::triggered, this, &Core::Open);
 
     action = AddAction("File.Save", Qt::CTRL + Qt::Key_S);
 
     action = AddAction("File.SaveAs", Qt::CTRL + Qt::SHIFT + Qt::Key_S);
+
+    action = AddAction("File.Close", Qt::CTRL + Qt::Key_W);
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
 
     action = AddAction("File.Exit");
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));

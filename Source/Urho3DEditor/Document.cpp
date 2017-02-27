@@ -44,56 +44,24 @@ void Document::SetTitle(const QString& title)
     }
 }
 
-bool Document::LaunchFileDialog(bool open)
+bool Document::Open(const QString& fileName)
 {
-    QFileDialog dialog;
-    if (!open)
-        dialog.selectFile(GetDefaultName());
-    dialog.setAcceptMode(open ? QFileDialog::AcceptOpen : QFileDialog::AcceptSave);
-    dialog.setFileMode(open ? QFileDialog::ExistingFile : QFileDialog::AnyFile);
-    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
-    dialog.setDirectory(core_.GetConfig().GetLastDirectory());
-    dialog.setNameFilter(GetNameFilters());
-    if (!dialog.exec())
+    fileName_ = fileName;
+    if (!DoLoad(fileName_))
         return false;
-
-    const QStringList files = dialog.selectedFiles();
-    if (files.isEmpty())
-        return false;
-
-    fileName_ = files[0];
-    core_.GetConfig().SetLastDirectoryByFileName(fileName_);
     SetTitle(QFileInfo(fileName_).fileName());
+    ResetDirty();
     return true;
 }
 
-bool Document::Open()
+bool Document::Save(const QString& fileName)
 {
-    if (!LaunchFileDialog(true))
+    fileName_ = fileName;
+    if (!DoSave(fileName_))
         return false;
-    return DoLoad(fileName_);
-}
-
-bool Document::SaveAs()
-{
-    if (!LaunchFileDialog(false))
-        return false;
-    if (DoSave(fileName_))
-    {
-        ResetDirty();
-        return true;
-    }
-    return false;
-}
-
-bool Document::Save()
-{
-    if (!fileName_.isEmpty() && DoSave(fileName_))
-    {
-        ResetDirty();
-        return true;
-    }
-    return SaveAs();
+    SetTitle(QFileInfo(fileName_).fileName());
+    ResetDirty();
+    return true;
 }
 
 bool Document::IsActive() const

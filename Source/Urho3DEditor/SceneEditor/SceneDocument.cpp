@@ -198,11 +198,6 @@ Urho3D::Ray SceneDocument::GetMouseRay() const
     return viewportManager_->GetCurrentCameraRay();
 }
 
-QString SceneDocument::GetNameFilters()
-{
-    return "Urho3D Scene (*.xml *.json *.bin);;All files (*.*)";
-}
-
 //////////////////////////////////////////////////////////////////////////
 bool SceneDocument::Cut()
 {
