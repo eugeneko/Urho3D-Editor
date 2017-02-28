@@ -124,7 +124,7 @@ ProjectDocument::ProjectDocument(Core& core)
     , fieldResourcePrefixPaths_(new QLineEdit("."))
     , fieldResourcePaths_(new QLineEdit("CoreData;Data"))
 {
-    SetTitle("New project");
+    SetTitle("New Project");
     MarkDirty();
 
     setLayout(layout_);

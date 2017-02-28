@@ -34,6 +34,9 @@ public:
     void MarkDirty();
     /// Reset document dirtiness.
     void ResetDirty();
+    /// Returns whether the document is dirty.
+    bool IsDirty() const { return dirty_; }
+
     /// Set title of the document.
     void SetTitle(const QString& title);
     /// Open document from file.

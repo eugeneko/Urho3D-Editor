@@ -67,7 +67,9 @@ template <class T> typename TypeMap<T>::Iterator begin(const TypeMap<T>& map) { 
 
 template <class T> typename TypeMap<T>::Iterator end(const TypeMap<T>& map) { return map.End(); }
 
-/// Document window.
+class Core;
+
+/// Document window. Owned document mustn't be null and destroyed in destructor.
 /// #TODO Move to separate file
 class DocumentWindow : public QMdiSubWindow
 {
@@ -75,13 +77,9 @@ class DocumentWindow : public QMdiSubWindow
 
 public:
     /// Construct.
-    DocumentWindow(Document* document, QWidget* parent = nullptr);
+    DocumentWindow(Core& core, Document* document, QWidget* parent = nullptr);
     /// Get document.
-    Document* GetDocument() const { return document_.data(); }
-
-signals:
-    /// Signals that document is about to be closed.
-    void aboutToClose();
+    Document& GetDocument() const { return *document_; }
 
 private slots:
     /// Update title.
@@ -92,6 +90,8 @@ private:
     virtual void closeEvent(QCloseEvent *event) override;
 
 private:
+    /// Core.
+    Core& core_;
     /// Document.
     QScopedPointer<Document> document_;
 
@@ -99,6 +99,7 @@ private:
 
 /// Core singleton of Urho3D Editor.
 /// #TODO Rename files
+/// #TODO Add 'Unsaved changes' message on main window close.
 class Core : public QObject
 {
     Q_OBJECT
@@ -129,6 +130,8 @@ public:
     bool OpenDocumentDialog(const QString& documentType, bool allowMultiselect);
     /// Save document. Launch save dialog if file name is unknown.
     bool SaveDocument(Document& document, bool saveAs = false);
+    /// Close document. Returns true if close operation was successful.
+    bool CloseDocument(DocumentWindow& documentWindow);
 
     /// Create new document by type.
     template <class T> bool NewDocument() { return NewDocument(T::staticMetaObject.className()); }
@@ -183,8 +186,6 @@ private:
     QAction* ReadAction(const QDomNode& node);
 
 private slots:
-    /// Close document.
-    void CloseDocument(DocumentWindow* widget);
     /// Change document.
     void ChangeDocument(DocumentWindow* widget);
 

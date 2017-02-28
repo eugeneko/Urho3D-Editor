@@ -8,6 +8,7 @@
 #include <Urho3D/Resource/ResourceCache.h>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QCloseEvent>
 #include <QMdiArea>
 #include <QMenuBar>
 #include <QTabBar>
@@ -19,10 +20,12 @@
 namespace Urho3DEditor
 {
 
-DocumentWindow::DocumentWindow(Document* document, QWidget* parent /*= nullptr*/)
+DocumentWindow::DocumentWindow(Core& core, Document* document, QWidget* parent /*= nullptr*/)
     : QMdiSubWindow(parent)
+    , core_(core)
     , document_(document)
 {
+    assert(document);
     updateTitle();
     connect(document, &Document::titleChanged, this, &DocumentWindow::updateTitle);
     setWidget(document);
@@ -33,9 +36,10 @@ void DocumentWindow::updateTitle()
     setWindowTitle(document_->GetTitle());
 }
 
-void DocumentWindow::closeEvent(QCloseEvent *event)
+void DocumentWindow::closeEvent(QCloseEvent* event)
 {
-    emit aboutToClose();
+    if (!core_.CloseDocument(*this))
+        event->ignore();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -67,7 +71,7 @@ Core::~Core()
 QMessageBox::StandardButton Core::Error(const QString& text,
     QMessageBox::StandardButtons buttons /*= QMessageBox::Ok*/, QMessageBox::StandardButton defaultButton /*= QMessageBox::Ok*/)
 {
-    return QMessageBox::critical(&mainWindow_, "Urho3D Editor Error", text, buttons, defaultButton);
+    return QMessageBox::critical(&mainWindow_, tr("Urho3D Editor Error"), text, buttons, defaultButton);
 }
 
 bool Core::RegisterDocument(const DocumentDescription& desc)
@@ -248,6 +252,43 @@ bool Core::SaveDocument(Document& document, bool saveAs /*= false*/)
     return true;
 }
 
+bool Core::CloseDocument(DocumentWindow& documentWindow)
+{
+    // Try to save document first
+    Document& document = documentWindow.GetDocument();
+    if (document.IsDirty())
+    {
+        const QMessageBox::StandardButton result =
+            QMessageBox::warning(&mainWindow_,
+                tr("Urho3D Editor"),
+                tr("Document %1 has unsaved changes").arg(document.GetTitle()),
+                QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel);
+
+        switch (result)
+        {
+        case QMessageBox::Save:
+            if (!SaveDocument(document))
+                return false;
+            break;
+        case QMessageBox::Discard:
+            break;
+        case QMessageBox::Cancel:
+        default:
+            return false;
+        }
+    }
+
+    // Close document
+    if (currentDocument_ == &documentWindow)
+    {
+        currentDocument_ = nullptr;
+        emit currentDocumentChanged(nullptr);
+    }
+    emit documentClosed(&document);
+    delete &documentWindow;
+    return true;
+}
+
 bool Core::Initialize()
 {
     InitializeMenu();
@@ -262,12 +303,11 @@ void Core::LoadLayout()
     // Close if cannot load layout
     if (!file.open(QFile::ReadOnly | QFile::Text))
     {
-        const QMessageBox::StandardButton button = QMessageBox::critical(&mainWindow_,
-            "Urho3D Editor error",
-            "Failed to load layout " + fileName + "\nReset to default?",
+        const QMessageBox::StandardButton result = Error(
+            tr("Failed to load layout $1\nReset to default?").arg(fileName),
             QMessageBox::Yes | QMessageBox::No);
 
-        if (button == QMessageBox::Yes)
+        if (result == QMessageBox::Yes)
             config_.SetValue(VarLayoutFileName, config_.GetDefaultValue(VarLayoutFileName), true);
 
         mainWindow_.close();
@@ -318,10 +358,10 @@ Document* Core::GetCurrentDocument() const
     {
         if (DocumentWindow* document = qobject_cast<DocumentWindow*>(subWindow))
         {
-            return document->GetDocument();
+            return &document->GetDocument();
         }
     }
-    return false;
+    return nullptr;
 }
 
 Urho3DWidget* Core::GetUrho3DWidget() const
@@ -367,21 +407,9 @@ void Core::AddDocument(Document* document, bool bringToTop /*= true*/)
 {
     // #TODO Do something with bringToTop
 
-    DocumentWindow* widget = new DocumentWindow(document, &mainWindow_);
-    connect(widget, &DocumentWindow::aboutToClose, this, [this, widget]() { CloseDocument(widget); });
+    DocumentWindow* widget = new DocumentWindow(*this, document, &mainWindow_);
     mdiArea_->addSubWindow(widget);
     widget->show();
-}
-
-void Core::CloseDocument(DocumentWindow* widget)
-{
-    if (currentDocument_ == widget)
-    {
-        emit currentDocumentChanged(nullptr);
-        currentDocument_ = nullptr;
-    }
-    emit documentClosed(widget->GetDocument());
-    delete widget;
 }
 
 void Core::ChangeDocument(DocumentWindow* widget)
@@ -389,7 +417,7 @@ void Core::ChangeDocument(DocumentWindow* widget)
     if (currentDocument_ != widget)
     {
         currentDocument_ = widget;
-        emit currentDocumentChanged(widget ? widget->GetDocument() : nullptr);
+        emit currentDocumentChanged(widget ? &widget->GetDocument() : nullptr);
     }
 }
 
