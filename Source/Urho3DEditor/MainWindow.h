@@ -119,12 +119,14 @@ public:
 
     /// Register document.
     bool RegisterDocument(const DocumentDescription& desc);
+    /// Register filter for Open dialog.
+    bool RegisterFilter(const QString& filter, const QStringList& documentTypes);
     /// Create new document by type name.
-    bool NewDocument(const QString& typeName);
-    /// Open document file. If type name is not specified, first successfully loaded document will be opened.
-    bool OpenDocument(const QString& fileName, const QString& typeName = "");
+    bool NewDocument(const QString& documentType);
+    /// Open document file. If type list is not empty, only specified document types may be loaded.
+    bool OpenDocument(const QString& fileName, QStringList documentTypes = QStringList());
     /// Launch open dialog and open selected documents. If type name is not specified, all document types are allowed.
-    bool OpenDocumentDialog(const QString& typeName, bool allowMultiselect);
+    bool OpenDocumentDialog(const QString& documentType, bool allowMultiselect);
     /// Save document. Launch save dialog if file name is unknown.
     bool SaveDocument(Document& document, bool saveAs = false);
 
@@ -210,7 +212,7 @@ private:
     /// Registered document filters.
     QStringList registeredDocumentFilters_;
     /// Registered document filters mapped to document type.
-    QHash<QString, QString> filterToDocumentType_;
+    QHash<QString, QStringList> filterToDocumentType_;
 
     /// Central widget.
     QMdiArea* mdiArea_;

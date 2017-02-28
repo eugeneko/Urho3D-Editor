@@ -56,14 +56,6 @@ Core::Core(Configuration& config, QMainWindow& mainWindow)
         [this](QMdiSubWindow* subWindow) { ChangeDocument(qobject_cast<DocumentWindow*>(subWindow)); });
 
     config.RegisterVariable(VarLayoutFileName, ":/Layout.xml", ".Global", "Layout");
-
-    // Register default filter
-    const QString anyFilter = "Any files (*.*)";
-    registeredDocumentFilters_.push_back(anyFilter);
-    filterToDocumentType_.insert(anyFilter, "");
-
-    // Register project
-    RegisterDocument(ProjectDocument::GetStaticDescription());
 }
 
 Core::~Core()
@@ -104,19 +96,32 @@ bool Core::RegisterDocument(const DocumentDescription& desc)
             continue;
         }
 
-        filterToDocumentType_.insert(filter, desc.typeName_);
+        filterToDocumentType_.insert(filter, { desc.typeName_ });
         registeredDocumentFilters_.push_back(filter);
     }
 
     return true;
 }
 
-bool Core::NewDocument(const QString& typeName)
+bool Core::RegisterFilter(const QString& filter, const QStringList& documentTypes)
 {
-    const DocumentDescription* desc = registeredDocuments_.Find(typeName);
+    if (filterToDocumentType_.contains(filter))
+    {
+        Error(tr("Filter %1 is already added").arg(filter));
+        return false;
+    }
+
+    filterToDocumentType_.insert(filter, documentTypes);
+    registeredDocumentFilters_.push_back(filter);
+    return true;
+}
+
+bool Core::NewDocument(const QString& documentType)
+{
+    const DocumentDescription* desc = registeredDocuments_.Find(documentType);
     if (!desc)
     {
-        Error(tr("Document %1 is not registered").arg(typeName));
+        Error(tr("Document %1 is not registered").arg(documentType));
         return false;
     }
 
@@ -129,31 +134,28 @@ bool Core::NewDocument(const QString& typeName)
     return true;
 }
 
-bool Core::OpenDocument(const QString& fileName, const QString& typeName /*= ""*/)
+bool Core::OpenDocument(const QString& fileName, QStringList documentTypes /*= QStringList()*/)
 {
     if (fileName.isEmpty())
     {
         Error(tr("File name mustn't be empty"));
         return false;
     }
-    if (typeName.isEmpty())
+
+    // Fill types if empty
+    if (documentTypes.isEmpty())
     {
         for (const auto& elem : registeredDocuments_)
-        {
-            QScopedPointer<Document> document((*elem.second.factory_)(*this));
-            if (document->Open(fileName))
-            {
-                AddDocument(document.take());
-                return true;
-            }
-        }
+            documentTypes.push_back(elem.first);
     }
-    else
+
+    // Try to load document
+    for (const QString& documentType : documentTypes)
     {
-        const DocumentDescription* desc = registeredDocuments_.Find(typeName);
+        const DocumentDescription* desc = registeredDocuments_.Find(documentType);
         if (!desc)
         {
-            Error(tr("Document %1 is not registered").arg(typeName));
+            Error(tr("Document %1 is not registered").arg(documentType));
             return false;
         }
 
@@ -169,7 +171,7 @@ bool Core::OpenDocument(const QString& fileName, const QString& typeName /*= ""*
     return false;
 }
 
-bool Core::OpenDocumentDialog(const QString& typeName, bool allowMultiselect)
+bool Core::OpenDocumentDialog(const QString& documentType, bool allowMultiselect)
 {
     // Initialize dialog
     QFileDialog dialog;
@@ -179,16 +181,16 @@ bool Core::OpenDocumentDialog(const QString& typeName, bool allowMultiselect)
     dialog.setDirectory(GetConfig().GetLastDirectory());
 
     // Prepare filters.
-    if (typeName.isEmpty())
+    if (documentType.isEmpty())
     {
         dialog.setNameFilters(registeredDocumentFilters_);
     }
     else
     {
-        const DocumentDescription* desc = registeredDocuments_.Find(typeName);
+        const DocumentDescription* desc = registeredDocuments_.Find(documentType);
         if (!desc)
         {
-            Error(tr("Document %1 is not registered").arg(typeName));
+            Error(tr("Document %1 is not registered").arg(documentType));
             return false;
         }
         dialog.setNameFilters(desc->fileNameFilters_);
@@ -201,9 +203,9 @@ bool Core::OpenDocumentDialog(const QString& typeName, bool allowMultiselect)
     if (fileNames.isEmpty())
         return false;
 
-    QString selectedType = typeName;
-    if (typeName.isEmpty())
-        selectedType = filterToDocumentType_.value(dialog.selectedNameFilter(), "");
+    QStringList selectedType = { documentType };
+    if (documentType.isEmpty())
+        selectedType = filterToDocumentType_.value(dialog.selectedNameFilter(), {});
 
     GetConfig().SetLastDirectoryByFileName(fileNames[0]);
     if (allowMultiselect)

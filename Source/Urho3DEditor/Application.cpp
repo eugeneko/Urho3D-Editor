@@ -51,7 +51,11 @@ bool Application::Initialize()
     if (!core_->Initialize())
         return false;
 
+    core_->RegisterFilter(tr("Urho3D Scenes and Projects (*.xml *.json *.bin *.urho)"),
+    { SceneDocument::GetStaticName(), ProjectDocument::GetStaticName() });
     core_->RegisterDocument(SceneDocument::GetStaticDescription());
+    core_->RegisterDocument(ProjectDocument::GetStaticDescription());
+    core_->RegisterFilter(tr("Any files (*.*)"), {});
 
     moduleSystem_->AddModule(new SceneEditor());
     moduleSystem_->AddModule(new HierarchyWindow());

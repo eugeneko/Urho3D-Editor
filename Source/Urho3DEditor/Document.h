@@ -14,6 +14,7 @@ class Core;
 #define URHO3DEDITOR_DOCUMENT \
 public: \
     static const DocumentDescription& GetStaticDescription() { static const DocumentDescription desc = CreateDescription(); return desc; } \
+    static const QString& GetStaticName() { return GetStaticDescription().typeName_; } \
     virtual const DocumentDescription& GetDescription() const override { return GetStaticDescription(); }
 
 /// Interface of document that can be placed as sub-window of main window area.
