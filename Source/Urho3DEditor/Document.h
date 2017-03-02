@@ -135,6 +135,8 @@ struct DocumentDescription
     /// Factory.
     Factory factory_ = nullptr;
 
+    /// Whether the document requires Urho3D systems intialized.
+    bool requireUrho_ = false;
     /// Whether the document is save-able.
     bool saveable_ = false;
     /// Whether the document shall be saved on creation before further actions.

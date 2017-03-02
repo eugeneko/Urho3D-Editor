@@ -3,6 +3,7 @@
 #include "Document.h"
 #include "OptionsDialog.h"
 
+#include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Resource/ResourceCache.h>
@@ -48,6 +49,7 @@ const QString Core::VarLayoutFileName = "global/layout";
 Core::Core(Configuration& config, QMainWindow& mainWindow)
     : config_(config)
     , mainWindow_(mainWindow)
+    , applicationParameters_(Urho3D::Engine::ParseParameters(Urho3D::GetArguments()))
     , mdiArea_(new QMdiArea(&mainWindow_))
     , urhoHost_(new Urho3DHost(&mainWindow_))
 {
@@ -60,6 +62,8 @@ Core::Core(Configuration& config, QMainWindow& mainWindow)
         [this](QMdiSubWindow* subWindow) { ChangeDocument(qobject_cast<DocumentWindow*>(subWindow)); });
 
     config.RegisterVariable(VarLayoutFileName, ":/Layout.xml", ".Global", "Layout");
+
+    urhoHost_->GetWidget().Initialize(applicationParameters_);
 }
 
 Core::~Core()
@@ -126,6 +130,13 @@ bool Core::NewDocument(const QString& documentType)
     if (!desc)
     {
         Error(tr("Document %1 is not registered").arg(documentType));
+        return false;
+    }
+
+    // #TODO Write other stuff
+    if (!urhoHost_->GetWidget().IsInitialized() && desc->requireUrho_)
+    {
+        Error(tr("Urho3D systems are not initialized"));
         return false;
     }
 
@@ -289,6 +300,13 @@ bool Core::CloseDocument(DocumentWindow& documentWindow)
     return true;
 }
 
+void Core::SetCurrentProject(QSharedPointer<Urho3DProject> project)
+{
+    currentProject_ = project;
+    Urho3DWidget& widget = urhoHost_->GetWidget();
+    widget.Initialize(applicationParameters_, currentProject_.data());
+}
+
 bool Core::Initialize()
 {
     InitializeMenu();
@@ -364,7 +382,7 @@ Document* Core::GetCurrentDocument() const
     return nullptr;
 }
 
-Urho3DWidget* Core::GetUrho3DWidget() const
+Urho3DWidget& Core::GetUrho3DWidget() const
 {
     return urhoHost_->GetWidget();
 }

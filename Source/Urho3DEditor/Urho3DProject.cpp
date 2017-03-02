@@ -3,6 +3,7 @@
 #include "Bridge.h"
 #include <Urho3D/IO/File.h>
 #include <Urho3D/Resource/XMLFile.h>
+// #include <QtXml/QDomDocument>
 #include <QAction>
 #include <QDirIterator>
 #include <QFileInfo>
@@ -118,9 +119,9 @@ bool Urho3DProject::Save(Urho3D::Serializer& dest) const
 //////////////////////////////////////////////////////////////////////////
 ProjectDocument::ProjectDocument(Core& core)
     : Document(core)
-    , project_(new Urho3DProject(core.GetUrho3DWidget()->GetContext()))
+    , project_(new Urho3DProject(core.GetUrho3DWidget().GetContext()))
     , layout_(new QGridLayout())
-    , buttonSetAsCurrent_(new QPushButton())
+    , buttonSetAsCurrent_(new QPushButton("Wear this project"))
     , fieldResourcePrefixPaths_(new QLineEdit("."))
     , fieldResourcePaths_(new QLineEdit("CoreData;Data"))
 {
@@ -128,6 +129,7 @@ ProjectDocument::ProjectDocument(Core& core)
     MarkDirty();
 
     setLayout(layout_);
+    connect(buttonSetAsCurrent_, &QPushButton::clicked, this, [this]() { GetCore().SetCurrentProject(project_); });
     connect(fieldResourcePrefixPaths_, &QLineEdit::textEdited, this, [this]() { MarkDirty(); });
     connect(fieldResourcePaths_,       &QLineEdit::textEdited, this, [this]() { MarkDirty(); });
 

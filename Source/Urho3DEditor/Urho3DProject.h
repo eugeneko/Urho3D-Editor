@@ -82,7 +82,7 @@ public:
     /// Construct.
     ProjectDocument(Core& core);
     /// Get project.
-    Urho3D::SharedPtr<Urho3DProject> GetProject() { return project_; }
+    QSharedPointer<Urho3DProject> GetProject() { return project_; }
 
 private:
     /// Load the document from file.
@@ -92,7 +92,7 @@ private:
 
 private:
     /// Project.
-    Urho3D::SharedPtr<Urho3DProject> project_;
+    QSharedPointer<Urho3DProject> project_;
     /// Layout.
     QGridLayout* layout_;
     /// 'Set as Current' button.

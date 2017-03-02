@@ -1,5 +1,6 @@
 #include "Urho3DWidget.h"
 #include "../Urho3DProject.h"
+#include "../Bridge.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
 #include <Urho3D/Resource/ResourceCache.h>
@@ -14,27 +15,34 @@ Urho3DWidget::Urho3DWidget(Urho3D::Context& context, QWidget* parent /*= nullptr
     , Object(&context)
     , engine_(new Urho3D::Engine(context_))
 {
-    // Initialize engine
-    Urho3D::VariantMap engineParameters = Urho3D::Engine::ParseParameters(Urho3D::GetArguments());
-    engineParameters[Urho3D::EP_FULL_SCREEN] = false;
-    engineParameters[Urho3D::EP_EXTERNAL_WINDOW] = (void*)winId();
-    engine_->Initialize(engineParameters);
-
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_PaintOnScreen);
     connect(&timer_, SIGNAL(timeout()), this, SLOT(OnTimer()));
     timer_.start(16);
 }
 
-bool Urho3DWidget::SetCurrentProject(Urho3DProject* project)
+bool Urho3DWidget::Initialize(Urho3D::VariantMap parameters, Urho3DProject* project /*= nullptr*/)
 {
-    Urho3D::VariantMap engineParameters = Urho3D::Engine::ParseParameters(Urho3D::GetArguments());;
+    // Override some parameters
+    parameters[Urho3D::EP_FULL_SCREEN] = false;
+    parameters[Urho3D::EP_EXTERNAL_WINDOW] = (void*)winId();
+
+    // Setup project-specific parameters
     if (project)
     {
-        engineParameters[Urho3D::EP_RESOURCE_PREFIX_PATHS] = project->GetAbsoluteResourcePrefixPaths(project->GetBasePath()).toStdString().c_str();
-        engineParameters[Urho3D::EP_RESOURCE_PATHS] = project->GetResourcePaths().toStdString().c_str();
+        parameters[Urho3D::EP_RESOURCE_PREFIX_PATHS] = Cast(project->GetAbsoluteResourcePrefixPaths(project->GetBasePath()));
+        parameters[Urho3D::EP_RESOURCE_PATHS] = Cast(project->GetResourcePaths());
     }
-    return engine_->InitializeResourceCache(engineParameters);
+
+    // Initialize engine
+    if (!engine_->IsInitialized())
+        return engine_->Initialize(parameters);
+    else
+    {
+        Urho3D::ResourceCache* cache = engine_->GetSubsystem<Urho3D::ResourceCache>();
+        cache->ReleaseAllResources(true);
+        return engine_->InitializeResourceCache(parameters);
+    }
 }
 
 void Urho3DWidget::OnTimer()
@@ -73,7 +81,7 @@ void Urho3DWidget::focusOutEvent(QFocusEvent *event)
 
 void Urho3DWidget::RunFrame()
 {
-    if (!engine_->IsExiting())
+    if (engine_->IsInitialized() && !engine_->IsExiting())
         engine_->RunFrame();
 }
 
@@ -121,7 +129,7 @@ void Urho3DClientWidget::Acquire()
         oldOwner->Release();
     host_.SetOwner(this);
     layout_->removeWidget(placeholder_);
-    layout_->addWidget(host_.GetWidget());
+    layout_->addWidget(&host_.GetWidget());
 }
 
 void Urho3DClientWidget::Release()
@@ -129,7 +137,7 @@ void Urho3DClientWidget::Release()
     if (host_.GetOwner() != this)
         return;
     host_.SetOwner(nullptr);
-    layout_->removeWidget(host_.GetWidget());
+    layout_->removeWidget(&host_.GetWidget());
     layout_->addWidget(placeholder_);
 }
 

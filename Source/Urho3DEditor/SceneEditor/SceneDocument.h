@@ -57,6 +57,7 @@ class SceneDocument : public Document, public Urho3D::Object, public SceneInputI
         DocumentDescriptionT<SceneDocument> desc;
         desc.fileNameFilters_ << "Urho3D Scene (*.xml *.json *.bin)";
         desc.defaultFileName_ = "Scene.xml";
+        desc.requireUrho_ = true;
         return desc;
     }
 

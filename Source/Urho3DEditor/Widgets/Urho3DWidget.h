@@ -23,8 +23,10 @@ class Urho3DWidget : public QWidget, public Urho3D::Object
 public:
     /// Construct.
     Urho3DWidget(Urho3D::Context& context, QWidget* parent = nullptr);
-    /// Initialize widget with optional configuration.
-    bool SetCurrentProject(Urho3DProject* project);
+    /// Initialize Urho3D systems. If systems are already initialized, partial initialization is performed.
+    bool Initialize(Urho3D::VariantMap parameters, Urho3DProject* project = nullptr);
+    /// Returns whether the Urho3D systems initialized.
+    bool IsInitialized() const { return engine_->IsInitialized(); }
 
 signals:
     /// Signals that key is pressed.
@@ -70,7 +72,7 @@ public:
     /// Construct.
     Urho3DHost(QWidget* parent = nullptr);
     /// Get widget.
-    Urho3DWidget* GetWidget() const { return urhoWidget_.data(); }
+    Urho3DWidget& GetWidget() const { return *urhoWidget_; }
 
     /// Get current client.
     Urho3DClientWidget* GetOwner() const { return client_; }

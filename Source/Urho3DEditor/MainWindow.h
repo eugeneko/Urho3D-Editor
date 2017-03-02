@@ -132,6 +132,8 @@ public:
     bool SaveDocument(Document& document, bool saveAs = false);
     /// Close document. Returns true if close operation was successful.
     bool CloseDocument(DocumentWindow& documentWindow);
+    /// Set current project.
+    void SetCurrentProject(QSharedPointer<Urho3DProject> project);
 
     /// Create new document by type.
     template <class T> bool NewDocument() { return NewDocument(T::staticMetaObject.className()); }
@@ -151,7 +153,7 @@ public:
     /// Get current active document.
     Document* GetCurrentDocument() const;
     /// Get Urho3D widget.
-    Urho3DWidget* GetUrho3DWidget() const;
+    Urho3DWidget& GetUrho3DWidget() const;
     /// Get menu bar.
     QMenuBar* GetMenuBar() const;
     /// Get action by name.
@@ -207,6 +209,8 @@ private:
     Configuration& config_;
     /// Main window.
     QMainWindow& mainWindow_;
+    /// Application parameters.
+    Urho3D::VariantMap applicationParameters_;
 
     /// Registered documents.
     TypeMap<DocumentDescription> registeredDocuments_;
@@ -221,6 +225,8 @@ private:
     Urho3DHost* urhoHost_;
     /// Current document. Used to suppress redundant notifications.
     DocumentWindow* currentDocument_ = nullptr;
+    /// Current project.
+    QSharedPointer<Urho3DProject> currentProject_;
 
     /// Menu actions.
     QHash<QString, QAction*> menuActions_;

@@ -27,7 +27,7 @@ namespace Urho3DEditor
 
 SceneDocument::SceneDocument(Core& core)
     : Document(core)
-    , Object(core.GetUrho3DWidget()->GetContext())
+    , Object(core.GetUrho3DWidget().GetContext())
     , input_(*GetSubsystem<Urho3D::Input>())
     , core_(core.CreateUrho3DClientWidget(this))
     , wheelDelta_(0)
@@ -57,11 +57,11 @@ SceneDocument::SceneDocument(Core& core)
 
     connect(viewportManager_.data(), SIGNAL(viewportsChanged()), this, SLOT(HandleViewportsChanged()));
 
-    Urho3DWidget* urhoWidget = core.GetUrho3DWidget();
-    connect(urhoWidget, SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(HandleKeyPress(QKeyEvent*)));
-    connect(urhoWidget, SIGNAL(keyReleased(QKeyEvent*)), this, SLOT(HandleKeyRelease(QKeyEvent*)));
-    connect(urhoWidget, SIGNAL(wheelMoved(QWheelEvent*)), this, SLOT(HandleMouseWheel(QWheelEvent*)));
-    connect(urhoWidget, SIGNAL(focusOut()), this, SLOT(HandleFocusOut()));
+    Urho3DWidget& urhoWidget = core.GetUrho3DWidget();
+    connect(&urhoWidget, SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(HandleKeyPress(QKeyEvent*)));
+    connect(&urhoWidget, SIGNAL(keyReleased(QKeyEvent*)), this, SLOT(HandleKeyRelease(QKeyEvent*)));
+    connect(&urhoWidget, SIGNAL(wheelMoved(QWheelEvent*)), this, SLOT(HandleMouseWheel(QWheelEvent*)));
+    connect(&urhoWidget, SIGNAL(focusOut()), this, SLOT(HandleFocusOut()));
 
     connect(core.GetAction("Edit.Cut"), SIGNAL(triggered(bool)), this, SLOT(Cut()));
     connect(core.GetAction("Edit.Duplicate"), SIGNAL(triggered(bool)), this, SLOT(Duplicate()));
