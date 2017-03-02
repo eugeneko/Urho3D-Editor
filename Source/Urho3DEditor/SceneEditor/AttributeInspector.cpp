@@ -1,7 +1,7 @@
 #include "AttributeInspector.h"
 #include "SceneDocument.h"
 #include "SceneActions.h"
-#include "../MainWindow.h"
+#include "../Core/Core.h"
 #include "../Widgets/CollapsiblePanelWidget.h"
 #include "../Widgets/AttributeWidgetImpl.h"
 #include "../Widgets/SerializableWidget.h"

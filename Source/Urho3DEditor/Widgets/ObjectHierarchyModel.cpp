@@ -1,5 +1,5 @@
 #include "ObjectHierarchyModel.h"
-#include "../Bridge.h"
+#include "../Core/QtUrhoHelpers.h"
 #include <QTreeView>
 
 namespace Urho3DEditor

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Module.h"
-#include "Document.h"
+#include "Core/Document.h"
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Resource/Resource.h>
 #include <QPushButton>

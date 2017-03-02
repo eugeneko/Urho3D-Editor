@@ -2,8 +2,8 @@
 // #include "Configuration.h"
 #include "SceneDocument.h"
 #include "SceneActions.h"
-#include "../MainWindow.h"
-#include "../Bridge.h"
+#include "../Core/Core.h"
+#include "../Core/QtUrhoHelpers.h"
 #include <Urho3D/Scene/Component.h>
 #include <Urho3D/Scene/Node.h>
 #include <Urho3D/Scene/SceneEvents.h>

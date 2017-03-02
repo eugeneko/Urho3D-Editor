@@ -1,6 +1,6 @@
 #include "Urho3DWidget.h"
 #include "../Urho3DProject.h"
-#include "../Bridge.h"
+#include "../Core/QtUrhoHelpers.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
 #include <Urho3D/Resource/ResourceCache.h>

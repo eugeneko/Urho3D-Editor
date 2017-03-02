@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Bridge.h"
+#include "../Core/QtUrhoHelpers.h"
 #include <Urho3D/Core/Attribute.h>
 #include <QWidget>
 

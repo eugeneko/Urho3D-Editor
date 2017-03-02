@@ -1,6 +1,6 @@
 #include "DebugRenderer.h"
 #include "SceneDocument.h"
-#include "../Bridge.h"
+#include "../Core/QtUrhoHelpers.h"
 #include "../Configuration.h"
 #include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Graphics/Octree.h>

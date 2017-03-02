@@ -1,5 +1,5 @@
 #include "AttributeWidgetImpl.h"
-#include "../Bridge.h"
+#include "../Core/QtUrhoHelpers.h"
 #include <QMouseEvent>
 
 namespace Urho3DEditor

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Module.h"
-#include "Urho3DProject.h"
+#include "TypeMap.h"
+#include "../Module.h"
+#include "../Urho3DProject.h"
 #include "Widgets/Urho3DWidget.h"
 #include <Urho3D/Core/Context.h>
 #include <QApplication>
@@ -20,85 +21,9 @@ namespace Urho3DEditor
 
 class Configuration;
 class Document;
-
-/// Ordered map from type to object.
-template <class T>
-class TypeMap
-{
-public:
-    /// Iterator.
-    using Iterator = typename QVector<QPair<QString, T>>::ConstIterator;
-
-    /// Insert new value.
-    bool Insert(const QString& typeName, const T& value)
-    {
-        if (map_.contains(typeName))
-            return false;
-        map_.insert(typeName, storage_.size());
-        storage_.push_back(qMakePair(typeName, value));
-        return true;
-    }
-    /// Find value by type name.
-    const T* Find(const QString& typeName) const
-    {
-        const int index = map_.value(typeName, -1);
-        return index >= 0 && index < storage_.size() ? &storage_[index].second : nullptr;
-    }
-    /// Get value by type name.
-    const T& Get(const QString& typeName)
-    {
-        const T* value = Find(typeName);
-        assert(value);
-        return value->second;
-    }
-    /// Begin iterator.
-    Iterator Begin() const { return storage_.cbegin(); }
-    /// End iterator.
-    Iterator End() const { return storage_.cend(); }
-
-private:
-    /// Vector storage.
-    QVector<QPair<QString, T>> storage_;
-    /// Map.
-    QHash<QString, int> map_;
-};
-
-template <class T> typename TypeMap<T>::Iterator begin(const TypeMap<T>& map) { return map.Begin(); }
-
-template <class T> typename TypeMap<T>::Iterator end(const TypeMap<T>& map) { return map.End(); }
-
-class Core;
-
-/// Document window. Owned document mustn't be null and destroyed in destructor.
-/// #TODO Move to separate file
-class DocumentWindow : public QMdiSubWindow
-{
-    Q_OBJECT
-
-public:
-    /// Construct.
-    DocumentWindow(Core& core, Document* document, QWidget* parent = nullptr);
-    /// Get document.
-    Document& GetDocument() const { return *document_; }
-
-private slots:
-    /// Update title.
-    void updateTitle();
-
-private:
-    /// @see QWidget::closeEvent
-    virtual void closeEvent(QCloseEvent *event) override;
-
-private:
-    /// Core.
-    Core& core_;
-    /// Document.
-    QScopedPointer<Document> document_;
-
-};
+class DocumentWindow;
 
 /// Core singleton of Urho3D Editor.
-/// #TODO Rename files
 /// #TODO Add 'Unsaved changes' message on main window close.
 class Core : public QObject
 {

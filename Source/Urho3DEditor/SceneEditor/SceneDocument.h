@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SceneOverlay.h"
-#include "../Document.h"
+#include "../Core/Document.h"
 #include <QAction>
 #include <QSet>
 #include <QUndoStack>

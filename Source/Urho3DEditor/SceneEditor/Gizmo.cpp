@@ -3,8 +3,8 @@
 #include "SceneDocument.h"
 #include "SceneEditor.h"
 #include "../Configuration.h"
-#include "../MainWindow.h"
-#include "../Bridge.h"
+#include "../Core/Core.h"
+#include "../Core/QtUrhoHelpers.h"
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/Graphics/Model.h>

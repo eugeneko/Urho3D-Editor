@@ -1,6 +1,6 @@
 #include "Document.h"
 #include "Configuration.h"
-#include "MainWindow.h"
+#include "Core.h"
 #include <QFileDialog>
 
 namespace Urho3DEditor

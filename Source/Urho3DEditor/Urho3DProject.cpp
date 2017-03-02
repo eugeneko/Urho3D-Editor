@@ -1,6 +1,6 @@
 #include "Urho3DProject.h"
-#include "MainWindow.h"
-#include "Bridge.h"
+#include "Core/Core.h"
+#include "Core/QtUrhoHelpers.h"
 #include <Urho3D/IO/File.h>
 #include <Urho3D/Resource/XMLFile.h>
 // #include <QtXml/QDomDocument>

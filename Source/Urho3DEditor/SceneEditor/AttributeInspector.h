@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Module.h"
-#include "../Bridge.h"
+#include "../Core/QtUrhoHelpers.h"
 #include <QAction>
 #include <QScopedPointer>
 

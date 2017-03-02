@@ -1,6 +1,6 @@
 #include "Module.h"
 #include <QMessageBox>
-// #include "MainWindow.h"
+// #include "Core.h"
 // #include "EditorSettings.h"
 // #include <Urho3D/Core/ProcessUtils.h>
 // #include <Urho3D/Engine/EngineDefs.h>

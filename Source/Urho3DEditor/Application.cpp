@@ -8,7 +8,7 @@
 #include <QResource>
 
 #include "Configuration.h"
-#include "MainWindow.h"
+#include "Core/Core.h"
 #include "Urho3DProject.h"
 #include "SceneEditor/AttributeInspector.h"
 #include "SceneEditor/HierarchyWindow.h"

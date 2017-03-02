@@ -2,9 +2,9 @@
 #include "SceneActions.h"
 #include "SceneOverlay.h"
 #include "SceneViewportManager.h"
-#include "../Bridge.h"
+#include "../Core/QtUrhoHelpers.h"
 #include "../Configuration.h"
-#include "../MainWindow.h"
+#include "../Core/Core.h"
 #include "../Widgets/Urho3DWidget.h"
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Graphics/DebugRenderer.h>

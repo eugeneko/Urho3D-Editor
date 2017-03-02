@@ -1,6 +1,6 @@
 #include "AttributeWidget.h"
 #include "AttributeWidgetImpl.h"
-#include "../Bridge.h"
+#include "../Core/QtUrhoHelpers.h"
 
 namespace Urho3DEditor
 {
