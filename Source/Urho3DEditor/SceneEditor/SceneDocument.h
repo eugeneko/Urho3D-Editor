@@ -49,17 +49,7 @@ enum class SelectionAction
 class SceneDocument : public Document, public Urho3D::Object, public SceneInputInterface
 {
     Q_OBJECT
-    URHO3DEDITOR_DOCUMENT
     URHO3D_OBJECT(SceneDocument, Urho3D::Object);
-
-    static DocumentDescription CreateDescription()
-    {
-        DocumentDescriptionT<SceneDocument> desc;
-        desc.fileNameFilters_ << "Urho3D Scene (*.xml *.json *.bin)";
-        desc.defaultFileName_ = "Scene.xml";
-        desc.requireUrho_ = true;
-        return desc;
-    }
 
 public:
     /// Set of nodes.
@@ -266,6 +256,21 @@ private:
     NodeSet selectedNodesAndComponents_;
     /// Last center of selected nodes and components.
     Urho3D::Vector3 lastSelectedCenter_;
+
+};
+
+/// SceneDocument factory.
+class SceneDocumentFactory : public DocumentFactoryT<SceneDocument>
+{
+public:
+    /// @see DocumentFactory::IsSaveable
+    virtual bool IsSaveable() const override { return true; }
+    /// @see DocumentFactory::ShallSaveOnCreate
+    virtual bool ShallSaveOnCreate() const override { return true; }
+    /// @see DocumentFactory::GetDefaultFileName
+    virtual QString GetDefaultFileName() const override { return "Scene.xml"; }
+    /// @see DocumentFactory::GetFileNameFilters
+    virtual QStringList GetFileNameFilters() const override { return{ "Urho3D Scene (*.xml *.json *.bin)" }; }
 
 };
 

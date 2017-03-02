@@ -43,12 +43,22 @@ public:
     QMessageBox::StandardButton Error(const QString& text,
         QMessageBox::StandardButtons buttons = QMessageBox::Ok, QMessageBox::StandardButton defaultButton = QMessageBox::Ok);
 
+    /// Get document factory by type name.
+    DocumentFactory* GetDocumentFactory(const QString& documentType) const;
+    /// Get document factory by type.
+    template <class T> DocumentFactory* GetDocumentFactory() const { return GetDocumentFactory(T::staticMetaObject.className()); }
+    /// Get document factory by type of document.
+    DocumentFactory* GetDocumentFactory(Document& document) const;
     /// Register document.
-    bool RegisterDocument(const DocumentDescription& desc);
+    bool RegisterDocument(DocumentFactory* factory);
     /// Register filter for Open dialog.
     bool RegisterFilter(const QString& filter, const QStringList& documentTypes);
+
     /// Create new document by type name.
     bool NewDocument(const QString& documentType);
+    /// Create new document by type.
+    template <class T> bool NewDocument() { return NewDocument(T::staticMetaObject.className()); }
+
     /// Open document file. If type list is not empty, only specified document types may be loaded.
     bool OpenDocument(const QString& fileName, QStringList documentTypes = QStringList());
     /// Launch open dialog and open selected documents. If type name is not specified, all document types are allowed.
@@ -60,8 +70,6 @@ public:
     /// Set current project.
     void SetCurrentProject(QSharedPointer<Urho3DProject> project);
 
-    /// Create new document by type.
-    template <class T> bool NewDocument() { return NewDocument(T::staticMetaObject.className()); }
     /// Launch generic open dialog and try to open all selected files.
     bool Open() { return OpenDocumentDialog("", true); }
 
@@ -138,7 +146,7 @@ private:
     Urho3D::VariantMap applicationParameters_;
 
     /// Registered documents.
-    TypeMap<DocumentDescription> registeredDocuments_;
+    TypeMap<QSharedPointer<DocumentFactory>> registeredDocuments_;
     /// Registered document filters.
     QStringList registeredDocumentFilters_;
     /// Registered document filters mapped to document type.

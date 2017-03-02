@@ -56,33 +56,38 @@ QMessageBox::StandardButton Core::Error(const QString& text,
     return QMessageBox::critical(&mainWindow_, tr("Urho3D Editor Error"), text, buttons, defaultButton);
 }
 
-bool Core::RegisterDocument(const DocumentDescription& desc)
+DocumentFactory* Core::GetDocumentFactory(const QString& documentType) const
 {
-    if (!desc.factory_ || desc.typeName_.isEmpty())
+    return registeredDocuments_.Get(documentType).data();
+}
+
+DocumentFactory* Core::GetDocumentFactory(Document& document) const
+{
+    return GetDocumentFactory(document.metaObject()->className());
+}
+
+bool Core::RegisterDocument(DocumentFactory* factory)
+{
+    if (!registeredDocuments_.Insert(factory->GetDocumentType(), QSharedPointer<DocumentFactory>(factory)))
     {
-        Error(tr("Document description is corrupted"));
-        return false;
-    }
-    if (!registeredDocuments_.Insert(desc.typeName_, desc))
-    {
-        Error(tr("Document %1 is already registered").arg(desc.typeName_));
+        Error(tr("Document %1 is already registered").arg(factory->GetDocumentType()));
         return false;
     }
 
-    for (QString filter : desc.fileNameFilters_)
+    for (QString filter : factory->GetFileNameFilters())
     {
         if (filter.contains(";;"))
         {
-            Error(tr("Document %1 has invalid filter %2: ';;' is not allowed").arg(desc.typeName_, filter));
+            Error(tr("Document %1 has invalid filter %2: ';;' is not allowed").arg(factory->GetDocumentType(), filter));
             continue;
         }
         if (filterToDocumentType_.contains(filter))
         {
-            Error(tr("Document %1 has already used file name filter %2").arg(desc.typeName_, filter));
+            Error(tr("Document %1 has already used file name filter %2").arg(factory->GetDocumentType(), filter));
             continue;
         }
 
-        filterToDocumentType_.insert(filter, { desc.typeName_ });
+        filterToDocumentType_.insert(filter, { factory->GetDocumentType() });
         registeredDocumentFilters_.push_back(filter);
     }
 
@@ -104,23 +109,16 @@ bool Core::RegisterFilter(const QString& filter, const QStringList& documentType
 
 bool Core::NewDocument(const QString& documentType)
 {
-    const DocumentDescription* desc = registeredDocuments_.Find(documentType);
-    if (!desc)
+    const DocumentFactory* factory = GetDocumentFactory(documentType);
+    if (!factory)
     {
         Error(tr("Document %1 is not registered").arg(documentType));
         return false;
     }
 
-    // #TODO Write other stuff
-    if (!urhoHost_->GetWidget().IsInitialized() && desc->requireUrho_)
-    {
-        Error(tr("Urho3D systems are not initialized"));
-        return false;
-    }
-
-    QScopedPointer<Document> document((*desc->factory_)(*this));
+    QScopedPointer<Document> document(factory->CreateDocument(*this));
     assert(document);
-    if (desc->saveable_ && desc->saveOnCreate_ && !SaveDocument(*document, true))
+    if (factory->IsSaveable() && factory->ShallSaveOnCreate() && !SaveDocument(*document, true))
         return false;
 
     AddDocument(document.take());
@@ -145,14 +143,14 @@ bool Core::OpenDocument(const QString& fileName, QStringList documentTypes /*= Q
     // Try to load document
     for (const QString& documentType : documentTypes)
     {
-        const DocumentDescription* desc = registeredDocuments_.Find(documentType);
-        if (!desc)
+        const DocumentFactory* factory = GetDocumentFactory(documentType);
+        if (!factory)
         {
             Error(tr("Document %1 is not registered").arg(documentType));
             return false;
         }
 
-        QScopedPointer<Document> document((*desc->factory_)(*this));
+        QScopedPointer<Document> document(factory->CreateDocument(*this));
         assert(document);
         if (document->Open(fileName))
         {
@@ -180,13 +178,13 @@ bool Core::OpenDocumentDialog(const QString& documentType, bool allowMultiselect
     }
     else
     {
-        const DocumentDescription* desc = registeredDocuments_.Find(documentType);
-        if (!desc)
+        const DocumentFactory* factory = GetDocumentFactory(documentType);
+        if (!factory)
         {
             Error(tr("Document %1 is not registered").arg(documentType));
             return false;
         }
-        dialog.setNameFilters(desc->fileNameFilters_);
+        dialog.setNameFilters(factory->GetFileNameFilters());
     }
 
     if (!dialog.exec())
@@ -211,6 +209,13 @@ bool Core::OpenDocumentDialog(const QString& documentType, bool allowMultiselect
 
 bool Core::SaveDocument(Document& document, bool saveAs /*= false*/)
 {
+    const DocumentFactory* factory = GetDocumentFactory(document);
+    if (!factory)
+    {
+        Error(tr("Document %1 is not registered").arg(document.metaObject()->className()));
+        return false;
+    }
+
     if (!document.GetFileName().isEmpty() && !saveAs)
     {
         if (document.Save(document.GetFileName()))
@@ -220,12 +225,12 @@ bool Core::SaveDocument(Document& document, bool saveAs /*= false*/)
 
     // Save as
     QFileDialog dialog;
-    dialog.selectFile(document.GetDescription().defaultFileName_);
+    dialog.selectFile(factory->GetDefaultFileName());
     dialog.setAcceptMode(QFileDialog::AcceptSave);
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setOption(QFileDialog::DontUseNativeDialog, true);
     dialog.setDirectory(GetConfig().GetLastDirectory());
-    dialog.setNameFilters(document.GetDescription().fileNameFilters_);
+    dialog.setNameFilters(factory->GetFileNameFilters());
     if (!dialog.exec())
         return false;
 

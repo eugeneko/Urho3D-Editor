@@ -2,20 +2,49 @@
 
 #include <QPointer>
 #include <QWidget>
+#include <type_traits>
 
 namespace Urho3DEditor
 {
 
-struct DocumentDescription;
 class Configuration;
 class Core;
+class Document;
 
-/// Macro to define Document helper functions.
-#define URHO3DEDITOR_DOCUMENT \
-public: \
-    static const DocumentDescription& GetStaticDescription() { static const DocumentDescription desc = CreateDescription(); return desc; } \
-    static const QString& GetStaticName() { return GetStaticDescription().typeName_; } \
-    virtual const DocumentDescription& GetDescription() const override { return GetStaticDescription(); }
+/// Document factory interface.
+class DocumentFactory
+{
+public:
+    /// Destructor.
+    virtual ~DocumentFactory() {}
+    /// Create document.
+    virtual Document* CreateDocument(Core& core) const = 0;
+
+    /// Returns document type name.
+    virtual QString GetDocumentType() const = 0;
+    /// Returns whether the document is save-able.
+    virtual bool IsSaveable() const { return false; }
+    /// Returns whether the document shall be saved when created.
+    virtual bool ShallSaveOnCreate() const { return false; }
+    /// Returns default save file name.
+    virtual QString GetDefaultFileName() const { return ""; }
+    /// Returns file name filters.
+    virtual QStringList GetFileNameFilters() const = 0;
+
+};
+
+/// Document factory template.
+template <class TDocument>
+class DocumentFactoryT : public DocumentFactory
+{
+    static_assert(std::is_base_of<Document, TDocument>::value, "TDocument shall be derived from Document");
+
+public:
+    /// @see DocumentFactory::CreateDocument
+    virtual Document* CreateDocument(Core& core) const override { return new TDocument(core); }
+    /// @see DocumentFactory::GetDocumentType
+    virtual QString GetDocumentType() const override { return TDocument::staticMetaObject.className(); }
+};
 
 /// Interface of document that can be placed as sub-window of main window area.
 class Document : public QWidget
@@ -27,8 +56,6 @@ public:
     Document(Core& core);
     /// Destruct.
     virtual ~Document();
-    /// Get description.
-    virtual const DocumentDescription& GetDescription() const = 0;
 
     /// Mark document as dirty.
     void MarkDirty();
@@ -118,44 +145,6 @@ private:
     /// Dirty flag.
     bool dirty_ = false;
 
-};
-
-/// Document description.
-struct DocumentDescription
-{
-    /// Factory callback.
-    using Factory = Document*(*)(Core& core);
-    /// Construct default.
-    DocumentDescription() {}
-    /// Construct.
-    DocumentDescription(const QString& typeName, Factory factory) : typeName_(typeName), factory_(factory) {}
-
-    /// Document type.
-    QString typeName_;
-    /// Factory.
-    Factory factory_ = nullptr;
-
-    /// Whether the document requires Urho3D systems intialized.
-    bool requireUrho_ = false;
-    /// Whether the document is save-able.
-    bool saveable_ = false;
-    /// Whether the document shall be saved on creation before further actions.
-    bool saveOnCreate_ = false;
-    /// Default save file name.
-    QString defaultFileName_;
-    /// File name filters.
-    QStringList fileNameFilters_;
-};
-
-/// Helper wrapper for DocumentDescription.
-template <class TDocument>
-struct DocumentDescriptionT : DocumentDescription
-{
-    /// Construct.
-    DocumentDescriptionT()
-        : DocumentDescription(TDocument::staticMetaObject.className(), [](Core& core) -> Document* { return new TDocument(core); })
-    {
-    }
 };
 
 }

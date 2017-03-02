@@ -31,11 +31,10 @@ public:
         return index >= 0 && index < storage_.size() ? &storage_[index].second : nullptr;
     }
     /// Get value by type name.
-    const T& Get(const QString& typeName)
+    T Get(const QString& typeName, const T& defaultValue = T()) const
     {
         const T* value = Find(typeName);
-        assert(value);
-        return value->second;
+        return value ? *value : defaultValue;
     }
     /// Begin iterator.
     Iterator Begin() const { return storage_.cbegin(); }

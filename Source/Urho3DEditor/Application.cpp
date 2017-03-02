@@ -52,9 +52,9 @@ bool Application::Initialize()
         return false;
 
     core_->RegisterFilter(tr("Urho3D Scenes and Projects (*.xml *.json *.bin *.urho)"),
-    { SceneDocument::GetStaticName(), ProjectDocument::GetStaticName() });
-    core_->RegisterDocument(SceneDocument::GetStaticDescription());
-    core_->RegisterDocument(ProjectDocument::GetStaticDescription());
+    { SceneDocument::staticMetaObject.className(), ProjectDocument::staticMetaObject.className() });
+    core_->RegisterDocument(new SceneDocumentFactory());
+    core_->RegisterDocument(new ProjectDocumentFactory());
     core_->RegisterFilter(tr("Any files (*.*)"), {});
 
     moduleSystem_->AddModule(new SceneEditor());

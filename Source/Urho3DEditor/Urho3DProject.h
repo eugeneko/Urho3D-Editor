@@ -66,17 +66,6 @@ private:
 class ProjectDocument : public Document
 {
     Q_OBJECT
-    URHO3DEDITOR_DOCUMENT
-
-    /// Create description.
-    static DocumentDescription CreateDescription()
-    {
-        DocumentDescriptionT<ProjectDocument> desc;
-        desc.saveOnCreate_ = true;
-        desc.fileNameFilters_ << "Urho3D Project (*.urho)";
-        desc.defaultFileName_ = "Project.urho";
-        return desc;
-    }
 
 public:
     /// Construct.
@@ -101,6 +90,21 @@ private:
     QLineEdit* fieldResourcePrefixPaths_;
     /// 'Resource Paths' field.
     QLineEdit* fieldResourcePaths_;
+
+};
+
+/// ProjectDocument factory.
+class ProjectDocumentFactory : public DocumentFactoryT<ProjectDocument>
+{
+public:
+    /// @see DocumentFactory::IsSaveable
+    virtual bool IsSaveable() const override { return true; }
+    /// @see DocumentFactory::ShallSaveOnCreate
+    virtual bool ShallSaveOnCreate() const override { return true; }
+    /// @see DocumentFactory::GetDefaultFileName
+    virtual QString GetDefaultFileName() const override { return "Project.urho"; }
+    /// @see DocumentFactory::GetFileNameFilters
+    virtual QStringList GetFileNameFilters() const override { return{ "Urho3D Project (*.urho)" }; }
 
 };
 
