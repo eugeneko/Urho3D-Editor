@@ -9,6 +9,7 @@
 #include <QMainWindow>
 #include <QMdiSubWindow>
 #include <QMessageBox>
+#include <QSettings>
 
 class QDockWidget;
 class QMainWindow;
@@ -19,6 +20,7 @@ class QMdiArea;
 namespace Urho3DEditor
 {
 
+class GlobalVariable;
 class Configuration;
 class Document;
 class DocumentWindow;
@@ -28,10 +30,6 @@ class DocumentWindow;
 class Core : public QObject
 {
     Q_OBJECT
-
-public:
-    /// Contains name of layout file. Restart is required.
-    static const QString VarLayoutFileName;
 
 public:
     /// Construct.
@@ -53,6 +51,12 @@ public:
     bool RegisterDocument(DocumentFactory* factory);
     /// Register filter for Open dialog.
     bool RegisterFilter(const QString& filter, const QStringList& documentTypes);
+    /// Register global variable.
+    void RegisterGlobalVariable(GlobalVariable& variable);
+    /// Get global variables.
+    const QVector<GlobalVariable*>& GetGlobalVariables() const { return globalVariables_; }
+    /// Save global variables.
+    void SaveGlobalVariables();
 
     /// Create new document by type name.
     bool NewDocument(const QString& documentType);
@@ -138,6 +142,11 @@ private slots:
     void HandleMenuAboutToShow();
 
 private:
+    /// Settings.
+    QSettings settings_;
+    /// Variables grouped by sections.
+    QVector<GlobalVariable*> globalVariables_;
+
     /// Configuration.
     Configuration& config_;
     /// Main window.

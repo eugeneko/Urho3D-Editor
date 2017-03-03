@@ -2,6 +2,7 @@
 #include "Document.h"
 #include "DocumentWindow.h"
 #include "QtUrhoHelpers.h"
+#include "GlobalVariable.h"
 #include "../Configuration.h"
 #include "../OptionsDialog.h"
 #include "../Documents/ProjectDocument.h"
@@ -25,10 +26,11 @@
 namespace Urho3DEditor
 {
 
-const QString Core::VarLayoutFileName = "global/layout";
+static GlobalVariableT<QString> VarLayout("global/layout", ":/Layout.xml", ".Global", QT_TR_NOOP("Layout"));
 
 Core::Core(Configuration& config, QMainWindow& mainWindow)
-    : config_(config)
+    : settings_("Urho3D", "Editor")
+    , config_(config)
     , mainWindow_(mainWindow)
     , applicationParameters_(Urho3D::Engine::ParseParameters(Urho3D::GetArguments()))
     , mdiArea_(new QMdiArea(&mainWindow_))
@@ -43,11 +45,12 @@ Core::Core(Configuration& config, QMainWindow& mainWindow)
     connect(mdiArea_, &QMdiArea::subWindowActivated, this,
         [this](QMdiSubWindow* subWindow) { ChangeDocument(qobject_cast<DocumentWindow*>(subWindow)); });
 
-    config.RegisterVariable(VarLayoutFileName, ":/Layout.xml", ".Global", "Layout");
+    RegisterGlobalVariable(VarLayout);
 }
 
 Core::~Core()
 {
+    SaveGlobalVariables();
     delete mdiArea_;
     delete urhoHost_;
 }
@@ -107,6 +110,18 @@ bool Core::RegisterFilter(const QString& filter, const QStringList& documentType
     filterToDocumentType_.insert(filter, documentTypes);
     registeredDocumentFilters_.push_back(filter);
     return true;
+}
+
+void Core::RegisterGlobalVariable(GlobalVariable& variable)
+{
+    variable.SetContext(settings_);
+    globalVariables_.push_back(&variable);
+}
+
+void Core::SaveGlobalVariables()
+{
+    for (GlobalVariable* variable : globalVariables_)
+        variable->Save();
 }
 
 bool Core::NewDocument(const QString& documentType)
@@ -321,18 +336,17 @@ bool Core::Initialize()
 
 void Core::LoadLayout()
 {
-    const QString fileName = config_.GetValue(VarLayoutFileName).toString();
-    QFile file(fileName);
+    QFile file(VarLayout.GetValue());
 
     // Close if cannot load layout
     if (!file.open(QFile::ReadOnly | QFile::Text))
     {
         const QMessageBox::StandardButton result = Error(
-            tr("Failed to load layout $1\nReset to default?").arg(fileName),
+            tr("Failed to load layout $1\nReset to default?").arg(VarLayout.GetValue()),
             QMessageBox::Yes | QMessageBox::No);
 
         if (result == QMessageBox::Yes)
-            config_.SetValue(VarLayoutFileName, config_.GetDefaultValue(VarLayoutFileName), true);
+            VarLayout.ResetToDefault();
 
         mainWindow_.close();
         return;
@@ -534,7 +548,7 @@ void Core::EditRedo()
 
 void Core::HandleToolsOptions()
 {
-    OptionsDialog dialog(config_);
+    OptionsDialog dialog(*this);
     dialog.exec();
 }
 

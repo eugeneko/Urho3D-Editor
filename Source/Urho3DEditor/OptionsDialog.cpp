@@ -1,5 +1,7 @@
 #include "OptionsDialog.h"
 #include "Configuration.h"
+#include "Core/Core.h"
+#include "Core/GlobalVariable.h"
 #include <Urho3D/Math/MathDefs.h>
 #include <QCheckBox>
 #include <QComboBox>
@@ -270,42 +272,37 @@ ConfigurationVariableImpl* CreateVariable(QVariant::Type type, const QVariant& d
     }
 }
 
-ConfigurationVariable::ConfigurationVariable(Configuration& config, const QString& name,
-    const QVariant& defaultValue, const QString& displayText, const QVariant& decorationInfo)
-    : config_(config)
-    , name_(name)
-    , displayText_(displayText.isEmpty() ? name : displayText)
-    , defaultValue_(defaultValue)
-    , decorationInfo_(decorationInfo)
-    , impl_(CreateVariable(defaultValue_.type(), decorationInfo_))
+GlobalVariableFacade::GlobalVariableFacade(GlobalVariable& variable)
+    : variable_(variable)
+    , impl_(CreateVariable(variable_.GetDefaultValue().type(), variable_.GetDecorationInfo()))
 {
-    impl_->SetValue(config_.GetValue(name_));
+    impl_->SetValue(variable_.GetValue());
 }
 
-const QString& ConfigurationVariable::GetDisplayText() const
+void GlobalVariableFacade::ResetToDefault()
 {
-    return displayText_.isEmpty() ? name_ : displayText_;
+    impl_->SetValue(variable_.GetDefaultValue());
 }
 
-QWidget* ConfigurationVariable::GetWidget()
+void GlobalVariableFacade::Save()
+{
+    variable_.SetValue(impl_->GetValue(), false);
+}
+
+const QString GlobalVariableFacade::GetDisplayText() const
+{
+    return variable_.GetDisplayText().isEmpty() ? variable_.GetName() : variable_.GetDisplayText();
+}
+
+QWidget* GlobalVariableFacade::GetWidget()
 {
     return impl_->GetWidget();
 }
 
-void ConfigurationVariable::Save()
-{
-    config_.SetValue(name_, impl_->GetValue());
-}
-
-void ConfigurationVariable::Reset()
-{
-    impl_->SetValue(defaultValue_);
-}
-
 //////////////////////////////////////////////////////////////////////////
-OptionsDialog::OptionsDialog(Configuration& config)
+OptionsDialog::OptionsDialog(Core& core)
     : QDialog()
-    , config_(config)
+    , core_(core)
     , currentSection_(nullptr)
 {
     setWindowTitle("Options");
@@ -315,25 +312,25 @@ OptionsDialog::OptionsDialog(Configuration& config)
 
 void OptionsDialog::Save()
 {
-    for (Section& group : variables_)
-        for (ConfigurationVariable* variable : group)
+    for (auto& section : variables_)
+        for (GlobalVariableFacade* variable : section)
             variable->Save();
-    config_.Save();
+    core_.SaveGlobalVariables();
 }
 
 void OptionsDialog::Reset()
 {
-    for (Section& group : variables_)
-        for (ConfigurationVariable* variable : group)
-            variable->Reset();
+    for (auto& section : variables_)
+        for (GlobalVariableFacade* variable : section)
+            variable->ResetToDefault();
 }
 
 void OptionsDialog::ResetSection(const QString& groupName)
 {
     if (variables_.contains(groupName))
     {
-        for (ConfigurationVariable* variable : variables_[groupName])
-            variable->Reset();
+        for (GlobalVariableFacade* variable : variables_[groupName])
+            variable->ResetToDefault();
     }
 }
 
@@ -379,17 +376,11 @@ void OptionsDialog::HandleResetAll()
 
 void OptionsDialog::SetupVariables()
 {
-    const Configuration::SectionMap& sections = config_.GetSections();
-    for (Configuration::SectionMap::ConstIterator iter = sections.begin(); iter != sections.end(); ++iter)
+    for (GlobalVariable* variable : core_.GetGlobalVariables())
     {
-        const QString& sectionName = iter.key();
-        for (const Configuration::VariableDesc& desc : *iter)
-        {
-            ConfigurationVariable* variable = new ConfigurationVariable(config_, desc.name_,
-                desc.defaultValue_, desc.displayText_, desc.decoration_);
-            variable->setParent(this);
-            variables_[sectionName].push_back(variable);
-        }
+        GlobalVariableFacade* widget = new GlobalVariableFacade(*variable);
+        widget->setParent(this);
+        variables_[variable->GetSection()].push_back(widget);
     }
 }
 
@@ -451,7 +442,7 @@ void OptionsDialog::SetupLayout()
         variablesLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
         variableGroupWidget->setLayout(variablesLayout);
 
-        for (ConfigurationVariable* variable : variables_[group])
+        for (GlobalVariableFacade* variable : variables_[group])
             variablesLayout->addRow(variable->GetDisplayText(), variable->GetWidget());
 
         variablesGroupArea->setWidget(variableGroupWidget);

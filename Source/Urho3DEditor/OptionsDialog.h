@@ -8,39 +8,35 @@ class QVBoxLayout;
 namespace Urho3DEditor
 {
 
-class Configuration;
+class Core;
+class GlobalVariable;
 
 class ConfigurationVariableImpl;
 
 /// Variable Widget.
-class ConfigurationVariable : public QObject
+class GlobalVariableFacade : public QObject
 {
     Q_OBJECT
 
 public:
     /// Construct.
-    ConfigurationVariable(Configuration& config, const QString& name,
-        const QVariant& defaultValue, const QString& displayText, const QVariant& decorationInfo);
+    GlobalVariableFacade(GlobalVariable& variable);
+
+    /// Reset value to default.
+    void ResetToDefault();
+    /// Save new value to variable.
+    void Save();
+
     /// Get display text.
-    const QString& GetDisplayText() const;
+    const QString GlobalVariableFacade::GetDisplayText() const;
+    /// Get variable.
+    GlobalVariable& GetVariable() { return variable_; }
     /// Get widget.
     QWidget* GetWidget();
-    /// Save variable value.
-    void Save();
-    /// Reset variable value to default.
-    void Reset();
 
 private:
-    /// Config.
-    Configuration& config_;
-    /// Name.
-    const QString name_;
-    /// Display name.
-    const QString displayText_;
-    /// Default value.
-    const QVariant defaultValue_;
-    /// Decoration info.
-    const QVariant decorationInfo_;
+    /// Variable.
+    GlobalVariable& variable_;
     /// Implementation details.
     QScopedPointer<ConfigurationVariableImpl> impl_;
 
@@ -52,12 +48,8 @@ class OptionsDialog : public QDialog
     Q_OBJECT
 
 public:
-    /// Section that contains variables.
-    using Section = QVector<ConfigurationVariable*>;
-
-public:
     /// Construct.
-    OptionsDialog(Configuration& config);
+    OptionsDialog(Core& core);
     /// Save variables.
     void Save();
     /// Reset variables.
@@ -86,12 +78,12 @@ private:
     void SetupLayout();
 
 private:
-    /// Config.
-    Configuration& config_;
+    /// Core.
+    Core& core_;
     /// Dialog layout.
     QScopedPointer<QVBoxLayout> dialogLayout_;
     /// Variables.
-    QHash<QString, Section> variables_;
+    QHash<QString, QVector<GlobalVariableFacade*>> variables_;
     /// Section widgets.
     QVector<QWidget*> sections_;
     /// Current section.
