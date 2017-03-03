@@ -1,10 +1,10 @@
 #include "Urho3DWidget.h"
-#include "../Core/Project.h"
 #include "../Core/QtUrhoHelpers.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Input/Input.h>
+#include <Urho3D/Graphics/Renderer.h>
 #include <QKeyEvent>
 
 namespace Urho3DEditor
@@ -21,28 +21,40 @@ Urho3DWidget::Urho3DWidget(Urho3D::Context& context, QWidget* parent /*= nullptr
     timer_.start(16);
 }
 
-bool Urho3DWidget::Initialize(Urho3D::VariantMap parameters, Project* project /*= nullptr*/)
+bool Urho3DWidget::Initialize(Urho3D::VariantMap parameters)
 {
     // Override some parameters
     parameters[Urho3D::EP_FULL_SCREEN] = false;
     parameters[Urho3D::EP_EXTERNAL_WINDOW] = (void*)winId();
 
-    // Setup project-specific parameters
-    if (project)
-    {
-        parameters[Urho3D::EP_RESOURCE_PREFIX_PATHS] = Cast(project->GetAbsoluteResourcePrefixPaths(project->GetBasePath()));
-        parameters[Urho3D::EP_RESOURCE_PATHS] = Cast(project->GetResourcePaths());
-    }
-
     // Initialize engine
     if (!engine_->IsInitialized())
         return engine_->Initialize(parameters);
     else
+        return true;
+}
+
+bool Urho3DWidget::SetResourceCache(const Urho3D::VariantMap& parameters)
+{
+    if (!engine_->IsInitialized())
+        return false;
+    Urho3D::ResourceCache* cache = engine_->GetSubsystem<Urho3D::ResourceCache>();
+    cache->ReleaseAllResources(true);
+    return engine_->InitializeResourceCache(parameters);
+}
+
+bool Urho3DWidget::SetDefaultRenderPath(const QString& fileName)
+{
+    if (Urho3D::Renderer* renderer = engine_->GetSubsystem<Urho3D::Renderer>())
     {
-        Urho3D::ResourceCache* cache = engine_->GetSubsystem<Urho3D::ResourceCache>();
-        cache->ReleaseAllResources(true);
-        return engine_->InitializeResourceCache(parameters);
+        Urho3D::ResourceCache* resourceCache = engine_->GetSubsystem<Urho3D::ResourceCache>();
+        if (Urho3D::XMLFile* renderPath = resourceCache->GetResource<Urho3D::XMLFile>(Cast(fileName)))
+        {
+            renderer->SetDefaultRenderPath(renderPath);
+            return true;
+        }
     }
+    return false;
 }
 
 void Urho3DWidget::OnTimer()

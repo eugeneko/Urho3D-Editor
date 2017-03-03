@@ -12,8 +12,6 @@
 namespace Urho3DEditor
 {
 
-class Project;
-
 /// Urho3D widget that owns context and all systems.
 class Urho3DWidget : public QWidget, public Urho3D::Object
 {
@@ -24,7 +22,11 @@ public:
     /// Construct.
     Urho3DWidget(Urho3D::Context& context, QWidget* parent = nullptr);
     /// Initialize Urho3D systems. If systems are already initialized, partial initialization is performed.
-    bool Initialize(Urho3D::VariantMap parameters, Project* project = nullptr);
+    bool Initialize(Urho3D::VariantMap parameters);
+    /// Set resource cache folders.
+    bool SetResourceCache(const Urho3D::VariantMap& parameters);
+    /// Set default render path.
+    bool SetDefaultRenderPath(const QString& fileName);
     /// Returns whether the Urho3D systems initialized.
     bool IsInitialized() const { return engine_->IsInitialized(); }
 
@@ -64,13 +66,15 @@ private:
 class Urho3DClientWidget;
 
 /// Urho3D host that holds Urho3D widget. Shan't be used as display widget.
-class Urho3DHost : public QWidget
+class Urho3DHost : private QWidget
 {
     Q_OBJECT
 
 public:
     /// Construct.
     Urho3DHost(QWidget* parent = nullptr);
+    /// Initialize Urho3D systems. If systems are already initialized, partial initialization is performed.
+    bool Initialize(const Urho3D::VariantMap& parameters) { return urhoWidget_->Initialize(parameters); }
     /// Get widget.
     Urho3DWidget& GetWidget() const { return *urhoWidget_; }
 

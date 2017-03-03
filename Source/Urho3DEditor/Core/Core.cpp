@@ -1,10 +1,12 @@
 #include "Core.h"
 #include "Document.h"
 #include "DocumentWindow.h"
+#include "QtUrhoHelpers.h"
 #include "../Configuration.h"
 #include "../OptionsDialog.h"
 #include "../Documents/ProjectDocument.h"
 
+#include <Urho3D/Engine/EngineDefs.h>
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/Scene/Scene.h>
@@ -32,6 +34,7 @@ Core::Core(Configuration& config, QMainWindow& mainWindow)
     , mdiArea_(new QMdiArea(&mainWindow_))
     , urhoHost_(new Urho3DHost(&mainWindow_))
 {
+    // Setup widgets
     mdiArea_->setViewMode(QMdiArea::TabbedView);
     mdiArea_->setTabsMovable(true);
     mdiArea_->setTabsClosable(true);
@@ -41,8 +44,6 @@ Core::Core(Configuration& config, QMainWindow& mainWindow)
         [this](QMdiSubWindow* subWindow) { ChangeDocument(qobject_cast<DocumentWindow*>(subWindow)); });
 
     config.RegisterVariable(VarLayoutFileName, ":/Layout.xml", ".Global", "Layout");
-
-    urhoHost_->GetWidget().Initialize(applicationParameters_);
 }
 
 Core::~Core()
@@ -287,12 +288,33 @@ bool Core::CloseDocument(DocumentWindow& documentWindow)
 void Core::SetCurrentProject(QSharedPointer<Project> project)
 {
     currentProject_ = project;
-    Urho3DWidget& widget = urhoHost_->GetWidget();
-    widget.Initialize(applicationParameters_, currentProject_.data());
+
+    if (currentProject_)
+    {
+        Urho3DWidget& widget = urhoHost_->GetWidget();
+        widget.SetResourceCache(currentProject_->GetResourceCacheParameters());
+        widget.SetDefaultRenderPath(currentProject_->GetDefaultRenderPath());
+    }
 }
 
 bool Core::Initialize()
 {
+    // Initialize Urho3D
+    if (!urhoHost_->Initialize(applicationParameters_))
+    {
+        // Try redundant parameters
+        applicationParameters_[Urho3D::EP_RESOURCE_PREFIX_PATHS] = Cast(QDir::currentPath());
+        applicationParameters_[Urho3D::EP_RESOURCE_PATHS] = ".";
+        applicationParameters_[Urho3D::EP_RESOURCE_PACKAGES] = "";
+        applicationParameters_[Urho3D::EP_AUTOLOAD_PATHS] = "";
+        if (!urhoHost_->Initialize(applicationParameters_))
+        {
+            Error(tr("Failed to initialize Urho3D"));
+            return false;
+        }
+    }
+
+    // Initialize menu
     InitializeMenu();
     return true;
 }

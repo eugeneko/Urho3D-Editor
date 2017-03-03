@@ -30,6 +30,11 @@ public:
     /// Load project.
     bool Load();
 
+    /// Get resource cache parameters.
+    Urho3D::VariantMap GetResourceCacheParameters() const;
+    /// Get default render path.
+    QString GetDefaultRenderPath() const { return defaultRenderPath_; }
+
     /// Concatenate path list to string.
     static QString ConcatenateList(const QStringList& list, QChar separator = ';');
     /// Get base path of the project.
@@ -60,10 +65,16 @@ private:
     /// Project file name.
     QString fileName_;
 
-    /// Resource Prefix Paths.
+    /// Resource prefix paths.
     QString resourcePrefixPaths_;
-    /// Resource Paths.
+    /// Resource paths.
     QString resourcePaths_;
+    /// Auto-load paths.
+    QString autoloadPaths_;
+    /// Package paths.
+    QString packagePaths_;
+    /// Default render path.
+    QString defaultRenderPath_;
 
 };
 

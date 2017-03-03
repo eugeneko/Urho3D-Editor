@@ -1,6 +1,7 @@
 #include "Project.h"
 #include "../Core/Core.h"
 #include "../Core/QtUrhoHelpers.h"
+#include <Urho3D/Engine/EngineDefs.h>
 #include <QtXml/QDomDocument>
 #include <QXmlStreamWriter>
 #include <QDirIterator>
@@ -12,6 +13,8 @@ namespace Urho3DEditor
 Project::Project()
     : resourcePrefixPaths_(".")
     , resourcePaths_("CoreData;Data")
+    , autoloadPaths_("Autoload")
+    , defaultRenderPath_("RenderPaths/Forward.xml")
 {
 
 }
@@ -55,6 +58,15 @@ bool Project::Load()
     return true;
 }
 
+Urho3D::VariantMap Project::GetResourceCacheParameters() const
+{
+    Urho3D::VariantMap result;
+    result[Urho3D::EP_RESOURCE_PREFIX_PATHS] = Cast(GetAbsoluteResourcePrefixPaths(GetBasePath()));
+    result[Urho3D::EP_RESOURCE_PATHS] = Cast(resourcePaths_);
+    result[Urho3D::EP_RESOURCE_PACKAGES] = Cast(packagePaths_);
+    result[Urho3D::EP_AUTOLOAD_PATHS] = Cast(autoloadPaths_);
+    return result;
+}
 
 QString Project::ConcatenateList(const QStringList& list, QChar separator)
 {
