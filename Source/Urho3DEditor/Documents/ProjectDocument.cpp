@@ -1,8 +1,6 @@
 #include "ProjectDocument.h"
 #include "../Core/Core.h"
 #include "../Core/QtUrhoHelpers.h"
-#include <Urho3D/IO/File.h>
-#include <Urho3D/Resource/XMLFile.h>
 // #include <QtXml/QDomDocument>
 #include <QAction>
 #include <QDirIterator>
@@ -15,7 +13,7 @@ namespace Urho3DEditor
 
 ProjectDocument::ProjectDocument(Core& core)
     : Document(core)
-    , project_(new Project(core.GetUrho3DWidget().GetContext()))
+    , project_(new Project())
     , layout_(new QGridLayout())
     , buttonSetAsCurrent_(new QPushButton("Wear this project"))
     , fieldResourcePrefixPaths_(new QLineEdit("."))
@@ -39,9 +37,9 @@ ProjectDocument::ProjectDocument(Core& core)
 
 bool ProjectDocument::DoLoad(const QString& fileName)
 {
-    if (!project_->LoadFile(Cast(fileName)))
+    project_->SetFileName(fileName);
+    if (!project_->Load())
         return false;
-    project_->SetName(Cast(fileName));
 
     fieldResourcePrefixPaths_->setText(project_->GetResourcePrefixPaths());
     fieldResourcePaths_->setText(project_->GetResourcePaths());
@@ -53,8 +51,8 @@ bool ProjectDocument::DoSave(const QString& fileName)
     project_->SetResourcePrefixPaths(fieldResourcePrefixPaths_->text());
     project_->SetResourcePaths(fieldResourcePaths_->text());
 
-    project_->SetName(Cast(fileName));
-    return project_->SaveFile(Cast(fileName));
+    project_->SetFileName(fileName);
+    return project_->Save();
 }
 
 }

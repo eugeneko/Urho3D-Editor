@@ -1,25 +1,60 @@
 #include "Project.h"
 #include "../Core/Core.h"
 #include "../Core/QtUrhoHelpers.h"
-#include <Urho3D/IO/File.h>
-#include <Urho3D/Resource/XMLFile.h>
-// #include <QtXml/QDomDocument>
-#include <QAction>
+#include <QtXml/QDomDocument>
+#include <QXmlStreamWriter>
 #include <QDirIterator>
 #include <QFileInfo>
-#include <QLabel>
-#include <QLineEdit>
 
 namespace Urho3DEditor
 {
 
-Project::Project(Urho3D::Context* context)
-    : Urho3D::Resource(context)
-    , resourcePrefixPaths_(".")
+Project::Project()
+    : resourcePrefixPaths_(".")
     , resourcePaths_("CoreData;Data")
 {
 
 }
+
+bool Project::Save()
+{
+    QFile file(fileName_);
+    if (!file.open(QFile::WriteOnly | QFile::Text))
+        return false;
+
+    QXmlStreamWriter xml(&file);
+
+    xml.setAutoFormatting(true);
+    xml.writeStartDocument();
+    xml.writeStartElement("project");
+    {
+        xml.writeTextElement("resourceprefixpaths", resourcePrefixPaths_);
+        xml.writeTextElement("resourcepaths", resourcePaths_);
+    }
+    xml.writeEndElement();
+    xml.writeEndDocument();
+
+    return true;
+}
+
+bool Project::Load()
+{
+    QFile file(fileName_);
+    if (!file.open(QFile::ReadOnly | QFile::Text))
+        return false;
+
+    // Read layout
+    QDomDocument xml;
+    if (!xml.setContent(&file))
+        return false;
+
+    const QDomElement root = xml.documentElement();
+    resourcePrefixPaths_ = root.namedItem("resourceprefixpaths").toElement().text();
+    resourcePaths_ = root.namedItem("resourcepaths").toElement().text();
+
+    return true;
+}
+
 
 QString Project::ConcatenateList(const QStringList& list, QChar separator)
 {
@@ -35,7 +70,7 @@ QString Project::ConcatenateList(const QStringList& list, QChar separator)
 
 QString Project::GetBasePath() const
 {
-    return QFileInfo(GetName().CString()).absolutePath();
+    return QFileInfo(fileName_).absolutePath();
 }
 
 void Project::SetResourcePrefixPaths(const QString& prefixPaths)
@@ -86,34 +121,6 @@ QStringList Project::GetAvailableResourcePathsList(const QString& basePath) cons
     result.sort();
     result.removeDuplicates();
     return result;
-}
-
-bool Project::BeginLoad(Urho3D::Deserializer& source)
-{
-    using namespace Urho3D;
-
-    XMLFile xmlFile(context_);
-    if (!xmlFile.Load(source))
-        return false;
-
-    XMLElement root = xmlFile.GetRoot("project");
-    if (root.IsNull())
-        return false;
-
-    resourcePrefixPaths_ = root.GetChild("resourceprefixpaths").GetValue().CString();
-    resourcePaths_ = root.GetChild("resourcepaths").GetValue().CString();
-    return true;
-}
-
-bool Project::Save(Urho3D::Serializer& dest) const
-{
-    using namespace Urho3D;
-
-    XMLFile xmlFile(context_);
-    XMLElement root = xmlFile.CreateRoot("project");
-    root.CreateChild("resourceprefixpaths").SetValue(resourcePrefixPaths_.toStdString().c_str());
-    root.CreateChild("resourcepaths").SetValue(resourcePaths_.toStdString().c_str());
-    return xmlFile.Save(dest);
 }
 
 }

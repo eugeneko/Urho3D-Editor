@@ -2,8 +2,6 @@
 
 #include "../Module.h"
 #include "../Core/Document.h"
-#include <Urho3D/Core/Context.h>
-#include <Urho3D/Resource/Resource.h>
 #include <QPushButton>
 #include <QGridLayout>
 #include <QLineEdit>
@@ -16,13 +14,22 @@ namespace Urho3DEditor
 class Core;
 
 /// Project.
-class Project : public Urho3D::Resource
+class Project : public QObject
 {
-    URHO3D_OBJECT(Project, Urho3D::Resource);
+    Q_OBJECT
 
 public:
     /// Construct.
-    Project(Urho3D::Context* context);
+    Project();
+    /// Set project file name.
+    void SetFileName(const QString& fileName) { fileName_ = fileName; }
+    /// Get project file name.
+    QString GetFileName() const { return fileName_; }
+    /// Save project.
+    bool Save();
+    /// Load project.
+    bool Load();
+
     /// Concatenate path list to string.
     static QString ConcatenateList(const QStringList& list, QChar separator = ';');
     /// Get base path of the project.
@@ -49,12 +56,10 @@ public:
     /// Get available resource paths.
     QStringList GetAvailableResourcePathsList(const QString& basePath) const;
 
-    /// Load resource from stream. May be called from a worker thread. Return true if successful.
-    virtual bool BeginLoad(Urho3D::Deserializer& source) override;
-    /// Save resource. Return true if successful.
-    virtual bool Save(Urho3D::Serializer& dest) const override;
-
 private:
+    /// Project file name.
+    QString fileName_;
+
     /// Resource Prefix Paths.
     QString resourcePrefixPaths_;
     /// Resource Paths.
