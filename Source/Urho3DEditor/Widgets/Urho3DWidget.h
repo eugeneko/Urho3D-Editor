@@ -12,7 +12,7 @@
 namespace Urho3DEditor
 {
 
-class Urho3DProject;
+class Project;
 
 /// Urho3D widget that owns context and all systems.
 class Urho3DWidget : public QWidget, public Urho3D::Object
@@ -24,7 +24,7 @@ public:
     /// Construct.
     Urho3DWidget(Urho3D::Context& context, QWidget* parent = nullptr);
     /// Initialize Urho3D systems. If systems are already initialized, partial initialization is performed.
-    bool Initialize(Urho3D::VariantMap parameters, Urho3DProject* project = nullptr);
+    bool Initialize(Urho3D::VariantMap parameters, Project* project = nullptr);
     /// Returns whether the Urho3D systems initialized.
     bool IsInitialized() const { return engine_->IsInitialized(); }
 

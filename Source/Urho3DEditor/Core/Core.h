@@ -1,8 +1,8 @@
 #pragma once
 
 #include "TypeMap.h"
+#include "Project.h"
 #include "../Module.h"
-#include "../Urho3DProject.h"
 #include "Widgets/Urho3DWidget.h"
 #include <Urho3D/Core/Context.h>
 #include <QApplication>
@@ -68,7 +68,7 @@ public:
     /// Close document. Returns true if close operation was successful.
     bool CloseDocument(DocumentWindow& documentWindow);
     /// Set current project.
-    void SetCurrentProject(QSharedPointer<Urho3DProject> project);
+    void SetCurrentProject(QSharedPointer<Project> project);
 
     /// Launch generic open dialog and try to open all selected files.
     bool Open() { return OpenDocumentDialog("", true); }
@@ -159,7 +159,7 @@ private:
     /// Current document. Used to suppress redundant notifications.
     DocumentWindow* currentDocument_ = nullptr;
     /// Current project.
-    QSharedPointer<Urho3DProject> currentProject_;
+    QSharedPointer<Project> currentProject_;
 
     /// Menu actions.
     QHash<QString, QAction*> menuActions_;

@@ -1,5 +1,5 @@
 #include "Urho3DWidget.h"
-#include "../Urho3DProject.h"
+#include "../Core/Project.h"
 #include "../Core/QtUrhoHelpers.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Engine/EngineDefs.h>
@@ -21,7 +21,7 @@ Urho3DWidget::Urho3DWidget(Urho3D::Context& context, QWidget* parent /*= nullptr
     timer_.start(16);
 }
 
-bool Urho3DWidget::Initialize(Urho3D::VariantMap parameters, Urho3DProject* project /*= nullptr*/)
+bool Urho3DWidget::Initialize(Urho3D::VariantMap parameters, Project* project /*= nullptr*/)
 {
     // Override some parameters
     parameters[Urho3D::EP_FULL_SCREEN] = false;

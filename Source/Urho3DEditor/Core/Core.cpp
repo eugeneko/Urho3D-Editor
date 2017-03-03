@@ -3,6 +3,7 @@
 #include "DocumentWindow.h"
 #include "../Configuration.h"
 #include "../OptionsDialog.h"
+#include "../Documents/ProjectDocument.h"
 
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/IO/File.h>
@@ -283,7 +284,7 @@ bool Core::CloseDocument(DocumentWindow& documentWindow)
     return true;
 }
 
-void Core::SetCurrentProject(QSharedPointer<Urho3DProject> project)
+void Core::SetCurrentProject(QSharedPointer<Project> project)
 {
     currentProject_ = project;
     Urho3DWidget& widget = urhoHost_->GetWidget();

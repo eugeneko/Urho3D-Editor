@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Module.h"
-#include "Core/Document.h"
+#include "../Module.h"
+#include "../Core/Document.h"
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Resource/Resource.h>
 #include <QPushButton>
@@ -15,14 +15,14 @@ namespace Urho3DEditor
 
 class Core;
 
-/// Urho3D Project document.
-class Urho3DProject : public Urho3D::Resource
+/// Project.
+class Project : public Urho3D::Resource
 {
-    URHO3D_OBJECT(Urho3DProject, Urho3D::Resource);
+    URHO3D_OBJECT(Project, Urho3D::Resource);
 
 public:
     /// Construct.
-    Urho3DProject(Urho3D::Context* context);
+    Project(Urho3D::Context* context);
     /// Concatenate path list to string.
     static QString ConcatenateList(const QStringList& list, QChar separator = ';');
     /// Get base path of the project.
@@ -59,52 +59,6 @@ private:
     QString resourcePrefixPaths_;
     /// Resource Paths.
     QString resourcePaths_;
-
-};
-
-/// Document that shows project content.
-class ProjectDocument : public Document
-{
-    Q_OBJECT
-
-public:
-    /// Construct.
-    ProjectDocument(Core& core);
-    /// Get project.
-    QSharedPointer<Urho3DProject> GetProject() { return project_; }
-
-private:
-    /// Load the document from file.
-    virtual bool DoLoad(const QString& fileName);
-    /// Save the document to file.
-    virtual bool DoSave(const QString& fileName);
-
-private:
-    /// Project.
-    QSharedPointer<Urho3DProject> project_;
-    /// Layout.
-    QGridLayout* layout_;
-    /// 'Set as Current' button.
-    QPushButton* buttonSetAsCurrent_;
-    /// 'Resource Prefix Paths' field.
-    QLineEdit* fieldResourcePrefixPaths_;
-    /// 'Resource Paths' field.
-    QLineEdit* fieldResourcePaths_;
-
-};
-
-/// ProjectDocument factory.
-class ProjectDocumentFactory : public DocumentFactoryT<ProjectDocument>
-{
-public:
-    /// @see DocumentFactory::IsSaveable
-    virtual bool IsSaveable() const override { return true; }
-    /// @see DocumentFactory::ShallSaveOnCreate
-    virtual bool ShallSaveOnCreate() const override { return true; }
-    /// @see DocumentFactory::GetDefaultFileName
-    virtual QString GetDefaultFileName() const override { return "Project.urho"; }
-    /// @see DocumentFactory::GetFileNameFilters
-    virtual QStringList GetFileNameFilters() const override { return{ "Urho3D Project (*.urho)" }; }
 
 };
 

@@ -9,7 +9,7 @@
 
 #include "Configuration.h"
 #include "Core/Core.h"
-#include "Urho3DProject.h"
+#include "Documents/ProjectDocument.h"
 #include "SceneEditor/AttributeInspector.h"
 #include "SceneEditor/HierarchyWindow.h"
 #include "SceneEditor/SceneEditor.h"
