@@ -5,6 +5,7 @@
 #include "GlobalVariable.h"
 #include "../Configuration.h"
 #include "../OptionsDialog.h"
+#include "../Dialogs/LaunchDialog.h"
 #include "../Documents/ProjectDocument.h"
 
 #include <Urho3D/Engine/EngineDefs.h>
@@ -27,6 +28,7 @@ namespace Urho3DEditor
 {
 
 static GlobalVariableT<QString> VarLayout("global/layout", ":/Layout.xml", ".Global", QT_TR_NOOP("Layout"));
+static GlobalVariableT<QString> VarLastOpenedProject("project/lastopened", "");
 
 Core::Core(Configuration& config, QMainWindow& mainWindow)
     : settings_("Urho3D", "Editor")
@@ -45,7 +47,10 @@ Core::Core(Configuration& config, QMainWindow& mainWindow)
     connect(mdiArea_, &QMdiArea::subWindowActivated, this,
         [this](QMdiSubWindow* subWindow) { ChangeDocument(qobject_cast<DocumentWindow*>(subWindow)); });
 
+    // Register internal things
     RegisterGlobalVariable(VarLayout);
+    RegisterGlobalVariable(VarLastOpenedProject);
+    LaunchDialog::RegisterGlobalVariables(*this);
 }
 
 Core::~Core()
@@ -59,6 +64,74 @@ QMessageBox::StandardButton Core::Error(const QString& text,
     QMessageBox::StandardButtons buttons /*= QMessageBox::Ok*/, QMessageBox::StandardButton defaultButton /*= QMessageBox::Ok*/)
 {
     return QMessageBox::critical(&mainWindow_, tr("Urho3D Editor Error"), text, buttons, defaultButton);
+}
+
+bool Core::NewProject()
+{
+    if (currentProject_)
+        return false;
+
+    QSharedPointer<Project> project(new Project());
+
+    // Launch save dialog
+    QFileDialog dialog;
+    dialog.selectFile("Project.urho");
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    dialog.setDirectory(QFileInfo(VarLastOpenedProject.GetValue()).absolutePath());
+    dialog.setNameFilter(tr("Urho3D Project (*.urho)"));
+    if (!dialog.exec() || dialog.selectedFiles().isEmpty())
+        return false;
+
+    // Save project
+    const QString fileName = dialog.selectedFiles().front();
+    project->SetFileName(fileName);
+    if (!project->Save())
+    {
+        Error(tr("Failed to save project %1").arg(fileName));
+        return false;
+    }
+
+    VarLastOpenedProject.SetValue(fileName);
+    SetCurrentProject(project);
+    return true;
+}
+
+bool Core::OpenProject(QString fileName /*= ""*/)
+{
+    if (currentProject_)
+        return false;
+
+    QSharedPointer<Project> project(new Project());
+
+    if (fileName.isEmpty())
+    {
+        // Launch open dialog
+        QFileDialog dialog;
+        dialog.setAcceptMode(QFileDialog::AcceptOpen);
+        dialog.setFileMode(QFileDialog::ExistingFile);
+        dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+        dialog.setDirectory(QFileInfo(VarLastOpenedProject.GetValue()).absolutePath());
+        dialog.setNameFilter(tr("Urho3D Project (*.urho)"));
+        if (!dialog.exec() || dialog.selectedFiles().isEmpty())
+            return false;
+
+        // Get file name
+        fileName = dialog.selectedFiles().front();
+    }
+
+    // Open project
+    project->SetFileName(fileName);
+    if (!project->Load())
+    {
+        Error(tr("Failed to load project %1").arg(fileName));
+        return false;
+    }
+
+    VarLastOpenedProject.SetValue(fileName);
+    SetCurrentProject(project);
+    return true;
 }
 
 DocumentFactory* Core::GetDocumentFactory(const QString& documentType) const
@@ -329,8 +402,17 @@ bool Core::Initialize()
         }
     }
 
-    // Initialize menu
+    // Initialize menu and layout
     InitializeMenu();
+    LoadLayout();
+
+    // Initialize project
+    LaunchDialog dialog(*this);
+    if (dialog.exec() == QDialog::Rejected)
+        return false;
+
+    // Open main window
+    mainWindow_.showMaximized();
     return true;
 }
 

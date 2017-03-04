@@ -33,7 +33,6 @@ int Application::Run()
 {
     if (!Initialize())
         return 1;
-    mainWindowWidget_->showMaximized();
     return exec();
 }
 
@@ -48,8 +47,6 @@ bool Application::Initialize()
     config_.reset(new Configuration());
     core_.reset(new Core(*config_, *mainWindowWidget_));
     moduleSystem_.reset(new ModuleSystem(*config_, *core_));
-    if (!core_->Initialize())
-        return false;
 
     core_->RegisterFilter(tr("Urho3D Scenes and Projects (*.xml *.json *.bin *.urho)"),
     { SceneDocument::staticMetaObject.className(), ProjectDocument::staticMetaObject.className() });
@@ -61,8 +58,7 @@ bool Application::Initialize()
     moduleSystem_->AddModule(new HierarchyWindow());
     moduleSystem_->AddModule(new AttributeInspector());
 
-    core_->LoadLayout();
-    return true;
+    return core_->Initialize();
 }
 
 // void SceneEditorPlugin::Register(EditorInterface& editor)

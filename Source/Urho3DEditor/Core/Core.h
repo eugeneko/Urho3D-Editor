@@ -41,6 +41,13 @@ public:
     QMessageBox::StandardButton Error(const QString& text,
         QMessageBox::StandardButtons buttons = QMessageBox::Ok, QMessageBox::StandardButton defaultButton = QMessageBox::Ok);
 
+    /// Create new project.
+    bool NewProject();
+    /// Open existing project.
+    bool OpenProject(QString fileName = "");
+    /// Get current project.
+    Project* GetProject() { return currentProject_.data(); }
+
     /// Get document factory by type name.
     DocumentFactory* GetDocumentFactory(const QString& documentType) const;
     /// Get document factory by type.
