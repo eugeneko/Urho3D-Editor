@@ -36,32 +36,17 @@ public:
     Urho3D::VariantMap GetResourceCacheParameters() const;
     /// Get default render path.
     QString GetDefaultRenderPath() const { return defaultRenderPath_; }
-
-    /// Concatenate path list to string.
-    static QString ConcatenateList(const QStringList& list, QChar separator = ';');
-    /// Get base path of the project.
-    QString GetBasePath() const;
+    /// Get resource prefix paths.
+    const QString& GetResourcePrefixPaths() const { return resourcePrefixPaths_; }
+    /// Get absolute resource prefix paths.
+    QString GetAbsoluteResourcePrefixPaths() const;
+    /// Get resource paths.
+    const QString& GetResourcePaths() const { return resourcePaths_; }
 
     /// Set resource prefix paths.
     void SetResourcePrefixPaths(const QString& prefixPaths);
     /// Set resource paths.
     void SetResourcePaths(const QString& paths);
-
-    /// Get resource prefix paths.
-    const QString& GetResourcePrefixPaths() const { return resourcePrefixPaths_; }
-    /// Get absolute resource prefix paths list.
-    QStringList GetAbsoluteResourcePrefixPathsList(const QString& basePath) const;
-    /// Get absolute resource prefix paths.
-    QString GetAbsoluteResourcePrefixPaths(const QString& basePath) const;
-    /// Get resource paths.
-    const QString& GetResourcePaths() const { return resourcePaths_; }
-
-    /// Get resource prefix paths (as is).
-    QStringList GetResourcePrefixPathsList() const;
-    /// Get resource paths.
-    QStringList GetResourcePathsList() const;
-    /// Get available resource paths.
-    QStringList GetAvailableResourcePathsList(const QString& basePath) const;
 
 private:
     /// Project file name.

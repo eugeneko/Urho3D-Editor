@@ -66,28 +66,27 @@ bool Project::Load()
 Urho3D::VariantMap Project::GetResourceCacheParameters() const
 {
     Urho3D::VariantMap result;
-    result[Urho3D::EP_RESOURCE_PREFIX_PATHS] = Cast(GetAbsoluteResourcePrefixPaths(GetBasePath()));
+    result[Urho3D::EP_RESOURCE_PREFIX_PATHS] = Cast(GetAbsoluteResourcePrefixPaths());
     result[Urho3D::EP_RESOURCE_PATHS] = Cast(resourcePaths_);
     result[Urho3D::EP_RESOURCE_PACKAGES] = Cast(packagePaths_);
     result[Urho3D::EP_AUTOLOAD_PATHS] = Cast(autoloadPaths_);
     return result;
 }
 
-QString Project::ConcatenateList(const QStringList& list, QChar separator)
+QString Project::GetAbsoluteResourcePrefixPaths() const
 {
-    QString result;
-    for (int i = 0; i < list.count(); ++i)
-    {
-        result += list[i];
-        if (i + 1 != list.count())
-            result += separator;
-    }
-    return result;
-}
+    // Get base path
+    const QString basePath = QFileInfo(fileName_).absolutePath();
 
-QString Project::GetBasePath() const
-{
-    return QFileInfo(fileName_).absolutePath();
+    // Get list of prefix paths
+    QStringList prefixPaths = resourcePrefixPaths_.split(';', QString::SkipEmptyParts);
+
+    // Make absolute paths
+    for (QString& path : prefixPaths)
+        path = QDir::cleanPath(QDir(basePath).filePath(path));
+
+    // Join all strings
+    return prefixPaths.join(';');
 }
 
 void Project::SetResourcePrefixPaths(const QString& prefixPaths)
@@ -98,46 +97,6 @@ void Project::SetResourcePrefixPaths(const QString& prefixPaths)
 void Project::SetResourcePaths(const QString& paths)
 {
     resourcePaths_ = paths;
-}
-
-QStringList Project::GetAbsoluteResourcePrefixPathsList(const QString& basePath) const
-{
-    QStringList paths = GetResourcePrefixPathsList();
-    for (QString& path : paths)
-        path = QDir::cleanPath(QDir(basePath).filePath(path));
-    return paths;
-}
-
-QString Project::GetAbsoluteResourcePrefixPaths(const QString& basePath) const
-{
-    return Project::ConcatenateList(GetAbsoluteResourcePrefixPathsList(basePath));
-}
-
-QStringList Project::GetResourcePrefixPathsList() const
-{
-    return resourcePrefixPaths_.split(';', QString::SkipEmptyParts);
-}
-
-QStringList Project::GetResourcePathsList() const
-{
-    return resourcePaths_.split(';', QString::SkipEmptyParts);
-}
-
-QStringList Project::GetAvailableResourcePathsList(const QString& basePath) const
-{
-    const QStringList prefixPaths = GetAbsoluteResourcePrefixPathsList(basePath);
-    QStringList result;
-    for (const QString& prefixPath : prefixPaths)
-    {
-        QDir path(prefixPath);
-        path.setFilter(QDir::NoDotAndDotDot | QDir::Dirs);
-        QDirIterator iter(path);
-        while (iter.hasNext())
-            result.push_back(path.relativeFilePath(iter.next()));
-    }
-    result.sort();
-    result.removeDuplicates();
-    return result;
 }
 
 }
