@@ -19,6 +19,7 @@ LaunchDialog::LaunchDialog(Core& core)
     , core_(core)
     , layout_(new QGridLayout(this))
 {
+    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
     setWindowTitle(tr("Startup Dialog"));
 
     QPushButton* newProject = new QPushButton(tr("New Project..."), this);

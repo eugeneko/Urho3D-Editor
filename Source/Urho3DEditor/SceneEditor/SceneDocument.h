@@ -135,9 +135,6 @@ public:
 
     // @}
 
-    /// Return title of the document.
-    virtual QString GetTitle() override { return GetRawTitle(); }
-
 signals:
     /// Signals that selection has been changed.
     void selectionChanged();

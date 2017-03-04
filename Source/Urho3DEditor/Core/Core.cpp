@@ -134,6 +134,21 @@ bool Core::OpenProject(QString fileName /*= ""*/)
     return true;
 }
 
+void Core::CloseProject()
+{
+    if (!CloseAllDocuments())
+        return;
+
+    currentProject_.reset();
+    mainWindow_.hide();
+
+    LaunchDialog dialog(*this);
+    if (dialog.exec() == QDialog::Rejected)
+        mainWindow_.close();
+
+    mainWindow_.show();
+}
+
 DocumentFactory* Core::GetDocumentFactory(const QString& documentType) const
 {
     return registeredDocuments_.Get(documentType).data();
@@ -373,6 +388,19 @@ bool Core::CloseDocument(DocumentWindow& documentWindow)
     return true;
 }
 
+bool Core::CloseCurrentDocument()
+{
+    if (DocumentWindow* window = qobject_cast<DocumentWindow*>(mdiArea_->currentSubWindow()))
+        return CloseDocument(*window);
+    return false;
+}
+
+bool Core::CloseAllDocuments()
+{
+    mdiArea_->closeAllSubWindows();
+    return mdiArea_->subWindowList().isEmpty();
+}
+
 void Core::SetCurrentProject(QSharedPointer<Project> project)
 {
     currentProject_ = project;
@@ -556,7 +584,13 @@ void Core::InitializeMenu()
     action = AddAction("File.SaveAs", Qt::CTRL + Qt::SHIFT + Qt::Key_S);
 
     action = AddAction("File.Close", Qt::CTRL + Qt::Key_W);
-    connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileClose()));
+    connect(action, &QAction::triggered, this, &Core::CloseCurrentDocument);
+
+    action = AddAction("File.CloseAll", Qt::CTRL + Qt::SHIFT + Qt::Key_W);
+    connect(action, &QAction::triggered, this, &Core::CloseAllDocuments);
+
+    action = AddAction("File.CloseProject");
+    connect(action, &QAction::triggered, this, &Core::CloseProject);
 
     action = AddAction("File.Exit");
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));

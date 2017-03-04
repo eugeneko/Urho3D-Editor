@@ -45,6 +45,8 @@ public:
     bool NewProject();
     /// Open existing project.
     bool OpenProject(QString fileName = "");
+    /// Close current project.
+    void CloseProject();
     /// Get current project.
     Project* GetProject() { return currentProject_.data(); }
 
@@ -78,6 +80,10 @@ public:
     bool SaveDocument(Document& document, bool saveAs = false);
     /// Close document. Returns true if close operation was successful.
     bool CloseDocument(DocumentWindow& documentWindow);
+    /// Close current document.
+    bool CloseCurrentDocument();
+    /// Close all documents.
+    bool CloseAllDocuments();
     /// Set current project.
     void SetCurrentProject(QSharedPointer<Project> project);
 

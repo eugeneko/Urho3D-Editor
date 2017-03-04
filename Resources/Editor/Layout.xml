@@ -8,7 +8,9 @@
             <action name="Save" action="File.Save" />
             <action name="Save As..." action="File.SaveAs" />
             <action name="Close" action="File.Close" />
+            <action name="Close All" action="File.CloseAll" />
             <separator/>
+            <action name="Close Project" action="File.CloseProject" />
             <action name="Exit" action="File.Exit" />
         </menu>
         <menu name="Edit">

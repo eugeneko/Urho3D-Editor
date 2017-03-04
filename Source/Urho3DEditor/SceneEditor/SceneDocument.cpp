@@ -113,6 +113,7 @@ void SceneDocument::RemoveOverlay(SceneOverlay* overlay)
 
 void SceneDocument::AddAction(QUndoCommand* action)
 {
+    MarkDirty();
     undoStack_.push(action);
 }
 
