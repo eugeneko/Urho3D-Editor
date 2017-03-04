@@ -40,6 +40,8 @@ public:
     /// Show error message.
     QMessageBox::StandardButton Error(const QString& text,
         QMessageBox::StandardButtons buttons = QMessageBox::Ok, QMessageBox::StandardButton defaultButton = QMessageBox::Ok);
+    /// Initialize. Shall be called after all registration calls.
+    bool Initialize();
     /// Quit.
     void Quit();
 
@@ -90,11 +92,6 @@ public:
     /// Launch generic open dialog and try to open all selected files.
     bool Open() { return OpenDocumentDialog("", true); }
 
-    /// Initialize.
-    virtual bool Initialize();
-    /// Load layout.
-    virtual void LoadLayout();
-
     /// Create Urho3D client widget.
     Urho3DClientWidget* CreateUrho3DClientWidget(QWidget* parent = nullptr);
 
@@ -132,6 +129,8 @@ signals:
 private:
     /// Initialize menu.
     void InitializeMenu();
+    /// Initialize layout.
+    void InitializeLayout();
     /// Read menu.
     QMenu* ReadMenu(const QDomNode& node);
     /// Read action.

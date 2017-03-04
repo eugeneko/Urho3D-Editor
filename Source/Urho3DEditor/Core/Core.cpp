@@ -66,6 +66,37 @@ QMessageBox::StandardButton Core::Error(const QString& text,
     return QMessageBox::critical(&mainWindow_, tr("Urho3D Editor Error"), text, buttons, defaultButton);
 }
 
+bool Core::Initialize()
+{
+    // Initialize Urho3D
+    if (!urhoHost_->Initialize(applicationParameters_))
+    {
+        // Try redundant parameters
+        applicationParameters_[Urho3D::EP_RESOURCE_PREFIX_PATHS] = Cast(QDir::currentPath());
+        applicationParameters_[Urho3D::EP_RESOURCE_PATHS] = ".";
+        applicationParameters_[Urho3D::EP_RESOURCE_PACKAGES] = "";
+        applicationParameters_[Urho3D::EP_AUTOLOAD_PATHS] = "";
+        if (!urhoHost_->Initialize(applicationParameters_))
+        {
+            Error(tr("Failed to initialize Urho3D"));
+            return false;
+        }
+    }
+
+    // Initialize menu and layout
+    InitializeMenu();
+    InitializeLayout();
+
+    // Initialize project
+    LaunchDialog dialog(*this);
+    if (dialog.exec() == QDialog::Rejected)
+        return false;
+
+    // Open main window
+    mainWindow_.showMaximized();
+    return true;
+}
+
 void Core::Quit()
 {
     mainWindow_.close();
@@ -412,83 +443,6 @@ bool Core::CloseAllDocuments()
     return mdiArea_->subWindowList().isEmpty();
 }
 
-bool Core::Initialize()
-{
-    // Initialize Urho3D
-    if (!urhoHost_->Initialize(applicationParameters_))
-    {
-        // Try redundant parameters
-        applicationParameters_[Urho3D::EP_RESOURCE_PREFIX_PATHS] = Cast(QDir::currentPath());
-        applicationParameters_[Urho3D::EP_RESOURCE_PATHS] = ".";
-        applicationParameters_[Urho3D::EP_RESOURCE_PACKAGES] = "";
-        applicationParameters_[Urho3D::EP_AUTOLOAD_PATHS] = "";
-        if (!urhoHost_->Initialize(applicationParameters_))
-        {
-            Error(tr("Failed to initialize Urho3D"));
-            return false;
-        }
-    }
-
-    // Initialize menu and layout
-    InitializeMenu();
-    LoadLayout();
-
-    // Initialize project
-    LaunchDialog dialog(*this);
-    if (dialog.exec() == QDialog::Rejected)
-        return false;
-
-    // Open main window
-    mainWindow_.showMaximized();
-    return true;
-}
-
-void Core::LoadLayout()
-{
-    QFile file(VarLayout.GetValue());
-
-    // Close if cannot load layout
-    if (!file.open(QFile::ReadOnly | QFile::Text))
-    {
-        const QMessageBox::StandardButton result = Error(
-            tr("Failed to load layout $1\nReset to default?").arg(VarLayout.GetValue()),
-            QMessageBox::Yes | QMessageBox::No);
-
-        if (result == QMessageBox::Yes)
-            VarLayout.ResetToDefault();
-
-        mainWindow_.close();
-        return;
-    }
-
-    // Read layout
-    QDomDocument xml;
-    if (!xml.setContent(&file))
-        return;
-
-    const QDomElement root = xml.documentElement();
-    const QDomNodeList children = root.childNodes();
-    for (int i = 0; i < children.count(); ++i)
-    {
-        const QDomNode node = children.at(i);
-        if (node.nodeName() == "menu")
-        {
-            const QString tag = node.attributes().namedItem("tag").nodeValue();
-            if (tag.isEmpty())
-            {
-                const QDomNodeList menus = node.childNodes();
-                for (int j = 0; j < menus.count(); ++j)
-                    mainWindow_.menuBar()->addMenu(ReadMenu(menus.at(j)));
-            }
-            else
-            {
-                if (!menus_.contains(tag))
-                    menus_[tag] = ReadMenu(node);
-            }
-        }
-    }
-}
-
 Urho3DClientWidget* Core::CreateUrho3DClientWidget(QWidget* parent /*= nullptr*/)
 {
     return new Urho3DClientWidget(*urhoHost_, parent);
@@ -605,6 +559,52 @@ void Core::InitializeMenu()
 
     action = AddAction("Help.About");
     connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleHelpAbout()));
+}
+
+void Core::InitializeLayout()
+{
+    QFile file(VarLayout.GetValue());
+
+    // Close if cannot load layout
+    if (!file.open(QFile::ReadOnly | QFile::Text))
+    {
+        const QMessageBox::StandardButton result = Error(
+            tr("Failed to load layout $1\nReset to default?").arg(VarLayout.GetValue()),
+            QMessageBox::Yes | QMessageBox::No);
+
+        if (result == QMessageBox::Yes)
+            VarLayout.ResetToDefault();
+
+        mainWindow_.close();
+        return;
+    }
+
+    // Read layout
+    QDomDocument xml;
+    if (!xml.setContent(&file))
+        return;
+
+    const QDomElement root = xml.documentElement();
+    const QDomNodeList children = root.childNodes();
+    for (int i = 0; i < children.count(); ++i)
+    {
+        const QDomNode node = children.at(i);
+        if (node.nodeName() == "menu")
+        {
+            const QString tag = node.attributes().namedItem("tag").nodeValue();
+            if (tag.isEmpty())
+            {
+                const QDomNodeList menus = node.childNodes();
+                for (int j = 0; j < menus.count(); ++j)
+                    mainWindow_.menuBar()->addMenu(ReadMenu(menus.at(j)));
+            }
+            else
+            {
+                if (!menus_.contains(tag))
+                    menus_[tag] = ReadMenu(node);
+            }
+        }
+    }
 }
 
 QMenu* Core::ReadMenu(const QDomNode& node)
