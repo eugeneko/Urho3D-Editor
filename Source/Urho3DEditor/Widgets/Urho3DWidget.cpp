@@ -34,12 +34,17 @@ bool Urho3DWidget::Initialize(Urho3D::VariantMap parameters)
         return true;
 }
 
+void Urho3DWidget::ClearResourceCache()
+{
+    if (Urho3D::ResourceCache* cache = engine_->GetSubsystem<Urho3D::ResourceCache>())
+        cache->ReleaseAllResources(true);
+
+}
+
 bool Urho3DWidget::SetResourceCache(const Urho3D::VariantMap& parameters)
 {
     if (!engine_->IsInitialized())
         return false;
-    Urho3D::ResourceCache* cache = engine_->GetSubsystem<Urho3D::ResourceCache>();
-    cache->ReleaseAllResources(true);
     return engine_->InitializeResourceCache(parameters);
 }
 

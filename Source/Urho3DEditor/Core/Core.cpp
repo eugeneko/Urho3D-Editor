@@ -71,7 +71,7 @@ bool Core::NewProject()
     if (currentProject_)
         return false;
 
-    QSharedPointer<Project> project(new Project());
+    QScopedPointer<Project> project(new Project());
 
     // Launch save dialog
     QFileDialog dialog;
@@ -94,7 +94,7 @@ bool Core::NewProject()
     }
 
     VarLastOpenedProject.SetValue(fileName);
-    SetCurrentProject(project);
+    SetCurrentProject(project.take());
     return true;
 }
 
@@ -103,7 +103,7 @@ bool Core::OpenProject(QString fileName /*= ""*/)
     if (currentProject_)
         return false;
 
-    QSharedPointer<Project> project(new Project());
+    QScopedPointer<Project> project(new Project());
 
     if (fileName.isEmpty())
     {
@@ -130,7 +130,7 @@ bool Core::OpenProject(QString fileName /*= ""*/)
     }
 
     VarLastOpenedProject.SetValue(fileName);
-    SetCurrentProject(project);
+    SetCurrentProject(project.take());
     return true;
 }
 
@@ -140,6 +140,7 @@ void Core::CloseProject()
         return;
 
     currentProject_.reset();
+    urhoHost_->GetWidget().ClearResourceCache();
     mainWindow_.hide();
 
     LaunchDialog dialog(*this);
@@ -401,18 +402,6 @@ bool Core::CloseAllDocuments()
     return mdiArea_->subWindowList().isEmpty();
 }
 
-void Core::SetCurrentProject(QSharedPointer<Project> project)
-{
-    currentProject_ = project;
-
-    if (currentProject_)
-    {
-        Urho3DWidget& widget = urhoHost_->GetWidget();
-        widget.SetResourceCache(currentProject_->GetResourceCacheParameters());
-        widget.SetDefaultRenderPath(currentProject_->GetDefaultRenderPath());
-    }
-}
-
 bool Core::Initialize()
 {
     // Initialize Urho3D
@@ -643,6 +632,18 @@ QAction* Core::ReadAction(const QDomNode& node)
     else
         action->setText(name);
     return action;
+}
+
+void Core::SetCurrentProject(Project* project)
+{
+    currentProject_.reset(project);
+
+    if (currentProject_)
+    {
+        Urho3DWidget& widget = urhoHost_->GetWidget();
+        widget.SetResourceCache(currentProject_->GetResourceCacheParameters());
+        widget.SetDefaultRenderPath(currentProject_->GetDefaultRenderPath());
+    }
 }
 
 void Core::HandleFileExit()

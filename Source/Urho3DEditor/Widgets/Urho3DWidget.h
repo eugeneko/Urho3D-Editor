@@ -23,6 +23,8 @@ public:
     Urho3DWidget(Urho3D::Context& context, QWidget* parent = nullptr);
     /// Initialize Urho3D systems. If systems are already initialized, partial initialization is performed.
     bool Initialize(Urho3D::VariantMap parameters);
+    /// Clear resource cache.
+    void ClearResourceCache();
     /// Set resource cache folders.
     bool SetResourceCache(const Urho3D::VariantMap& parameters);
     /// Set default render path.

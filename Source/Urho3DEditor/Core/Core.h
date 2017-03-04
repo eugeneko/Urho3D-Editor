@@ -84,8 +84,6 @@ public:
     bool CloseCurrentDocument();
     /// Close all documents.
     bool CloseAllDocuments();
-    /// Set current project.
-    void SetCurrentProject(QSharedPointer<Project> project);
 
     /// Launch generic open dialog and try to open all selected files.
     bool Open() { return OpenDocumentDialog("", true); }
@@ -136,6 +134,8 @@ private:
     QMenu* ReadMenu(const QDomNode& node);
     /// Read action.
     QAction* ReadAction(const QDomNode& node);
+    /// Set current project.
+    void SetCurrentProject(Project* project);
 
 private slots:
     /// Change document.
@@ -181,7 +181,7 @@ private:
     /// Current document. Used to suppress redundant notifications.
     DocumentWindow* currentDocument_ = nullptr;
     /// Current project.
-    QSharedPointer<Project> currentProject_;
+    QScopedPointer<Project> currentProject_;
 
     /// Menu actions.
     QHash<QString, QAction*> menuActions_;

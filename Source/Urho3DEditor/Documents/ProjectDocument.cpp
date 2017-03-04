@@ -23,7 +23,6 @@ ProjectDocument::ProjectDocument(Core& core)
     MarkDirty();
 
     setLayout(layout_);
-    connect(buttonSetAsCurrent_, &QPushButton::clicked, this, [this]() { GetCore().SetCurrentProject(project_); });
     connect(fieldResourcePrefixPaths_, &QLineEdit::textEdited, this, [this]() { MarkDirty(); });
     connect(fieldResourcePaths_,       &QLineEdit::textEdited, this, [this]() { MarkDirty(); });
 
