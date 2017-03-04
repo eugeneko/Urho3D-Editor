@@ -66,6 +66,11 @@ QMessageBox::StandardButton Core::Error(const QString& text,
     return QMessageBox::critical(&mainWindow_, tr("Urho3D Editor Error"), text, buttons, defaultButton);
 }
 
+void Core::Quit()
+{
+    mainWindow_.close();
+}
+
 bool Core::NewProject()
 {
     if (currentProject_)
@@ -94,7 +99,8 @@ bool Core::NewProject()
     }
 
     VarLastOpenedProject.SetValue(fileName);
-    SetCurrentProject(project.take());
+    currentProject_.reset(project.take());
+    UpdateProjectContext();
     return true;
 }
 
@@ -130,7 +136,8 @@ bool Core::OpenProject(QString fileName /*= ""*/)
     }
 
     VarLastOpenedProject.SetValue(fileName);
-    SetCurrentProject(project.take());
+    currentProject_.reset(project.take());
+    UpdateProjectContext();
     return true;
 }
 
@@ -145,7 +152,10 @@ void Core::CloseProject()
 
     LaunchDialog dialog(*this);
     if (dialog.exec() == QDialog::Rejected)
-        mainWindow_.close();
+    {
+        Quit();
+        return;
+    }
 
     mainWindow_.show();
 }
@@ -562,9 +572,6 @@ void Core::InitializeMenu()
 {
     QAction* action = nullptr;
 
-    action = AddAction("File.NewProject");
-    connect(action, &QAction::triggered, this, &Core::NewDocument<ProjectDocument>);
-
     action = AddAction("File.Open", Qt::CTRL + Qt::Key_O);
     connect(action, &QAction::triggered, this, &Core::Open);
 
@@ -578,11 +585,14 @@ void Core::InitializeMenu()
     action = AddAction("File.CloseAll", Qt::CTRL + Qt::SHIFT + Qt::Key_W);
     connect(action, &QAction::triggered, this, &Core::CloseAllDocuments);
 
+    action = AddAction("File.ProjectProperties");
+    connect(action, &QAction::triggered, this, &Core::NewDocument<ProjectDocument>);
+
     action = AddAction("File.CloseProject");
     connect(action, &QAction::triggered, this, &Core::CloseProject);
 
-    action = AddAction("File.Exit");
-    connect(action, SIGNAL(triggered(bool)), this, SLOT(HandleFileExit()));
+    action = AddAction("File.Quit");
+    connect(action, &QAction::triggered, this, &Core::Quit);
 
     action = AddAction("Edit.Undo", Qt::CTRL + Qt::Key_Z);
     connect(action, SIGNAL(triggered(bool)), this, SLOT(EditUndo()));
@@ -634,21 +644,21 @@ QAction* Core::ReadAction(const QDomNode& node)
     return action;
 }
 
-void Core::SetCurrentProject(Project* project)
+void Core::UpdateWindowTitle()
 {
-    currentProject_.reset(project);
+    const QString projectName = currentProject_ ? currentProject_->GetTitle() : "(Invalid!)";
+    mainWindow_.setWindowTitle(projectName + tr(" - Urho3D Editor"));
+}
 
+void Core::UpdateProjectContext()
+{
+    UpdateWindowTitle();
     if (currentProject_)
     {
         Urho3DWidget& widget = urhoHost_->GetWidget();
         widget.SetResourceCache(currentProject_->GetResourceCacheParameters());
         widget.SetDefaultRenderPath(currentProject_->GetDefaultRenderPath());
     }
-}
-
-void Core::HandleFileExit()
-{
-    mainWindow_.close();
 }
 
 void Core::EditUndo()

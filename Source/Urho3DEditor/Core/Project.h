@@ -25,6 +25,8 @@ public:
     void SetFileName(const QString& fileName) { fileName_ = fileName; }
     /// Get project file name.
     QString GetFileName() const { return fileName_; }
+    /// Get project short title name.
+    QString GetTitle() const;
     /// Save project.
     bool Save();
     /// Load project.

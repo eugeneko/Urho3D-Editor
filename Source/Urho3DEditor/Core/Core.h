@@ -40,6 +40,8 @@ public:
     /// Show error message.
     QMessageBox::StandardButton Error(const QString& text,
         QMessageBox::StandardButtons buttons = QMessageBox::Ok, QMessageBox::StandardButton defaultButton = QMessageBox::Ok);
+    /// Quit.
+    void Quit();
 
     /// Create new project.
     bool NewProject();
@@ -134,15 +136,15 @@ private:
     QMenu* ReadMenu(const QDomNode& node);
     /// Read action.
     QAction* ReadAction(const QDomNode& node);
-    /// Set current project.
-    void SetCurrentProject(Project* project);
+    /// Update window title.
+    void UpdateWindowTitle();
+    /// Update project-specific context.
+    void UpdateProjectContext();
 
 private slots:
     /// Change document.
     void ChangeDocument(DocumentWindow* widget);
 
-    /// Handle 'File/Exit'
-    void HandleFileExit();
     /// Handle 'Edit/Undo'
     void EditUndo();
     /// Handle 'Edit/Redo'

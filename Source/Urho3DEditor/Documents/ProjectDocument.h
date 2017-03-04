@@ -22,22 +22,21 @@ class ProjectDocument : public Document
 public:
     /// Construct.
     ProjectDocument(Core& core);
-    /// Get project.
-    QSharedPointer<Project> GetProject() { return project_; }
+    /// Update content.
+    void UpdateContent();
 
 private:
-    /// Load the document from file.
-    virtual bool DoLoad(const QString& fileName);
     /// Save the document to file.
     virtual bool DoSave(const QString& fileName);
 
 private:
     /// Project.
-    QSharedPointer<Project> project_;
+    Project* project_;
     /// Layout.
     QGridLayout* layout_;
-    /// 'Set as Current' button.
-    QPushButton* buttonSetAsCurrent_;
+
+    /// Project file name.
+    QLineEdit* projectFileName_;
     /// 'Resource Prefix Paths' field.
     QLineEdit* fieldResourcePrefixPaths_;
     /// 'Resource Paths' field.
@@ -51,8 +50,6 @@ class ProjectDocumentFactory : public DocumentFactoryT<ProjectDocument>
 public:
     /// @see DocumentFactory::IsSaveable
     virtual bool IsSaveable() const override { return true; }
-    /// @see DocumentFactory::ShallSaveOnCreate
-    virtual bool ShallSaveOnCreate() const override { return true; }
     /// @see DocumentFactory::GetDefaultFileName
     virtual QString GetDefaultFileName() const override { return "Project.urho"; }
     /// @see DocumentFactory::GetFileNameFilters

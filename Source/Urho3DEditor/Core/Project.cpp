@@ -19,6 +19,11 @@ Project::Project()
 
 }
 
+QString Project::GetTitle() const
+{
+    return QFileInfo(fileName_).fileName();
+}
+
 bool Project::Save()
 {
     QFile file(fileName_);

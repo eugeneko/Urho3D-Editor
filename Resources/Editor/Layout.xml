@@ -1,7 +1,6 @@
 <layout>
     <menu>
         <menu name="File">
-            <action name="New Project" action="File.NewProject" />
             <action name="New Scene" action="File.NewScene" />
             <separator/>
             <action name="Open..." action="File.Open"/>
@@ -10,8 +9,10 @@
             <action name="Close" action="File.Close" />
             <action name="Close All" action="File.CloseAll" />
             <separator/>
+            <action name="Project Properties" action="File.ProjectProperties" />
+            <separator/>
             <action name="Close Project" action="File.CloseProject" />
-            <action name="Exit" action="File.Exit" />
+            <action name="Quit" action="File.Quit" />
         </menu>
         <menu name="Edit">
             <action name="Undo" action="Edit.Undo" />
