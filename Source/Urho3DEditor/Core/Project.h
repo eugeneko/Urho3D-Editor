@@ -32,21 +32,31 @@ public:
     /// Load project.
     bool Load();
 
-    /// Get resource cache parameters.
-    Urho3D::VariantMap GetResourceCacheParameters() const;
-    /// Get default render path.
-    QString GetDefaultRenderPath() const { return defaultRenderPath_; }
-    /// Get resource prefix paths.
-    const QString& GetResourcePrefixPaths() const { return resourcePrefixPaths_; }
     /// Get absolute resource prefix paths.
     QString GetAbsoluteResourcePrefixPaths() const;
+    /// Get resource cache parameters.
+    Urho3D::VariantMap GetResourceCacheParameters() const;
+    /// Get resource prefix paths.
+    const QString& GetResourcePrefixPaths() const { return resourcePrefixPaths_; }
     /// Get resource paths.
     const QString& GetResourcePaths() const { return resourcePaths_; }
+    /// Get auto-load paths.
+    const QString& GetAutoloadPaths() const { return autoloadPaths_; }
+    /// Get package paths.
+    const QString& GetPackagePaths() const { return packagePaths_; }
+    /// Get default render path.
+    const QString& GetDefaultRenderPath() const { return defaultRenderPath_; }
 
     /// Set resource prefix paths.
-    void SetResourcePrefixPaths(const QString& prefixPaths);
+    void SetResourcePrefixPaths(const QString& prefixPaths) { resourcePrefixPaths_ = prefixPaths; }
     /// Set resource paths.
-    void SetResourcePaths(const QString& paths);
+    void SetResourcePaths(const QString& paths) { resourcePaths_ = paths; }
+    /// Set auto-load paths.
+    void SetAutoloadPaths(const QString& autoloadPaths) { autoloadPaths_ = autoloadPaths; }
+    /// Set package paths.
+    void SetPackagePaths(const QString& packagePaths) { packagePaths_ = packagePaths; }
+    /// Set default render path.
+    void SetDefaultRenderPath(const QString& defaultRenderPath) { defaultRenderPath_ = defaultRenderPath; }
 
 private:
     /// Project file name.

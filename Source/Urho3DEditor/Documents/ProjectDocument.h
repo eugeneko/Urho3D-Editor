@@ -37,10 +37,17 @@ private:
 
     /// Project file name.
     QLineEdit* projectFileName_;
-    /// 'Resource Prefix Paths' field.
-    QLineEdit* fieldResourcePrefixPaths_;
-    /// 'Resource Paths' field.
-    QLineEdit* fieldResourcePaths_;
+
+    /// Resource prefix paths.
+    QLineEdit* resourcePrefixPaths_;
+    /// Resource paths.
+    QLineEdit* resourcePaths_;
+    /// Auto-load paths.
+    QLineEdit* autoloadPaths_;
+    /// Package paths.
+    QLineEdit* packagePaths_;
+    /// Default render path.
+    QLineEdit* defaultRenderPath_;
 
 };
 

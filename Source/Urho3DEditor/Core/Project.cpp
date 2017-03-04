@@ -89,14 +89,4 @@ QString Project::GetAbsoluteResourcePrefixPaths() const
     return prefixPaths.join(';');
 }
 
-void Project::SetResourcePrefixPaths(const QString& prefixPaths)
-{
-    resourcePrefixPaths_ = prefixPaths;
-}
-
-void Project::SetResourcePaths(const QString& paths)
-{
-    resourcePaths_ = paths;
-}
-
 }
