@@ -13,7 +13,7 @@ namespace Urho3DEditor
 
 class Core;
 
-/// Project.
+/// Urho3D Project description.
 class Project : public QObject
 {
     Q_OBJECT
@@ -72,6 +72,18 @@ private:
     QString packagePaths_;
     /// Default render path.
     QString defaultRenderPath_;
+
+};
+
+/// Target type.
+enum class TargetType
+{
+
+};
+
+/// Run-able target description.
+struct Target
+{
 
 };
 

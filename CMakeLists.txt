@@ -19,6 +19,8 @@ include (Urho3D-CMake-common)
 # Setup Editor
 
 add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Urho3DEditor)
+add_subdirectory (${CMAKE_SOURCE_DIR}/Source/EditorToolkit)
+add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Urho3DPlayer)
 include_directories (${CMAKE_SOURCE_DIR}/Source)
 
 # Setup Launcher
@@ -29,4 +31,4 @@ set (SOURCE_FILES ${CMAKE_SOURCE_DIR}/Source/EditorLauncher/Main.cpp)
 qt5_add_resources(SOURCE_FILES ${CMAKE_SOURCE_DIR}/Resources/QDarkStyle/QDarkStyle.qrc ${CMAKE_SOURCE_DIR}/Resources/Editor/Editor.qrc)
 set (TARGET_NAME EditorLauncher)
 setup_main_executable ()
-target_link_libraries (EditorLauncher Urho3DEditor)
+target_link_libraries (EditorLauncher Urho3DEditor EditorToolkit)
