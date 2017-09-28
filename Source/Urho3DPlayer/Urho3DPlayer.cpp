@@ -1,3 +1,249 @@
+#include <Urho3D/Engine/Application.h>
+#include <Urho3D/Scene/Scene.h>
+
+#include "../EditorToolkit/GenericUI/GenericUI.h"
+
+using namespace Urho3D;
+
+/// Static 3D scene example.
+/// This sample demonstrates:
+///     - Creating a 3D scene with static content
+///     - Displaying the scene using the Renderer subsystem
+///     - Handling keyboard and mouse input to move a freelook camera
+class StaticScene : public Application
+{
+    URHO3D_OBJECT(StaticScene, Application);
+
+public:
+    /// Construct.
+    StaticScene(Context* context);
+
+    /// Setup after engine initialization and before running the main loop.
+    virtual void Start() override;
+
+private:
+    /// Construct the scene content.
+    void CreateScene();
+    /// Construct an instruction text to the UI.
+    void CreateInstructions();
+    /// Set up a viewport for displaying the scene.
+    void SetupViewport();
+    /// Read input and moves the camera.
+    void MoveCamera(float timeStep);
+    /// Subscribe to application-wide logic update events.
+    void SubscribeToEvents();
+    /// Handle the logic update event.
+    void HandleUpdate(StringHash eventType, VariantMap& eventData);
+
+    /// Scene.
+    SharedPtr<Scene> scene_;
+    /// Camera scene node.
+    SharedPtr<Node> cameraNode_;
+    /// Camera yaw angle.
+    float yaw_ = 0;
+    /// Camera pitch angle.
+    float pitch_ = 0;
+
+    SharedPtr<HierarchyWindow> hw_;
+};
+
+#include <Urho3D/Core/CoreEvents.h>
+#include <Urho3D/Engine/Engine.h>
+#include <Urho3D/Graphics/Camera.h>
+#include <Urho3D/Graphics/Graphics.h>
+#include <Urho3D/Graphics/Material.h>
+#include <Urho3D/Graphics/Model.h>
+#include <Urho3D/Graphics/Octree.h>
+#include <Urho3D/Graphics/Renderer.h>
+#include <Urho3D/Graphics/StaticModel.h>
+#include <Urho3D/Input/Input.h>
+#include <Urho3D/Resource/ResourceCache.h>
+#include <Urho3D/UI/Font.h>
+#include <Urho3D/UI/Text.h>
+#include <Urho3D/UI/UI.h>
+
+#include <Urho3D/DebugNew.h>
+
+URHO3D_DEFINE_APPLICATION_MAIN(StaticScene)
+
+StaticScene::StaticScene(Context* context) :
+    Application(context)
+{
+}
+
+void StaticScene::Start()
+{
+    // Execute base class startup
+    Application::Start();
+
+    // Create the scene content
+    CreateScene();
+
+    // Create the UI content
+    CreateInstructions();
+
+    // Setup the viewport for displaying the scene
+    SetupViewport();
+
+    // Hook up to the frame update events
+    SubscribeToEvents();
+
+    // Setup UI
+    {
+        GetSubsystem<Input>()->SetMouseVisible(true);
+        ResourceCache* cache = GetSubsystem<ResourceCache>();
+        XMLFile* style = cache->GetResource<XMLFile>("UI/DefaultStyle.xml");
+        GetSubsystem<UI>()->GetRoot()->SetDefaultStyle(style);
+    }
+
+    {
+        context_->RegisterSubsystem(new GenericUI(context_));
+        GenericUI* gui = GetSubsystem<GenericUI>();
+        gui->SetDefaultHost(new UrhoUIHost(context_));
+
+        hw_ = MakeShared<HierarchyWindow>(context_);
+        hw_->SetScene(scene_);
+    }
+}
+
+void StaticScene::CreateScene()
+{
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+
+    scene_ = new Scene(context_);
+
+    // Create the Octree component to the scene. This is required before adding any drawable components, or else nothing will
+    // show up. The default octree volume will be from (-1000, -1000, -1000) to (1000, 1000, 1000) in world coordinates; it
+    // is also legal to place objects outside the volume but their visibility can then not be checked in a hierarchically
+    // optimizing manner
+    scene_->CreateComponent<Octree>();
+
+    // Create a child scene node (at world origin) and a StaticModel component into it. Set the StaticModel to show a simple
+    // plane mesh with a "stone" material. Note that naming the scene nodes is optional. Scale the scene node larger
+    // (100 x 100 world units)
+    Node* planeNode = scene_->CreateChild("Plane");
+    planeNode->SetScale(Vector3(100.0f, 1.0f, 100.0f));
+    StaticModel* planeObject = planeNode->CreateComponent<StaticModel>();
+    planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
+    planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+
+    // Create a directional light to the world so that we can see something. The light scene node's orientation controls the
+    // light direction; we will use the SetDirection() function which calculates the orientation from a forward direction vector.
+    // The light will use default settings (white light, no shadows)
+    Node* lightNode = scene_->CreateChild("DirectionalLight");
+    lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f)); // The direction vector does not need to be normalized
+    Light* light = lightNode->CreateComponent<Light>();
+    light->SetLightType(LIGHT_DIRECTIONAL);
+
+    // Create more StaticModel objects to the scene, randomly positioned, rotated and scaled. For rotation, we construct a
+    // quaternion from Euler angles where the Y angle (rotation about the Y axis) is randomized. The mushroom model contains
+    // LOD levels, so the StaticModel component will automatically select the LOD level according to the view distance (you'll
+    // see the model get simpler as it moves further away). Finally, rendering a large number of the same object with the
+    // same material allows instancing to be used, if the GPU supports it. This reduces the amount of CPU work in rendering the
+    // scene.
+    const unsigned NUM_OBJECTS = 200;
+    for (unsigned i = 0; i < NUM_OBJECTS; ++i)
+    {
+        Node* mushroomNode = scene_->CreateChild("Mushroom");
+        mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
+        mushroomNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
+        mushroomNode->SetScale(0.5f + Random(2.0f));
+        StaticModel* mushroomObject = mushroomNode->CreateComponent<StaticModel>();
+        mushroomObject->SetModel(cache->GetResource<Model>("Models/Mushroom.mdl"));
+        mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+    }
+
+    // Create a scene node for the camera, which we will move around
+    // The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)
+    cameraNode_ = scene_->CreateChild("Camera");
+    cameraNode_->CreateComponent<Camera>();
+
+    // Set an initial position for the camera scene node above the plane
+    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
+}
+
+void StaticScene::CreateInstructions()
+{
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    UI* ui = GetSubsystem<UI>();
+
+    // Construct new Text object, set string to display and font to use
+    Text* instructionText = ui->GetRoot()->CreateChild<Text>();
+    instructionText->SetText("Use WASD keys and mouse/touch to move");
+    instructionText->SetFont(cache->GetResource<Font>("Fonts/Anonymous Pro.ttf"), 15);
+
+    // Position the text relative to the screen center
+    instructionText->SetHorizontalAlignment(HA_CENTER);
+    instructionText->SetVerticalAlignment(VA_CENTER);
+    instructionText->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
+}
+
+void StaticScene::SetupViewport()
+{
+    Renderer* renderer = GetSubsystem<Renderer>();
+
+    // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen. We need to define the scene and the camera
+    // at minimum. Additionally we could configure the viewport screen size and the rendering path (eg. forward / deferred) to
+    // use, but now we just use full screen and default render path configured in the engine command line options
+    SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
+    renderer->SetViewport(0, viewport);
+}
+
+void StaticScene::MoveCamera(float timeStep)
+{
+    // Do not move if the UI has a focused element (the console)
+    if (GetSubsystem<UI>()->GetFocusElement())
+        return;
+
+    Input* input = GetSubsystem<Input>();
+    if (!input->GetMouseButtonDown(MOUSEB_RIGHT))
+        return;
+
+    // Movement speed as world units per second
+    const float MOVE_SPEED = 20.0f;
+    // Mouse sensitivity as degrees per pixel
+    const float MOUSE_SENSITIVITY = 0.1f;
+
+    // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
+    IntVector2 mouseMove = input->GetMouseMove();
+    yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
+    pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
+    pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+
+    // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
+    cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+
+    // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
+    // Use the Translate() function (default local space) to move relative to the node's orientation.
+    if (input->GetKeyDown(KEY_W))
+        cameraNode_->Translate(Vector3::FORWARD * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_S))
+        cameraNode_->Translate(Vector3::BACK * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_A))
+        cameraNode_->Translate(Vector3::LEFT * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_D))
+        cameraNode_->Translate(Vector3::RIGHT * MOVE_SPEED * timeStep);
+}
+
+void StaticScene::SubscribeToEvents()
+{
+    // Subscribe HandleUpdate() function for processing update events
+    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(StaticScene, HandleUpdate));
+}
+
+void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
+{
+    using namespace Update;
+
+    // Take the frame time step, which is stored as a float
+    float timeStep = eventData[P_TIMESTEP].GetFloat();
+
+    // Move the camera, scale movement with time step
+    MoveCamera(timeStep);
+}
+
+#if 0
+
 //
 // Copyright (c) 2008-2016 the Urho3D project.
 //
@@ -34,7 +280,10 @@
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Resource/ResourceEvents.h>
 
+#include <Urho3D/UI/UI.h>
+#include <Urho3D/Input/Input.h>
 #include "Urho3DPlayer.h"
+#include "../EditorToolkit/GenericUI/GenericUI.h"
 
 #include <Urho3D/DebugNew.h>
 
@@ -131,8 +380,30 @@ void Urho3DPlayer::Setup()
         engineParameters_["ResourcePrefixPaths"] = ";../share/Resources;../share/Urho3D/Resources";
 }
 
+SharedPtr<HierarchyWindow> hw_;
+
 void Urho3DPlayer::Start()
 {
+    {
+        GetSubsystem<Input>()->SetMouseVisible(true);
+        ResourceCache* cache = GetSubsystem<ResourceCache>();
+        XMLFile* style = cache->GetResource<XMLFile>("UI/DefaultStyle.xml");
+        GetSubsystem<UI>()->GetRoot()->SetDefaultStyle(style);
+    }
+
+    {
+        context_->RegisterSubsystem(new GenericUI(context_));
+        GenericUI* gui = GetSubsystem<GenericUI>();
+        gui->SetDefaultHost(new UrhoUIHost(context_));
+
+        hw_ = MakeShared<HierarchyWindow>(context_);
+//         GenericDialog* dialog = gui->AddDialog();
+//         GenericHierarchyList* hierarchy = gui->CreateHierarchyList();
+//         dialog->AddWidget(hierarchy);
+    }
+    return;
+
+
     // Reattempt reading the command line now on Web platform
 #ifdef __EMSCRIPTEN__
     if (GetArguments().Empty())
@@ -209,6 +480,7 @@ void Urho3DPlayer::Start()
 
 void Urho3DPlayer::Stop()
 {
+    hw_.Reset();
 #ifdef URHO3D_ANGELSCRIPT
     if (scriptFile_)
     {
@@ -266,3 +538,5 @@ void Urho3DPlayer::GetScriptFileName()
     if (arguments.Size() && arguments[0][0] != '-')
         scriptFileName_ = GetInternalPath(arguments[0]);
 }
+
+#endif
