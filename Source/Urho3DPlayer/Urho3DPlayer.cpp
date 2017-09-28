@@ -2,6 +2,7 @@
 #include <Urho3D/Scene/Scene.h>
 
 #include "../EditorToolkit/GenericUI/GenericUI.h"
+#include "../EditorToolkit/Editor/EditorViewportLayout.h"
 
 using namespace Urho3D;
 
@@ -45,6 +46,7 @@ private:
     float pitch_ = 0;
 
     SharedPtr<HierarchyWindow> hw_;
+    SharedPtr<EditorViewportLayout> ev_;
 };
 
 #include <Urho3D/Core/CoreEvents.h>
@@ -103,6 +105,12 @@ void StaticScene::Start()
 
         hw_ = MakeShared<HierarchyWindow>(context_);
         hw_->SetScene(scene_);
+
+        ev_ = MakeShared<EditorViewportLayout>(context_);
+        ev_->SetLayout(EditorViewportLayoutScheme::Left2_Right1);
+        ev_->SetScene(scene_);
+        ev_->SetCamera(cameraNode_);
+        ev_->ApplyViewports();
     }
 }
 
