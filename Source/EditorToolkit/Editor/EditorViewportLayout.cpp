@@ -57,8 +57,6 @@ void EditorViewport::SetRect(IntRect rect)
 EditorViewportLayout::EditorViewportLayout(Context* context)
     : AbstractEditorOverlay(context)
     , graphics_(*GetSubsystem<Graphics>())
-    , currentViewport_(0)
-    , layout_(EditorViewportLayoutScheme::Empty)
 {
     SetLayout(EditorViewportLayoutScheme::Single); // #TODO Change
     SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(EditorViewportLayout, HandleResize));
@@ -73,7 +71,11 @@ void EditorViewportLayout::Update(AbstractEditorInput& input, float timeStep)
 
     // Update current viewport
     if (isAnyMouseButtonPressed)
-        UpdateCurrentViewport(input.GetMousePosition());
+        UpdateActiveViewport(input.GetMousePosition());
+    UpdateHoveredViewport(input.GetMousePosition());
+
+    // Update ray
+    currentCameraRay_ = ComputeCameraRay(viewports_[hoveredViewport_]->GetViewport(), input.GetMousePosition());
 }
 
 void EditorViewportLayout::SetScene(Scene* scene)
@@ -109,7 +111,7 @@ Ray EditorViewportLayout::ComputeCameraRay(const Viewport& viewport, const IntVe
 
 Camera& EditorViewportLayout::GetCurrentCamera()
 {
-    return viewports_[currentViewport_]->GetCamera();
+    return viewports_[activeViewport_]->GetCamera();
 }
 
 void EditorViewportLayout::HandleResize(StringHash eventType, VariantMap& eventData)
@@ -232,24 +234,31 @@ void EditorViewportLayout::UpdateViewportsSize()
     }
 }
 
-void EditorViewportLayout::UpdateCurrentViewport(const IntVector2& mousePosition)
+void EditorViewportLayout::UpdateActiveViewport(const IntVector2& mousePosition)
 {
-    IntVector2 localPosition;
+    activeViewport_ = FindViewport(mousePosition);
+
+    // Send event.
+    SendEvent(E_EDITORCURRENTVIEWPORTCHANGED,
+        EditorCurrentViewportChanged::P_VIEWPORTLAYOUT, this,
+        EditorCurrentViewportChanged::P_CAMERA, &viewports_[activeViewport_]->GetCamera());
+}
+
+void EditorViewportLayout::UpdateHoveredViewport(const IntVector2& mousePosition)
+{
+    hoveredViewport_ = FindViewport(mousePosition);
+}
+
+unsigned EditorViewportLayout::FindViewport(const IntVector2& mousePosition)
+{
     for (unsigned i = 0; i < viewports_.Size(); ++i)
     {
         const Viewport& viewport = viewports_[i]->GetViewport();
         const IntRect rect = viewport.GetRect();
         if (rect.Size() == IntVector2::ZERO || rect.IsInside(mousePosition) != OUTSIDE)
-        {
-            currentViewport_ = i;
-
-            // Send event.
-            SendEvent(E_EDITORCURRENTVIEWPORTCHANGED,
-                EditorCurrentViewportChanged::P_VIEWPORTLAYOUT, this,
-                EditorCurrentViewportChanged::P_CAMERA, &viewports_[i]->GetCamera());
-            break;
-        }
+            return i;
     }
+    return viewports_.Size();
 }
 
 }

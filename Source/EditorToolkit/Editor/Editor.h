@@ -43,6 +43,8 @@ public:
     virtual int GetMouseWheelMove() const = 0;
     /// Return mouse ray in 3D.
     virtual Ray GetMouseRay() const = 0;
+    /// Return far clip distance.
+    virtual float GetFarClip() const = 0;
 
     /// Grab key.
     virtual void GrabKey(int key) = 0;
@@ -87,7 +89,10 @@ public:
     void AddOverlay(AbstractEditorOverlay* overlay);
 
 private:
+    /// Handle update.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
+    /// Handle post-render update.
+    void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
 
 private:
     SharedPtr<AbstractEditorInput> input_ = nullptr;
@@ -106,44 +111,46 @@ public:
     /// \todo replace with interface
     void SetViewportLayout(EditorViewportLayout* viewportLayout);
 
-    /// Reset grab.
+    /// \see AbstractEditorInput::GetFarClip
     void ResetGrab() override;
 
-    /// Set mouse mode.
-    void SetMouseMode(Urho3D::MouseMode mouseMode) override;
-    /// Return whether the UI is focused.
+    /// \see AbstractEditorInput::SetMouseMode
+    void SetMouseMode(MouseMode mouseMode) override;
+    /// \see AbstractEditorInput::IsUIFocused
     bool IsUIFocused() const override;
-    /// Return whether the UI is hovered.
+    /// \see AbstractEditorInput::IsUIHovered
     bool IsUIHovered() const override;
 
-    /// Return whether the key is down.
+    /// \see AbstractEditorInput::IsKeyDown
     bool IsKeyDown(int key) const override;
-    /// Return whether the key is pressed.
+    /// \see AbstractEditorInput::IsKeyPressed
     bool IsKeyPressed(int key) const override;
-    /// Return whether the mouse button is down.
+    /// \see AbstractEditorInput::IsMouseButtonDown
     bool IsMouseButtonDown(int mouseButton) const override;
-    /// Return whether the mouse button is pressed.
+    /// \see AbstractEditorInput::IsMouseButtonPressed
     bool IsMouseButtonPressed(int mouseButton) const override;
-    /// Return mouse position.
+    /// \see AbstractEditorInput::GetMousePosition
     IntVector2 GetMousePosition() const override;
-    /// Return mouse move.
+    /// \see AbstractEditorInput::GetMouseMove
     IntVector2 GetMouseMove() const override;
-    /// Return mouse wheel delta.
+    /// \see AbstractEditorInput::GetMouseWheelMove
     int GetMouseWheelMove() const override;
-    /// Return mouse ray in 3D.
+    /// \see AbstractEditorInput::GetMouseRay
     Ray GetMouseRay() const override;
+    /// \see AbstractEditorInput::GetFarClip
+    float GetFarClip() const override;
 
-    /// Grab key.
+    /// \see AbstractEditorInput::GrabKey
     void GrabKey(int key) override;
-    /// Checks whether key is grabbed.
+    /// \see AbstractEditorInput::IsKeyGrabbed
     bool IsKeyGrabbed(int key) const override;
-    /// Grab mouse button input.
+    /// \see AbstractEditorInput::GrabMouseButton
     void GrabMouseButton(int mouseButton) override;
-    /// Checks whether mouse button is grabbed.
+    /// \see AbstractEditorInput::IsMouseButtonGrabbed
     bool IsMouseButtonGrabbed(int mouseButton) const override;
-    /// Grab mouse button input.
+    /// \see AbstractEditorInput::GrabMouseMove
     void GrabMouseMove() override;
-    /// Checks whether mouse button is grabbed.
+    /// \see AbstractEditorInput::IsMouseMoveGrabbed
     bool IsMouseMoveGrabbed() const override;
 
 private:

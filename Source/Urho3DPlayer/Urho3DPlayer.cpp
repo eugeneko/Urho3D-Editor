@@ -1,11 +1,15 @@
 #include <Urho3D/Engine/Application.h>
+#include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Scene/Scene.h>
 
 #include "../EditorToolkit/GenericUI/GenericUI.h"
 #include "../EditorToolkit/Editor/CameraController.h"
 #include "../EditorToolkit/Editor/Editor.h"
+#include "../EditorToolkit/Editor/Selection.h"
+#include "../EditorToolkit/Editor/ObjectSelector.h"
 #include "../EditorToolkit/Editor/KeyBinding.h"
 #include "../EditorToolkit/Editor/EditorViewportLayout.h"
+#include "../EditorToolkit/Editor/DebugGeometryRenderer.h"
 
 using namespace Urho3D;
 
@@ -38,6 +42,8 @@ private:
     void SubscribeToEvents();
     /// Handle the logic update event.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
+    /// Handle key down.
+    void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
     /// Scene.
     SharedPtr<Scene> scene_;
@@ -52,6 +58,7 @@ private:
     SharedPtr<Editor> editor_ = nullptr;
     SharedPtr<HierarchyWindow> hierarchyWindow_;
     SharedPtr<EditorViewportLayout> viewportLayout_;
+    SharedPtr<DebugGeometryRenderer> debugGeometryRenderer_;
     //Vector<SharedPtr<Ed
 };
 
@@ -125,6 +132,27 @@ void StaticScene::Start()
         cameraController->SetPanSpeed(Vector2::ONE * 2.5f);
         cameraController->SetAccelerationFactor(Vector3::ONE * 5.0f);
         cameraController->SetRotationSpeed(Vector2::ONE * 0.2f);
+
+        auto selection = MakeShared<Selection>(context_);
+        auto objectSelector = MakeShared<ObjectSelector>(context_);
+        objectSelector->SetScene(scene_);
+        objectSelector->SetSelection(selection);
+        objectSelector->AddSelectionTransferring("TerrainPatch", "Terrain");
+
+        debugGeometryRenderer_ = MakeShared<DebugGeometryRenderer>(context_);
+        debugGeometryRenderer_->SetScene(scene_);
+        debugGeometryRenderer_->SetSelection(selection);
+        debugGeometryRenderer_->DisableForComponent("Terrain");
+
+        editor_->SetInput(editorInput);
+        editor_->AddOverlay(viewportLayout_);
+        editor_->AddOverlay(cameraController);
+        editor_->AddOverlay(objectSelector);
+        editor_->AddOverlay(debugGeometryRenderer_);
+
+        hierarchyWindow_ = MakeShared<HierarchyWindow>(context_);
+        hierarchyWindow_->SetScene(scene_);
+
         if (blenderHotkeys_)
         {
             using KB = KeyBinding;
@@ -149,6 +177,14 @@ void StaticScene::Start()
                 { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
                 { CC::WHEEL_ZOOM,       { KB::ALT } },
             });
+
+            using OS = ObjectSelector;
+            objectSelector->SetControls({
+                { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
+                { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
+                { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
+                { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT + KB::CTRL } },
+            });
         }
         else
         {
@@ -170,14 +206,15 @@ void StaticScene::Start()
                 { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
                 { CC::WHEEL_ZOOM,       { KB::ALT } },
             });
+
+            using OS = ObjectSelector;
+            objectSelector->SetControls({
+                { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
+                { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
+                { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
+                { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL + KB::SHIFT } },
+            });
         }
-
-        editor_->SetInput(editorInput);
-        editor_->AddOverlay(viewportLayout_);
-        editor_->AddOverlay(cameraController);
-
-        hierarchyWindow_ = MakeShared<HierarchyWindow>(context_);
-        hierarchyWindow_->SetScene(scene_);
     }
 }
 
@@ -192,6 +229,7 @@ void StaticScene::CreateScene()
     // is also legal to place objects outside the volume but their visibility can then not be checked in a hierarchically
     // optimizing manner
     scene_->CreateComponent<Octree>();
+    scene_->CreateComponent<DebugRenderer>();
 
     // Create a child scene node (at world origin) and a StaticModel component into it. Set the StaticModel to show a simple
     // plane mesh with a "stone" material. Note that naming the scene nodes is optional. Scale the scene node larger
@@ -304,6 +342,7 @@ void StaticScene::SubscribeToEvents()
 {
     // Subscribe HandleUpdate() function for processing update events
     SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(StaticScene, HandleUpdate));
+    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(StaticScene, HandleKeyDown));
 }
 
 void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -315,6 +354,11 @@ void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
 
     // Move the camera, scale movement with time step
     MoveCamera(timeStep);
+}
+
+void StaticScene::HandleKeyDown(StringHash eventType, VariantMap& eventData)
+{
+
 }
 
 #if 0

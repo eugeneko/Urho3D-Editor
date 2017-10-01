@@ -83,7 +83,7 @@ public:
     /// Construct.
     EditorViewportLayout(Context* context);
 
-    /// @see AbstractEditorOverlay::Update
+    /// \see AbstractEditorOverlay::Update
     void Update(AbstractEditorInput& input, float timeStep) override;
 
     /// Set scene.
@@ -107,8 +107,12 @@ private:
     void UpdateViewports();
     /// Update viewports size.
     void UpdateViewportsSize();
-    /// Update current viewport.
-    void UpdateCurrentViewport(const IntVector2& mousePosition);
+    /// Update active viewport.
+    void UpdateActiveViewport(const IntVector2& mousePosition);
+    /// Update hovered viewport.
+    void UpdateHoveredViewport(const IntVector2& mousePosition);
+    /// Get viewport at position.
+    unsigned FindViewport(const IntVector2& mousePosition);
 
 private:
     /// Graphics.
@@ -120,8 +124,10 @@ private:
 
     /// Viewports.
     Vector<SharedPtr<EditorViewport>> viewports_;
-    /// Current viewport index.
-    int currentViewport_;
+    /// Active viewport index.
+    unsigned activeViewport_ = 0;
+    /// Hovered viewport index.
+    unsigned hoveredViewport_ = 0;
     /// Current camera ray.
     Ray currentCameraRay_;
 

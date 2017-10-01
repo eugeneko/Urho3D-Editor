@@ -14,6 +14,7 @@ class CameraController : public AbstractEditorOverlay
     URHO3D_OBJECT(CameraController, AbstractEditorOverlay);
 
 public:
+    /// Camera controller controls.
     enum Control
     {
         MOVE_FORWARD,
@@ -33,10 +34,11 @@ public:
         WHEEL_SCROLL_Z,
         WHEEL_ZOOM
     };
+    /// Map of camera controller controls.
     using Controls = HashMap<int, CompositeKeyBinding>;
-
     /// Construct.
     CameraController(Context* context);
+
     /// Set controlled camera.
     void SetCamera(Camera* camera) { camera_ = camera; }
     /// Set origin.
@@ -61,7 +63,7 @@ public:
     /// Set default origin distance.
     void SetDefaultOriginDistance(float defaultOriginDistance) { defaultOriginDistance_ = defaultOriginDistance; }
 
-    /// @see AbstractEditorOverlay::Update
+    /// \see AbstractEditorOverlay::Update
     void Update(AbstractEditorInput& input, float timeStep) override;
 
 private:

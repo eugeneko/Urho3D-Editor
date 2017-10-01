@@ -83,6 +83,11 @@ Ray UrhoEditorInput::GetMouseRay() const
     return viewportLayout_ ? viewportLayout_->GetCurrentCameraRay() : Ray();
 }
 
+float UrhoEditorInput::GetFarClip() const
+{
+    return viewportLayout_->GetCurrentCamera().GetFarClip();
+}
+
 void UrhoEditorInput::GrabKey(int key)
 {
     grabbedKeys_.Insert(key);
@@ -127,6 +132,7 @@ Editor::Editor(Context* context)
     : Object(context)
 {
     SubscribeToEvent(Urho3D::E_UPDATE, URHO3D_HANDLER(Editor, HandleUpdate));
+    SubscribeToEvent(Urho3D::E_POSTRENDERUPDATE, URHO3D_HANDLER(Editor, HandlePostRenderUpdate));
 }
 
 void Editor::AddOverlay(AbstractEditorOverlay* overlay)
@@ -140,6 +146,12 @@ void Editor::HandleUpdate(StringHash eventType, VariantMap& eventData)
     input_->ResetGrab();
     for (AbstractEditorOverlay* overlay : overlays_)
         overlay->Update(*input_, timeStep);
+}
+
+void Editor::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
+{
+    for (AbstractEditorOverlay* overlay : overlays_)
+        overlay->PostRenderUpdate(*input_);
 }
 
 }
