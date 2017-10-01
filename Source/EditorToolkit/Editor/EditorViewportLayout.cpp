@@ -32,14 +32,13 @@ int GetNumberOfViewports(EditorViewportLayoutScheme layout)
     }
 }
 
+//////////////////////////////////////////////////////////////////////////
 EditorViewport::EditorViewport(Context* context, Scene* scene, Camera* camera)
     : sceneCamera_(camera)
     , cameraNode_(context)
     , camera_(*cameraNode_.CreateComponent<Camera>())
     , viewportCamera_(sceneCamera_ ? sceneCamera_ : &camera_)
     , viewport_(new Viewport(context, scene, viewportCamera_))
-    , flyMode_(false)
-    , orbiting_(false)
 {
 }
 
@@ -47,7 +46,6 @@ void EditorViewport::SetTransform(const Vector3& position, const Quaternion& rot
 {
     cameraNode_.SetWorldPosition(position);
     cameraNode_.SetWorldRotation(rotation);
-    cameraAngles_ = cameraNode_.GetRotation().EulerAngles();
 }
 
 void EditorViewport::SetRect(IntRect rect)
@@ -57,7 +55,7 @@ void EditorViewport::SetRect(IntRect rect)
 
 //////////////////////////////////////////////////////////////////////////
 EditorViewportLayout::EditorViewportLayout(Context* context)
-    : Object(context)
+    : AbstractEditorOverlay(context)
     , graphics_(*GetSubsystem<Graphics>())
     , currentViewport_(0)
     , layout_(EditorViewportLayoutScheme::Empty)
@@ -66,14 +64,25 @@ EditorViewportLayout::EditorViewportLayout(Context* context)
     SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(EditorViewportLayout, HandleResize));
 }
 
+void EditorViewportLayout::Update(AbstractEditorInput& input, float timeStep)
+{
+    const bool isAnyMouseButtonPressed =
+        input.IsMouseButtonPressed(MOUSEB_LEFT)
+        || input.IsMouseButtonPressed(MOUSEB_RIGHT)
+        || input.IsMouseButtonPressed(MOUSEB_MIDDLE);
+
+    // Update current viewport
+    if (isAnyMouseButtonPressed)
+        UpdateCurrentViewport(input.GetMousePosition());
+}
+
 void EditorViewportLayout::SetScene(Scene* scene)
 {
     scene_ = scene;
-    UpdateNumberOfViewports(GetNumberOfViewports(layout_));
-    UpdateViewportLayout();
+    UpdateViewports();
 }
 
-void EditorViewportLayout::SetCamera(Node* cameraNode)
+void EditorViewportLayout::SetCameraTransform(Node* cameraNode)
 {
     for (EditorViewport* viewport : viewports_)
         viewport->SetTransform(cameraNode->GetWorldPosition(), cameraNode->GetWorldRotation());
@@ -82,23 +91,10 @@ void EditorViewportLayout::SetCamera(Node* cameraNode)
 void EditorViewportLayout::SetLayout(EditorViewportLayoutScheme layout)
 {
     layout_ = layout;
-    UpdateNumberOfViewports(GetNumberOfViewports(layout));
-    UpdateViewportLayout();
+    UpdateViewports();
 }
 
-void EditorViewportLayout::ApplyViewports()
-{
-    Renderer* renderer = GetSubsystem<Renderer>();
-    unsigned index = 0;
-    for (EditorViewport* region : viewports_)
-        renderer->SetViewport(index++, &region->GetViewport());
-    while (index < renderer->GetNumViewports())
-        renderer->SetViewport(index++, nullptr);
-
-    currentViewport_ = Min(currentViewport_, (int)index - 1);
-}
-
-Ray EditorViewportLayout::ComputeCameraRay(const Viewport& viewport, const IntVector2& mousePosition)
+Ray EditorViewportLayout::ComputeCameraRay(const Viewport& viewport, const IntVector2& mousePosition) const
 {
     using namespace Urho3D;
 
@@ -118,58 +114,67 @@ Camera& EditorViewportLayout::GetCurrentCamera()
 
 void EditorViewportLayout::HandleResize(StringHash eventType, VariantMap& eventData)
 {
-    UpdateViewportLayout();
+    UpdateViewportsSize();
 }
 
-void EditorViewportLayout::UpdateNumberOfViewports(int numViewports)
+void EditorViewportLayout::UpdateViewports()
 {
     if (!scene_)
         return;
 
     using namespace Urho3D;
 
+    Renderer* renderer = GetSubsystem<Renderer>();
+
+    // Get old viewports
+    Vector<Viewport*> oldViewports;
+    for (unsigned i = 0; i < renderer->GetNumViewports(); ++i)
+        oldViewports.Push(renderer->GetViewport(i));
+
+    // Remove old layout viewports
+    for (EditorViewport* viewport : viewports_)
+        oldViewports.Remove(&viewport->GetViewport());
+
+    // Get default transform of new viewports
     static const Vector3 defaultPosition(0, 10, -10);
     static const Quaternion defaultRotation(45, 0, 0);
+    Vector3 position = defaultPosition;
+    Quaternion rotation = defaultRotation;
+    if (!viewports_.Empty())
+    {
+        Node& node = viewports_.Back()->GetNode();
+        position = node.GetWorldPosition();
+        rotation = node.GetWorldRotation();
+    }
 
-    const int oldNumViewports = viewports_.Size();
-    if (numViewports < oldNumViewports)
+    // Re-allocate viewports
+    const unsigned numViewports = GetNumberOfViewports(layout_);
+    if (numViewports < viewports_.Size())
         viewports_.Resize(numViewports);
     else
     {
-        Vector3 position = defaultPosition;
-        Quaternion rotation = defaultRotation;
-        if (oldNumViewports > 0)
-        {
-            Node& node = viewports_[oldNumViewports - 1]->GetNode();
-            position = node.GetWorldPosition();
-            rotation = node.GetWorldRotation();
-        }
-
-        for (int i = oldNumViewports; i < numViewports; ++i)
+        while (viewports_.Size() < numViewports)
         {
             auto viewport = MakeShared<EditorViewport>(context_, scene_, nullptr);
             viewport->SetTransform(position, rotation);
             viewports_.Push(viewport);
         }
     }
+
+    // Append viewports to array
+    for (EditorViewport* viewport : viewports_)
+        oldViewports.Push(&viewport->GetViewport());
+
+    // Set viewports
+    renderer->SetNumViewports(oldViewports.Size());
+    for (unsigned i = 0; i < oldViewports.Size(); ++i)
+        renderer->SetViewport(i, oldViewports[i]);
+
+    // Update layout
+    UpdateViewportsSize();
 }
 
-void EditorViewportLayout::SelectCurrentViewport(const IntVector2& mousePosition)
-{
-    IntVector2 localPosition;
-    for (unsigned i = 0; i < viewports_.Size(); ++i)
-    {
-        const Viewport& viewport = viewports_[i]->GetViewport();
-        const IntRect rect = viewport.GetRect();
-        if (rect.Size() == IntVector2::ZERO || rect.IsInside(mousePosition) != OUTSIDE)
-        {
-            currentViewport_ = i;
-            break;
-        }
-    }
-}
-
-void EditorViewportLayout::UpdateViewportLayout()
+void EditorViewportLayout::UpdateViewportsSize()
 {
     if (!scene_)
         return;
@@ -224,6 +229,26 @@ void EditorViewportLayout::UpdateViewportLayout()
         break;
     default:
         break;
+    }
+}
+
+void EditorViewportLayout::UpdateCurrentViewport(const IntVector2& mousePosition)
+{
+    IntVector2 localPosition;
+    for (unsigned i = 0; i < viewports_.Size(); ++i)
+    {
+        const Viewport& viewport = viewports_[i]->GetViewport();
+        const IntRect rect = viewport.GetRect();
+        if (rect.Size() == IntVector2::ZERO || rect.IsInside(mousePosition) != OUTSIDE)
+        {
+            currentViewport_ = i;
+
+            // Send event.
+            SendEvent(E_EDITORCURRENTVIEWPORTCHANGED,
+                EditorCurrentViewportChanged::P_VIEWPORTLAYOUT, this,
+                EditorCurrentViewportChanged::P_CAMERA, &viewports_[i]->GetCamera());
+            break;
+        }
     }
 }
 

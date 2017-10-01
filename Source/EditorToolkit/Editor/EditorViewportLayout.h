@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Editor.h"
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Viewport.h>
 #include <Urho3D/Scene/Node.h>
@@ -9,6 +10,13 @@ namespace Urho3D
 {
 
 class Graphics;
+
+/// Editor current viewport changed.
+URHO3D_EVENT(E_EDITORCURRENTVIEWPORTCHANGED, EditorCurrentViewportChanged)
+{
+    URHO3D_PARAM(P_VIEWPORTLAYOUT, ViewportLayout); // EditorViewportLayout ptr
+    URHO3D_PARAM(P_CAMERA, Camera);                 // Camera ptr
+}
 
 /// Scene viewport.
 class EditorViewport : public RefCounted
@@ -38,19 +46,11 @@ private:
     Node cameraNode_;
     /// Local camera component.
     Camera& camera_;
-    /// Local camera angles.
-    Vector3 cameraAngles_;
-
-    /// Controls whether in fly mode.
-    bool flyMode_;
-    /// Shows whether the camera is orbiting.
-    bool orbiting_;
 
     /// Camera.
     Camera* viewportCamera_;
     /// Viewport.
     SharedPtr<Viewport> viewport_;
-
 };
 
 enum class EditorViewportLayoutScheme
@@ -75,24 +75,26 @@ enum class EditorViewportLayoutScheme
     Left2_Right1
 };
 
-class EditorViewportLayout : public Object
+class EditorViewportLayout : public AbstractEditorOverlay
 {
-    URHO3D_OBJECT(EditorViewportLayout, Object);
+    URHO3D_OBJECT(EditorViewportLayout, AbstractEditorOverlay);
 
 public:
     /// Construct.
     EditorViewportLayout(Context* context);
+
+    /// @see AbstractEditorOverlay::Update
+    void Update(AbstractEditorInput& input, float timeStep) override;
+
     /// Set scene.
     void SetScene(Scene* scene);
     /// Set camera for each viewport.
-    void SetCamera(Node* cameraNode);
+    void SetCameraTransform(Node* cameraNode);
     /// Set layout.
     void SetLayout(EditorViewportLayoutScheme layout);
-    /// Apply viewports to Urho3D Renderer.
-    void ApplyViewports();
 
     /// Compute camera ray.
-    Ray ComputeCameraRay(const Viewport& viewport, const IntVector2& mousePosition);
+    Ray ComputeCameraRay(const Viewport& viewport, const IntVector2& mousePosition) const;
     /// Get current camera.
     Camera& GetCurrentCamera();
     /// Get current camera ray.
@@ -101,18 +103,20 @@ public:
 private:
     /// Handle window resize.
     void HandleResize(StringHash eventType, VariantMap& eventData);
-    /// Update number of main viewports.
-    void UpdateNumberOfViewports(int numViewports);
+    /// Update viewports.
+    void UpdateViewports();
+    /// Update viewports size.
+    void UpdateViewportsSize();
     /// Update current viewport.
-    void SelectCurrentViewport(const IntVector2& mousePosition);
-    /// Update viewport layout.
-    void UpdateViewportLayout();
+    void UpdateCurrentViewport(const IntVector2& mousePosition);
 
 private:
     /// Graphics.
     Graphics& graphics_;
     /// Scene.
     Scene* scene_ = nullptr;
+    /// Layout type.
+    EditorViewportLayoutScheme layout_ = EditorViewportLayoutScheme::Empty;
 
     /// Viewports.
     Vector<SharedPtr<EditorViewport>> viewports_;
@@ -120,8 +124,6 @@ private:
     int currentViewport_;
     /// Current camera ray.
     Ray currentCameraRay_;
-    /// Layout type.
-    EditorViewportLayoutScheme layout_;
 
 };
 

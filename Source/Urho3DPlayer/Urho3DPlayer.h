@@ -55,7 +55,7 @@ private:
 
     /// Script file name.
     String scriptFileName_;
-    
+
 #ifdef URHO3D_ANGELSCRIPT
     /// Script file.
     SharedPtr<ScriptFile> scriptFile_;

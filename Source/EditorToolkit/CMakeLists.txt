@@ -3,6 +3,10 @@ add_library(EditorToolkit
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/GenericUI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/EditorViewportLayout.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/EditorViewportLayout.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/EditorCamera.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/EditorCamera.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/CameraController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/CameraController.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Editor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Editor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/KeyBinding.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/KeyBinding.h
 )

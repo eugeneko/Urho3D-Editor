@@ -2,6 +2,9 @@
 #include <Urho3D/Scene/Scene.h>
 
 #include "../EditorToolkit/GenericUI/GenericUI.h"
+#include "../EditorToolkit/Editor/CameraController.h"
+#include "../EditorToolkit/Editor/Editor.h"
+#include "../EditorToolkit/Editor/KeyBinding.h"
 #include "../EditorToolkit/Editor/EditorViewportLayout.h"
 
 using namespace Urho3D;
@@ -45,8 +48,11 @@ private:
     /// Camera pitch angle.
     float pitch_ = 0;
 
-    SharedPtr<HierarchyWindow> hw_;
-    SharedPtr<EditorViewportLayout> ev_;
+    bool blenderHotkeys_ = false;
+    SharedPtr<Editor> editor_ = nullptr;
+    SharedPtr<HierarchyWindow> hierarchyWindow_;
+    SharedPtr<EditorViewportLayout> viewportLayout_;
+    //Vector<SharedPtr<Ed
 };
 
 #include <Urho3D/Core/CoreEvents.h>
@@ -103,14 +109,75 @@ void StaticScene::Start()
         GenericUI* gui = GetSubsystem<GenericUI>();
         gui->SetDefaultHost(new UrhoUIHost(context_));
 
-        hw_ = MakeShared<HierarchyWindow>(context_);
-        hw_->SetScene(scene_);
+        editor_ = MakeShared<Editor>(context_);
 
-        ev_ = MakeShared<EditorViewportLayout>(context_);
-        ev_->SetLayout(EditorViewportLayoutScheme::Left2_Right1);
-        ev_->SetScene(scene_);
-        ev_->SetCamera(cameraNode_);
-        ev_->ApplyViewports();
+        viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
+        viewportLayout_->SetLayout(EditorViewportLayoutScheme::Vertical);
+        viewportLayout_->SetScene(scene_);
+        viewportLayout_->SetCameraTransform(cameraNode_);
+
+        auto editorInput = MakeShared<UrhoEditorInput>(context_);
+        editorInput->SetViewportLayout(viewportLayout_);
+
+        auto cameraController = MakeShared<CameraController>(context_);
+        cameraController->SetCamera(&viewportLayout_->GetCurrentCamera());
+        cameraController->SetSpeed(Vector3::ONE * 5.0f);
+        cameraController->SetPanSpeed(Vector2::ONE * 2.5f);
+        cameraController->SetAccelerationFactor(Vector3::ONE * 5.0f);
+        cameraController->SetRotationSpeed(Vector2::ONE * 0.2f);
+        if (blenderHotkeys_)
+        {
+            using KB = KeyBinding;
+            using CC = CameraController;
+            cameraController->SetFlyMode(false);
+            cameraController->SetPositionControl(false);
+            cameraController->SetControls({
+                { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
+                { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
+                { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
+                { CC::MOVE_RIGHT,       { KB::OPTIONAL_SHIFT + KB::Key(KEY_D), KB::OPTIONAL_SHIFT + KB::Key(KEY_RIGHT)    } },
+                { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
+                { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
+                { CC::MOVE_ACCEL,       { KB::SHIFT } },
+                { CC::TOGGLE_FLY_MODE,  { KB::SHIFT + KB::Key(KEY_F) } },
+                { CC::RESET_FLY_MODE,   { KB::ANY_MODIFIER + KB::Key(KEY_ESCAPE), KB::ANY_MODIFIER + KB::Mouse(MOUSEB_RIGHT) } },
+                { CC::ROTATE,           { } },
+                { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
+                { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
+                { CC::WHEEL_SCROLL_X,   { KB::CTRL } },
+                { CC::WHEEL_SCROLL_Y,   { KB::SHIFT } },
+                { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
+                { CC::WHEEL_ZOOM,       { KB::ALT } },
+            });
+        }
+        else
+        {
+            using KB = KeyBinding;
+            using CC = CameraController;
+            cameraController->SetFlyMode(false);
+            cameraController->SetPositionControl(true);
+            cameraController->SetControls({
+                { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
+                { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
+                { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
+                { CC::MOVE_RIGHT,       { KB::OPTIONAL_SHIFT + KB::Key(KEY_D), KB::OPTIONAL_SHIFT + KB::Key(KEY_RIGHT)    } },
+                { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
+                { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
+                { CC::MOVE_ACCEL,       { KB::SHIFT } },
+                { CC::ROTATE,           { KB::Mouse(MOUSEB_RIGHT) } },
+                { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
+                { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
+                { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
+                { CC::WHEEL_ZOOM,       { KB::ALT } },
+            });
+        }
+
+        editor_->SetInput(editorInput);
+        editor_->AddOverlay(viewportLayout_);
+        editor_->AddOverlay(cameraController);
+
+        hierarchyWindow_ = MakeShared<HierarchyWindow>(context_);
+        hierarchyWindow_->SetScene(scene_);
     }
 }
 
