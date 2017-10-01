@@ -1,13 +1,6 @@
 #pragma once
 
 #include "Editor.h"
-// #include "SceneOverlay.h"
-// #include <QSharedPointer>
-// #include <QVector>
-// #include <Urho3D/Graphics/Camera.h>
-// #include <Urho3D/Graphics/Viewport.h>
-// #include <Urho3D/Scene/Node.h>
-// #include <Urho3D/Scene/Scene.h>
 
 namespace Urho3D
 {
