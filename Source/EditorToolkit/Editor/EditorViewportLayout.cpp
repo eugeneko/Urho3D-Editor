@@ -1,9 +1,7 @@
 #include "EditorViewportLayout.h"
-// #include "SceneDocument.h"
-// #include "SceneEditor.h"
-// #include "../Configuration.h"
-#include <Urho3D/Graphics/GraphicsEvents.h>
+#include "EditorEvents.h"
 #include <Urho3D/Graphics/Graphics.h>
+#include <Urho3D/Graphics/GraphicsEvents.h>
 #include <Urho3D/Graphics/Renderer.h>
 
 namespace Urho3D

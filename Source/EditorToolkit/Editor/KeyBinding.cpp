@@ -1,5 +1,5 @@
 #include "KeyBinding.h"
-#include "Editor.h"
+#include "EditorInterfaces.h"
 
 namespace Urho3D
 {

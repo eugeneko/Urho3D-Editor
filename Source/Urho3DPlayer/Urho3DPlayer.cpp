@@ -3,6 +3,7 @@
 #include <Urho3D/Scene/Scene.h>
 
 #include "../EditorToolkit/GenericUI/GenericUI.h"
+#include "../EditorToolkit/GenericUI/UrhoUI.h"
 #include "../EditorToolkit/Editor/CameraController.h"
 #include "../EditorToolkit/Editor/Editor.h"
 #include "../EditorToolkit/Editor/Selection.h"
@@ -119,7 +120,7 @@ void StaticScene::Start()
         editor_ = MakeShared<Editor>(context_);
 
         viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
-        viewportLayout_->SetLayout(EditorViewportLayoutScheme::Vertical);
+        //viewportLayout_->SetLayout(EditorViewportLayoutScheme::Vertical);
         viewportLayout_->SetScene(scene_);
         viewportLayout_->SetCameraTransform(cameraNode_);
 

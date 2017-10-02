@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Editor.h"
+#include "EditorInterfaces.h"
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Viewport.h>
 #include <Urho3D/Scene/Node.h>
@@ -10,13 +10,6 @@ namespace Urho3D
 {
 
 class Graphics;
-
-/// Editor current viewport changed.
-URHO3D_EVENT(E_EDITORCURRENTVIEWPORTCHANGED, EditorCurrentViewportChanged)
-{
-    URHO3D_PARAM(P_VIEWPORTLAYOUT, ViewportLayout); // EditorViewportLayout ptr
-    URHO3D_PARAM(P_CAMERA, Camera);                 // Camera ptr
-}
 
 /// Scene viewport.
 class EditorViewport : public RefCounted

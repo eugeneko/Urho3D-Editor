@@ -5,10 +5,6 @@
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Physics/PhysicsWorld.h>
 #include <Urho3D/Physics/RigidBody.h>
-// #include "SceneDocument.h"
-// #include "SceneEditor.h"
-// #include "../Configuration.h"
-// #include <Urho3D/Graphics/DebugRenderer.h>
 
 namespace Urho3D
 {

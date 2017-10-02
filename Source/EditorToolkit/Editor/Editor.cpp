@@ -119,15 +119,6 @@ bool UrhoEditorInput::IsMouseMoveGrabbed() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-void AbstractEditorOverlay::Update(AbstractEditorInput& /*input*/, float /*timeStep*/)
-{
-}
-
-void AbstractEditorOverlay::PostRenderUpdate(AbstractEditorInput& /*input*/)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////
 Editor::Editor(Context* context)
     : Object(context)
 {
