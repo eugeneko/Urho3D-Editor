@@ -1,5 +1,6 @@
 #include "UrhoUI.h"
 #include <Urho3D/UI/UI.h>
+#include <Urho3D/UI/UIEvents.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/Button.h>
 #include <Urho3D/UI/LineEdit.h>
@@ -62,6 +63,7 @@ UrhoHierarchyList::UrhoHierarchyList(Context* context)
     hierarchyList_->SetSelectOnClickEnd(true);
     hierarchyList_->SetHierarchyMode(true);
     hierarchyList_->SetStyle("HierarchyListView");
+    SubscribeToEvent(hierarchyList_, E_ITEMCLICKED, URHO3D_HANDLER(UrhoHierarchyList, HandleItemClicked));
 }
 
 void UrhoHierarchyList::SelectItem(GenericHierarchyListItem* item)
@@ -90,7 +92,7 @@ void UrhoHierarchyList::GetSelection(ItemVector& result)
     {
         UIElement* element = hierarchyList_->GetItem(index);
         if (auto item = dynamic_cast<UrhoHierarchyListItem::ItemWidget*>(element))
-            result.Push(item->GetItem());
+            result.Push(item->GetGenericItem());
     }
 }
 
@@ -100,6 +102,16 @@ void UrhoHierarchyList::OnChildAdded(GenericWidget* widget)
         hierarchyList_->InsertItem(M_MAX_UNSIGNED, urhoWidget->GetWidget());
     if (auto listItem = dynamic_cast<UrhoHierarchyListItem*>(widget))
         listItem->SetParentListView(hierarchyList_);
+}
+
+void UrhoHierarchyList::HandleItemClicked(StringHash /*eventType*/, VariantMap& eventData)
+{
+    if (auto item = dynamic_cast<UrhoHierarchyListItem::ItemWidget*>(eventData[ItemClicked::P_ITEM].GetPtr()))
+    {
+        SendEvent(E_GENERICWIDGETCLICKED,
+            GenericWidgetClicked::P_ELEMENT, this,
+            GenericWidgetClicked::P_ITEM, item->GetGenericItem());
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////

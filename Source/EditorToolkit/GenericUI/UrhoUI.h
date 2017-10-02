@@ -45,6 +45,9 @@ protected:
     void OnChildAdded(GenericWidget* widget) override;
 
 private:
+    void HandleItemClicked(StringHash eventType, VariantMap& eventData);
+
+private:
     SharedPtr<ListView> hierarchyList_;
 };
 
@@ -57,7 +60,7 @@ public:
     {
     public:
         ItemWidget(Context* context, UrhoHierarchyListItem* item) : Text(context), item_(item) { }
-        UrhoHierarchyListItem* GetItem() { return item_; }
+        UrhoHierarchyListItem* GetGenericItem() { return item_; }
     private:
         UrhoHierarchyListItem* item_ = nullptr;;
     };

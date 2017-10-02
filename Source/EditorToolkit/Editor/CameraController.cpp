@@ -186,7 +186,7 @@ Vector3& CameraController::GetCameraOrigin(Camera& camera)
 
 void CameraController::HandleCurrentViewportChanged(StringHash eventType, VariantMap& eventData)
 {
-    Camera* newCamera = static_cast<Camera*>(eventData[EditorCurrentViewportChanged::P_CAMERA].GetPtr());
+    Camera* newCamera = dynamic_cast<Camera*>(eventData[EditorCurrentViewportChanged::P_CAMERA].GetPtr());
     SetCamera(newCamera);
 }
 

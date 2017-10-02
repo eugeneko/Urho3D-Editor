@@ -12,6 +12,13 @@ class Node;
 class Serializable;
 class Selection;
 
+/// Generic UI widget clicked.
+URHO3D_EVENT(E_GENERICWIDGETCLICKED, GenericWidgetClicked)
+{
+    URHO3D_PARAM(P_ELEMENT, Element);   // GenericWidget ptr
+    URHO3D_PARAM(P_ITEM, Item);         // GenericWidget ptr (optional)
+}
+
 class GenericWidget : public Object
 {
     URHO3D_OBJECT(GenericWidget, Object);

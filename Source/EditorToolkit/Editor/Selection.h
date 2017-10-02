@@ -48,7 +48,7 @@ public:
     /// Clear selection.
     void ClearSelection();
     /// Select objects.
-    void SelectObjects(const ObjectSet& objects);
+    void SetSelection(const ObjectSet& objects);
     /// Select object.
     void SelectObject(Object* object, SelectionAction action, bool clearSelection);
     /// Set hovered object.

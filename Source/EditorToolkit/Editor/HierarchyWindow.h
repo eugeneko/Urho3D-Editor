@@ -31,10 +31,11 @@ private:
     void GatherHierarchyListSelections(Selection::ObjectSet& result) const;
     void AddNode(Node* node);
 
-    // @name Editor Events
+    // @name Editor and UI Events
     // @{
 
-    void HandleSelectionChanged(StringHash eventType, VariantMap& eventData);
+    void HandleListSelectionChanged(StringHash eventType, VariantMap& eventData);
+    void HandleEditorSelectionChanged(StringHash eventType, VariantMap& eventData);
 
     // @}
 
@@ -68,6 +69,8 @@ private:
     SharedPtr<Scene> scene_;
     SharedPtr<Selection> selection_;
     HashMap<WeakPtr<Object>, WeakPtr<GenericHierarchyListItem>> objectsToItems_;
+
+    bool suppressEditorSelectionChanges_ = false;
 };
 
 }

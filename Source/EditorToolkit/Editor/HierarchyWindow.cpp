@@ -46,7 +46,7 @@ void HierarchyWindow::SetSelection(Selection* selection)
         UnsubscribeFromEvent(E_EDITORSELECTIONCHANGED);
     selection_ = selection;
     if (selection_)
-        SubscribeToEvent(E_EDITORSELECTIONCHANGED, URHO3D_HANDLER(HierarchyWindow, HandleSelectionChanged));
+        SubscribeToEvent(E_EDITORSELECTIONCHANGED, URHO3D_HANDLER(HierarchyWindow, HandleEditorSelectionChanged));
 }
 
 Selection::ObjectSet HierarchyWindow::GetSelectedObjects()
@@ -62,6 +62,7 @@ void HierarchyWindow::CreateWidgets(GenericUIHost* host)
     dialog_->SetName("Hierarchy");
 
     hierarchyList_ = dialog_->CreateChild<GenericHierarchyList>();
+    SubscribeToEvent(hierarchyList_, E_GENERICWIDGETCLICKED, URHO3D_HANDLER(HierarchyWindow, HandleListSelectionChanged));
     SetScene(scene_);
 }
 
@@ -109,8 +110,21 @@ void HierarchyWindow::AddNode(Node* node)
         AddNode(child);
 }
 
-void HierarchyWindow::HandleSelectionChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)
+void HierarchyWindow::HandleListSelectionChanged(StringHash eventType, VariantMap& eventData)
 {
+    if (eventData[GenericWidgetClicked::P_ITEM].GetPtr() != nullptr)
+    {
+        suppressEditorSelectionChanges_ = true;
+        selection_->SetSelection(GetSelectedObjects());
+        suppressEditorSelectionChanges_ = false;
+    }
+}
+
+void HierarchyWindow::HandleEditorSelectionChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)
+{
+    if (suppressEditorSelectionChanges_)
+        return;
+
     // TODO: Cache
     Selection::ObjectSet oldSelection = GetSelectedObjects();
     Selection::ObjectSet newSelection = selection_->GetSelected();

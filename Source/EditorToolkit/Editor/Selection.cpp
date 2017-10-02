@@ -36,7 +36,7 @@ void Selection::ClearSelection()
     UpdateChangedSelection();
 }
 
-void Selection::SelectObjects(const ObjectSet& objects)
+void Selection::SetSelection(const ObjectSet& objects)
 {
     selectedObjects_ = objects;
     UpdateChangedSelection();
