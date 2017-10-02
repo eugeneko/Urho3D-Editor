@@ -1,4 +1,5 @@
 #include "Selection.h"
+#include "EditorEvents.h"
 #include <Urho3D/Graphics/Drawable.h>
 #include <Urho3D/Scene/Component.h>
 #include <Urho3D/Scene/Node.h>
@@ -32,13 +33,13 @@ namespace Urho3D
 void Selection::ClearSelection()
 {
     selectedObjects_.Clear();
-    GatherSelection();
+    UpdateChangedSelection();
 }
 
 void Selection::SelectObjects(const ObjectSet& objects)
 {
     selectedObjects_ = objects;
-    GatherSelection();
+    UpdateChangedSelection();
 }
 
 void Selection::SelectObject(Object* object, SelectionAction action, bool clearSelection)
@@ -50,7 +51,7 @@ void Selection::SelectObject(Object* object, SelectionAction action, bool clearS
     if (!wasSelected && action != SelectionAction::Deselect)
         selectedObjects_.Insert(object);
 
-    GatherSelection();
+    UpdateChangedSelection();
 }
 
 void Selection::SetHoveredObject(Object* object)
@@ -94,9 +95,8 @@ Component* Selection::GetHoveredComponent() const
     return dynamic_cast<Component*>(hoveredObject_);
 }
 
-void Selection::GatherSelection()
+void Selection::UpdateChangedSelection()
 {
-    using namespace Urho3D;
     selectedNodes_.Clear();
     selectedComponents_.Clear();
     selectedNodesAndComponents_.Clear();
@@ -113,6 +113,8 @@ void Selection::GatherSelection()
             selectedNodesAndComponents_.Insert(component->GetNode());
         }
     }
+
+    SendEvent(E_EDITORSELECTIONCHANGED, EditorSelectionChanged::P_SELECTION, this);
 }
 
 }

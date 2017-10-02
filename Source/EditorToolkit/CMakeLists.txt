@@ -18,6 +18,8 @@ add_library(EditorToolkit
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/ObjectSelector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Selection.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Selection.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/HierarchyWindow.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/HierarchyWindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/DebugGeometryRenderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/DebugGeometryRenderer.h
 )

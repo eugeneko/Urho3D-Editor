@@ -7,6 +7,7 @@
 #include "../EditorToolkit/Editor/CameraController.h"
 #include "../EditorToolkit/Editor/Editor.h"
 #include "../EditorToolkit/Editor/Selection.h"
+#include "../EditorToolkit/Editor/HierarchyWindow.h"
 #include "../EditorToolkit/Editor/ObjectSelector.h"
 #include "../EditorToolkit/Editor/KeyBinding.h"
 #include "../EditorToolkit/Editor/EditorViewportLayout.h"

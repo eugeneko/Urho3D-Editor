@@ -10,6 +10,7 @@ class GenericUIHost;
 class Scene;
 class Node;
 class Serializable;
+class Selection;
 
 class GenericWidget : public Object
 {
@@ -81,50 +82,6 @@ public:
 
 private:
     UniquePtr<GenericUIHost> defaultHost_;
-};
-
-class HierarchyWindow : public Object
-{
-    URHO3D_OBJECT(HierarchyWindow, Object);
-
-public:
-    HierarchyWindow(Context* context);
-    void SetScene(Scene* scene);
-
-private:
-    void CreateWidgets(GenericUIHost* host);
-    GenericHierarchyListItem* FindItem(Serializable* object);
-    void AddNode(Node* node);
-
-    // @name Scene Events
-    // @{
-
-    void HandleNodeAdded(StringHash eventType, VariantMap& eventData);
-    void HandleNodeRemoved(StringHash eventType, VariantMap& eventData);
-    void HandleComponentAdded(StringHash eventType, VariantMap& eventData);
-    void HandleComponentRemoved(StringHash eventType, VariantMap& eventData);
-    void HandleNodeNameChanged(StringHash eventType, VariantMap& eventData);
-    void HandleNodeEnabledChanged(StringHash eventType, VariantMap& eventData);
-    void HandleComponentEnabledChanged(StringHash eventType, VariantMap& eventData);
-
-    // @}
-
-    // @name UI Events
-    // @{
-
-    void HandleUIElementNameChanged(StringHash eventType, VariantMap& eventData);
-    void HandleUIElementVisibilityChanged(StringHash eventType, VariantMap& eventData);
-    void HandleUIElementAttributeChanged(StringHash eventType, VariantMap& eventData);
-    void HandleUIElementAdded(StringHash eventType, VariantMap& eventData);
-    void HandleUIElementRemoved(StringHash eventType, VariantMap& eventData);
-
-    // @}
-
-private:
-    SharedPtr<GenericDialog> dialog_;
-    GenericHierarchyList* hierarchyList_ = nullptr;
-    SharedPtr<Scene> scene_;
-    HashMap<WeakPtr<Serializable>, WeakPtr<GenericHierarchyListItem>> objectsToItems_;
 };
 
 }

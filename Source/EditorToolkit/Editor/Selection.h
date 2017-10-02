@@ -73,7 +73,7 @@ public:
 
 private:
     /// Gather secondary selection lists.
-    void GatherSelection();
+    void UpdateChangedSelection();
 
 private:
     /// Selected objects.

@@ -9,6 +9,7 @@ namespace Urho3D
 CameraController::CameraController(Context* context)
     : AbstractEditorOverlay(context)
 {
+    // \todo Use more specific things
     SubscribeToEvent(E_EDITORCURRENTVIEWPORTCHANGED, URHO3D_HANDLER(CameraController, HandleCurrentViewportChanged));
 }
 
