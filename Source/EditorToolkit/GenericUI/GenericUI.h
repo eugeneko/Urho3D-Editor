@@ -48,6 +48,11 @@ class GenericHierarchyListItem : public GenericWidget
 public:
     GenericHierarchyListItem(Context* context) : GenericWidget(context) { }
     virtual void SetText(const String& text) = 0;
+    void SetObject(Object* object) { object_ = object; }
+    Object* GetObject() const { return object_; }
+
+private:
+    Object* object_ = nullptr;
 };
 
 class GenericHierarchyList : public GenericWidget
@@ -55,7 +60,12 @@ class GenericHierarchyList : public GenericWidget
     URHO3D_OBJECT(GenericHierarchyList, GenericWidget);
 
 public:
+    using ItemVector = PODVector<GenericHierarchyListItem*>;
     GenericHierarchyList(Context* context) : GenericWidget(context) { }
+    virtual void SelectItem(GenericHierarchyListItem* item) = 0;
+    virtual void DeselectItem(GenericHierarchyListItem* item) = 0;
+    virtual void GetSelection(ItemVector& result) = 0;
+    ItemVector GetSelection() { ItemVector result; GetSelection(result); return result; }
 };
 
 class GenericUIHost : public Object

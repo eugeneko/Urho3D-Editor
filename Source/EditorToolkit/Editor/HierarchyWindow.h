@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Selection.h"
 #include "../GenericUI/GenericUI.h"
 #include <Urho3D/Core/Object.h>
 #include <Urho3D/Container/HashMap.h>
@@ -10,8 +11,6 @@ namespace Urho3D
 class GenericUIHost;
 class Scene;
 class Node;
-class Serializable;
-class Selection;
 
 class HierarchyWindow : public Object
 {
@@ -21,10 +20,15 @@ public:
     HierarchyWindow(Context* context);
     void SetScene(Scene* scene);
     void SetSelection(Selection* selection);
+    Selection::ObjectSet GetSelectedObjects();
 
 private:
     void CreateWidgets(GenericUIHost* host);
-    GenericHierarchyListItem* FindItem(Serializable* object);
+    GenericHierarchyListItem* FindItem(Object* object);
+    /// Subtract right set from left one.
+    void Subtract(const Selection::ObjectSet& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const;
+    /// Gather selection from hierarchy list.
+    void GatherHierarchyListSelections(Selection::ObjectSet& result) const;
     void AddNode(Node* node);
 
     // @name Editor Events
@@ -63,7 +67,7 @@ private:
     GenericHierarchyList* hierarchyList_ = nullptr;
     SharedPtr<Scene> scene_;
     SharedPtr<Selection> selection_;
-    HashMap<WeakPtr<Serializable>, WeakPtr<GenericHierarchyListItem>> objectsToItems_;
+    HashMap<WeakPtr<Object>, WeakPtr<GenericHierarchyListItem>> objectsToItems_;
 };
 
 }

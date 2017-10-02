@@ -154,6 +154,7 @@ void StaticScene::Start()
 
         hierarchyWindow_ = MakeShared<HierarchyWindow>(context_);
         hierarchyWindow_->SetScene(scene_);
+        hierarchyWindow_->SetSelection(selection);
 
         if (blenderHotkeys_)
         {
@@ -202,7 +203,7 @@ void StaticScene::Start()
                 { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
                 { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
                 { CC::MOVE_ACCEL,       { KB::SHIFT } },
-                { CC::ROTATE,           { KB::Mouse(MOUSEB_RIGHT) } },
+                { CC::ROTATE,           { KB::OPTIONAL_SHIFT + KB::Mouse(MOUSEB_RIGHT) } },
                 { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
                 { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
                 { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },

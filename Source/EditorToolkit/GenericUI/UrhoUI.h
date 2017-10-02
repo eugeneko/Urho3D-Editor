@@ -36,7 +36,10 @@ class UrhoHierarchyList : public GenericHierarchyList, public UrhoWidget
 
 public:
     UrhoHierarchyList(Context* context);
-    virtual UIElement* GetWidget() { return hierarchyList_; }
+    UIElement* GetWidget() override { return hierarchyList_; }
+    void SelectItem(GenericHierarchyListItem* item) override;
+    void DeselectItem(GenericHierarchyListItem* item) override;
+    void GetSelection(ItemVector& result) override;
 
 protected:
     void OnChildAdded(GenericWidget* widget) override;
@@ -50,6 +53,15 @@ class UrhoHierarchyListItem : public GenericHierarchyListItem, public UrhoWidget
     URHO3D_OBJECT(UrhoHierarchyListItem, GenericHierarchyListItem);
 
 public:
+    class ItemWidget : public Text
+    {
+    public:
+        ItemWidget(Context* context, UrhoHierarchyListItem* item) : Text(context), item_(item) { }
+        UrhoHierarchyListItem* GetItem() { return item_; }
+    private:
+        UrhoHierarchyListItem* item_ = nullptr;;
+    };
+
     UrhoHierarchyListItem(Context* context);
     void SetParentListView(ListView* listView) { hierarchyList_ = listView; }
     void SetText(const String& text) override { text_->SetText(text); }
@@ -59,7 +71,7 @@ protected:
     void OnChildAdded(GenericWidget* widget) override;
 
 private:
-    SharedPtr<Text> text_;
+    SharedPtr<ItemWidget> text_;
     ListView* hierarchyList_ = nullptr;
 
 };

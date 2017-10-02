@@ -64,6 +64,36 @@ UrhoHierarchyList::UrhoHierarchyList(Context* context)
     hierarchyList_->SetStyle("HierarchyListView");
 }
 
+void UrhoHierarchyList::SelectItem(GenericHierarchyListItem* item)
+{
+    if (auto urhoItem = dynamic_cast<UrhoHierarchyListItem*>(item))
+    {
+        const unsigned index = hierarchyList_->FindItem(urhoItem->GetWidget());
+        if (!hierarchyList_->IsSelected(index))
+            hierarchyList_->ToggleSelection(index);
+    }
+}
+
+void UrhoHierarchyList::DeselectItem(GenericHierarchyListItem* item)
+{
+    if (auto urhoItem = dynamic_cast<UrhoHierarchyListItem*>(item))
+    {
+        const unsigned index = hierarchyList_->FindItem(urhoItem->GetWidget());
+        if (hierarchyList_->IsSelected(index))
+            hierarchyList_->ToggleSelection(index);
+    }
+}
+
+void UrhoHierarchyList::GetSelection(ItemVector& result)
+{
+    for (unsigned index : hierarchyList_->GetSelections())
+    {
+        UIElement* element = hierarchyList_->GetItem(index);
+        if (auto item = dynamic_cast<UrhoHierarchyListItem::ItemWidget*>(element))
+            result.Push(item->GetItem());
+    }
+}
+
 void UrhoHierarchyList::OnChildAdded(GenericWidget* widget)
 {
     if (auto urhoWidget = dynamic_cast<UrhoWidget*>(widget))
@@ -76,7 +106,7 @@ void UrhoHierarchyList::OnChildAdded(GenericWidget* widget)
 UrhoHierarchyListItem::UrhoHierarchyListItem(Context* context)
     : GenericHierarchyListItem(context)
 {
-    text_ = MakeShared<Text>(context);
+    text_ = MakeShared<ItemWidget>(context_, this);
     text_->SetStyle("FileSelectorListText");
 }
 

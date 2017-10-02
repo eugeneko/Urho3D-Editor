@@ -1,6 +1,5 @@
 #include "HierarchyWindow.h"
 #include "EditorEvents.h"
-#include "Selection.h"
 #include <Urho3D/Scene/SceneEvents.h>
 #include <Urho3D/Scene/Scene.h>
 
@@ -50,6 +49,13 @@ void HierarchyWindow::SetSelection(Selection* selection)
         SubscribeToEvent(E_EDITORSELECTIONCHANGED, URHO3D_HANDLER(HierarchyWindow, HandleSelectionChanged));
 }
 
+Selection::ObjectSet HierarchyWindow::GetSelectedObjects()
+{
+    Selection::ObjectSet result;
+    GatherHierarchyListSelections(result);
+    return result;
+}
+
 void HierarchyWindow::CreateWidgets(GenericUIHost* host)
 {
     dialog_ = host->CreateWidget<GenericDialog>();
@@ -59,12 +65,28 @@ void HierarchyWindow::CreateWidgets(GenericUIHost* host)
     SetScene(scene_);
 }
 
-GenericHierarchyListItem* HierarchyWindow::FindItem(Serializable* object)
+GenericHierarchyListItem* HierarchyWindow::FindItem(Object* object)
 {
     if (object)
-        return objectsToItems_[WeakPtr<Serializable>(object)];
+        return objectsToItems_[WeakPtr<Object>(object)];
     else
         return nullptr;
+}
+
+void HierarchyWindow::Subtract(const Selection::ObjectSet& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const
+{
+    result.Clear();
+    for (Object* object : lhs)
+        if (!rhs.Contains(object))
+            result.Insert(object);
+}
+
+void HierarchyWindow::GatherHierarchyListSelections(Selection::ObjectSet& result) const
+{
+    // TODO: Cache
+    for (GenericHierarchyListItem* item : hierarchyList_->GetSelection())
+        if (Object* object = item->GetObject())
+            result.Insert(object);
 }
 
 void HierarchyWindow::AddNode(Node* node)
@@ -75,8 +97,9 @@ void HierarchyWindow::AddNode(Node* node)
         ? parentItem->CreateChild<GenericHierarchyListItem>()
         : hierarchyList_->CreateChild<GenericHierarchyListItem>();
 
-    objectsToItems_[WeakPtr<Serializable>(node)] = objectItem;
+    objectsToItems_[WeakPtr<Object>(node)] = objectItem;
 
+    objectItem->SetObject(node);
     if (Scene* scene = dynamic_cast<Scene*>(node))
         objectItem->SetText(scene->GetName().Empty() ? "Scene" : scene->GetName());
     else
@@ -86,9 +109,36 @@ void HierarchyWindow::AddNode(Node* node)
         AddNode(child);
 }
 
-void HierarchyWindow::HandleSelectionChanged(StringHash eventType, VariantMap& eventData)
+void HierarchyWindow::HandleSelectionChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)
 {
+    // TODO: Cache
+    Selection::ObjectSet oldSelection = GetSelectedObjects();
+    Selection::ObjectSet newSelection = selection_->GetSelected();
+    Selection::ObjectSet toSelect;
+    Subtract(newSelection, oldSelection, toSelect);
+    Selection::ObjectSet toDeselect;
+    Subtract(oldSelection, newSelection, toDeselect);
 
+    // Deselect old objects
+    for (Object* object : toDeselect)
+        if (GenericHierarchyListItem* item = FindItem(object))
+            hierarchyList_->DeselectItem(item);
+
+    // Select new objects
+    bool wasScrolled = false;
+    for (Object* object : toSelect)
+    {
+        if (GenericHierarchyListItem* item = FindItem(object))
+        {
+            hierarchyList_->SelectItem(item);
+            if (!wasScrolled)
+            {
+                wasScrolled = true;
+                // TODO: Add scroll
+                // treeView_->scrollTo(index);
+            }
+        }
+    }
 }
 
 void HierarchyWindow::HandleNodeAdded(StringHash eventType, VariantMap& eventData)
