@@ -1,6 +1,7 @@
 #include "ObjectSelector.h"
 #include "Selection.h"
 #include "KeyBinding.h"
+#include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Physics/PhysicsWorld.h>
@@ -72,7 +73,7 @@ void ObjectSelector::PerformRaycast(AbstractEditorInput& input)
         physicsWorld->UpdateCollisions();
 
         PhysicsRaycastResult result;
-        physicsWorld->RaycastSingle(result, input.GetMouseRay(), input.GetFarClip());
+        physicsWorld->RaycastSingle(result, input.GetMouseRay(), input.GetCurrentCamera()->GetFarClip());
         if (result.body_)
             selectedComponent = result.body_;
     }
@@ -84,7 +85,7 @@ void ObjectSelector::PerformRaycast(AbstractEditorInput& input)
 
         static int pickModeDrawableFlags[3] = { DRAWABLE_GEOMETRY, DRAWABLE_LIGHT, DRAWABLE_ZONE };
         PODVector<RayQueryResult> result;
-        RayOctreeQuery query(result, input.GetMouseRay(), RAY_TRIANGLE, input.GetFarClip(),
+        RayOctreeQuery query(result, input.GetMouseRay(), RAY_TRIANGLE, input.GetCurrentCamera()->GetFarClip(),
             pickModeDrawableFlags[static_cast<int>(selectionMode_)], 0x7fffffff);
         octree->RaycastSingle(query);
 

@@ -12,6 +12,8 @@
 #include "../EditorToolkit/Editor/KeyBinding.h"
 #include "../EditorToolkit/Editor/EditorViewportLayout.h"
 #include "../EditorToolkit/Editor/DebugGeometryRenderer.h"
+#include "../EditorToolkit/Editor/Gizmo.h"
+#include "../EditorToolkit/Editor/Transformable.h"
 
 using namespace Urho3D;
 
@@ -141,6 +143,14 @@ void StaticScene::Start()
         objectSelector->SetSelection(selection);
         objectSelector->AddSelectionTransferring("TerrainPatch", "Terrain");
 
+        auto selectionTransform = MakeShared<SelectionTransform>(context_);
+        selectionTransform->SetSelection(selection);
+        selectionTransform->SetScene(scene_);
+
+        auto gizmo = MakeShared<Gizmo>(context_);
+        gizmo->SetGizmoType(GizmoType::Position);
+        gizmo->SetTransformable(selectionTransform);
+
         debugGeometryRenderer_ = MakeShared<DebugGeometryRenderer>(context_);
         debugGeometryRenderer_->SetScene(scene_);
         debugGeometryRenderer_->SetSelection(selection);
@@ -148,9 +158,11 @@ void StaticScene::Start()
 
         editor_->SetInput(editorInput);
         editor_->AddOverlay(viewportLayout_);
+        editor_->AddOverlay(gizmo);
         editor_->AddOverlay(cameraController);
         editor_->AddOverlay(objectSelector);
         editor_->AddOverlay(debugGeometryRenderer_);
+        editor_->AddSubsystem(selectionTransform);
 
         hierarchyWindow_ = MakeShared<HierarchyWindow>(context_);
         hierarchyWindow_->SetScene(scene_);

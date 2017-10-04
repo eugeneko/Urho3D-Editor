@@ -22,4 +22,8 @@ add_library(EditorToolkit
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/HierarchyWindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/DebugGeometryRenderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/DebugGeometryRenderer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Gizmo.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Gizmo.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Transformable.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Transformable.h
 )

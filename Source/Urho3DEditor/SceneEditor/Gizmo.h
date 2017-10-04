@@ -126,7 +126,7 @@ private:
     Urho3D::StaticModel& gizmo_;
 
     /// Previous type of gizmo.
-    GizmoType lastType_;
+    GizmoType lastType_ = GizmoType::Position;
 
     /// X axis of gizmo.
     GizmoAxis axisX_;

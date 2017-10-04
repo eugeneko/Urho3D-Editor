@@ -22,6 +22,8 @@ public:
     /// Add overlay.
     /// \todo add priority
     void AddOverlay(AbstractEditorOverlay* overlay);
+    /// Add editor subsystem.
+    void AddSubsystem(Object* subsystem);
 
 private:
     /// Handle update.
@@ -32,6 +34,7 @@ private:
 private:
     SharedPtr<AbstractEditorInput> input_ = nullptr;
     Vector<SharedPtr<AbstractEditorOverlay>> overlays_;
+    Vector<SharedPtr<Object>> subsystems_;
 };
 
 /// Urho Editor input interface.
@@ -72,8 +75,8 @@ public:
     int GetMouseWheelMove() const override;
     /// \see AbstractEditorInput::GetMouseRay
     Ray GetMouseRay() const override;
-    /// \see AbstractEditorInput::GetFarClip
-    float GetFarClip() const override;
+    /// \see AbstractEditorInput::GetCurrentCamera
+    Camera* GetCurrentCamera() const override;
 
     /// \see AbstractEditorInput::GrabKey
     void GrabKey(int key) override;

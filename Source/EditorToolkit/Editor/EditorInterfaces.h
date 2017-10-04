@@ -7,6 +7,7 @@ namespace Urho3D
 {
 
 class UI;
+class Camera;
 
 /// Interface of editor input provider.
 class AbstractEditorInput : public Object
@@ -42,8 +43,8 @@ public:
     virtual int GetMouseWheelMove() const = 0;
     /// Return mouse ray in 3D.
     virtual Ray GetMouseRay() const = 0;
-    /// Return far clip distance.
-    virtual float GetFarClip() const = 0;
+    /// Return current camera.
+    virtual Camera* GetCurrentCamera() const = 0;
 
     /// Grab key.
     virtual void GrabKey(int key) = 0;
