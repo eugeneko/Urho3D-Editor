@@ -8,7 +8,7 @@
 namespace Urho3D
 {
 
-class GenericUIHost;
+class AbstractUI;
 class Scene;
 class Node;
 
@@ -18,12 +18,12 @@ class HierarchyWindow : public Object
 
 public:
     HierarchyWindow(Context* context);
+    void Initialize(AbstractUI* ui);
     void SetScene(Scene* scene);
     void SetSelection(Selection* selection);
     Selection::ObjectSet GetSelectedObjects();
 
 private:
-    void CreateWidgets(GenericUIHost* host);
     GenericHierarchyListItem* FindItem(Object* object);
     /// Subtract right set from left one.
     void Subtract(const Selection::ObjectSet& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const;

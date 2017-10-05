@@ -59,7 +59,8 @@ private:
     float pitch_ = 0;
 
     bool blenderHotkeys_ = false;
-    SharedPtr<Editor> editor_ = nullptr;
+    SharedPtr<UrhoUI> urhoUi_;
+    SharedPtr<Editor> editor_;
     SharedPtr<HierarchyWindow> hierarchyWindow_;
     SharedPtr<EditorViewportLayout> viewportLayout_;
     SharedPtr<DebugGeometryRenderer> debugGeometryRenderer_;
@@ -116,9 +117,7 @@ void StaticScene::Start()
     }
 
     {
-        context_->RegisterSubsystem(new GenericUI(context_));
-        GenericUI* gui = GetSubsystem<GenericUI>();
-        gui->SetDefaultHost(new UrhoUIHost(context_));
+        urhoUi_ = MakeShared<UrhoUI>(context_);
 
         editor_ = MakeShared<Editor>(context_);
 
@@ -165,6 +164,7 @@ void StaticScene::Start()
         editor_->AddSubsystem(selectionTransform);
 
         hierarchyWindow_ = MakeShared<HierarchyWindow>(context_);
+        hierarchyWindow_->Initialize(urhoUi_);
         hierarchyWindow_->SetScene(scene_);
         hierarchyWindow_->SetSelection(selection);
 
@@ -526,9 +526,9 @@ void Urho3DPlayer::Start()
     }
 
     {
-        context_->RegisterSubsystem(new GenericUI(context_));
-        GenericUI* gui = GetSubsystem<GenericUI>();
-        gui->SetDefaultHost(new UrhoUIHost(context_));
+        context_->RegisterSubsystem(new AbstractUI(context_));
+        AbstractUI* gui = GetSubsystem<AbstractUI>();
+        gui->SetDefaultHost(new UrhoUI(context_));
 
         hw_ = MakeShared<HierarchyWindow>(context_);
 //         GenericDialog* dialog = gui->AddDialog();

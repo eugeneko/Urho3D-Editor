@@ -79,12 +79,12 @@ private:
 
 };
 
-class UrhoUIHost : public GenericUIHost
+class UrhoUI : public Object, public AbstractUI
 {
-    URHO3D_OBJECT(UrhoUIHost, GenericUIHost);
+    URHO3D_OBJECT(UrhoUI, Object);
 
 public:
-    UrhoUIHost(Context* context) : GenericUIHost(context) { }
+    UrhoUI(Context* context) : Object(context) { }
 
 protected:
     GenericWidget* CreateWidgetImpl(StringHash type) override;

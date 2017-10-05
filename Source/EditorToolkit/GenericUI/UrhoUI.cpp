@@ -131,7 +131,7 @@ void UrhoHierarchyListItem::OnChildAdded(GenericWidget* widget)
 }
 
 //////////////////////////////////////////////////////////////////////////
-GenericWidget* UrhoUIHost::CreateWidgetImpl(StringHash type)
+GenericWidget* UrhoUI::CreateWidgetImpl(StringHash type)
 {
     if (type == GenericDialog::GetTypeStatic())
         return new UrhoDialog(context_);

@@ -6,7 +6,7 @@
 namespace Urho3D
 {
 
-class GenericUIHost;
+class AbstractUI;
 class Scene;
 class Node;
 class Serializable;
@@ -19,13 +19,21 @@ URHO3D_EVENT(E_GENERICWIDGETCLICKED, GenericWidgetClicked)
     URHO3D_PARAM(P_ITEM, Item);         // GenericWidget ptr (optional)
 }
 
+class GenericMainWindow : public Object
+{
+    URHO3D_OBJECT(GenericMainWindow, Object);
+public:
+    GenericMainWindow(Context* context) : Object(context) { }
+};
+
+// #TODO: Rename file
 class GenericWidget : public Object
 {
     URHO3D_OBJECT(GenericWidget, Object);
 
 public:
     GenericWidget(Context* context) : Object(context) { }
-    void SetHost(GenericUIHost* host) { host_ = host; OnHostInitialized(); }
+    void SetHost(AbstractUI* ui) { ui_ = ui; OnHostInitialized(); }
     GenericWidget* CreateChild(StringHash type);
     template <class T> T* CreateChild() { return dynamic_cast<T*>(CreateChild(T::GetTypeStatic())); }
 
@@ -34,7 +42,7 @@ protected:
     virtual void OnChildAdded(GenericWidget* widget);
 
 private:
-    GenericUIHost* host_ = nullptr;
+    AbstractUI* ui_ = nullptr;
     Vector<SharedPtr<GenericWidget>> children_;
 
 };
@@ -75,30 +83,20 @@ public:
     ItemVector GetSelection() { ItemVector result; GetSelection(result); return result; }
 };
 
-class GenericUIHost : public Object
+class AbstractUI
 {
-    URHO3D_OBJECT(GenericUIHost, Object);
-
 public:
-    GenericUIHost(Context* context) : Object(context) { }
     GenericWidget* CreateWidget(StringHash type);
     template <class T> T* CreateWidget() { return dynamic_cast<T*>(CreateWidget(T::GetTypeStatic())); }
-
-protected:
-    virtual GenericWidget* CreateWidgetImpl(StringHash type) = 0;
-};
-
-class GenericUI : public Object
-{
-    URHO3D_OBJECT(GenericUI, Object);
-
-public:
-    GenericUI(Context* context) : Object(context) { }
-    void SetDefaultHost(GenericUIHost* host) { defaultHost_.Reset(host); }
-    GenericUIHost* GetDefaultHost() { return defaultHost_.Get(); }
+    void SetMainWindow(GenericMainWindow* mainWindow) { mainWindow_ = mainWindow; }
+    GenericMainWindow* GetMainWindow() { return mainWindow_; }
 
 private:
-    UniquePtr<GenericUIHost> defaultHost_;
+    virtual GenericWidget* CreateWidgetImpl(StringHash type) = 0;
+
+private:
+    UniquePtr<AbstractUI> defaultHost_;
+    SharedPtr<GenericMainWindow> mainWindow_;
 };
 
 }

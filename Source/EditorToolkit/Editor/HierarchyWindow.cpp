@@ -8,7 +8,16 @@ namespace Urho3D
 
 HierarchyWindow::HierarchyWindow(Context* context) : Object(context)
 {
-    CreateWidgets(GetSubsystem<GenericUI>()->GetDefaultHost());
+}
+
+void HierarchyWindow::Initialize(AbstractUI* ui)
+{
+    dialog_ = ui->CreateWidget<GenericDialog>();
+    dialog_->SetName("Hierarchy");
+
+    hierarchyList_ = dialog_->CreateChild<GenericHierarchyList>();
+    SubscribeToEvent(hierarchyList_, E_GENERICWIDGETCLICKED, URHO3D_HANDLER(HierarchyWindow, HandleListSelectionChanged));
+    SetScene(scene_);
 }
 
 void HierarchyWindow::SetScene(Scene* scene)
@@ -54,16 +63,6 @@ Selection::ObjectSet HierarchyWindow::GetSelectedObjects()
     Selection::ObjectSet result;
     GatherHierarchyListSelections(result);
     return result;
-}
-
-void HierarchyWindow::CreateWidgets(GenericUIHost* host)
-{
-    dialog_ = host->CreateWidget<GenericDialog>();
-    dialog_->SetName("Hierarchy");
-
-    hierarchyList_ = dialog_->CreateChild<GenericHierarchyList>();
-    SubscribeToEvent(hierarchyList_, E_GENERICWIDGETCLICKED, URHO3D_HANDLER(HierarchyWindow, HandleListSelectionChanged));
-    SetScene(scene_);
 }
 
 GenericHierarchyListItem* HierarchyWindow::FindItem(Object* object)
