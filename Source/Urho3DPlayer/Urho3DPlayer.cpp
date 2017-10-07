@@ -106,8 +106,7 @@ public:
         viewportLayout_->SetScene(scene_);
         viewportLayout_->SetCameraTransform(scene_->GetChild("Camera"));
 
-        auto editorInput = MakeShared<UrhoEditorInput>(context_);
-        editorInput->SetViewportLayout(viewportLayout_);
+        auto editorInput = MakeShared<StandardEditorInput>(context_, ui.GetInput(), viewportLayout_);
 
         auto cameraController = MakeShared<CameraController>(context_);
         cameraController->SetCamera(&viewportLayout_->GetCurrentCamera());
@@ -235,7 +234,7 @@ int Main()
     return applicaton.exec();
 }
 
-// URHO3D_DEFINE_MAIN(Main())
+URHO3D_DEFINE_MAIN(Main())
 
 //////////////////////////////////////////////////////////////////////////
 class EditorApplication : public Application
@@ -266,4 +265,4 @@ private:
 };
 
 
-URHO3D_DEFINE_APPLICATION_MAIN(EditorApplication)
+// URHO3D_DEFINE_APPLICATION_MAIN(EditorApplication)

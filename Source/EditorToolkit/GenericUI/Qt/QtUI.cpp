@@ -235,4 +235,9 @@ GenericMainWindow* QtUI::GetMainWindow()
     return &mainWindow_;
 }
 
+AbstractInput* QtUI::GetInput()
+{
+    return mainWindow_.GetUrhoWidget().GetInput();
+}
+
 }

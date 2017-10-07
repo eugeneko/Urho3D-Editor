@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../UrhoUI.h"
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Engine/Engine.h>
 #include <Urho3D/IO/PackageFile.h>
@@ -11,6 +12,41 @@
 
 namespace Urho3D
 {
+
+/// Qt input.
+class QtInput : public UrhoInput
+{
+public:
+    /// Construct.
+    QtInput(Context* context);
+
+    /// Process key press.
+    void OnKeyPress(Qt::Key key);
+    /// Process key release.
+    void OnKeyRelease(Qt::Key key);
+    /// Process mouse wheel.
+    void OnWheel(int delta);
+    /// Process focus out.
+    void OnFocusOut();
+    /// End frame.
+    void EndFrame();
+
+    /// \see AbstractInput::IsUIHovered
+    bool IsKeyDown(int key) const override;
+    /// \see AbstractInput::IsUIHovered
+    bool IsKeyPressed(int key) const override;
+    /// \see AbstractInput::IsUIHovered
+    int GetMouseWheelMove() const override;
+
+private:
+    /// Keys pressed.
+    HashSet<int> keysPressed_;
+    /// Keys down.
+    HashSet<int> keysDown_;
+    /// Mouse wheel delta.
+    int mouseWheelDelta_ = 0;
+
+};
 
 /// Urho3D widget that owns context and all systems.
 class QtUrhoWidget : public QWidget, public Object
@@ -31,28 +67,20 @@ public:
     bool SetDefaultRenderPath(const QString& fileName);
     /// Returns whether the Urho3D systems initialized.
     bool IsInitialized() const { return engine_->IsInitialized(); }
-
-signals:
-    /// Signals that key is pressed.
-    void keyPressed(QKeyEvent* event);
-    /// Signals that key is released.
-    void keyReleased(QKeyEvent* event);
-    /// Signals that wheel is moved.
-    void wheelMoved(QWheelEvent* event);
-    /// Signals that widget lost focus.
-    void focusOut();
+    /// Get input.
+    AbstractInput* GetInput() { return input_; }
 
 private slots:
     /// Handle main timer.
     void OnTimer();
 
 protected:
-    virtual QPaintEngine * paintEngine() const override;
-    virtual void paintEvent(QPaintEvent *event) override;
-    virtual void keyPressEvent(QKeyEvent *event) override;
-    virtual void keyReleaseEvent(QKeyEvent *event) override;
-    virtual void wheelEvent(QWheelEvent * event) override;
-    virtual void focusOutEvent(QFocusEvent *event) override;
+    QPaintEngine* paintEngine() const override;
+    void paintEvent(QPaintEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+    void keyReleaseEvent(QKeyEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void focusOutEvent(QFocusEvent* event) override;
 
 private:
     void RunFrame();
@@ -62,63 +90,9 @@ private:
     SharedPtr<Engine> engine_;
     /// Main timer.
     QTimer timer_;
+    /// Input.
+    SharedPtr<QtInput> input_;
 
-};
-
-class QtUrhoClientWidget;
-
-/// Urho3D host that holds Urho3D widget. Shan't be used as display widget.
-class QtUrhoHost : private QWidget
-{
-    Q_OBJECT
-
-public:
-    /// Construct.
-    QtUrhoHost(QWidget* parent = nullptr);
-    /// Initialize Urho3D systems. If systems are already initialized, partial initialization is performed.
-    bool Initialize(const VariantMap& parameters) { return urhoWidget_->Initialize(parameters); }
-    /// Get widget.
-    QtUrhoWidget& GetWidget() const { return *urhoWidget_; }
-
-    /// Get current client.
-    QtUrhoClientWidget* GetOwner() const { return client_; }
-    /// Set current client.
-    void SetOwner(QtUrhoClientWidget* client);
-
-private:
-    using QWidget::setVisible;
-
-    /// Urho3D context.
-    SharedPtr<Context> context_;
-    /// Urho3D widget.
-    QScopedPointer<QtUrhoWidget> urhoWidget_;
-    /// Owner.
-    QtUrhoClientWidget* client_ = nullptr;
-};
-
-/// Urho3D client widget. Multiple clients may share single host. However, only one client is able to display host content.
-class QtUrhoClientWidget : public QWidget
-{
-    Q_OBJECT
-
-public:
-    /// Construct.
-    QtUrhoClientWidget(QtUrhoHost& host, QWidget* parent = nullptr);
-    /// Destroy.
-    virtual ~QtUrhoClientWidget();
-
-    /// Acquire ownership over host.
-    void Acquire();
-    /// Release ownership.
-    void Release();
-
-private:
-    /// Host.
-    QtUrhoHost& host_;
-    /// Layout.
-    QVBoxLayout* layout_;
-    /// Placeholder.
-    QLabel* placeholder_;
 };
 
 }

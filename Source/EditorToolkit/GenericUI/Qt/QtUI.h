@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../GenericUI.h"
+#include "../UrhoUI.h"
 #include "QtUrhoWidget.h"
 #include <QApplication>
 #include <QMainWindow>
@@ -70,6 +71,7 @@ public:
     GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) override;
     Context* GetContext() override;
     GenericMainWindow* GetMainWindow() override;
+    AbstractInput* GetInput() override;
 
 private:
     QtMainWindow& mainWindow_;
@@ -82,6 +84,7 @@ public:
     QtMainWindow(QApplication& application);
     Context* GetContext() { return context_; }
     GenericDialog* AddDialog(DialogLocationHint hint) override;
+    QtUrhoWidget& GetUrhoWidget() { return urhoWidget_; }
 private:
     SharedPtr<Context> context_;
     QApplication& application_;

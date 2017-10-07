@@ -9,6 +9,7 @@ namespace Urho3D
 {
 
 class UrhoUI;
+class UI;
 
 class UrhoDialog : public GenericDialog
 {
@@ -75,18 +76,57 @@ private:
     Vector<SharedPtr<UrhoDialog>> dialogs_;
 };
 
+class UrhoInput : public AbstractInput, public Object
+{
+    URHO3D_OBJECT(UrhoInput, Object);
+
+public:
+    /// Construct.
+    UrhoInput(Context* context);
+
+    /// \see AbstractInput::SetMouseMode
+    void SetMouseMode(MouseMode mouseMode) override;
+    /// \see AbstractInput::IsUIFocused
+    bool IsUIFocused() const override;
+    /// \see AbstractInput::IsUIHovered
+    bool IsUIHovered() const override;
+
+    /// \see AbstractInput::IsUIHovered
+    bool IsKeyDown(int key) const override;
+    /// \see AbstractInput::IsUIHovered
+    bool IsKeyPressed(int key) const override;
+    /// \see AbstractInput::IsUIHovered
+    bool IsMouseButtonDown(int mouseButton) const override;
+    /// \see AbstractInput::IsUIHovered
+    bool IsMouseButtonPressed(int mouseButton) const override;
+    /// \see AbstractInput::IsUIHovered
+    IntVector2 GetMousePosition() const override;
+    /// \see AbstractInput::IsUIHovered
+    IntVector2 GetMouseMove() const override;
+    /// \see AbstractInput::IsUIHovered
+    int GetMouseWheelMove() const override;
+
+private:
+    /// Input.
+    Input* input_ = nullptr;
+    /// UI.
+    UI* ui_ = nullptr;
+};
+
 class UrhoUI : public Object, public AbstractUI
 {
     URHO3D_OBJECT(UrhoUI, Object);
 
 public:
-    UrhoUI(Context* context) : Object(context), mainWindow_(context, *this) { }
+    UrhoUI(Context* context);
     GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) override;
     Context* GetContext() override { return Object::GetContext(); }
     GenericMainWindow* GetMainWindow() override { return &mainWindow_; }
+    AbstractInput* GetInput() override { return &input_; }
 
 private:
     UrhoMainWindow mainWindow_;
+    UrhoInput input_;
 
 };
 

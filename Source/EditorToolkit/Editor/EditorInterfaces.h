@@ -9,7 +9,7 @@ namespace Urho3D
 class UI;
 class Camera;
 
-/// Interface of editor input provider.
+/// Interface of editor context.
 class AbstractEditorInput : public Object
 {
     URHO3D_OBJECT(AbstractEditorInput, Object);

@@ -2,11 +2,11 @@
 
 #include "EditorInterfaces.h"
 #include <Urho3D/Math/Ray.h>
-#include <Urho3D/Input/Input.h>
 
 namespace Urho3D
 {
 
+class AbstractInput;
 class EditorViewportLayout;
 
 /// Editor base.
@@ -37,14 +37,14 @@ private:
     Vector<SharedPtr<Object>> subsystems_;
 };
 
-/// Urho Editor input interface.
-class UrhoEditorInput : public AbstractEditorInput
+/// Standard Editor input.
+class StandardEditorInput : public AbstractEditorInput
 {
-    URHO3D_OBJECT(UrhoEditorInput, AbstractEditorInput);
+    URHO3D_OBJECT(StandardEditorInput, AbstractEditorInput);
 
 public:
     /// Construct.
-    UrhoEditorInput(Context* context);
+    StandardEditorInput(Context* context, AbstractInput* input, EditorViewportLayout* viewportLayout);
     /// Set viewport layout.
     /// \todo replace with interface
     void SetViewportLayout(EditorViewportLayout* viewportLayout);
@@ -93,9 +93,7 @@ public:
 
 private:
     /// Input.
-    Input* input_ = nullptr;
-    /// UI.
-    UI* ui_ = nullptr;
+    AbstractInput* input_ = nullptr;
     /// Viewport layout.
     EditorViewportLayout* viewportLayout_ = nullptr;
 

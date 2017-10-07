@@ -163,6 +163,73 @@ GenericDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
 }
 
 //////////////////////////////////////////////////////////////////////////
+UrhoInput::UrhoInput(Context* context)
+    : Object(context)
+    , input_(GetSubsystem<Input>())
+    , ui_(GetSubsystem<UI>())
+{
+
+}
+
+void UrhoInput::SetMouseMode(Urho3D::MouseMode mouseMode)
+{
+    input_->SetMouseMode(mouseMode);
+}
+
+bool UrhoInput::IsUIFocused() const
+{
+    return ui_->HasModalElement() || ui_->GetFocusElement();
+}
+
+bool UrhoInput::IsUIHovered() const
+{
+    return !!ui_->GetElementAt(GetMousePosition());
+}
+
+bool UrhoInput::IsKeyDown(int key) const
+{
+    return input_->GetKeyDown(key);
+}
+
+bool UrhoInput::IsKeyPressed(int key) const
+{
+    return input_->GetKeyPress(key);
+}
+
+bool UrhoInput::IsMouseButtonDown(int mouseButton) const
+{
+    return input_->GetMouseButtonDown(mouseButton);
+}
+
+bool UrhoInput::IsMouseButtonPressed(int mouseButton) const
+{
+    return input_->GetMouseButtonPress(mouseButton);
+}
+
+IntVector2 UrhoInput::GetMousePosition() const
+{
+    return input_->GetMousePosition();
+}
+
+IntVector2 UrhoInput::GetMouseMove() const
+{
+    return input_->GetMouseMove();
+}
+
+int UrhoInput::GetMouseWheelMove() const
+{
+    return input_->GetMouseMoveWheel();
+}
+
+//////////////////////////////////////////////////////////////////////////
+UrhoUI::UrhoUI(Context* context)
+    : Object(context)
+    , mainWindow_(context, *this)
+    , input_(context)
+{
+
+}
+
 GenericWidget* UrhoUI::CreateWidget(StringHash type, GenericWidget* parent)
 {
     GenericWidget* widget = nullptr;

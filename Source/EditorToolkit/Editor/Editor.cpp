@@ -1,25 +1,20 @@
 #include "Editor.h"
 #include "EditorViewportLayout.h"
+#include "../GenericUI/GenericUI.h"
 #include <Urho3D/Core/CoreEvents.h>
-#include <Urho3D/UI/UI.h>
 
 namespace Urho3D
 {
 
 //////////////////////////////////////////////////////////////////////////
-UrhoEditorInput::UrhoEditorInput(Context* context)
+StandardEditorInput::StandardEditorInput(Context* context, AbstractInput* input, EditorViewportLayout* viewportLayout)
     : AbstractEditorInput(context)
-    , input_(GetSubsystem<Input>())
-    , ui_(GetSubsystem<UI>())
+    , input_(input)
+    , viewportLayout_(viewportLayout)
 {
 }
 
-void UrhoEditorInput::SetViewportLayout(EditorViewportLayout* viewportLayout)
-{
-    viewportLayout_ = viewportLayout;
-}
-
-void UrhoEditorInput::ResetGrab()
+void StandardEditorInput::ResetGrab()
 {
     grabbedKeys_.Clear();
     /// Grabbed mouse buttons.
@@ -28,92 +23,92 @@ void UrhoEditorInput::ResetGrab()
     grabbedMouseMove_ = false;
 }
 
-void UrhoEditorInput::SetMouseMode(Urho3D::MouseMode mouseMode)
+void StandardEditorInput::SetMouseMode(Urho3D::MouseMode mouseMode)
 {
     input_->SetMouseMode(mouseMode);
 }
 
-bool UrhoEditorInput::IsUIFocused() const
+bool StandardEditorInput::IsUIFocused() const
 {
-    return ui_->HasModalElement() || ui_->GetFocusElement();
+    return input_->IsUIFocused();
 }
 
-bool UrhoEditorInput::IsUIHovered() const
+bool StandardEditorInput::IsUIHovered() const
 {
-    return !!ui_->GetElementAt(GetMousePosition());
+    return input_->IsUIHovered();
 }
 
-bool UrhoEditorInput::IsKeyDown(int key) const
+bool StandardEditorInput::IsKeyDown(int key) const
 {
-    return input_->GetKeyDown(key);
+    return input_->IsKeyDown(key);
 }
 
-bool UrhoEditorInput::IsKeyPressed(int key) const
+bool StandardEditorInput::IsKeyPressed(int key) const
 {
-    return input_->GetKeyPress(key);
+    return input_->IsKeyPressed(key);
 }
 
-bool UrhoEditorInput::IsMouseButtonDown(int mouseButton) const
+bool StandardEditorInput::IsMouseButtonDown(int mouseButton) const
 {
-    return input_->GetMouseButtonDown(mouseButton);
+    return input_->IsMouseButtonDown(mouseButton);
 }
 
-bool UrhoEditorInput::IsMouseButtonPressed(int mouseButton) const
+bool StandardEditorInput::IsMouseButtonPressed(int mouseButton) const
 {
-    return input_->GetMouseButtonPress(mouseButton);
+    return input_->IsMouseButtonPressed(mouseButton);
 }
 
-IntVector2 UrhoEditorInput::GetMousePosition() const
+IntVector2 StandardEditorInput::GetMousePosition() const
 {
     return input_->GetMousePosition();
 }
 
-IntVector2 UrhoEditorInput::GetMouseMove() const
+IntVector2 StandardEditorInput::GetMouseMove() const
 {
     return input_->GetMouseMove();
 }
 
-int UrhoEditorInput::GetMouseWheelMove() const
+int StandardEditorInput::GetMouseWheelMove() const
 {
-    return input_->GetMouseMoveWheel();
+    return input_->GetMouseWheelMove();
 }
 
-Ray UrhoEditorInput::GetMouseRay() const
+Ray StandardEditorInput::GetMouseRay() const
 {
     return viewportLayout_ ? viewportLayout_->GetCurrentCameraRay() : Ray();
 }
 
-Camera* UrhoEditorInput::GetCurrentCamera() const
+Camera* StandardEditorInput::GetCurrentCamera() const
 {
     return &viewportLayout_->GetCurrentCamera();
 }
 
-void UrhoEditorInput::GrabKey(int key)
+void StandardEditorInput::GrabKey(int key)
 {
     grabbedKeys_.Insert(key);
 }
 
-bool UrhoEditorInput::IsKeyGrabbed(int key) const
+bool StandardEditorInput::IsKeyGrabbed(int key) const
 {
     return grabbedKeys_.Contains(key);
 }
 
-void UrhoEditorInput::GrabMouseButton(int mouseButton)
+void StandardEditorInput::GrabMouseButton(int mouseButton)
 {
     grabbedMouseButtons_.Insert(mouseButton);
 }
 
-bool UrhoEditorInput::IsMouseButtonGrabbed(int mouseButton) const
+bool StandardEditorInput::IsMouseButtonGrabbed(int mouseButton) const
 {
     return grabbedMouseButtons_.Contains(mouseButton);
 }
 
-void UrhoEditorInput::GrabMouseMove()
+void StandardEditorInput::GrabMouseMove()
 {
     grabbedMouseMove_ = true;
 }
 
-bool UrhoEditorInput::IsMouseMoveGrabbed() const
+bool StandardEditorInput::IsMouseMoveGrabbed() const
 {
     return grabbedMouseMove_;
 }
