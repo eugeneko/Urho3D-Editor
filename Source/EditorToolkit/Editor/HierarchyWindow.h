@@ -12,13 +12,24 @@ class AbstractUI;
 class Scene;
 class Node;
 
+class HierarchyWindowItem : public GenericHierarchyListItem
+{
+public:
+    HierarchyWindowItem(Object* object) : GenericHierarchyListItem(object->GetContext()), object_(object) { }
+    Object* GetObject() { return object_; }
+
+    String GetText() override;
+
+private:
+    Object* object_ = nullptr;
+};
+
 class HierarchyWindow : public Object
 {
     URHO3D_OBJECT(HierarchyWindow, Object);
 
 public:
-    HierarchyWindow(Context* context);
-    void Initialize(AbstractUI* ui);
+    HierarchyWindow(AbstractUI& ui);
     void SetScene(Scene* scene);
     void SetSelection(Selection* selection);
     Selection::ObjectSet GetSelectedObjects();
@@ -29,6 +40,7 @@ private:
     void Subtract(const Selection::ObjectSet& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const;
     /// Gather selection from hierarchy list.
     void GatherHierarchyListSelections(Selection::ObjectSet& result) const;
+    GenericHierarchyListItem* CreateListItem(Object* object);
     void AddNode(Node* node);
 
     // @name Editor and UI Events

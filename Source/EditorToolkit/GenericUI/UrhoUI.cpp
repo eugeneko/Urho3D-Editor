@@ -8,9 +8,10 @@
 namespace Urho3D
 {
 
-UrhoDialog::UrhoDialog(Context* context)
-    : GenericDialog(context)
+UrhoDialog::UrhoDialog(AbstractUI& ui, GenericWidget* parent)
+    : GenericDialog(ui, parent)
 {
+    {
     UI* ui = GetSubsystem<UI>();
     UIElement* uiRoot = ui->GetRoot();
 
@@ -38,6 +39,23 @@ UrhoDialog::UrhoDialog(Context* context)
     buttonClose->SetName("CloseButton");
 
     titleBar->SetFixedHeight(titleBar->GetMinHeight());
+    }
+}
+
+void UrhoDialog::SetBodyWidget(GenericWidget* widget)
+{
+    if (bodyElement_)
+    {
+        window_->RemoveChild(bodyElement_);
+        body_ = nullptr;
+        bodyElement_ = nullptr;
+    }
+    if (auto urhoWidget = dynamic_cast<UrhoWidget*>(widget))
+    {
+        body_ = widget;
+        bodyElement_ = urhoWidget->GetWidget();
+        window_->AddChild(bodyElement_);
+    }
 }
 
 void UrhoDialog::SetName(const String& name)
@@ -45,15 +63,10 @@ void UrhoDialog::SetName(const String& name)
     windowTitle_->SetText(name);
 }
 
-void UrhoDialog::OnChildAdded(GenericWidget* widget)
-{
-    if (auto urhoWidget = dynamic_cast<UrhoWidget*>(widget))
-        window_->AddChild(urhoWidget->GetWidget());
-}
-
 //////////////////////////////////////////////////////////////////////////
-UrhoHierarchyList::UrhoHierarchyList(Context* context)
-    : GenericHierarchyList(context)
+UrhoHierarchyList::UrhoHierarchyList(AbstractUI& ui, GenericWidget* parent)
+    : GenericHierarchyList(ui, parent)
+    , rootItem_(context_)
 {
     hierarchyList_ = new ListView(context_);
     hierarchyList_->SetInternal(true);
@@ -66,11 +79,23 @@ UrhoHierarchyList::UrhoHierarchyList(Context* context)
     SubscribeToEvent(hierarchyList_, E_ITEMCLICKED, URHO3D_HANDLER(UrhoHierarchyList, HandleItemClicked));
 }
 
+void UrhoHierarchyList::AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent)
+{
+    hierarchyList_->DisableInternalLayoutUpdate();
+    if (parent)
+        parent->InsertChild(item, index);
+    else
+        rootItem_.InsertChild(item, index);
+    InsertItem(item, index, parent);
+    hierarchyList_->EnableInternalLayoutUpdate();
+    hierarchyList_->UpdateInternalLayout();
+}
+
 void UrhoHierarchyList::SelectItem(GenericHierarchyListItem* item)
 {
-    if (auto urhoItem = dynamic_cast<UrhoHierarchyListItem*>(item))
+    if (auto itemWidget = dynamic_cast<UIElement*>(item->GetInternalPointer()))
     {
-        const unsigned index = hierarchyList_->FindItem(urhoItem->GetWidget());
+        const unsigned index = hierarchyList_->FindItem(itemWidget);
         if (!hierarchyList_->IsSelected(index))
             hierarchyList_->ToggleSelection(index);
     }
@@ -78,9 +103,9 @@ void UrhoHierarchyList::SelectItem(GenericHierarchyListItem* item)
 
 void UrhoHierarchyList::DeselectItem(GenericHierarchyListItem* item)
 {
-    if (auto urhoItem = dynamic_cast<UrhoHierarchyListItem*>(item))
+    if (auto itemWidget = dynamic_cast<UIElement*>(item->GetInternalPointer()))
     {
-        const unsigned index = hierarchyList_->FindItem(urhoItem->GetWidget());
+        const unsigned index = hierarchyList_->FindItem(itemWidget);
         if (hierarchyList_->IsSelected(index))
             hierarchyList_->ToggleSelection(index);
     }
@@ -91,55 +116,59 @@ void UrhoHierarchyList::GetSelection(ItemVector& result)
     for (unsigned index : hierarchyList_->GetSelections())
     {
         UIElement* element = hierarchyList_->GetItem(index);
-        if (auto item = dynamic_cast<UrhoHierarchyListItem::ItemWidget*>(element))
-            result.Push(item->GetGenericItem());
+        if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
+            result.Push(item->GetItem());
     }
 }
 
-void UrhoHierarchyList::OnChildAdded(GenericWidget* widget)
+void UrhoHierarchyList::InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent)
 {
-    if (auto urhoWidget = dynamic_cast<UrhoWidget*>(widget))
-        hierarchyList_->InsertItem(M_MAX_UNSIGNED, urhoWidget->GetWidget());
-    if (auto listItem = dynamic_cast<UrhoHierarchyListItem*>(widget))
-        listItem->SetParentListView(hierarchyList_);
+    auto itemWidget = MakeShared<UrhoHierarchyListItemWidget>(context_, item);
+    itemWidget->SetText(item->GetText());
+    item->SetInternalPointer(itemWidget);
+
+    UIElement* parentWidget = parent ? dynamic_cast<UIElement*>(parent->GetInternalPointer()) : nullptr;
+    if (itemWidget)
+    {
+        hierarchyList_->InsertItem(M_MAX_UNSIGNED, itemWidget, parentWidget);
+        for (unsigned i = 0; i < item->GetNumChildren(); ++i)
+            InsertItem(item->GetChild(i), M_MAX_UNSIGNED, item);
+    }
 }
 
 void UrhoHierarchyList::HandleItemClicked(StringHash /*eventType*/, VariantMap& eventData)
 {
-    if (auto item = dynamic_cast<UrhoHierarchyListItem::ItemWidget*>(eventData[ItemClicked::P_ITEM].GetPtr()))
+    RefCounted* element = eventData[ItemClicked::P_ITEM].GetPtr();
+    if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
     {
         SendEvent(E_GENERICWIDGETCLICKED,
             GenericWidgetClicked::P_ELEMENT, this,
-            GenericWidgetClicked::P_ITEM, item->GetGenericItem());
+            GenericWidgetClicked::P_ITEM, item->GetItem());
     }
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoHierarchyListItem::UrhoHierarchyListItem(Context* context)
-    : GenericHierarchyListItem(context)
+UrhoHierarchyListItemWidget::UrhoHierarchyListItemWidget(Context* context, GenericHierarchyListItem* item)
+    : Text(context)
+    , item_(item)
 {
-    text_ = MakeShared<ItemWidget>(context_, this);
-    text_->SetStyle("FileSelectorListText");
-}
-
-void UrhoHierarchyListItem::OnChildAdded(GenericWidget* widget)
-{
-    if (auto urhoWidget = dynamic_cast<UrhoWidget*>(widget))
-        hierarchyList_->InsertItem(M_MAX_UNSIGNED, urhoWidget->GetWidget(), GetWidget());
-    if (auto listItem = dynamic_cast<UrhoHierarchyListItem*>(widget))
-        listItem->SetParentListView(hierarchyList_);
+    SetStyle("FileSelectorListText");
 }
 
 //////////////////////////////////////////////////////////////////////////
-GenericWidget* UrhoUI::CreateWidgetImpl(StringHash type)
+GenericDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
 {
-    if (type == GenericDialog::GetTypeStatic())
-        return new UrhoDialog(context_);
-    else if (type == GenericHierarchyList::GetTypeStatic())
-        return new UrhoHierarchyList(context_);
-    else if (type == GenericHierarchyListItem::GetTypeStatic())
-        return new UrhoHierarchyListItem(context_);
-    return nullptr;
+    dialogs_.Push(MakeShared<UrhoDialog>(ui_, nullptr));
+    return dialogs_.Back();
+}
+
+//////////////////////////////////////////////////////////////////////////
+GenericWidget* UrhoUI::CreateWidget(StringHash type, GenericWidget* parent)
+{
+    GenericWidget* widget = nullptr;
+    if (type == GenericHierarchyList::GetTypeStatic())
+        widget = new UrhoHierarchyList(*this, parent);
+    return widget;
 }
 
 }

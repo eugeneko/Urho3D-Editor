@@ -6,16 +6,24 @@
 namespace Urho3D
 {
 
-HierarchyWindow::HierarchyWindow(Context* context) : Object(context)
+String HierarchyWindowItem::GetText()
 {
+    if (Scene* scene = dynamic_cast<Scene*>(object_))
+        return scene->GetName().Empty() ? "Scene" : scene->GetName();
+    else if (Node* node = dynamic_cast<Node*>(object_))
+        return node->GetName().Empty() ? "Node" : node->GetName();
+    return String::EMPTY;
 }
 
-void HierarchyWindow::Initialize(AbstractUI* ui)
+//////////////////////////////////////////////////////////////////////////
+HierarchyWindow::HierarchyWindow(AbstractUI& ui)
+    : Object(ui.GetContext())
 {
-    dialog_ = ui->CreateWidget<GenericDialog>();
+    GenericMainWindow* mainWindow = ui.GetMainWindow();
+    dialog_ = mainWindow->AddDialog(DialogLocationHint::DockLeft);
     dialog_->SetName("Hierarchy");
 
-    hierarchyList_ = dialog_->CreateChild<GenericHierarchyList>();
+    hierarchyList_ = dialog_->CreateBodyWidget<GenericHierarchyList>();
     SubscribeToEvent(hierarchyList_, E_GENERICWIDGETCLICKED, URHO3D_HANDLER(HierarchyWindow, HandleListSelectionChanged));
     SetScene(scene_);
 }
@@ -85,28 +93,30 @@ void HierarchyWindow::GatherHierarchyListSelections(Selection::ObjectSet& result
 {
     // TODO: Cache
     for (GenericHierarchyListItem* item : hierarchyList_->GetSelection())
-        if (Object* object = item->GetObject())
-            result.Insert(object);
+        if (HierarchyWindowItem* derivedItem = static_cast<HierarchyWindowItem*>(item))
+            if (Object* object = derivedItem->GetObject())
+                result.Insert(object);
+}
+
+GenericHierarchyListItem* HierarchyWindow::CreateListItem(Object* object)
+{
+    auto item = new HierarchyWindowItem(object);
+    objectsToItems_[WeakPtr<Object>(object)] = item;
+    if (Node* node = dynamic_cast<Node*>(object))
+    {
+        for (Node* child : node->GetChildren())
+            item->InsertChild(CreateListItem(child), M_MAX_UNSIGNED);
+    }
+    return item;
 }
 
 void HierarchyWindow::AddNode(Node* node)
 {
     Node* parent = node->GetParent();
     GenericHierarchyListItem* parentItem = FindItem(parent);
-    GenericHierarchyListItem* objectItem = parentItem
-        ? parentItem->CreateChild<GenericHierarchyListItem>()
-        : hierarchyList_->CreateChild<GenericHierarchyListItem>();
+    GenericHierarchyListItem* objectItem = CreateListItem(node);
 
-    objectsToItems_[WeakPtr<Object>(node)] = objectItem;
-
-    objectItem->SetObject(node);
-    if (Scene* scene = dynamic_cast<Scene*>(node))
-        objectItem->SetText(scene->GetName().Empty() ? "Scene" : scene->GetName());
-    else
-        objectItem->SetText(node->GetName().Empty() ? "Node" : node->GetName());
-
-    for (Node* child : node->GetChildren())
-        AddNode(child);
+    hierarchyList_->AddItem(objectItem, M_MAX_UNSIGNED, parentItem);
 }
 
 void HierarchyWindow::HandleListSelectionChanged(StringHash eventType, VariantMap& eventData)

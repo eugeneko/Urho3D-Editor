@@ -8,20 +8,22 @@
 namespace Urho3D
 {
 
+class UrhoUI;
+
 class UrhoDialog : public GenericDialog
 {
     URHO3D_OBJECT(UrhoDialog, GenericDialog);
 
 public:
-    UrhoDialog(Context* context);
+    UrhoDialog(AbstractUI& ui, GenericWidget* parent);
+    void SetBodyWidget(GenericWidget* widget) override;
     void SetName(const String& name) override;
-
-protected:
-    void OnChildAdded(GenericWidget* widget) override;
 
 private:
     SharedPtr<Window> window_;
     Text* windowTitle_ = nullptr;
+    SharedPtr<GenericWidget> body_;
+    UIElement* bodyElement_ = nullptr;
 };
 
 class UrhoWidget
@@ -30,53 +32,47 @@ public:
     virtual UIElement* GetWidget() = 0;
 };
 
+class UrhoHierarchyListItemWidget : public Text
+{
+public:
+    UrhoHierarchyListItemWidget(Context* context, GenericHierarchyListItem* item);
+    GenericHierarchyListItem* GetItem() { return item_; }
+private:
+    GenericHierarchyListItem* item_ = nullptr;;
+};
+
 class UrhoHierarchyList : public GenericHierarchyList, public UrhoWidget
 {
     URHO3D_OBJECT(UrhoHierarchyList, GenericHierarchyList);
 
 public:
-    UrhoHierarchyList(Context* context);
+    UrhoHierarchyList(AbstractUI& ui, GenericWidget* parent);
     UIElement* GetWidget() override { return hierarchyList_; }
+    void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) override;
     void SelectItem(GenericHierarchyListItem* item) override;
     void DeselectItem(GenericHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
 
-protected:
-    void OnChildAdded(GenericWidget* widget) override;
-
 private:
+    void InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent);
     void HandleItemClicked(StringHash eventType, VariantMap& eventData);
 
 private:
     SharedPtr<ListView> hierarchyList_;
+    GenericHierarchyListItem rootItem_;
 };
 
-class UrhoHierarchyListItem : public GenericHierarchyListItem, public UrhoWidget
+class UrhoMainWindow : public GenericMainWindow, public Object
 {
-    URHO3D_OBJECT(UrhoHierarchyListItem, GenericHierarchyListItem);
+    URHO3D_OBJECT(UrhoMainWindow, Object);
 
 public:
-    class ItemWidget : public Text
-    {
-    public:
-        ItemWidget(Context* context, UrhoHierarchyListItem* item) : Text(context), item_(item) { }
-        UrhoHierarchyListItem* GetGenericItem() { return item_; }
-    private:
-        UrhoHierarchyListItem* item_ = nullptr;;
-    };
-
-    UrhoHierarchyListItem(Context* context);
-    void SetParentListView(ListView* listView) { hierarchyList_ = listView; }
-    void SetText(const String& text) override { text_->SetText(text); }
-    UIElement* GetWidget() override { return text_; }
-
-protected:
-    void OnChildAdded(GenericWidget* widget) override;
+    UrhoMainWindow(Context* context, UrhoUI& ui) : GenericMainWindow(), Object(context), ui_(ui) { }
+    virtual GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
 
 private:
-    SharedPtr<ItemWidget> text_;
-    ListView* hierarchyList_ = nullptr;
-
+    UrhoUI& ui_;
+    Vector<SharedPtr<UrhoDialog>> dialogs_;
 };
 
 class UrhoUI : public Object, public AbstractUI
@@ -84,10 +80,13 @@ class UrhoUI : public Object, public AbstractUI
     URHO3D_OBJECT(UrhoUI, Object);
 
 public:
-    UrhoUI(Context* context) : Object(context) { }
+    UrhoUI(Context* context) : Object(context), mainWindow_(context, *this) { }
+    GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) override;
+    Context* GetContext() override { return Object::GetContext(); }
+    GenericMainWindow* GetMainWindow() override { return &mainWindow_; }
 
-protected:
-    GenericWidget* CreateWidgetImpl(StringHash type) override;
+private:
+    UrhoMainWindow mainWindow_;
 
 };
 

@@ -5,25 +5,42 @@
 namespace Urho3D
 {
 
-GenericWidget* GenericWidget::CreateChild(StringHash type)
+GenericWidget::GenericWidget(AbstractUI& ui, GenericWidget* parent)
+    : Object(ui.GetContext())
+    , ui_(ui)
+    , parent_(parent)
 {
-    SharedPtr<GenericWidget> child(ui_->CreateWidget(type));
-    children_.Push(child);
-    OnChildAdded(child);
-    return child;
-}
 
-void GenericWidget::OnChildAdded(GenericWidget* widget)
-{
 }
 
 //////////////////////////////////////////////////////////////////////////
-GenericWidget* AbstractUI::CreateWidget(StringHash type)
+GenericWidget* GenericDialog::CreateBodyWidget(StringHash type)
 {
-    GenericWidget* widget = CreateWidgetImpl(type);
-    if (widget)
-        widget->SetHost(this);
+    GenericWidget* widget = ui_.CreateWidget(type, this);
+    SetBodyWidget(widget);
     return widget;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void GenericHierarchyListItem::InsertChild(GenericHierarchyListItem* item, unsigned index)
+{
+    children_.Insert(index, SharedPtr<GenericHierarchyListItem>(item));
+    item->SetParent(this);
+}
+
+void GenericHierarchyListItem::RemoveChild(unsigned index)
+{
+    children_.Erase(index);
+}
+
+int GenericHierarchyListItem::GetIndex()
+{
+    if (parent_)
+    {
+        const unsigned idx = parent_->children_.IndexOf(SharedPtr<GenericHierarchyListItem>(this));
+        return idx < parent_->children_.Size() ? static_cast<int>(idx) : -1;
+    }
+    return 0;
 }
 
 }
