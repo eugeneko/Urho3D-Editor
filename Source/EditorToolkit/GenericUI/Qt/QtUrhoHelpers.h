@@ -23,7 +23,7 @@ inline String Cast(const QString& value) { return value.toStdString().c_str(); }
 inline QString Cast(const String& value) { return value.CString(); }
 
 /// Convert mouse button code from Urho3D to Qt.
-inline Qt::MouseButton ConvertMouseButton(int button)
+inline Qt::MouseButton CastMouseButton(int button)
 {
     switch (button)
     {
@@ -36,17 +36,10 @@ inline Qt::MouseButton ConvertMouseButton(int button)
     }
 }
 
-/// Vector of serializables.
-using SerializableVector = QVector<Serializable*>;
+/// Convert key code from Qt to Urho3D.
+int Cast(Qt::Key key);
 
-/// Gather serializables from container.
-template <class T>
-SerializableVector GatherSerializables(const T& container)
-{
-    SerializableVector result;
-    for (Serializable* item : container)
-        result.push_back(item);
-    return result;
-}
+/// Convert key code from Urho3D to Qt.
+Qt::Key CastKey(int key);
 
 }

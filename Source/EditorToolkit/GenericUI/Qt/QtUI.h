@@ -9,6 +9,7 @@
 #include <QTreeView>
 #include <QAbstractItemModel>
 #include <QHeaderView>
+#include <QAction>
 
 namespace Urho3D
 {
@@ -78,22 +79,43 @@ private:
 
 };
 
-class QtMainWindow : public GenericMainWindow
+class QtMenu : public GenericMenu
 {
+public:
+    QtMenu(QtMainWindow* host, QMenu* menu);
+    QtMenu(QtMainWindow* host, QAction* action);
+    GenericMenu* AddMenu(const String& name) override;
+    GenericMenu* AddAction(const String& name, const String& actionId) override;
+private:
+    QtMainWindow* host_ = nullptr;
+    QMenu* menu_ = nullptr;
+    QAction* action_ = nullptr;
+    QList<QtMenu> children_;
+};
+
+class QtMainWindow : public QMainWindow, public GenericMainWindow
+{
+    Q_OBJECT
+
 public:
     QtMainWindow(QApplication& application);
 
     GenericDialog* AddDialog(DialogLocationHint hint) override;
-    void AddAction(const AbstractAction& action) override;
+    void AddAction(const AbstractAction& actionDesc) override;
+    GenericMenu* AddMenu(const String& name) override;
 
     Context* GetContext() { return context_; }
     QtUrhoWidget& GetUrhoWidget() { return urhoWidget_; }
+    QAction* FindAction(const String& id) const;
+
 private:
     SharedPtr<Context> context_;
     QApplication& application_;
-    QMainWindow mainWindow_;
     QtUrhoWidget urhoWidget_;
     QtUI ui_;
+
+    HashMap<String, QAction*> actions_;
+    QList<QtMenu> menus_;
 };
 
 }

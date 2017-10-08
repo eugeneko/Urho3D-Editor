@@ -162,9 +162,14 @@ GenericDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
     return dialogs_.Back();
 }
 
-void UrhoMainWindow::AddAction(const AbstractAction& action)
+void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)
 {
 
+}
+
+GenericMenu* UrhoMainWindow::AddMenu(const String& name)
+{
+    return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////

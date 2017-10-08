@@ -42,9 +42,17 @@ enum class DialogLocationHint
 
 struct AbstractAction
 {
-    String name_;
+    String id_;
+    String text_;
     std::function<void()> action_;
     KeyBinding keyBinding_;
+};
+
+class GenericMenu
+{
+public:
+    virtual GenericMenu* AddMenu(const String& name) = 0;
+    virtual GenericMenu* AddAction(const String& name, const String& actionId) = 0;
 };
 
 class GenericMainWindow
@@ -52,12 +60,12 @@ class GenericMainWindow
 
 public:
     virtual GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) = 0;
-    virtual void AddAction(const AbstractAction& action) = 0;
-    template <class T> void AddAction(const String& name, T function, KeyBinding keyBinding = KeyBinding::EMPTY)
+    virtual void AddAction(const AbstractAction& actionDesc) = 0;
+    template <class T> void AddAction(const String& id, KeyBinding keyBinding, T function)
     {
-        AddAction({ name, function, keyBinding });
+        AddAction({ id, "", function, keyBinding });
     }
-    //virtual GenericDocument* AddDocument() = 0;
+    virtual GenericMenu* AddMenu(const String& name) = 0;
 };
 
 // #TODO: Rename file

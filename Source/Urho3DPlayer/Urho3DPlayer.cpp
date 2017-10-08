@@ -209,9 +209,16 @@ public:
             });
         }
 
+        GenericMainWindow* mainWindow = ui.GetMainWindow();
+        mainWindow->AddAction("DeleteSelection", KeyBinding::Key(KEY_DELETE),
+            [=]()
+        {
+            // #TODO Implement me
+            selection->GetSelectedNodesAndComponents();
+        });
 
-//         GenericMainWindow* mainWindow = ui.GetMainWindow();
-//         mainWindow->AddDialog(DialogLocationHint::DockLeft);
+        GenericMenu* menuEdit = mainWindow->AddMenu("Edit");
+        menuEdit->AddAction("Delete", "DeleteSelection");
     }
 
 private:

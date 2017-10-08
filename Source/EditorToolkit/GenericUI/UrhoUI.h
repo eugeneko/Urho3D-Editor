@@ -70,7 +70,8 @@ class UrhoMainWindow : public GenericMainWindow, public Object
 public:
     UrhoMainWindow(Context* context, UrhoUI& ui) : GenericMainWindow(), Object(context), ui_(ui) { }
     GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
-    void AddAction(const AbstractAction& action) override;
+    void AddAction(const AbstractAction& actionDesc) override;
+    GenericMenu* AddMenu(const String& name) override;
 
 private:
     UrhoUI& ui_;

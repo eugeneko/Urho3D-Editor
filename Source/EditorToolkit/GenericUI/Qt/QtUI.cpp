@@ -1,6 +1,8 @@
 #include "QtUI.h"
 #include "QtUrhoHelpers.h"
 #include <Urho3D/Core/ProcessUtils.h>
+#include <QKeySequence>
+#include <QMenuBar>
 
 namespace Urho3D
 {
@@ -26,6 +28,18 @@ Qt::DockWidgetArea Cast(DialogLocationHint value)
     default:
         return Qt::NoDockWidgetArea;
     }
+}
+
+QKeySequence Cast(const KeyBinding& binding)
+{
+    int key = CastKey(binding.GetKey());
+    if (binding.GetShift() == ModifierState::Required)
+        key += Qt::SHIFT;
+    if (binding.GetCtrl() == ModifierState::Required)
+        key += Qt::CTRL;
+    if (binding.GetAlt() == ModifierState::Required)
+        key += Qt::ALT;
+    return QKeySequence(key);
 }
 
 }
@@ -196,29 +210,85 @@ void QtHierarchyList::GetSelection(ItemVector& result)
 }
 
 //////////////////////////////////////////////////////////////////////////
+QtMenu::QtMenu(QtMainWindow* host, QMenu* menu)
+    : host_(host)
+    , menu_(menu)
+{
+
+}
+
+QtMenu::QtMenu(QtMainWindow* host, QAction* action)
+    : host_(host)
+    , action_(action)
+{
+
+}
+
+GenericMenu* QtMenu::AddMenu(const String& name)
+{
+    if (!menu_)
+        return nullptr;
+    QMenu* childMenu = menu_->addMenu(Cast(name));
+    children_.push_back(QtMenu(host_, childMenu));
+    return &children_.back();
+}
+
+GenericMenu* QtMenu::AddAction(const String& name, const String& actionId)
+{
+    if (!menu_)
+        return nullptr;
+
+    QAction* childAction = host_->FindAction(actionId);
+    if (!childAction)
+        return nullptr;
+
+    childAction->setText(Cast(name));
+    menu_->addAction(childAction);
+    children_.push_back(QtMenu(host_, childAction));
+    return &children_.back();
+}
+
+//////////////////////////////////////////////////////////////////////////
 QtMainWindow::QtMainWindow(QApplication& application)
     : GenericMainWindow()
     , context_(new Context)
     , application_(application)
-    , mainWindow_()
     , urhoWidget_(*context_, nullptr)
     , ui_(*this)
 {
     urhoWidget_.Initialize(Engine::ParseParameters(GetArguments()));
-    mainWindow_.setCentralWidget(&urhoWidget_);
-    mainWindow_.showMaximized();
+    setCentralWidget(&urhoWidget_);
+    showMaximized();
 }
 
 GenericDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocationHint::Undocked*/)
 {
     auto widget = new QtDockDialog(ui_, nullptr);
-    mainWindow_.addDockWidget(Cast(hint), widget);
+    addDockWidget(Cast(hint), widget);
     return widget;
 }
 
-void QtMainWindow::AddAction(const AbstractAction& action)
+void QtMainWindow::AddAction(const AbstractAction& actionDesc)
 {
+    QAction* action = new QAction(this);
+    action->setText(Cast(actionDesc.text_));
+    action->setShortcut(Cast(actionDesc.keyBinding_));
+    connect(action, &QAction::triggered, this, actionDesc.action_);
+    actions_[actionDesc.id_] = action;
+}
 
+GenericMenu* QtMainWindow::AddMenu(const String& name)
+{
+    QMenu* menu = menuBar()->addMenu(Cast(name));
+    menus_.push_back(QtMenu(this, menu));
+    return &menus_.back();
+}
+
+QAction* QtMainWindow::FindAction(const String& id) const
+{
+    QAction* action = nullptr;
+    actions_.TryGetValue(id, action);
+    return action;
 }
 
 //////////////////////////////////////////////////////////////////////////

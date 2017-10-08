@@ -22,6 +22,7 @@ add_library(EditorToolkit
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/Qt/QtUI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/Qt/QtUrhoWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/Qt/QtUrhoWidget.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/Qt/QtUrhoHelpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/Qt/QtUrhoHelpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/EditorViewportLayout.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/EditorViewportLayout.h

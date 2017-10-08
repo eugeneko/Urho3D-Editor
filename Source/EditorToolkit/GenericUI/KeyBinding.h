@@ -35,6 +35,11 @@ public:
     friend KeyBinding operator +(KeyBinding lhs, const KeyBinding& rhs);
     bool IsDown(AbstractInput& input, bool ignoreGrabbed = true, bool grab = true) const;
     bool IsPressed(AbstractInput& input, bool ignoreGrabbed = true, bool grab = true) const;
+
+    int GetKey() const { return key_; }
+    ModifierState GetShift() const { return shift_; }
+    ModifierState GetAlt() const { return alt_; }
+    ModifierState GetCtrl() const { return ctrl_; }
 private:
     int mouseButton_ = -1;
     int key_ = -1;
