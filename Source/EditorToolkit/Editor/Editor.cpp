@@ -24,9 +24,9 @@ Camera* StandardEditorContext::GetCurrentCamera() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-Editor::Editor(AbstractUI& ui)
-    : Object(ui.GetContext())
-    , input_(ui.GetInput())
+Editor::Editor(AbstractMainWindow& mainWindow)
+    : Object(mainWindow.GetContext())
+    , input_(mainWindow.GetInput())
 {
     SubscribeToEvent(Urho3D::E_UPDATE, URHO3D_HANDLER(Editor, HandleUpdate));
     SubscribeToEvent(Urho3D::E_POSTRENDERUPDATE, URHO3D_HANDLER(Editor, HandlePostRenderUpdate));

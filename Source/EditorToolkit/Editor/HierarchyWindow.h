@@ -8,7 +8,7 @@
 namespace Urho3D
 {
 
-class AbstractUI;
+class AbstractMainWindow;
 class Scene;
 class Node;
 
@@ -29,7 +29,7 @@ class HierarchyWindow : public Object
     URHO3D_OBJECT(HierarchyWindow, Object);
 
 public:
-    HierarchyWindow(AbstractUI& ui);
+    HierarchyWindow(AbstractMainWindow& mainWindow);
     void SetScene(Scene* scene);
     void SetSelection(Selection* selection);
     Selection::ObjectSet GetSelectedObjects();

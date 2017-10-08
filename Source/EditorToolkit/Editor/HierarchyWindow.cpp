@@ -16,11 +16,10 @@ String HierarchyWindowItem::GetText()
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindow::HierarchyWindow(AbstractUI& ui)
-    : Object(ui.GetContext())
+HierarchyWindow::HierarchyWindow(AbstractMainWindow& mainWindow)
+    : Object(mainWindow.GetContext())
 {
-    GenericMainWindow* mainWindow = ui.GetMainWindow();
-    dialog_ = mainWindow->AddDialog(DialogLocationHint::DockLeft);
+    dialog_ = mainWindow.AddDialog(DialogLocationHint::DockLeft);
     dialog_->SetName("Hierarchy");
 
     hierarchyList_ = dialog_->CreateBodyWidget<GenericHierarchyList>();

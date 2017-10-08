@@ -5,9 +5,9 @@
 namespace Urho3D
 {
 
-GenericWidget::GenericWidget(AbstractUI& ui, GenericWidget* parent)
-    : Object(ui.GetContext())
-    , ui_(ui)
+GenericWidget::GenericWidget(AbstractMainWindow& mainWindow, GenericWidget* parent)
+    : Object(mainWindow.GetContext())
+    , mainWindow_(mainWindow)
     , parent_(parent)
 {
 
@@ -16,7 +16,7 @@ GenericWidget::GenericWidget(AbstractUI& ui, GenericWidget* parent)
 //////////////////////////////////////////////////////////////////////////
 GenericWidget* GenericDialog::CreateBodyWidget(StringHash type)
 {
-    GenericWidget* widget = ui_.CreateWidget(type, this);
+    GenericWidget* widget = mainWindow_.CreateWidget(type, this);
     SetBodyWidget(widget);
     return widget;
 }

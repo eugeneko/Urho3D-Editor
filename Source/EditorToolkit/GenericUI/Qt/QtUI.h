@@ -20,7 +20,7 @@ class QtDockDialog : public GenericDialog, public QDockWidget
 {
 
 public:
-    QtDockDialog(AbstractUI& ui, GenericWidget* parent) : GenericDialog(ui, parent), QDockWidget() { }
+    QtDockDialog(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericDialog(mainWindow, parent), QDockWidget() { }
     void SetBodyWidget(GenericWidget* widget) override;
     void SetName(const String& name) override;
 
@@ -29,7 +29,7 @@ public:
 class QtHierarchyListModel : public QAbstractItemModel
 {
 public:
-    QtHierarchyListModel(AbstractUI& ui, GenericWidget* parent);
+    QtHierarchyListModel(AbstractMainWindow& mainWindow, GenericWidget* parent);
 
     void InsertItem(GenericHierarchyListItem* item, const QModelIndex& parentIndex);
     void RemoveItem(GenericHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow = -1);
@@ -52,7 +52,7 @@ private:
 class QtHierarchyList : public GenericHierarchyList, public QTreeView
 {
 public:
-    QtHierarchyList(AbstractUI& ui, GenericWidget* parent);
+    QtHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent);
 
     void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) override;
     void SelectItem(GenericHierarchyListItem* item) override;
@@ -62,20 +62,6 @@ public:
 private:
 
     QtHierarchyListModel model_;
-
-};
-
-class QtUI : public AbstractUI
-{
-public:
-    QtUI(QtMainWindow& mainWindow) : mainWindow_(mainWindow) { }
-    GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) override;
-    Context* GetContext() override;
-    GenericMainWindow* GetMainWindow() override;
-    AbstractInput* GetInput() override;
-
-private:
-    QtMainWindow& mainWindow_;
 
 };
 
@@ -93,18 +79,22 @@ private:
     QList<QtMenu> children_;
 };
 
-class QtMainWindow : public QMainWindow, public GenericMainWindow
+class QtMainWindow : public QMainWindow, public AbstractMainWindow
 {
     Q_OBJECT
 
 public:
     QtMainWindow(QApplication& application);
+    ~QtMainWindow() override;
 
+    GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) override;
     GenericDialog* AddDialog(DialogLocationHint hint) override;
     void AddAction(const AbstractAction& actionDesc) override;
     GenericMenu* AddMenu(const String& name) override;
 
-    Context* GetContext() { return context_; }
+    Context* GetContext() override;
+    AbstractInput* GetInput() override;
+
     QtUrhoWidget& GetUrhoWidget() { return urhoWidget_; }
     QAction* FindAction(const String& id) const;
 
@@ -112,7 +102,6 @@ private:
     SharedPtr<Context> context_;
     QApplication& application_;
     QtUrhoWidget urhoWidget_;
-    QtUI ui_;
 
     HashMap<String, QAction*> actions_;
     QList<QtMenu> menus_;

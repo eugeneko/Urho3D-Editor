@@ -9,7 +9,7 @@
 namespace Urho3D
 {
 
-class AbstractUI;
+class AbstractMainWindow;
 class Scene;
 class Node;
 class Serializable;
@@ -55,30 +55,17 @@ public:
     virtual GenericMenu* AddAction(const String& name, const String& actionId) = 0;
 };
 
-class GenericMainWindow
-{
-
-public:
-    virtual GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) = 0;
-    virtual void AddAction(const AbstractAction& actionDesc) = 0;
-    template <class T> void AddAction(const String& id, KeyBinding keyBinding, T function)
-    {
-        AddAction({ id, "", function, keyBinding });
-    }
-    virtual GenericMenu* AddMenu(const String& name) = 0;
-};
-
 // #TODO: Rename file
 class GenericWidget : public Object
 {
     URHO3D_OBJECT(GenericWidget, Object);
 
 public:
-    GenericWidget(AbstractUI& ui, GenericWidget* parent);
+    GenericWidget(AbstractMainWindow& mainWindow, GenericWidget* parent);
     GenericWidget* GetParent() const { return parent_; }
 
 protected:
-    AbstractUI& ui_;
+    AbstractMainWindow& mainWindow_;
 
 private:
     GenericWidget* parent_ = nullptr;
@@ -89,7 +76,7 @@ class GenericDialog : public GenericWidget
     URHO3D_OBJECT(GenericDialog, GenericWidget);
 
 public:
-    GenericDialog(AbstractUI& ui, GenericWidget* parent) : GenericWidget(ui, parent) { }
+    GenericDialog(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
     GenericWidget* CreateBodyWidget(StringHash type);
     template <class T> T* CreateBodyWidget() { return dynamic_cast<T*>(CreateBodyWidget(T::GetTypeStatic())); }
     virtual void SetBodyWidget(GenericWidget* widget) = 0;
@@ -127,7 +114,7 @@ class GenericHierarchyList : public GenericWidget
 
 public:
     using ItemVector = PODVector<GenericHierarchyListItem*>;
-    GenericHierarchyList(AbstractUI& ui, GenericWidget* parent) : GenericWidget(ui, parent) { }
+    GenericHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
     virtual void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) = 0;
     virtual void SelectItem(GenericHierarchyListItem* item) = 0;
     virtual void DeselectItem(GenericHierarchyListItem* item) = 0;
@@ -135,17 +122,21 @@ public:
     ItemVector GetSelection() { ItemVector result; GetSelection(result); return result; }
 };
 
-class AbstractUI
+class AbstractMainWindow
 {
 public:
-    virtual Context* GetContext() = 0;
     virtual GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) = 0;
-    //template <class T> T* CreateWidget() { return dynamic_cast<T*>(CreateWidget(T::GetTypeStatic())); }
-    virtual GenericMainWindow* GetMainWindow() = 0;
+    virtual GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) = 0;
+    virtual void AddAction(const AbstractAction& actionDesc) = 0;
+    virtual GenericMenu* AddMenu(const String& name) = 0;
+
+    virtual Context* GetContext() = 0;
     virtual AbstractInput* GetInput() = 0;
 
-private:
-    UniquePtr<AbstractUI> defaultHost_;
+    template <class T> void AddAction(const String& id, KeyBinding keyBinding, T function)
+    {
+        AddAction({ id, "", function, keyBinding });
+    }
 };
 
 }

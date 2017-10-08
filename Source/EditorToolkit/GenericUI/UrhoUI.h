@@ -8,7 +8,7 @@
 namespace Urho3D
 {
 
-class UrhoUI;
+class UrhoMainWindow;
 class UI;
 
 class UrhoDialog : public GenericDialog
@@ -16,7 +16,7 @@ class UrhoDialog : public GenericDialog
     URHO3D_OBJECT(UrhoDialog, GenericDialog);
 
 public:
-    UrhoDialog(AbstractUI& ui, GenericWidget* parent);
+    UrhoDialog(AbstractMainWindow& mainWindow, GenericWidget* parent);
     void SetBodyWidget(GenericWidget* widget) override;
     void SetName(const String& name) override;
 
@@ -47,7 +47,7 @@ class UrhoHierarchyList : public GenericHierarchyList, public UrhoWidget
     URHO3D_OBJECT(UrhoHierarchyList, GenericHierarchyList);
 
 public:
-    UrhoHierarchyList(AbstractUI& ui, GenericWidget* parent);
+    UrhoHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent);
     UIElement* GetWidget() override { return hierarchyList_; }
     void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) override;
     void SelectItem(GenericHierarchyListItem* item) override;
@@ -61,21 +61,6 @@ private:
 private:
     SharedPtr<ListView> hierarchyList_;
     GenericHierarchyListItem rootItem_;
-};
-
-class UrhoMainWindow : public GenericMainWindow, public Object
-{
-    URHO3D_OBJECT(UrhoMainWindow, Object);
-
-public:
-    UrhoMainWindow(Context* context, UrhoUI& ui) : GenericMainWindow(), Object(context), ui_(ui) { }
-    GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
-    void AddAction(const AbstractAction& actionDesc) override;
-    GenericMenu* AddMenu(const String& name) override;
-
-private:
-    UrhoUI& ui_;
-    Vector<SharedPtr<UrhoDialog>> dialogs_;
 };
 
 class StandardUrhoInput : public StandardInput, public Object
@@ -115,21 +100,24 @@ private:
     UI* ui_ = nullptr;
 };
 
-class UrhoUI : public Object, public AbstractUI
+class UrhoMainWindow : public AbstractMainWindow, public Object
 {
-    URHO3D_OBJECT(UrhoUI, Object);
+    URHO3D_OBJECT(UrhoMainWindow, Object);
 
 public:
-    UrhoUI(Context* context);
+    UrhoMainWindow(Context* context);
+
     GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) override;
+    GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
+    void AddAction(const AbstractAction& actionDesc) override;
+    GenericMenu* AddMenu(const String& name) override;
+
     Context* GetContext() override { return Object::GetContext(); }
-    GenericMainWindow* GetMainWindow() override { return &mainWindow_; }
     AbstractInput* GetInput() override { return &input_; }
 
 private:
-    UrhoMainWindow mainWindow_;
+    Vector<SharedPtr<UrhoDialog>> dialogs_;
     StandardUrhoInput input_;
-
 };
 
 }

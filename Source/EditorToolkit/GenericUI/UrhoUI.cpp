@@ -8,10 +8,9 @@
 namespace Urho3D
 {
 
-UrhoDialog::UrhoDialog(AbstractUI& ui, GenericWidget* parent)
-    : GenericDialog(ui, parent)
+UrhoDialog::UrhoDialog(AbstractMainWindow& mainWindow, GenericWidget* parent)
+    : GenericDialog(mainWindow, parent)
 {
-    {
     UI* ui = GetSubsystem<UI>();
     UIElement* uiRoot = ui->GetRoot();
 
@@ -39,7 +38,6 @@ UrhoDialog::UrhoDialog(AbstractUI& ui, GenericWidget* parent)
     buttonClose->SetName("CloseButton");
 
     titleBar->SetFixedHeight(titleBar->GetMinHeight());
-    }
 }
 
 void UrhoDialog::SetBodyWidget(GenericWidget* widget)
@@ -64,8 +62,8 @@ void UrhoDialog::SetName(const String& name)
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoHierarchyList::UrhoHierarchyList(AbstractUI& ui, GenericWidget* parent)
-    : GenericHierarchyList(ui, parent)
+UrhoHierarchyList::UrhoHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent)
+    : GenericHierarchyList(mainWindow, parent)
     , rootItem_(context_)
 {
     hierarchyList_ = new ListView(context_);
@@ -156,23 +154,6 @@ UrhoHierarchyListItemWidget::UrhoHierarchyListItemWidget(Context* context, Gener
 }
 
 //////////////////////////////////////////////////////////////////////////
-GenericDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
-{
-    dialogs_.Push(MakeShared<UrhoDialog>(ui_, nullptr));
-    return dialogs_.Back();
-}
-
-void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)
-{
-
-}
-
-GenericMenu* UrhoMainWindow::AddMenu(const String& name)
-{
-    return nullptr;
-}
-
-//////////////////////////////////////////////////////////////////////////
 StandardUrhoInput::StandardUrhoInput(Context* context)
     : Object(context)
     , input_(GetSubsystem<Input>())
@@ -232,20 +213,36 @@ int StandardUrhoInput::GetMouseWheelMove() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoUI::UrhoUI(Context* context)
-    : Object(context)
-    , mainWindow_(context, *this)
+UrhoMainWindow::UrhoMainWindow(Context* context)
+    : AbstractMainWindow()
+    , Object(context)
     , input_(context)
 {
 
 }
 
-GenericWidget* UrhoUI::CreateWidget(StringHash type, GenericWidget* parent)
+GenericWidget* UrhoMainWindow::CreateWidget(StringHash type, GenericWidget* parent)
 {
     GenericWidget* widget = nullptr;
     if (type == GenericHierarchyList::GetTypeStatic())
         widget = new UrhoHierarchyList(*this, parent);
     return widget;
+}
+
+GenericDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
+{
+    dialogs_.Push(MakeShared<UrhoDialog>(*this, nullptr));
+    return dialogs_.Back();
+}
+
+void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)
+{
+
+}
+
+GenericMenu* UrhoMainWindow::AddMenu(const String& name)
+{
+    return nullptr;
 }
 
 }

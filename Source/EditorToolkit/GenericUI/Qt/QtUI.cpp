@@ -56,8 +56,8 @@ void QtDockDialog::SetName(const String& name)
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtHierarchyListModel::QtHierarchyListModel(AbstractUI& ui, GenericWidget* parent)
-    : rootItem_(ui.GetContext())
+QtHierarchyListModel::QtHierarchyListModel(AbstractMainWindow& mainWindow, GenericWidget* parent)
+    : rootItem_(mainWindow.GetContext())
 {
 }
 
@@ -176,9 +176,9 @@ int QtHierarchyListModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtHierarchyList::QtHierarchyList(AbstractUI& ui, GenericWidget* parent)
-    : GenericHierarchyList(ui, parent)
-    , model_(ui, this)
+QtHierarchyList::QtHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent)
+    : GenericHierarchyList(mainWindow, parent)
+    , model_(mainWindow, this)
 {
     header()->hide();
     setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -250,20 +250,34 @@ GenericMenu* QtMenu::AddAction(const String& name, const String& actionId)
 
 //////////////////////////////////////////////////////////////////////////
 QtMainWindow::QtMainWindow(QApplication& application)
-    : GenericMainWindow()
+    : AbstractMainWindow()
     , context_(new Context)
     , application_(application)
     , urhoWidget_(*context_, nullptr)
-    , ui_(*this)
 {
     urhoWidget_.Initialize(Engine::ParseParameters(GetArguments()));
     setCentralWidget(&urhoWidget_);
     showMaximized();
 }
 
+QtMainWindow::~QtMainWindow()
+{
+    // Delete actions first
+    for (const auto& item : actions_)
+        delete item.second_;
+}
+
+GenericWidget* QtMainWindow::CreateWidget(StringHash type, GenericWidget* parent)
+{
+    GenericWidget* widget = nullptr;
+    if (type == GenericHierarchyList::GetTypeStatic())
+        widget = new QtHierarchyList(*this, parent);
+    return widget;
+}
+
 GenericDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocationHint::Undocked*/)
 {
-    auto widget = new QtDockDialog(ui_, nullptr);
+    auto widget = new QtDockDialog(*this, nullptr);
     addDockWidget(Cast(hint), widget);
     return widget;
 }
@@ -284,35 +298,21 @@ GenericMenu* QtMainWindow::AddMenu(const String& name)
     return &menus_.back();
 }
 
+Context* QtMainWindow::GetContext()
+{
+    return context_;
+}
+
+AbstractInput* QtMainWindow::GetInput()
+{
+    return urhoWidget_.GetInput();
+}
+
 QAction* QtMainWindow::FindAction(const String& id) const
 {
     QAction* action = nullptr;
     actions_.TryGetValue(id, action);
     return action;
-}
-
-//////////////////////////////////////////////////////////////////////////
-GenericWidget* QtUI::CreateWidget(StringHash type, GenericWidget* parent)
-{
-    GenericWidget* widget = nullptr;
-    if (type == GenericHierarchyList::GetTypeStatic())
-        widget = new QtHierarchyList(*this, parent);
-    return widget;
-}
-
-Context* QtUI::GetContext()
-{
-    return mainWindow_.GetContext();
-}
-
-GenericMainWindow* QtUI::GetMainWindow()
-{
-    return &mainWindow_;
-}
-
-AbstractInput* QtUI::GetInput()
-{
-    return mainWindow_.GetUrhoWidget().GetInput();
 }
 
 }

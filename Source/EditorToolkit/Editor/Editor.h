@@ -8,7 +8,7 @@ namespace Urho3D
 
 class AbstractInput;
 class EditorViewportLayout;
-class AbstractUI;
+class AbstractMainWindow;
 
 /// Editor base.
 class Editor : public Object
@@ -17,7 +17,7 @@ class Editor : public Object
 
 public:
     /// Construct.
-    Editor(AbstractUI& ui);
+    Editor(AbstractMainWindow& mainWindow);
     /// Set editor context.
     void SetEditorContext(AbstractEditorContext* editorContext) { editorContext_ = editorContext; }
     /// Add overlay.

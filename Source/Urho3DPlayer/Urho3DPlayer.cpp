@@ -94,13 +94,13 @@ class DefaultEditor : public Object
     URHO3D_OBJECT(DefaultEditor, Object);
 
 public:
-    DefaultEditor(AbstractUI& ui, bool blenderHotkeys)
-        : Object(ui.GetContext())
+    DefaultEditor(AbstractMainWindow& mainWindow, bool blenderHotkeys)
+        : Object(mainWindow.GetContext())
     {
         scene_ = MakeShared<Scene>(context_);
         CreateScene(scene_);
 
-        editor_ = MakeShared<Editor>(ui);
+        editor_ = MakeShared<Editor>(mainWindow);
 
         viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
         viewportLayout_->SetScene(scene_);
@@ -142,7 +142,7 @@ public:
         editor_->AddOverlay(debugGeometryRenderer_);
         editor_->AddSubsystem(selectionTransform);
 
-        hierarchyWindow_ = MakeShared<HierarchyWindow>(ui);
+        hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow);
         hierarchyWindow_->SetScene(scene_);
         hierarchyWindow_->SetSelection(selection);
 
@@ -209,16 +209,15 @@ public:
             });
         }
 
-        GenericMainWindow* mainWindow = ui.GetMainWindow();
-        mainWindow->AddAction("DeleteSelection", KeyBinding::Key(KEY_DELETE),
+        mainWindow.AddAction("DeleteSelection", KeyBinding::Key(KEY_DELETE),
             [=]()
         {
             // #TODO Implement me
             selection->GetSelectedNodesAndComponents();
         });
 
-        GenericMenu* menuEdit = mainWindow->AddMenu("Edit");
-        menuEdit->AddAction("Delete", "DeleteSelection");
+//         GenericMenu* menuEdit = mainWindow.AddMenu("Edit");
+//         menuEdit->AddAction("Delete", "DeleteSelection");
     }
 
 private:
@@ -230,26 +229,23 @@ private:
     SharedPtr<Scene> scene_;
 };
 
-int Main()
+int QtEditorMain()
 {
     static int argcStub = 0;
     static char* argvStub[] = { nullptr };
     QApplication applicaton(argcStub, argvStub);
     QtMainWindow mainWindow(applicaton);
-    QtUI qtUI(mainWindow);
-    DefaultEditor defaultEditor(qtUI, false);
+    DefaultEditor defaultEditor(mainWindow, false);
     return applicaton.exec();
 }
 
-URHO3D_DEFINE_MAIN(Main())
-
 //////////////////////////////////////////////////////////////////////////
-class EditorApplication : public Application
+class UrhoEditorApplication : public Application
 {
-    URHO3D_OBJECT(EditorApplication, Application);
+    URHO3D_OBJECT(UrhoEditorApplication, Application);
 
 public:
-    EditorApplication(Context* context) : Application(context) { }
+    UrhoEditorApplication(Context* context) : Application(context) { }
 
     virtual void Start() override
     {
@@ -262,14 +258,15 @@ public:
         input->SetMouseVisible(true);
         ui->GetRoot()->SetDefaultStyle(style);
 
-        urhoUi_ = MakeShared<UrhoUI>(context_);
-        editor_ = MakeShared<DefaultEditor>(*urhoUi_, false);
+        mainWindow_ = MakeShared<UrhoMainWindow>(context_);
+        editor_ = MakeShared<DefaultEditor>(*mainWindow_, false);
     }
 
 private:
-    SharedPtr<UrhoUI> urhoUi_;
+    SharedPtr<UrhoMainWindow> mainWindow_;
     SharedPtr<DefaultEditor> editor_;
 };
 
 
-// URHO3D_DEFINE_APPLICATION_MAIN(EditorApplication)
+URHO3D_DEFINE_MAIN(QtEditorMain())
+// URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)
