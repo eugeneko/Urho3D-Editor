@@ -44,7 +44,7 @@ struct AbstractAction
 {
     String id_;
     String text_;
-    std::function<void()> action_;
+    std::function<void()> actionCallback_;
     KeyBinding keyBinding_;
 };
 

@@ -287,7 +287,7 @@ void QtMainWindow::AddAction(const AbstractAction& actionDesc)
     QAction* action = new QAction(this);
     action->setText(Cast(actionDesc.text_));
     action->setShortcut(Cast(actionDesc.keyBinding_));
-    connect(action, &QAction::triggered, this, actionDesc.action_);
+    connect(action, &QAction::triggered, this, actionDesc.actionCallback_);
     actions_[actionDesc.id_] = action;
 }
 

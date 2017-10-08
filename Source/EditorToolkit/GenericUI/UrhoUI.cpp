@@ -1,13 +1,104 @@
 #include "UrhoUI.h"
+#include <Urho3D/Graphics/Graphics.h>
+#include <Urho3D/Graphics/GraphicsEvents.h>
 #include <Urho3D/UI/UI.h>
 #include <Urho3D/UI/UIEvents.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/Button.h>
+#include <Urho3D/UI/Menu.h>
 #include <Urho3D/UI/LineEdit.h>
 
 namespace Urho3D
 {
 
+namespace
+{
+
+String PrintKey(int key)
+{
+    switch (key)
+    {
+    case KEY_BACKSPACE: return "Backspace";
+    case KEY_TAB: return "Tab";
+    case KEY_RETURN: return "Return";
+    case KEY_RETURN2: return "Return2";
+    case KEY_KP_ENTER: return "NumEnter";
+    case KEY_SHIFT: return "Shift";
+    case KEY_CTRL: return "Ctrl";
+    case KEY_ALT: return "Alt";
+    case KEY_GUI: return "GUI";
+    case KEY_PAUSE: return "Pause";
+    case KEY_CAPSLOCK: return "CapsLock";
+    case KEY_ESCAPE: return "Esc";
+    case KEY_SPACE: return "Space";
+    case KEY_PAGEUP: return "PageUp";
+    case KEY_PAGEDOWN: return "PageDn";
+    case KEY_END: return "End";
+    case KEY_HOME: return "Home";
+    case KEY_LEFT: return "Left";
+    case KEY_UP: return "Up";
+    case KEY_RIGHT: return "Right";
+    case KEY_DOWN: return "Down";
+    case KEY_SELECT: return "Select";
+    case KEY_PRINTSCREEN: return "PrintScr";
+    case KEY_INSERT: return "Ins";
+    case KEY_DELETE: return "Del";
+    case KEY_APPLICATION: return "App";
+    case KEY_KP_0: return "Num0";
+    case KEY_KP_1: return "Num1";
+    case KEY_KP_2: return "Num2";
+    case KEY_KP_3: return "Num3";
+    case KEY_KP_4: return "Num4";
+    case KEY_KP_5: return "Num5";
+    case KEY_KP_6: return "Num6";
+    case KEY_KP_7: return "Num7";
+    case KEY_KP_8: return "Num8";
+    case KEY_KP_9: return "Num9";
+    case KEY_KP_MULTIPLY: return "NumMul";
+    case KEY_KP_PLUS: return "NumPlus";
+    case KEY_KP_MINUS: return "NumMinus";
+    case KEY_KP_PERIOD: return "NumPeriod";
+    case KEY_KP_DIVIDE: return "NumDiv";
+    case KEY_F1: return "F1";
+    case KEY_F2: return "F2";
+    case KEY_F3: return "F3";
+    case KEY_F4: return "F4";
+    case KEY_F5: return "F5";
+    case KEY_F6: return "F6";
+    case KEY_F7: return "F7";
+    case KEY_F8: return "F8";
+    case KEY_F9: return "F9";
+    case KEY_F10: return "F10";
+    case KEY_F11: return "F11";
+    case KEY_F12: return "F12";
+    case KEY_NUMLOCKCLEAR: return "NumLock";
+    case KEY_SCROLLLOCK: return "ScrollLock";
+    default:
+        if (key >= KEY_0 && key <= KEY_9)
+            return String(static_cast<char>(key - KEY_0 + '0'));
+        else if (key >= KEY_A && key <= KEY_Z)
+            return String(static_cast<char>(key - KEY_A + 'A'));
+        else
+            return "Unknown";
+    }
+}
+
+String PrintKeyBinding(const KeyBinding& keyBinding)
+{
+    String result;
+    if (keyBinding.GetShift() == ModifierState::Required)
+        result += "Shift+";
+    if (keyBinding.GetCtrl() == ModifierState::Required)
+        result += "Ctrl+";
+    if (keyBinding.GetAlt() == ModifierState::Required)
+        result += "Alt+";
+    result += PrintKey(keyBinding.GetKey());
+    return result;
+}
+
+}
+
+//////////////////////////////////////////////////////////////////////////
 UrhoDialog::UrhoDialog(AbstractMainWindow& mainWindow, GenericWidget* parent)
     : GenericDialog(mainWindow, parent)
 {
@@ -213,12 +304,109 @@ int StandardUrhoInput::GetMouseWheelMove() const
 }
 
 //////////////////////////////////////////////////////////////////////////
+UrhoMenu::UrhoMenu(UrhoMainWindow& mainWindow, UIElement* parent, const String& text, const String& actionId,
+    bool hasPopup, bool topLevel)
+    : Object(mainWindow.GetContext())
+    , mainWindow_(mainWindow)
+{
+    AbstractAction* action = nullptr;
+    if (!actionId.Empty())
+    {
+        action = mainWindow_.FindAction(actionId);
+    }
+
+    menu_ = new Menu(context_);
+    menu_->SetDefaultStyle(parent->GetDefaultStyle());
+    menu_->SetStyleAuto();
+    menu_->SetLayout(LM_HORIZONTAL, 0, IntRect(8, 2, 8, 2));
+
+    text_ = menu_->CreateChild<Text>();
+    text_->SetStyle("EditorMenuText");
+    text_->SetText(text);
+
+    if (topLevel)
+    {
+        menu_->SetMaxWidth(text_->GetWidth() + 20);
+    }
+
+    if (action)
+    {
+        actionCallback_ = action->actionCallback_;
+        SubscribeToEvent(menu_, E_MENUSELECTED, URHO3D_HANDLER(UrhoMenu, HandleMenuSelected));
+
+        const KeyBinding& keyBinding = action->keyBinding_;
+        if (!keyBinding.IsEmpty())
+        {
+            // Setup accelerator
+            int qualifiers = 0;
+            if (keyBinding.GetShift() == ModifierState::Required)
+                qualifiers |= QUAL_SHIFT;
+            if (keyBinding.GetCtrl() == ModifierState::Required)
+                qualifiers |= QUAL_CTRL;
+            if (keyBinding.GetAlt() == ModifierState::Required)
+                qualifiers |= QUAL_ALT;
+            menu_->SetAccelerator(keyBinding.GetKey(), qualifiers);
+
+            // Create accelerator tip
+            UIElement* spacer = menu_->CreateChild<UIElement>();
+            spacer->SetMinWidth(text_->GetIndentSpacing());
+            spacer->SetHeight(text_->GetHeight());
+            menu_->AddChild(spacer);
+
+            Text* accelKeyText = menu_->CreateChild<Text>();
+            accelKeyText->SetStyle("EditorMenuText");
+            accelKeyText->SetTextAlignment(HA_RIGHT);
+            accelKeyText->SetText(PrintKeyBinding(keyBinding));
+        }
+    }
+
+    if (hasPopup)
+    {
+        popup_ = MakeShared<Window>(context_);
+        popup_->SetDefaultStyle(menu_->GetDefaultStyle());
+        popup_->SetStyleAuto();
+        popup_->SetLayout(LM_VERTICAL, 1, IntRect(2, 6, 2, 6));
+        menu_->SetPopup(popup_);
+        menu_->SetPopupOffset(0, menu_->GetHeight());
+    }
+
+    parent->AddChild(menu_);
+}
+
+GenericMenu* UrhoMenu::AddMenu(const String& name)
+{
+    if (!popup_)
+        return nullptr;
+    children_.Push(MakeShared<UrhoMenu>(mainWindow_, popup_, name, "", true, false));
+    return children_.Back();
+}
+
+GenericMenu* UrhoMenu::AddAction(const String& name, const String& actionId)
+{
+    if (!popup_)
+        return nullptr;
+    children_.Push(MakeShared<UrhoMenu>(mainWindow_, popup_, name, actionId, false, false));
+    return children_.Back();
+}
+
+void UrhoMenu::HandleMenuSelected(StringHash eventType, VariantMap& eventData)
+{
+    if (menu_->GetPopup())
+        return;
+
+    mainWindow_.CollapseMenuPopups(menu_);
+
+    if (actionCallback_)
+        actionCallback_();
+}
+
+//////////////////////////////////////////////////////////////////////////
 UrhoMainWindow::UrhoMainWindow(Context* context)
     : AbstractMainWindow()
     , Object(context)
     , input_(context)
 {
-
+    SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(UrhoMainWindow, HandleResized));
 }
 
 GenericWidget* UrhoMainWindow::CreateWidget(StringHash type, GenericWidget* parent)
@@ -237,12 +425,53 @@ GenericDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
 
 void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)
 {
-
+    actions_[actionDesc.id_] = actionDesc;
 }
 
 GenericMenu* UrhoMainWindow::AddMenu(const String& name)
 {
-    return nullptr;
+    if (!menuBar_)
+    {
+        UI* ui = GetSubsystem<UI>();
+        Graphics* graphics = GetSubsystem<Graphics>();
+        menuBar_ = ui->GetRoot()->CreateChild<BorderImage>("MenuBar");
+        menuBar_->SetLayout(LM_HORIZONTAL);
+        menuBar_->SetFixedWidth(graphics->GetWidth());
+        menuBar_->SetStyle("EditorMenuBar");
+    }
+
+    menus_.Push(MakeShared<UrhoMenu>(*this, menuBar_, name, "", true, true));
+    return menus_.Back();
+}
+
+AbstractAction* UrhoMainWindow::FindAction(const String& actionId) const
+{
+    return actions_[actionId];
+}
+
+void UrhoMainWindow::CollapseMenuPopups(Menu* menu) const
+{
+    // Go to topmost menu
+    while (UIElement* parent = menu->GetParent())
+    {
+        Menu* parentMenu = dynamic_cast<Menu*>(parent->GetVar("Origin").GetPtr());
+        if (parentMenu)
+            menu = parentMenu;
+        else
+            break;
+    }
+
+    if (menu->GetParent() == menuBar_)
+        menu->ShowPopup(false);
+}
+
+void UrhoMainWindow::HandleResized(StringHash eventType, VariantMap& eventData)
+{
+    if (menuBar_)
+    {
+        Graphics* graphics = GetSubsystem<Graphics>();
+        menuBar_->SetFixedWidth(graphics->GetWidth());
+    }
 }
 
 }

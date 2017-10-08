@@ -10,6 +10,7 @@ namespace Urho3D
 
 class UrhoMainWindow;
 class UI;
+class Menu;
 
 class UrhoDialog : public GenericDialog
 {
@@ -100,6 +101,29 @@ private:
     UI* ui_ = nullptr;
 };
 
+class UrhoMenu : public GenericMenu, public Object
+{
+    URHO3D_OBJECT(UrhoMenu, Object);
+
+public:
+    static const StringHash VAR_ACTION;
+    UrhoMenu(UrhoMainWindow& mainWindow, UIElement* parent, const String& text, const String& actionId, bool hasPopup, bool topLevel);
+    GenericMenu* AddMenu(const String& name) override;
+    GenericMenu* AddAction(const String& name, const String& actionId) override;
+
+private:
+    void HandleMenuSelected(StringHash eventType, VariantMap& eventData);
+
+private:
+    UrhoMainWindow& mainWindow_;
+    // #TODO Hide em
+    Menu* menu_ = nullptr;
+    Text* text_ = nullptr;
+    SharedPtr<Window> popup_ = nullptr;
+    std::function<void()> actionCallback_;
+    Vector<SharedPtr<UrhoMenu>> children_;
+};
+
 class UrhoMainWindow : public AbstractMainWindow, public Object
 {
     URHO3D_OBJECT(UrhoMainWindow, Object);
@@ -115,9 +139,20 @@ public:
     Context* GetContext() override { return Object::GetContext(); }
     AbstractInput* GetInput() override { return &input_; }
 
+    AbstractAction* FindAction(const String& actionId) const;
+    void CollapseMenuPopups(Menu* menu) const;
+
+private:
+    void HandleResized(StringHash eventType, VariantMap& eventData);
+
 private:
     Vector<SharedPtr<UrhoDialog>> dialogs_;
     StandardUrhoInput input_;
+
+    HashMap<String, AbstractAction> actions_;
+
+    UIElement* menuBar_ = nullptr;
+    Vector<SharedPtr<UrhoMenu>> menus_;
 };
 
 }

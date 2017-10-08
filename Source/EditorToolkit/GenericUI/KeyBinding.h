@@ -36,6 +36,7 @@ public:
     bool IsDown(AbstractInput& input, bool ignoreGrabbed = true, bool grab = true) const;
     bool IsPressed(AbstractInput& input, bool ignoreGrabbed = true, bool grab = true) const;
 
+    bool IsEmpty() const { return key_ < 0 && mouseButton_ < 0; }
     int GetKey() const { return key_; }
     ModifierState GetShift() const { return shift_; }
     ModifierState GetAlt() const { return alt_; }

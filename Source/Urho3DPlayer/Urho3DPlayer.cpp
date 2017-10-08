@@ -209,15 +209,21 @@ public:
             });
         }
 
-        mainWindow.AddAction("DeleteSelection", KeyBinding::Key(KEY_DELETE),
+        mainWindow.AddAction("EditCut", KeyBinding::Key(KEY_X) + KeyBinding::CTRL, [=]() {});
+        mainWindow.AddAction("EditCopy", KeyBinding::Key(KEY_C) + KeyBinding::CTRL, [=]() {});
+        mainWindow.AddAction("EditPaste", KeyBinding::Key(KEY_V) + KeyBinding::CTRL, [=]() {});
+        mainWindow.AddAction("EditDelete", KeyBinding::Key(KEY_DELETE),
             [=]()
         {
             // #TODO Implement me
             selection->GetSelectedNodesAndComponents();
         });
 
-//         GenericMenu* menuEdit = mainWindow.AddMenu("Edit");
-//         menuEdit->AddAction("Delete", "DeleteSelection");
+        GenericMenu* menuEdit = mainWindow.AddMenu("Edit");
+        menuEdit->AddAction("Cut", "EditCut");
+        menuEdit->AddAction("Copy", "EditCopy");
+        menuEdit->AddAction("Paste", "EditPaste");
+        menuEdit->AddAction("Delete", "EditDelete");
     }
 
 private:
@@ -268,5 +274,5 @@ private:
 };
 
 
-URHO3D_DEFINE_MAIN(QtEditorMain())
-// URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)
+// URHO3D_DEFINE_MAIN(QtEditorMain())
+URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)
