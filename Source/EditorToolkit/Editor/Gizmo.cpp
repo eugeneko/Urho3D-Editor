@@ -1,5 +1,6 @@
 #include "Gizmo.h"
 #include "Transformable.h"
+#include "../GenericUI/AbstractInput.h"
 // #include "Transformable.h"
 // #include "SceneActions.h"
 // #include "SceneDocument.h"
@@ -97,19 +98,19 @@ void Gizmo::SetGizmoType(GizmoType type, float step /*= 1.0f*/, float snapScale 
     snapScale_ = snapScale;
 }
 
-void Gizmo::Update(AbstractEditorInput& input, float timeStep)
+void Gizmo::Update(AbstractInput& input, AbstractEditorContext& editorContext, float timeStep)
 {
     UpdateDragState(input);
     PrepareUndo();
     UseGizmoKeyboard(input, timeStep);
-    if (UseGizmoMouse(input.GetMouseRay()))
+    if (UseGizmoMouse(editorContext.GetMouseRay()))
     {
         input.GrabMouseButton(MOUSEB_LEFT);
         input.GrabMouseMove();
     }
     FinalizeUndo();
     PositionGizmo();
-    ResizeGizmo(input);
+    ResizeGizmo(editorContext);
 }
 
 Model* Gizmo::GetGizmoModel(GizmoType type)
@@ -171,7 +172,7 @@ void Gizmo::HideGizmo()
     gizmo_.SetEnabled(false);
 }
 
-void Gizmo::UpdateDragState(AbstractEditorInput& input)
+void Gizmo::UpdateDragState(AbstractInput& input)
 {
     // Update mouse drag state
     mouseDrag_ = input.IsMouseButtonDown(MOUSEB_LEFT)
@@ -261,12 +262,12 @@ void Gizmo::PositionGizmo()
         HideGizmo();
 }
 
-void Gizmo::ResizeGizmo(AbstractEditorInput& input)
+void Gizmo::ResizeGizmo(AbstractEditorContext& editorContext)
 {
     if (!gizmo_.IsEnabled())
         return;
 
-    const Camera& camera = *input.GetCurrentCamera();
+    const Camera& camera = *editorContext.GetCurrentCamera();
     float scale = 0.1f / camera.GetZoom();
 
     if (camera.IsOrthographic())
@@ -310,7 +311,7 @@ void Gizmo::FlushActions()
     moved_ = false;
 }
 
-void Gizmo::UseGizmoKeyboard(AbstractEditorInput& input, float timeStep)
+void Gizmo::UseGizmoKeyboard(AbstractInput& input, float timeStep)
 {
     using namespace Urho3D;
 

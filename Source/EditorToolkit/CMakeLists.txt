@@ -12,8 +12,12 @@ find_package (Qt5Xml)
 add_library(EditorToolkit
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/GenericUI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/GenericUI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/KeyBinding.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/KeyBinding.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/UrhoUI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/UrhoUI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/AbstractInput.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/AbstractInput.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/Qt/QtUI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/Qt/QtUI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GenericUI/Qt/QtUrhoWidget.cpp
@@ -28,8 +32,6 @@ add_library(EditorToolkit
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/EditorEvents.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/EditorInterfaces.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/EditorInterfaces.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/KeyBinding.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Editor/KeyBinding.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/ObjectSelector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/ObjectSelector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Selection.cpp
@@ -45,4 +47,4 @@ add_library(EditorToolkit
 )
 
 # Link to Qt
-target_link_libraries (EditorToolkit Qt5::Widgets Qt5::Xml) 
+target_link_libraries (EditorToolkit Qt5::Widgets Qt5::Xml)

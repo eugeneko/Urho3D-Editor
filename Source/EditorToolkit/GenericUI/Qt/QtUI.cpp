@@ -216,6 +216,11 @@ GenericDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocatio
     return widget;
 }
 
+void QtMainWindow::AddAction(const AbstractAction& action)
+{
+
+}
+
 //////////////////////////////////////////////////////////////////////////
 GenericWidget* QtUI::CreateWidget(StringHash type, GenericWidget* parent)
 {

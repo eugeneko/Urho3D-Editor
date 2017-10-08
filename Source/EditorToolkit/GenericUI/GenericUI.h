@@ -1,5 +1,7 @@
 #pragma once
 
+#include "KeyBinding.h"
+#include "AbstractInput.h"
 #include <Urho3D/Core/Object.h>
 #include <Urho3D/Container/HashSet.h>
 #include <Urho3D/Input/Input.h>
@@ -38,11 +40,23 @@ enum class DialogLocationHint
     DockBottom,
 };
 
+struct AbstractAction
+{
+    String name_;
+    std::function<void()> action_;
+    KeyBinding keyBinding_;
+};
+
 class GenericMainWindow
 {
 
 public:
     virtual GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) = 0;
+    virtual void AddAction(const AbstractAction& action) = 0;
+    template <class T> void AddAction(const String& name, T function, KeyBinding keyBinding = KeyBinding::EMPTY)
+    {
+        AddAction({ name, function, keyBinding });
+    }
     //virtual GenericDocument* AddDocument() = 0;
 };
 
@@ -111,33 +125,6 @@ public:
     virtual void DeselectItem(GenericHierarchyListItem* item) = 0;
     virtual void GetSelection(ItemVector& result) = 0;
     ItemVector GetSelection() { ItemVector result; GetSelection(result); return result; }
-};
-
-class AbstractInput
-{
-public:
-    /// Set mouse mode.
-    virtual void SetMouseMode(MouseMode mouseMode) = 0;
-    /// Return whether the UI is focused.
-    virtual bool IsUIFocused() const = 0;
-    /// Return whether the UI is hovered.
-    virtual bool IsUIHovered() const = 0;
-
-    /// Return whether the key is down.
-    virtual bool IsKeyDown(int key) const = 0;
-    /// Return whether the key is pressed.
-    virtual bool IsKeyPressed(int key) const = 0;
-    /// Return whether the mouse button is down.
-    virtual bool IsMouseButtonDown(int mouseButton) const = 0;
-    /// Return whether the mouse button is pressed.
-    virtual bool IsMouseButtonPressed(int mouseButton) const = 0;
-    /// Return mouse position.
-    virtual IntVector2 GetMousePosition() const = 0;
-    /// Return mouse move.
-    virtual IntVector2 GetMouseMove() const = 0;
-    /// Return mouse wheel delta.
-    virtual int GetMouseWheelMove() const = 0;
-
 };
 
 class AbstractUI

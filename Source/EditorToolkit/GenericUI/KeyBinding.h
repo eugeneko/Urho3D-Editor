@@ -6,7 +6,7 @@
 namespace Urho3D
 {
 
-class AbstractEditorInput;
+class AbstractInput;
 
 /// Modifier state.
 enum class ModifierState
@@ -20,6 +20,7 @@ enum class ModifierState
 class KeyBinding
 {
 public:
+    static const KeyBinding EMPTY;
     static const KeyBinding SHIFT;
     static const KeyBinding ALT;
     static const KeyBinding CTRL;
@@ -32,8 +33,8 @@ public:
     KeyBinding() {}
     KeyBinding(int mouseButton, int key, ModifierState shift, ModifierState alt, ModifierState ctrl);
     friend KeyBinding operator +(KeyBinding lhs, const KeyBinding& rhs);
-    bool IsDown(AbstractEditorInput& input, bool ignoreGrabbed = true, bool grab = true) const;
-    bool IsPressed(AbstractEditorInput& input, bool ignoreGrabbed = true, bool grab = true) const;
+    bool IsDown(AbstractInput& input, bool ignoreGrabbed = true, bool grab = true) const;
+    bool IsPressed(AbstractInput& input, bool ignoreGrabbed = true, bool grab = true) const;
 private:
     int mouseButton_ = -1;
     int key_ = -1;
@@ -49,8 +50,8 @@ public:
     CompositeKeyBinding() {}
     CompositeKeyBinding(const KeyBinding& keyBinding) : keyBindings_{ keyBinding } {}
     CompositeKeyBinding(const std::initializer_list<KeyBinding>& keyBindings) : keyBindings_(keyBindings) {}
-    bool IsDown(AbstractEditorInput& input, bool ignoreGrabbed = true, bool grab = true) const;
-    bool IsPressed(AbstractEditorInput& input, bool ignoreGrabbed = true, bool grab = true) const;
+    bool IsDown(AbstractInput& input, bool ignoreGrabbed = true, bool grab = true) const;
+    bool IsPressed(AbstractInput& input, bool ignoreGrabbed = true, bool grab = true) const;
 private:
     Vector<KeyBinding> keyBindings_;
 };

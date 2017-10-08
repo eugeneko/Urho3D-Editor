@@ -77,7 +77,7 @@ public:
     EditorViewportLayout(Context* context);
 
     /// \see AbstractEditorOverlay::Update
-    void Update(AbstractEditorInput& input, float timeStep) override;
+    void Update(AbstractInput& input, AbstractEditorContext& editorContext, float timeStep) override;
 
     /// Set scene.
     void SetScene(Scene* scene);

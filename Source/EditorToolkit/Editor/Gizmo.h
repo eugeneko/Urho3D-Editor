@@ -65,7 +65,7 @@ public:
 
 private:
     /// @see AbstractEditorOverlay::Update
-    void Update(AbstractEditorInput& input, float timeStep) override;
+    void Update(AbstractInput& input, AbstractEditorContext& editorContext, float timeStep) override;
 
 private:
     /// Get gizmo model.
@@ -79,7 +79,7 @@ private:
     void HideGizmo();
 
     /// Update drag state.
-    void UpdateDragState(AbstractEditorInput& input);
+    void UpdateDragState(AbstractInput& input);
     /// Prepare undo action if dragging started.
     void PrepareUndo();
     /// Flush undo action if dragging started, update previous drag states.
@@ -92,7 +92,7 @@ private:
     /// Position gizmo.
     void PositionGizmo();
     /// Resize gizmo.
-    void ResizeGizmo(AbstractEditorInput& input);
+    void ResizeGizmo(AbstractEditorContext& editorContext);
     /// Calculate gizmo axes.
     void CalculateGizmoAxes();
     /// Mark gizmo moved.
@@ -100,7 +100,7 @@ private:
     /// Flush gizmo actions.
     void FlushActions();
     /// Use gizmo (by keyboard).
-    void UseGizmoKeyboard(AbstractEditorInput& input, float timeStep);
+    void UseGizmoKeyboard(AbstractInput& input, float timeStep);
     /// Use gizmo (by mouse). Return true if selected.
     bool UseGizmoMouse(const Ray& mouseRay);
 

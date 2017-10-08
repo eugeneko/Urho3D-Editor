@@ -14,7 +14,7 @@ namespace Urho3D
 {
 
 /// Qt input.
-class QtInput : public UrhoInput
+class QtInput : public StandardUrhoInput
 {
 public:
     /// Construct.

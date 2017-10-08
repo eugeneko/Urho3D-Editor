@@ -69,20 +69,21 @@ class UrhoMainWindow : public GenericMainWindow, public Object
 
 public:
     UrhoMainWindow(Context* context, UrhoUI& ui) : GenericMainWindow(), Object(context), ui_(ui) { }
-    virtual GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
+    GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
+    void AddAction(const AbstractAction& action) override;
 
 private:
     UrhoUI& ui_;
     Vector<SharedPtr<UrhoDialog>> dialogs_;
 };
 
-class UrhoInput : public AbstractInput, public Object
+class StandardUrhoInput : public StandardInput, public Object
 {
-    URHO3D_OBJECT(UrhoInput, Object);
+    URHO3D_OBJECT(StandardUrhoInput, Object);
 
 public:
     /// Construct.
-    UrhoInput(Context* context);
+    StandardUrhoInput(Context* context);
 
     /// \see AbstractInput::SetMouseMode
     void SetMouseMode(MouseMode mouseMode) override;
@@ -126,7 +127,7 @@ public:
 
 private:
     UrhoMainWindow mainWindow_;
-    UrhoInput input_;
+    StandardUrhoInput input_;
 
 };
 

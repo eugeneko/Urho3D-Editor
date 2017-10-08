@@ -1,5 +1,6 @@
 #include "EditorViewportLayout.h"
 #include "EditorEvents.h"
+#include "../GenericUI/AbstractInput.h"
 #include <Urho3D/Graphics/Graphics.h>
 #include <Urho3D/Graphics/GraphicsEvents.h>
 #include <Urho3D/Graphics/Renderer.h>
@@ -60,7 +61,7 @@ EditorViewportLayout::EditorViewportLayout(Context* context)
     SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(EditorViewportLayout, HandleResize));
 }
 
-void EditorViewportLayout::Update(AbstractEditorInput& input, float timeStep)
+void EditorViewportLayout::Update(AbstractInput& input, AbstractEditorContext& editorContext, float timeStep)
 {
     const bool isAnyMouseButtonPressed =
         input.IsMouseButtonPressed(MOUSEB_LEFT)

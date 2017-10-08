@@ -1,6 +1,7 @@
 #include "ObjectSelector.h"
 #include "Selection.h"
-#include "KeyBinding.h"
+#include "../GenericUI/AbstractInput.h"
+#include "../GenericUI/KeyBinding.h"
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/Scene/Scene.h>
@@ -30,13 +31,13 @@ void ObjectSelector::AddSelectionTransferring(const String& sourceType, const St
     selectionTransferringRoutines_[sourceType] = destType;
 }
 
-void ObjectSelector::PostRenderUpdate(AbstractEditorInput& input)
+void ObjectSelector::PostRenderUpdate(AbstractInput& input, AbstractEditorContext& editorContext)
 {
     if (!input.IsUIHovered())
-        PerformRaycast(input);
+        PerformRaycast(input, editorContext);
 }
 
-void ObjectSelector::PerformRaycast(AbstractEditorInput& input)
+void ObjectSelector::PerformRaycast(AbstractInput& input, AbstractEditorContext& editorContext)
 {
 #if 0
     if (pickMode == PICK_UI_ELEMENTS)
@@ -73,7 +74,7 @@ void ObjectSelector::PerformRaycast(AbstractEditorInput& input)
         physicsWorld->UpdateCollisions();
 
         PhysicsRaycastResult result;
-        physicsWorld->RaycastSingle(result, input.GetMouseRay(), input.GetCurrentCamera()->GetFarClip());
+        physicsWorld->RaycastSingle(result, editorContext.GetMouseRay(), editorContext.GetCurrentCamera()->GetFarClip());
         if (result.body_)
             selectedComponent = result.body_;
     }
@@ -85,7 +86,7 @@ void ObjectSelector::PerformRaycast(AbstractEditorInput& input)
 
         static int pickModeDrawableFlags[3] = { DRAWABLE_GEOMETRY, DRAWABLE_LIGHT, DRAWABLE_ZONE };
         PODVector<RayQueryResult> result;
-        RayOctreeQuery query(result, input.GetMouseRay(), RAY_TRIANGLE, input.GetCurrentCamera()->GetFarClip(),
+        RayOctreeQuery query(result, editorContext.GetMouseRay(), RAY_TRIANGLE, editorContext.GetCurrentCamera()->GetFarClip(),
             pickModeDrawableFlags[static_cast<int>(selectionMode_)], 0x7fffffff);
         octree->RaycastSingle(query);
 

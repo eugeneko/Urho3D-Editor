@@ -162,8 +162,13 @@ GenericDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
     return dialogs_.Back();
 }
 
+void UrhoMainWindow::AddAction(const AbstractAction& action)
+{
+
+}
+
 //////////////////////////////////////////////////////////////////////////
-UrhoInput::UrhoInput(Context* context)
+StandardUrhoInput::StandardUrhoInput(Context* context)
     : Object(context)
     , input_(GetSubsystem<Input>())
     , ui_(GetSubsystem<UI>())
@@ -171,52 +176,52 @@ UrhoInput::UrhoInput(Context* context)
 
 }
 
-void UrhoInput::SetMouseMode(Urho3D::MouseMode mouseMode)
+void StandardUrhoInput::SetMouseMode(Urho3D::MouseMode mouseMode)
 {
     input_->SetMouseMode(mouseMode);
 }
 
-bool UrhoInput::IsUIFocused() const
+bool StandardUrhoInput::IsUIFocused() const
 {
     return ui_->HasModalElement() || ui_->GetFocusElement();
 }
 
-bool UrhoInput::IsUIHovered() const
+bool StandardUrhoInput::IsUIHovered() const
 {
     return !!ui_->GetElementAt(GetMousePosition());
 }
 
-bool UrhoInput::IsKeyDown(int key) const
+bool StandardUrhoInput::IsKeyDown(int key) const
 {
     return input_->GetKeyDown(key);
 }
 
-bool UrhoInput::IsKeyPressed(int key) const
+bool StandardUrhoInput::IsKeyPressed(int key) const
 {
     return input_->GetKeyPress(key);
 }
 
-bool UrhoInput::IsMouseButtonDown(int mouseButton) const
+bool StandardUrhoInput::IsMouseButtonDown(int mouseButton) const
 {
     return input_->GetMouseButtonDown(mouseButton);
 }
 
-bool UrhoInput::IsMouseButtonPressed(int mouseButton) const
+bool StandardUrhoInput::IsMouseButtonPressed(int mouseButton) const
 {
     return input_->GetMouseButtonPress(mouseButton);
 }
 
-IntVector2 UrhoInput::GetMousePosition() const
+IntVector2 StandardUrhoInput::GetMousePosition() const
 {
     return input_->GetMousePosition();
 }
 
-IntVector2 UrhoInput::GetMouseMove() const
+IntVector2 StandardUrhoInput::GetMouseMove() const
 {
     return input_->GetMouseMove();
 }
 
-int UrhoInput::GetMouseWheelMove() const
+int StandardUrhoInput::GetMouseWheelMove() const
 {
     return input_->GetMouseMoveWheel();
 }

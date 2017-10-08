@@ -64,7 +64,7 @@ public:
     void SetDefaultOriginDistance(float defaultOriginDistance) { defaultOriginDistance_ = defaultOriginDistance; }
 
     /// \see AbstractEditorOverlay::Update
-    void Update(AbstractEditorInput& input, float timeStep) override;
+    void Update(AbstractInput& input, AbstractEditorContext& editorContext, float timeStep) override;
 
 private:
     /// Remove expired cameras.

@@ -1,5 +1,5 @@
 #include "KeyBinding.h"
-#include "EditorInterfaces.h"
+#include "AbstractInput.h"
 
 namespace Urho3D
 {
@@ -41,6 +41,7 @@ ModifierState MergeModifier(ModifierState lhs, ModifierState rhs)
 
 }
 
+const KeyBinding KeyBinding::EMPTY;
 const KeyBinding KeyBinding::SHIFT(-1, -1, ModifierState::Required, ModifierState::Forbidden, ModifierState::Forbidden);
 const KeyBinding KeyBinding::ALT(-1, -1, ModifierState::Forbidden, ModifierState::Required, ModifierState::Forbidden);
 const KeyBinding KeyBinding::CTRL(-1, -1, ModifierState::Forbidden, ModifierState::Forbidden, ModifierState::Required);
@@ -68,7 +69,7 @@ KeyBinding::KeyBinding(int mouseButton, int key, ModifierState shift, ModifierSt
 {
 }
 
-bool KeyBinding::IsDown(AbstractEditorInput& input, bool ignoreGrabbed, bool grab) const
+bool KeyBinding::IsDown(AbstractInput& input, bool ignoreGrabbed, bool grab) const
 {
     // Check all conditions
     if (mouseButton_ >= 0)
@@ -103,7 +104,7 @@ bool KeyBinding::IsDown(AbstractEditorInput& input, bool ignoreGrabbed, bool gra
     return true;
 }
 
-bool KeyBinding::IsPressed(AbstractEditorInput& input, bool ignoreGrabbed, bool grab) const
+bool KeyBinding::IsPressed(AbstractInput& input, bool ignoreGrabbed, bool grab) const
 {
     // Check all conditions
     if (mouseButton_ >= 0)
@@ -151,7 +152,7 @@ KeyBinding operator+(KeyBinding lhs, const KeyBinding& rhs)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool CompositeKeyBinding::IsDown(AbstractEditorInput& input, bool ignoreGrabbed /*= true*/, bool grab /*= true*/) const
+bool CompositeKeyBinding::IsDown(AbstractInput& input, bool ignoreGrabbed /*= true*/, bool grab /*= true*/) const
 {
     for (const KeyBinding& keyBinding : keyBindings_)
         if (keyBinding.IsDown(input, ignoreGrabbed, grab))
@@ -159,7 +160,7 @@ bool CompositeKeyBinding::IsDown(AbstractEditorInput& input, bool ignoreGrabbed 
     return false;
 }
 
-bool CompositeKeyBinding::IsPressed(AbstractEditorInput& input, bool ignoreGrabbed /*= true*/, bool grab /*= true*/) const
+bool CompositeKeyBinding::IsPressed(AbstractInput& input, bool ignoreGrabbed /*= true*/, bool grab /*= true*/) const
 {
     for (const KeyBinding& keyBinding : keyBindings_)
         if (keyBinding.IsPressed(input, ignoreGrabbed, grab))

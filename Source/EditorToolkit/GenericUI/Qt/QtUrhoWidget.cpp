@@ -75,7 +75,7 @@ int Cast(Qt::Key key)
 
 //////////////////////////////////////////////////////////////////////////
 QtInput::QtInput(Context* context)
-    : UrhoInput(context)
+    : StandardUrhoInput(context)
 {
 
 }

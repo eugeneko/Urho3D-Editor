@@ -1,7 +1,8 @@
 #include "CameraController.h"
-#include "KeyBinding.h"
 #include "EditorViewportLayout.h"
 #include "EditorEvents.h"
+#include "../GenericUI/AbstractInput.h"
+#include "../GenericUI/KeyBinding.h"
 
 namespace Urho3D
 {
@@ -18,7 +19,7 @@ void CameraController::SetControls(const Controls& controls)
     controls_ = controls;
 }
 
-void CameraController::Update(AbstractEditorInput& input, float timeStep)
+void CameraController::Update(AbstractInput& input, AbstractEditorContext& editorContext, float timeStep)
 {
     if (!camera_ || input.IsUIFocused())
         return;

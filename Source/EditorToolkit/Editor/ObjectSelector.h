@@ -55,11 +55,11 @@ public:
 
 private:
     /// \see AbstractEditorOverlay::PostRenderUpdate
-    void PostRenderUpdate(AbstractEditorInput& input) override;
+    void PostRenderUpdate(AbstractInput& input, AbstractEditorContext& editorContext) override;
 
 private:
     /// Perform raycast.
-    void PerformRaycast(AbstractEditorInput& input);
+    void PerformRaycast(AbstractInput& input, AbstractEditorContext& editorContext);
     /// Resolve routine.
     Component* ResolveRoutine(Component* source);
 

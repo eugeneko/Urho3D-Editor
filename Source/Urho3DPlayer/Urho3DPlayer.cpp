@@ -18,13 +18,13 @@
 
 #include "../EditorToolkit/GenericUI/GenericUI.h"
 #include "../EditorToolkit/GenericUI/UrhoUI.h"
+#include "../EditorToolkit/GenericUI/KeyBinding.h"
 #include "../EditorToolkit/GenericUI/Qt/QtUI.h"
 #include "../EditorToolkit/Editor/CameraController.h"
 #include "../EditorToolkit/Editor/Editor.h"
 #include "../EditorToolkit/Editor/Selection.h"
 #include "../EditorToolkit/Editor/HierarchyWindow.h"
 #include "../EditorToolkit/Editor/ObjectSelector.h"
-#include "../EditorToolkit/Editor/KeyBinding.h"
 #include "../EditorToolkit/Editor/EditorViewportLayout.h"
 #include "../EditorToolkit/Editor/DebugGeometryRenderer.h"
 #include "../EditorToolkit/Editor/Gizmo.h"
@@ -100,13 +100,13 @@ public:
         scene_ = MakeShared<Scene>(context_);
         CreateScene(scene_);
 
-        editor_ = MakeShared<Editor>(context_);
+        editor_ = MakeShared<Editor>(ui);
 
         viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
         viewportLayout_->SetScene(scene_);
         viewportLayout_->SetCameraTransform(scene_->GetChild("Camera"));
 
-        auto editorInput = MakeShared<StandardEditorInput>(context_, ui.GetInput(), viewportLayout_);
+        auto editorContext = MakeShared<StandardEditorContext>(context_, viewportLayout_);
 
         auto cameraController = MakeShared<CameraController>(context_);
         cameraController->SetCamera(&viewportLayout_->GetCurrentCamera());
@@ -134,7 +134,7 @@ public:
         debugGeometryRenderer_->SetSelection(selection);
         debugGeometryRenderer_->DisableForComponent("Terrain");
 
-        editor_->SetInput(editorInput);
+        editor_->SetEditorContext(editorContext);
         editor_->AddOverlay(viewportLayout_);
         editor_->AddOverlay(gizmo);
         editor_->AddOverlay(cameraController);

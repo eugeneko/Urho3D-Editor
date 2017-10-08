@@ -36,7 +36,7 @@ public:
 
 private:
     /// \see AbstractEditorOverlay::PostRenderUpdate
-    void PostRenderUpdate(AbstractEditorInput& input) override;
+    void PostRenderUpdate(AbstractInput& input, AbstractEditorContext& editorContext) override;
 
 private:
     /// Check whether to draw debug geometry for node.

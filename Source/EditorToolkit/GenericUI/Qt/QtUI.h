@@ -82,8 +82,11 @@ class QtMainWindow : public GenericMainWindow
 {
 public:
     QtMainWindow(QApplication& application);
-    Context* GetContext() { return context_; }
+
     GenericDialog* AddDialog(DialogLocationHint hint) override;
+    void AddAction(const AbstractAction& action) override;
+
+    Context* GetContext() { return context_; }
     QtUrhoWidget& GetUrhoWidget() { return urhoWidget_; }
 private:
     SharedPtr<Context> context_;

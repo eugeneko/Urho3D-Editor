@@ -4,11 +4,11 @@ namespace Urho3D
 {
 
 //////////////////////////////////////////////////////////////////////////
-void AbstractEditorOverlay::Update(AbstractEditorInput& /*input*/, float /*timeStep*/)
+void AbstractEditorOverlay::Update(AbstractInput& /*input*/, AbstractEditorContext& /*editorContext*/, float /*timeStep*/)
 {
 }
 
-void AbstractEditorOverlay::PostRenderUpdate(AbstractEditorInput& /*input*/)
+void AbstractEditorOverlay::PostRenderUpdate(AbstractInput& /*input*/, AbstractEditorContext& /*editorContext*/)
 {
 }
 
