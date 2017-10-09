@@ -16,7 +16,7 @@ GenericWidget::GenericWidget(AbstractMainWindow& mainWindow, GenericWidget* pare
 //////////////////////////////////////////////////////////////////////////
 GenericWidget* GenericDialog::CreateBodyWidget(StringHash type)
 {
-    GenericWidget* widget = mainWindow_.CreateWidget(type, this);
+    SharedPtr<GenericWidget> widget = mainWindow_.CreateWidget(type, this);
     SetBodyWidget(widget);
     return widget;
 }
@@ -41,6 +41,48 @@ int GenericHierarchyListItem::GetIndex()
         return idx < parent_->children_.Size() ? static_cast<int>(idx) : -1;
     }
     return 0;
+}
+
+SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, GenericWidget* parent)
+{
+    using WidgetFactory = SharedPtr<GenericWidget>(AbstractMainWindow::*)(GenericWidget* parent);
+    static const HashMap<StringHash, WidgetFactory> factory =
+    {
+        { AbstractLayout::GetTypeStatic(), &AbstractMainWindow::CreateLayout },
+        { AbstractButton::GetTypeStatic(), &AbstractMainWindow::CreateButton},
+        { AbstractText::GetTypeStatic(), &AbstractMainWindow::CreateText },
+        { AbstractLineEdit::GetTypeStatic(), &AbstractMainWindow::CreateLineEdit },
+        { GenericHierarchyList::GetTypeStatic(), &AbstractMainWindow::CreateHierarchyList },
+    };
+
+    WidgetFactory createWidget = nullptr;
+    factory.TryGetValue(type, createWidget);
+    return createWidget ? (this->*createWidget)(parent) : nullptr;
+}
+
+SharedPtr<GenericWidget> AbstractMainWindow::CreateLayout(GenericWidget* parent)
+{
+    return nullptr;
+}
+
+SharedPtr<GenericWidget> AbstractMainWindow::CreateButton(GenericWidget* parent)
+{
+    return nullptr;
+}
+
+SharedPtr<GenericWidget> AbstractMainWindow::CreateText(GenericWidget* parent)
+{
+    return nullptr;
+}
+
+SharedPtr<GenericWidget> AbstractMainWindow::CreateLineEdit(GenericWidget* parent)
+{
+    return nullptr;
+}
+
+SharedPtr<GenericWidget> AbstractMainWindow::CreateHierarchyList(GenericWidget* parent)
+{
+    return nullptr;
 }
 
 }

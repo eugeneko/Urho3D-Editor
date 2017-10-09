@@ -83,6 +83,41 @@ public:
     virtual void SetName(const String& name) = 0;
 };
 
+class AbstractLayout : public GenericWidget
+{
+    URHO3D_OBJECT(AbstractLayout, GenericWidget);
+
+public:
+    AbstractLayout(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+};
+
+class AbstractButton : public GenericWidget
+{
+    URHO3D_OBJECT(AbstractButton, GenericWidget);
+
+public:
+    AbstractButton(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+    virtual AbstractButton& SetText(const String& text) = 0;
+};
+
+class AbstractText : public GenericWidget
+{
+    URHO3D_OBJECT(AbstractText, GenericWidget);
+
+public:
+    AbstractText(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+    virtual AbstractText& SetText(const String& text) = 0;
+};
+
+class AbstractLineEdit : public GenericWidget
+{
+    URHO3D_OBJECT(AbstractLineEdit, GenericWidget);
+
+public:
+    AbstractLineEdit(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+    virtual AbstractLineEdit& SetText(const String& text) = 0;
+};
+
 class GenericHierarchyListItem : public Object
 {
     URHO3D_OBJECT(GenericHierarchyListItem, Object);
@@ -125,7 +160,7 @@ public:
 class AbstractMainWindow
 {
 public:
-    virtual GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) = 0;
+    SharedPtr<GenericWidget> CreateWidget(StringHash type, GenericWidget* parent);
     virtual GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) = 0;
     virtual void AddAction(const AbstractAction& actionDesc) = 0;
     virtual GenericMenu* AddMenu(const String& name) = 0;
@@ -137,6 +172,17 @@ public:
     {
         AddAction({ id, "", function, keyBinding });
     }
+
+private:
+    virtual SharedPtr<GenericWidget> CreateLayout(GenericWidget* parent);
+    virtual SharedPtr<GenericWidget> CreateButton(GenericWidget* parent);
+    virtual SharedPtr<GenericWidget> CreateText(GenericWidget* parent);
+    virtual SharedPtr<GenericWidget> CreateLineEdit(GenericWidget* parent);
+    virtual SharedPtr<GenericWidget> CreateHierarchyList(GenericWidget* parent);
 };
 
 }
+
+#define URHO3D_IMPLEMENT_WIDGET_FACTORY(factory, implementation) \
+    SharedPtr<GenericWidget> factory(GenericWidget* parent) override { return MakeShared<implementation>(*this, parent); }
+

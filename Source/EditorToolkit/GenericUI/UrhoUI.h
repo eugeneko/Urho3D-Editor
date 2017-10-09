@@ -11,6 +11,14 @@ namespace Urho3D
 class UrhoMainWindow;
 class UI;
 class Menu;
+class LineEdit;
+class Button;
+
+class UrhoWidget
+{
+public:
+    virtual void CreateElements(UIElement* parent) = 0;
+};
 
 class UrhoDialog : public GenericDialog
 {
@@ -24,14 +32,97 @@ public:
 private:
     SharedPtr<Window> window_;
     Text* windowTitle_ = nullptr;
-    SharedPtr<GenericWidget> body_;
     UIElement* bodyElement_ = nullptr;
+    SharedPtr<GenericWidget> body_;
 };
 
-class UrhoWidget
+class UrhoLayout : public AbstractLayout, public UrhoWidget
 {
+    URHO3D_OBJECT(UrhoLayout, AbstractLayout);
+
 public:
-    virtual UIElement* GetWidget() = 0;
+    UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent);
+
+    void ResetRows();
+    void AddFixedColumn(float width, int minWidth);
+    void AddColumn();
+
+    GenericWidget& CreateCellWidget(StringHash type, unsigned row, unsigned column);
+    template <class T> T& CreateCellWidget(unsigned row, unsigned column) { return dynamic_cast<T&>(CreateCellWidget(T::GetTypeStatic(), row, column)); }
+
+    GenericWidget& CreateRowWidget(StringHash type, unsigned row);
+    template <class T> T& CreateRowWidget(unsigned row) { return dynamic_cast<T&>(CreateRowWidget(T::GetTypeStatic(), row)); }
+
+    void UpdateLayout();
+
+    void CreateElements(UIElement* parent) override;
+
+private:
+    bool AddCellWidget(unsigned row, unsigned column, GenericWidget* childWidget);
+    bool AddRowWidget(unsigned row, GenericWidget* childWidget);
+    void HandleLayoutChanged(StringHash eventType, VariantMap& eventData);
+    struct ColumnDesc
+    {
+        bool fixed_ = false;
+        float width_ = 0;
+        int minWidth_ = 0;
+    };
+    enum class RowType
+    {
+        SingleColumn,
+        MultipleColumns
+    };
+
+    UIElement* body_ = nullptr;
+    Vector<ColumnDesc> columns_;
+    Vector<SharedPtr<GenericWidget>> children_;
+    Vector<Pair<UIElement*, RowType>> rowElements_;
+};
+
+class UrhoButton : public AbstractButton, public UrhoWidget
+{
+    URHO3D_OBJECT(UrhoButton, AbstractButton);
+
+public:
+    UrhoButton(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractButton(mainWindow, parent) {}
+    AbstractButton& SetText(const String& text) override;
+
+private:
+    void CreateElements(UIElement* parent) override;
+
+private:
+    Button* button_ = nullptr;
+    Text* text_ = nullptr;
+};
+
+class UrhoText : public AbstractText, public UrhoWidget
+{
+    URHO3D_OBJECT(UrhoText, AbstractText);
+
+public:
+    UrhoText(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractText(mainWindow, parent) {}
+    AbstractText& SetText(const String& text) override;
+
+private:
+    void CreateElements(UIElement* parent) override;
+
+private:
+    Text* text_ = nullptr;
+};
+
+class UrhoLineEdit : public AbstractLineEdit, public UrhoWidget
+{
+    URHO3D_OBJECT(UrhoLineEdit, AbstractLineEdit);
+
+public:
+    UrhoLineEdit(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractLineEdit(mainWindow, parent) {}
+    AbstractLineEdit& SetText(const String& text) override;
+
+private:
+    void CreateElements(UIElement* parent) override;
+
+private:
+    LineEdit* lineEdit_ = nullptr;
 };
 
 class UrhoHierarchyListItemWidget : public Text
@@ -49,11 +140,12 @@ class UrhoHierarchyList : public GenericHierarchyList, public UrhoWidget
 
 public:
     UrhoHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent);
-    UIElement* GetWidget() override { return hierarchyList_; }
     void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) override;
     void SelectItem(GenericHierarchyListItem* item) override;
     void DeselectItem(GenericHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
+
+    void CreateElements(UIElement* parent) override;
 
 private:
     void InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent);
@@ -131,7 +223,6 @@ class UrhoMainWindow : public AbstractMainWindow, public Object
 public:
     UrhoMainWindow(Context* context);
 
-    GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) override;
     GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
     void AddAction(const AbstractAction& actionDesc) override;
     GenericMenu* AddMenu(const String& name) override;
@@ -143,6 +234,12 @@ public:
     void CollapseMenuPopups(Menu* menu) const;
 
 private:
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           UrhoLayout);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           UrhoButton);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             UrhoText);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         UrhoLineEdit);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList,    UrhoHierarchyList);
+
     void HandleResized(StringHash eventType, VariantMap& eventData);
 
 private:

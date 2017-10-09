@@ -267,14 +267,6 @@ QtMainWindow::~QtMainWindow()
         delete item.second_;
 }
 
-GenericWidget* QtMainWindow::CreateWidget(StringHash type, GenericWidget* parent)
-{
-    GenericWidget* widget = nullptr;
-    if (type == GenericHierarchyList::GetTypeStatic())
-        widget = new QtHierarchyList(*this, parent);
-    return widget;
-}
-
 GenericDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocationHint::Undocked*/)
 {
     auto widget = new QtDockDialog(*this, nullptr);

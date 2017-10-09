@@ -28,6 +28,7 @@
 #include "../EditorToolkit/Editor/EditorViewportLayout.h"
 #include "../EditorToolkit/Editor/DebugGeometryRenderer.h"
 #include "../EditorToolkit/Editor/Gizmo.h"
+#include "../EditorToolkit/Editor/Inspector.h"
 #include "../EditorToolkit/Editor/Transformable.h"
 
 #include <Urho3D/DebugNew.h>
@@ -142,9 +143,11 @@ public:
         editor_->AddOverlay(debugGeometryRenderer_);
         editor_->AddSubsystem(selectionTransform);
 
-        hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow);
-        hierarchyWindow_->SetScene(scene_);
-        hierarchyWindow_->SetSelection(selection);
+//         hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow);
+//         hierarchyWindow_->SetScene(scene_);
+//         hierarchyWindow_->SetSelection(selection);
+
+        inspector_ = MakeShared<Inspector>(mainWindow);
 
         if (blenderHotkeys)
         {
@@ -232,6 +235,7 @@ private:
     SharedPtr<DebugGeometryRenderer> debugGeometryRenderer_;
 
     SharedPtr<HierarchyWindow> hierarchyWindow_;
+    SharedPtr<Inspector> inspector_;
     SharedPtr<Scene> scene_;
 };
 

@@ -87,7 +87,6 @@ public:
     QtMainWindow(QApplication& application);
     ~QtMainWindow() override;
 
-    GenericWidget* CreateWidget(StringHash type, GenericWidget* parent) override;
     GenericDialog* AddDialog(DialogLocationHint hint) override;
     void AddAction(const AbstractAction& actionDesc) override;
     GenericMenu* AddMenu(const String& name) override;
@@ -97,6 +96,9 @@ public:
 
     QtUrhoWidget& GetUrhoWidget() { return urhoWidget_; }
     QAction* FindAction(const String& id) const;
+
+private:
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList, QtHierarchyList);
 
 private:
     SharedPtr<Context> context_;
