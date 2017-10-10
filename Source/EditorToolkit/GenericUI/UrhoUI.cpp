@@ -178,31 +178,6 @@ void UrhoLayout::SetScroll(bool scroll)
     }
 }
 
-void UrhoLayout::ResetRows()
-{
-    children_.Clear();
-    elements_.Clear();
-    body_->RemoveAllChildren();
-}
-
-void UrhoLayout::AddFixedColumn(float width, int minWidth)
-{
-    ResetRows();
-    ColumnDesc desc;
-    desc.fixed_ = true;
-    desc.width_ = width;
-    desc.minWidth_ = minWidth;
-    columns_.Push(desc);
-}
-
-void UrhoLayout::AddColumn()
-{
-    ResetRows();
-    ColumnDesc desc;
-    desc.fixed_ = false;
-    columns_.Push(desc);
-}
-
 GenericWidget& UrhoLayout::CreateCellWidget(StringHash type, unsigned row, unsigned column)
 {
     SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
@@ -363,20 +338,12 @@ UIElement* UrhoLayout::CreateElements(UIElement* parent)
     if (count != 1)
         return container_;
     scrollView_->SetScrollBarsVisible(false, true);
-    AddFixedColumn(0.35f, 100);
-    AddColumn();
     int row = 0;
     for (int i = 0; i < 50; ++i)
     {
         CreateCellWidget<AbstractText>(row, 0).SetText("Position").SetFixedWidth(false);
         UrhoLayout& nestedLayout1 = (UrhoLayout&)CreateCellWidget<AbstractLayout>(row, 1);
         nestedLayout1.SetScroll(false);
-        nestedLayout1.AddColumn();
-        nestedLayout1.AddColumn();
-        nestedLayout1.AddColumn();
-        nestedLayout1.AddColumn();
-        nestedLayout1.AddColumn();
-        nestedLayout1.AddColumn();
         nestedLayout1.CreateCellWidget<AbstractText>(0, 0).SetText("X");
         nestedLayout1.CreateCellWidget<AbstractLineEdit>(0, 1).SetText("1");
         nestedLayout1.CreateCellWidget<AbstractText>(0, 2).SetText("Y");
@@ -392,8 +359,6 @@ UIElement* UrhoLayout::CreateElements(UIElement* parent)
         CreateCellWidget<AbstractText>(row, 0).SetText("Two Buttons").SetFixedWidth(false);
         UrhoLayout& nestedLayout2 = (UrhoLayout&)CreateCellWidget<AbstractLayout>(row, 1);
         nestedLayout2.SetScroll(false);
-        nestedLayout2.AddColumn();
-        nestedLayout2.AddColumn();
         nestedLayout2.CreateCellWidget<AbstractButton>(0, 0).SetText("1");
         nestedLayout2.CreateCellWidget<AbstractButton>(0, 1).SetText("2");
         ++row;
@@ -467,7 +432,6 @@ bool UrhoLayout::AddRowWidget(unsigned row, GenericWidget* childWidget)
 
 void UrhoLayout::HandleLayoutChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)
 {
-    body_->UpdateLayout();
     UpdateLayout();
 }
 

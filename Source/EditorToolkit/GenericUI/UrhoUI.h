@@ -45,9 +45,6 @@ public:
     UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent);
 
     void SetScroll(bool scroll);
-    void ResetRows();
-    void AddFixedColumn(float width, int minWidth);
-    void AddColumn();
 
     GenericWidget& CreateCellWidget(StringHash type, unsigned row, unsigned column);
     template <class T> T& CreateCellWidget(unsigned row, unsigned column) { return dynamic_cast<T&>(CreateCellWidget(T::GetTypeStatic(), row, column)); }
@@ -63,12 +60,6 @@ private:
     bool AddCellWidget(unsigned row, unsigned column, GenericWidget* childWidget);
     bool AddRowWidget(unsigned row, GenericWidget* childWidget);
     void HandleLayoutChanged(StringHash eventType, VariantMap& eventData);
-    struct ColumnDesc
-    {
-        bool fixed_ = false;
-        float width_ = 0;
-        int minWidth_ = 0;
-    };
     enum class RowType
     {
         SingleColumn,
@@ -82,7 +73,6 @@ private:
     UIElement* scrollPanel_ = nullptr;
     UIElement* body_ = nullptr;
 
-    Vector<ColumnDesc> columns_;
     Vector<SharedPtr<GenericWidget>> children_;
     Vector<Pair<Vector<UIElement*>, RowType>> elements_;
 };
