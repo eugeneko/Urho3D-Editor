@@ -13,6 +13,7 @@ class UI;
 class Menu;
 class LineEdit;
 class Button;
+class ScrollView;
 
 class UrhoWidget
 {
@@ -43,6 +44,7 @@ class UrhoLayout : public AbstractLayout, public UrhoWidget
 public:
     UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent);
 
+    void SetScroll(bool scroll);
     void ResetRows();
     void AddFixedColumn(float width, int minWidth);
     void AddColumn();
@@ -73,10 +75,16 @@ private:
         MultipleColumns
     };
 
+    bool scroll_ = true;
+
+    ScrollView* scrollView_ = nullptr;
+    UIElement* scrollPanel_ = nullptr;
     UIElement* body_ = nullptr;
+
     Vector<ColumnDesc> columns_;
     Vector<SharedPtr<GenericWidget>> children_;
-    Vector<Pair<UIElement*, RowType>> rowElements_;
+    Vector<Vector<SharedPtr<GenericWidget>>> cells_;
+    Vector<Vector<UIElement*>> elements_;
 };
 
 class UrhoButton : public AbstractButton, public UrhoWidget
