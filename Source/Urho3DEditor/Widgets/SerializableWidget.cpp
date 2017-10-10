@@ -39,7 +39,9 @@ SerializableWidget::SerializableWidget(const SerializableVector& serializables, 
             continue;
 
         const int row = layout_->rowCount();
-        layout_->addWidget(new QLabel(Cast(attrib.name_)), row, 0);
+        QLabel* lbl = nullptr;
+        layout_->addWidget(lbl = new QLabel(Cast(attrib.name_)), row, 0);
+        lbl->setMinimumWidth(10);
         if (AttributeWidget* attribWidget = AttributeWidget::Create(attrib, i))
         {
             layout_->addWidget(attribWidget, row, 1);

@@ -8,6 +8,7 @@
 #include <Urho3D/UI/Button.h>
 #include <Urho3D/UI/Menu.h>
 #include <Urho3D/UI/LineEdit.h>
+#include <numeric>
 
 namespace Urho3D
 {
@@ -110,7 +111,7 @@ UrhoDialog::UrhoDialog(AbstractMainWindow& mainWindow, GenericWidget* parent)
     window_ = uiRoot->CreateChild<Window>();
     window_->SetStyleAuto();
     window_->SetPosition(200, 200);
-    window_->SetSize(500, 200);
+    window_->SetMinSize(200, 200);
     window_->SetResizeBorder(IntRect(6, 6, 6, 6));
     window_->SetResizable(true);
     window_->SetMovable(true);
@@ -172,7 +173,7 @@ void UrhoLayout::SetScroll(bool scroll)
     {
         UnsubscribeFromEvent(scrollPanel_, E_LAYOUTUPDATED);
         scrollView_->SetVisible(false);
-        scrollView_->GetParent()->AddChild(body_);
+        container_->AddChild(body_);
         SubscribeToEvent(body_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
     }
 }
@@ -220,28 +221,77 @@ GenericWidget& UrhoLayout::CreateRowWidget(StringHash type, unsigned row)
 
 void UrhoLayout::UpdateLayout()
 {
-    const IntVector2 clientSize = scrollPanel_->GetSize() - IntVector2(5, 0);
-    Vector<int> minRowHeights;
-    Vector<int> minColumnWidths;
+    // Disable layout update
+    body_->DisableLayoutUpdate();
+    if (scroll_)
+        scrollPanel_->DisableLayoutUpdate();
+
+    const IntVector2 clientSize = scroll_ ? scrollPanel_->GetSize() - IntVector2(5, 0) : body_->GetSize();
+    Vector<int> minRowHeight;
+    Vector<int> minColumnWidth;
+    Vector<int> maxColumnWidth;
 
     // Compute sizes
     const unsigned numRows = elements_.Size();
-    minRowHeights.Resize(numRows, 0);
+    minRowHeight.Resize(numRows, 0);
     for (unsigned row = 0; row < numRows; ++row)
     {
+        const RowType rowType = elements_[row].second_;
         const Vector<UIElement*>& rowElements = elements_[row].first_;
         const unsigned numColumns = rowElements.Size();
-        if (minColumnWidths.Size() <= numColumns)
-            minColumnWidths.Resize(numColumns + 1, 0);
-        for (unsigned column = 0; column < rowElements.Size(); ++column)
+        if (minColumnWidth.Size() <= numColumns)
+            minColumnWidth.Resize(numColumns, 0);
+        if (maxColumnWidth.Size() <= numColumns)
+            maxColumnWidth.Resize(numColumns, 0);
+        for (unsigned column = 0; column < numColumns; ++column)
         {
             UIElement* cellElement = rowElements[column];
-            if (!cellElement)
+            if (!cellElement || cellElement->GetNumChildren() == 0)
                 continue;
             const IntVector2 cellSize = cellElement->GetEffectiveMinSize();
+            const IntVector2 maxCellSize = cellElement->GetMaxSize();
 
-            minColumnWidths[column] = Max(minColumnWidths[column], cellSize.x_);
-            minRowHeights[row] = Max(minRowHeights[row], cellSize.y_);
+            if (rowType != RowType::SingleColumn)
+            {
+                minColumnWidth[column] = Max(minColumnWidth[column], cellSize.x_);
+                maxColumnWidth[column] = Max(maxColumnWidth[column], maxCellSize.x_);
+            }
+            minRowHeight[row] = Max(minRowHeight[row], cellSize.y_);
+        }
+    }
+
+    // Compute width stretch
+    const unsigned numColumns = minColumnWidth.Size();
+    const int minBodyWidth = std::accumulate(&*minColumnWidth.Begin(), &*minColumnWidth.End(), 0);
+
+    Vector<int> maxColumnStretch;
+    maxColumnStretch.Resize(numColumns, 0);
+    for (unsigned i = 0; i < numColumns; ++i)
+        maxColumnStretch[i] = Max(0, maxColumnWidth[i] - minColumnWidth[i]);
+
+    Vector<int> columnWidth = minColumnWidth;
+    int remainingStretch = Max(0, clientSize.x_ - minBodyWidth);
+    unsigned remainingColumns = numColumns;
+    while (remainingStretch > 0 && remainingColumns > 0)
+    {
+        // Compute number of stretchable columns
+        remainingColumns = 0;
+        for (unsigned i = 0; i < numColumns; ++i)
+            if (columnWidth[i] < maxColumnWidth[i])
+                ++remainingColumns;
+        if (remainingColumns == 0)
+            break;
+
+        // Stretch columns
+        const int columnDelta = (remainingStretch + remainingColumns - 1) / remainingColumns;
+        for (unsigned i = 0; i < numColumns; ++i)
+        {
+            if (columnWidth[i] < maxColumnWidth[i])
+            {
+                const int oldWidth = columnWidth[i];
+                columnWidth[i] = Min(maxColumnWidth[i], columnWidth[i] + Min(columnDelta, remainingStretch));
+                remainingStretch -= columnWidth[i] - oldWidth;
+            }
         }
     }
 
@@ -252,7 +302,7 @@ void UrhoLayout::UpdateLayout()
     {
         const RowType rowType = elements_[row].second_;
         const Vector<UIElement*>& rowElements = elements_[row].first_;
-        const int rowHeight = minRowHeights[row];
+        const int rowHeight = minRowHeight[row];
         position.x_ = 0;
         if (rowType == RowType::SingleColumn)
         {
@@ -267,17 +317,16 @@ void UrhoLayout::UpdateLayout()
         else
         {
             // Iterate over columns
-            const unsigned numColumns = rowElements.Size();
             for (unsigned column = 0; column < rowElements.Size(); ++column)
             {
                 UIElement* cellElement = rowElements[column];
                 if (!cellElement)
                     continue;
 
-                const int columnWidth = minColumnWidths[column];
+                const int width = columnWidth[column];
                 cellElement->SetPosition(position);
-                cellElement->SetSize(columnWidth, rowHeight);
-                position.x_ += columnWidth;
+                cellElement->SetSize(width, rowHeight);
+                position.x_ += width;
             }
         }
         position.y_ += rowHeight;
@@ -285,11 +334,19 @@ void UrhoLayout::UpdateLayout()
     }
     bodySize.y_ = position.y_;
     body_->SetSize(bodySize);
+
+    // Update layout
+    body_->EnableLayoutUpdate();
+    if (scroll_)
+        scrollPanel_->EnableLayoutUpdate();
 }
 
-void UrhoLayout::CreateElements(UIElement* parent)
+UIElement* UrhoLayout::CreateElements(UIElement* parent)
 {
-    scrollView_ = parent->CreateChild<ScrollView>("AL_ScrollView");
+    container_ = parent->CreateChild<UIElement>("AL_MainContainer");
+    container_->SetLayout(LM_HORIZONTAL);
+
+    scrollView_ = container_->CreateChild<ScrollView>("AL_ScrollView");
     scrollView_->SetStyleAuto();
     scrollView_->SetScrollBarsVisible(false, true);
 
@@ -304,14 +361,14 @@ void UrhoLayout::CreateElements(UIElement* parent)
     scrollView_->SetScrollBarsVisible(false, false);
 
     if (count != 1)
-        return;
+        return container_;
     scrollView_->SetScrollBarsVisible(false, true);
     AddFixedColumn(0.35f, 100);
     AddColumn();
     int row = 0;
-    for (int i = 0; i < 20; ++i)
+    for (int i = 0; i < 50; ++i)
     {
-        CreateCellWidget<AbstractText>(row, 0).SetText("Position");
+        CreateCellWidget<AbstractText>(row, 0).SetText("Position").SetFixedWidth(false);
         UrhoLayout& nestedLayout1 = (UrhoLayout&)CreateCellWidget<AbstractLayout>(row, 1);
         nestedLayout1.SetScroll(false);
         nestedLayout1.AddColumn();
@@ -327,12 +384,12 @@ void UrhoLayout::CreateElements(UIElement* parent)
         nestedLayout1.CreateCellWidget<AbstractText>(0, 4).SetText("Z");
         nestedLayout1.CreateCellWidget<AbstractLineEdit>(0, 5).SetText("3");
         ++row;
-        CreateCellWidget<AbstractText>(row, 0).SetText("Some long long long name");
+        CreateCellWidget<AbstractText>(row, 0).SetText("Some long long long name").SetFixedWidth(false);
         CreateCellWidget<AbstractLineEdit>(row, 1).SetText("Some long long long edit");
         ++row;
         CreateRowWidget<AbstractButton>(row).SetText("Build");
         ++row;
-        CreateCellWidget<AbstractText>(row, 0).SetText("Two Buttons");
+        CreateCellWidget<AbstractText>(row, 0).SetText("Two Buttons").SetFixedWidth(false);
         UrhoLayout& nestedLayout2 = (UrhoLayout&)CreateCellWidget<AbstractLayout>(row, 1);
         nestedLayout2.SetScroll(false);
         nestedLayout2.AddColumn();
@@ -342,6 +399,7 @@ void UrhoLayout::CreateElements(UIElement* parent)
         ++row;
     }
     --count;
+    return container_;
 }
 
 bool UrhoLayout::AddCellWidget(unsigned row, unsigned column, GenericWidget* childWidget)
@@ -358,14 +416,6 @@ bool UrhoLayout::AddCellWidget(unsigned row, unsigned column, GenericWidget* chi
     if (rowElements.Size() <= column)
         rowElements.Resize(column + 1);
 
-    UIElement* cellElement = rowElements[column];
-    if (!cellElement)
-    {
-        cellElement = body_->CreateChild<UIElement>();
-        cellElement->SetLayout(LM_HORIZONTAL);
-        rowElements[column] = cellElement;
-    }
-
     // Test element
     auto urhoWidget = dynamic_cast<UrhoWidget*>(childWidget);
     if (!urhoWidget)
@@ -375,8 +425,9 @@ bool UrhoLayout::AddCellWidget(unsigned row, unsigned column, GenericWidget* chi
     }
 
     // Add widget
-    cellElement->RemoveAllChildren();
-    urhoWidget->CreateElements(cellElement);
+    if (rowElements[column])
+        body_->RemoveChild(rowElements[column]);
+    rowElements[column] = urhoWidget->CreateElements(body_);
 
     // Update layout
     UpdateLayout();
@@ -398,14 +449,6 @@ bool UrhoLayout::AddRowWidget(unsigned row, GenericWidget* childWidget)
         body_->RemoveChild(cellElement);
     rowElements.Resize(1);
 
-    UIElement* cellElement = rowElements[0];
-    if (!cellElement)
-    {
-        cellElement = body_->CreateChild<UIElement>();
-        cellElement->SetLayout(LM_HORIZONTAL);
-        rowElements[0] = cellElement;
-    }
-
     // Test element
     auto urhoWidget = dynamic_cast<UrhoWidget*>(childWidget);
     if (!urhoWidget)
@@ -415,8 +458,7 @@ bool UrhoLayout::AddRowWidget(unsigned row, GenericWidget* childWidget)
     }
 
     // Add widget
-    cellElement->RemoveAllChildren();
-    urhoWidget->CreateElements(cellElement);
+    rowElements[0] = urhoWidget->CreateElements(body_);
 
     // Update layout
     UpdateLayout();
@@ -433,33 +475,67 @@ void UrhoLayout::HandleLayoutChanged(StringHash /*eventType*/, VariantMap& /*eve
 AbstractButton& UrhoButton::SetText(const String& text)
 {
     text_->SetText(text);
+    UpdateContainerSize();
     return *this;
 }
 
-void UrhoButton::CreateElements(UIElement* parent)
+UIElement* UrhoButton::CreateElements(UIElement* parent)
 {
     button_ = parent->CreateChild<Button>();
     button_->SetStyleAuto();
     button_->SetClipChildren(true);
-    button_->SetLayout(LM_HORIZONTAL);
     text_ = button_->CreateChild<Text>();
     text_->SetStyleAuto();
     text_->SetAlignment(HA_CENTER, VA_CENTER);
-    text_->SetMinSize(text_->GetRowHeight(), text_->GetRowHeight());
+    text_->SetMinHeight(static_cast<int>(text_->GetRowHeight()));
+    UpdateContainerSize();
+    return button_;
+}
+
+void UrhoButton::UpdateContainerSize()
+{
+    button_->SetMinSize(text_->GetMinHeight(), text_->GetMinHeight());
+    button_->SetMaxWidth(Max(text_->GetMinWidth(), text_->GetMinHeight()) + 4);
+    button_->SetMaxHeight(text_->GetMinHeight() + 4);
 }
 
 //////////////////////////////////////////////////////////////////////////
 AbstractText& UrhoText::SetText(const String& text)
 {
     text_->SetText(text);
+    UpdateContainerSize();
     return *this;
 }
 
-void UrhoText::CreateElements(UIElement* parent)
+AbstractText& UrhoText::SetFixedWidth(bool fixedSize)
 {
-    text_ = parent->CreateChild<Text>();
+    fixedSize_ = fixedSize;
+    UpdateContainerSize();
+    return *this;
+}
+
+UIElement* UrhoText::CreateElements(UIElement* parent)
+{
+    container_ = parent->CreateChild<UIElement>();
+    container_->SetClipChildren(true);
+    text_ = container_->CreateChild<Text>();
     text_->SetStyleAuto();
-    text_->SetMinSize(text_->GetRowHeight(), text_->GetRowHeight());
+    UpdateContainerSize();
+    return container_;
+}
+
+void UrhoText::UpdateContainerSize()
+{
+    if (fixedSize_)
+    {
+        container_->SetFixedSize(text_->GetMinSize());
+    }
+    else
+    {
+        // Intentionally use min height to allow width trimming
+        container_->SetMinSize(text_->GetMinHeight(), text_->GetMinHeight());
+        container_->SetMaxSize(text_->GetMinSize());
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -469,11 +545,13 @@ AbstractLineEdit& UrhoLineEdit::SetText(const String& text)
     return *this;
 }
 
-void UrhoLineEdit::CreateElements(UIElement* parent)
+UIElement* UrhoLineEdit::CreateElements(UIElement* parent)
 {
     lineEdit_ = parent->CreateChild<LineEdit>();
     lineEdit_->SetStyleAuto();
-    lineEdit_->SetMinSize(lineEdit_->GetTextElement()->GetRowHeight(), lineEdit_->GetTextElement()->GetRowHeight());
+    const int defaultHeight = static_cast<int>(lineEdit_->GetTextElement()->GetRowHeight());
+    lineEdit_->SetMinSize(defaultHeight * 2, defaultHeight);
+    return lineEdit_;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -525,7 +603,7 @@ void UrhoHierarchyList::GetSelection(ItemVector& result)
     }
 }
 
-void UrhoHierarchyList::CreateElements(UIElement* parent)
+UIElement* UrhoHierarchyList::CreateElements(UIElement* parent)
 {
     hierarchyList_ = parent->CreateChild<ListView>();
     hierarchyList_->SetInternal(true);
@@ -536,6 +614,7 @@ void UrhoHierarchyList::CreateElements(UIElement* parent)
     hierarchyList_->SetHierarchyMode(true);
     hierarchyList_->SetStyle("HierarchyListView");
     SubscribeToEvent(hierarchyList_, E_ITEMCLICKED, URHO3D_HANDLER(UrhoHierarchyList, HandleItemClicked));
+    return hierarchyList_;
 }
 
 void UrhoHierarchyList::InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent)

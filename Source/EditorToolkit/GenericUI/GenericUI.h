@@ -107,6 +107,7 @@ class AbstractText : public GenericWidget
 public:
     AbstractText(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
     virtual AbstractText& SetText(const String& text) = 0;
+    virtual AbstractText& SetFixedWidth(bool fixedSize) = 0;
 };
 
 class AbstractLineEdit : public GenericWidget

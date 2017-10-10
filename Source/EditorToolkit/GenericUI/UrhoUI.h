@@ -18,7 +18,7 @@ class ScrollView;
 class UrhoWidget
 {
 public:
-    virtual void CreateElements(UIElement* parent) = 0;
+    virtual UIElement* CreateElements(UIElement* parent) = 0;
 };
 
 class UrhoDialog : public GenericDialog
@@ -33,7 +33,7 @@ public:
 private:
     SharedPtr<Window> window_;
     Text* windowTitle_ = nullptr;
-    UIElement* bodyElement_ = nullptr;
+    UIElement* bodyElement_ = nullptr; // #TODO Remove it
     SharedPtr<GenericWidget> body_;
 };
 
@@ -57,7 +57,7 @@ public:
 
     void UpdateLayout();
 
-    void CreateElements(UIElement* parent) override;
+    UIElement* CreateElements(UIElement* parent) override;
 
 private:
     bool AddCellWidget(unsigned row, unsigned column, GenericWidget* childWidget);
@@ -77,6 +77,7 @@ private:
 
     bool scroll_ = true;
 
+    UIElement* container_ = nullptr;
     ScrollView* scrollView_ = nullptr;
     UIElement* scrollPanel_ = nullptr;
     UIElement* body_ = nullptr;
@@ -95,7 +96,9 @@ public:
     AbstractButton& SetText(const String& text) override;
 
 private:
-    void CreateElements(UIElement* parent) override;
+    UIElement* CreateElements(UIElement* parent) override;
+
+    void UpdateContainerSize();
 
 private:
     Button* button_ = nullptr;
@@ -109,12 +112,17 @@ class UrhoText : public AbstractText, public UrhoWidget
 public:
     UrhoText(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractText(mainWindow, parent) {}
     AbstractText& SetText(const String& text) override;
+    AbstractText& SetFixedWidth(bool fixedSize) override;
 
 private:
-    void CreateElements(UIElement* parent) override;
+    UIElement* CreateElements(UIElement* parent) override;
+
+    void UpdateContainerSize();
 
 private:
+    UIElement* container_ = nullptr;
     Text* text_ = nullptr;
+    bool fixedSize_ = true;
 };
 
 class UrhoLineEdit : public AbstractLineEdit, public UrhoWidget
@@ -126,7 +134,7 @@ public:
     AbstractLineEdit& SetText(const String& text) override;
 
 private:
-    void CreateElements(UIElement* parent) override;
+    UIElement* CreateElements(UIElement* parent) override;
 
 private:
     LineEdit* lineEdit_ = nullptr;
@@ -152,7 +160,7 @@ public:
     void DeselectItem(GenericHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
 
-    void CreateElements(UIElement* parent) override;
+    UIElement* CreateElements(UIElement* parent) override;
 
 private:
     void InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent);
