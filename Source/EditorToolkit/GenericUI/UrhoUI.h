@@ -83,8 +83,7 @@ private:
 
     Vector<ColumnDesc> columns_;
     Vector<SharedPtr<GenericWidget>> children_;
-    Vector<Vector<SharedPtr<GenericWidget>>> cells_;
-    Vector<Vector<UIElement*>> elements_;
+    Vector<Pair<Vector<UIElement*>, RowType>> elements_;
 };
 
 class UrhoButton : public AbstractButton, public UrhoWidget
