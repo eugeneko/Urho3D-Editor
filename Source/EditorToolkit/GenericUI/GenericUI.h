@@ -91,6 +91,26 @@ public:
     AbstractLayout(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
 };
 
+class AbstractScrollRegion : public GenericWidget
+{
+    URHO3D_OBJECT(AbstractScrollRegion, GenericWidget);
+
+public:
+    AbstractScrollRegion(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+
+    virtual void SetDynamicWidth(bool dynamicWidth) = 0;
+
+    GenericWidget* CreateContent(StringHash type);
+    template <class T> T* CreateContent() { return dynamic_cast<T*>(CreateContent(T::GetTypeStatic())); }
+
+private:
+    virtual bool SetContent(GenericWidget* content) = 0;
+
+private:
+    SharedPtr<GenericWidget> content_;
+
+};
+
 class AbstractButton : public GenericWidget
 {
     URHO3D_OBJECT(AbstractButton, GenericWidget);
@@ -175,6 +195,7 @@ public:
     }
 
 private:
+    virtual SharedPtr<GenericWidget> CreateScrollRegion(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateLayout(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateButton(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateText(GenericWidget* parent);

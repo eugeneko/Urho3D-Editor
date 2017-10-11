@@ -37,14 +37,34 @@ private:
     SharedPtr<GenericWidget> body_;
 };
 
+class UrhoScrollRegion : public AbstractScrollRegion, public UrhoWidget
+{
+    URHO3D_OBJECT(UrhoScrollRegion, AbstractScrollRegion);
+
+public:
+    UrhoScrollRegion(AbstractMainWindow& mainWindow, GenericWidget* parent);
+
+    void SetDynamicWidth(bool dynamicWidth) override;
+
+private:
+    bool SetContent(GenericWidget* content) override;
+    UIElement* CreateElements(UIElement* parent) override;
+
+    void HandleResized(StringHash eventType, VariantMap& eventData);
+    void UpdateBodySize();
+
+private:
+    ScrollView* scrollView_ = nullptr;
+    UIElement* scrollPanel_ = nullptr;
+    bool dynamicWidth_ = false;
+};
+
 class UrhoLayout : public AbstractLayout, public UrhoWidget
 {
     URHO3D_OBJECT(UrhoLayout, AbstractLayout);
 
 public:
     UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent);
-
-    void SetScroll(bool scroll);
 
     GenericWidget& CreateCellWidget(StringHash type, unsigned row, unsigned column);
     template <class T> T& CreateCellWidget(unsigned row, unsigned column) { return dynamic_cast<T&>(CreateCellWidget(T::GetTypeStatic(), row, column)); }
@@ -66,11 +86,6 @@ private:
         MultipleColumns
     };
 
-    bool scroll_ = true;
-
-    UIElement* container_ = nullptr;
-    ScrollView* scrollView_ = nullptr;
-    UIElement* scrollPanel_ = nullptr;
     UIElement* body_ = nullptr;
 
     Vector<SharedPtr<GenericWidget>> children_;
@@ -239,6 +254,7 @@ public:
     void CollapseMenuPopups(Menu* menu) const;
 
 private:
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollRegion,     UrhoScrollRegion);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           UrhoLayout);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           UrhoButton);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             UrhoText);

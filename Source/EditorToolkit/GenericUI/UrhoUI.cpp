@@ -154,28 +154,75 @@ void UrhoDialog::SetName(const String& name)
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoLayout::UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent)
-    : AbstractLayout(mainWindow, parent)
+UrhoScrollRegion::UrhoScrollRegion(AbstractMainWindow& mainWindow, GenericWidget* parent)
+    : AbstractScrollRegion(mainWindow, parent)
 {
+
 }
 
-void UrhoLayout::SetScroll(bool scroll)
+void UrhoScrollRegion::SetDynamicWidth(bool dynamicWidth)
 {
-    scroll_ = scroll;
-    if (scroll)
+    UIElement* body = scrollView_->GetContentElement();
+    if (dynamicWidth)
     {
-        UnsubscribeFromEvent(body_, E_LAYOUTUPDATED);
-        scrollView_->SetVisible(true);
-        scrollView_->SetContentElement(body_);
-        SubscribeToEvent(scrollPanel_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
+        dynamicWidth_ = true;
+        UpdateBodySize();
     }
     else
     {
-        UnsubscribeFromEvent(scrollPanel_, E_LAYOUTUPDATED);
-        scrollView_->SetVisible(false);
-        container_->AddChild(body_);
-        SubscribeToEvent(body_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
+        dynamicWidth_ = false;
+        if (body)
+        {
+            body->SetMinWidth(0);
+            body->SetMaxWidth(M_MAX_INT);
+        }
     }
+}
+
+bool UrhoScrollRegion::SetContent(GenericWidget* content)
+{
+    // Test element
+    auto urhoWidget = dynamic_cast<UrhoWidget*>(content);
+    if (!urhoWidget)
+        return false;
+
+    // Set content
+    scrollView_->SetContentElement(urhoWidget->CreateElements(scrollPanel_));
+    UpdateBodySize();
+    return true;
+}
+
+UIElement* UrhoScrollRegion::CreateElements(UIElement* parent)
+{
+    scrollView_ = parent->CreateChild<ScrollView>("ASR_ScrollView");
+    scrollView_->SetStyleAuto();
+
+    scrollPanel_ = scrollView_->GetScrollPanel();
+    SubscribeToEvent(scrollPanel_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoScrollRegion, HandleResized));
+    return scrollView_;
+}
+
+
+void UrhoScrollRegion::HandleResized(StringHash /*eventType*/, VariantMap& /*eventData*/)
+{
+    UpdateBodySize();
+}
+
+void UrhoScrollRegion::UpdateBodySize()
+{
+    UIElement* body = scrollView_->GetContentElement();
+    const IntRect& clipBorder = scrollPanel_->GetClipBorder();
+    if (body && dynamicWidth_)
+    {
+        body->SetFixedWidth(scrollPanel_->GetWidth() - clipBorder.left_ - clipBorder.right_);
+        scrollView_->OnResize(scrollView_->GetSize(), IntVector2::ZERO);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////
+UrhoLayout::UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent)
+    : AbstractLayout(mainWindow, parent)
+{
 }
 
 GenericWidget& UrhoLayout::CreateCellWidget(StringHash type, unsigned row, unsigned column)
@@ -198,10 +245,8 @@ void UrhoLayout::UpdateLayout()
 {
     // Disable layout update
     body_->DisableLayoutUpdate();
-    if (scroll_)
-        scrollPanel_->DisableLayoutUpdate();
 
-    const IntVector2 clientSize = scroll_ ? scrollPanel_->GetSize() - IntVector2(5, 0) : body_->GetSize();
+    const IntVector2 clientSize = body_->GetSize()/* - IntVector2(5, 0)*/;
     Vector<int> minRowHeight;
     Vector<int> minColumnWidth;
     Vector<int> maxColumnWidth;
@@ -312,38 +357,23 @@ void UrhoLayout::UpdateLayout()
 
     // Update layout
     body_->EnableLayoutUpdate();
-    if (scroll_)
-        scrollPanel_->EnableLayoutUpdate();
 }
 
 UIElement* UrhoLayout::CreateElements(UIElement* parent)
 {
-    container_ = parent->CreateChild<UIElement>("AL_MainContainer");
-    container_->SetLayout(LM_HORIZONTAL);
-
-    scrollView_ = container_->CreateChild<ScrollView>("AL_ScrollView");
-    scrollView_->SetStyleAuto();
-    scrollView_->SetScrollBarsVisible(false, true);
-
-    scrollPanel_ = scrollView_->GetScrollPanel();
-
-    body_ = scrollPanel_->CreateChild<UIElement>("AL_Content");
-    scrollView_->SetContentElement(body_);
-    SubscribeToEvent(scrollPanel_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
+    body_ = parent->CreateChild<UIElement>("AL_Content");
+    SubscribeToEvent(body_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
 
     static int count = 0;
     ++count;
-    scrollView_->SetScrollBarsVisible(false, false);
 
     if (count != 1)
-        return container_;
-    scrollView_->SetScrollBarsVisible(false, true);
+        return body_;
     int row = 0;
     for (int i = 0; i < 50; ++i)
     {
         CreateCellWidget<AbstractText>(row, 0).SetText("Position").SetFixedWidth(false);
         UrhoLayout& nestedLayout1 = (UrhoLayout&)CreateCellWidget<AbstractLayout>(row, 1);
-        nestedLayout1.SetScroll(false);
         nestedLayout1.CreateCellWidget<AbstractText>(0, 0).SetText("X");
         nestedLayout1.CreateCellWidget<AbstractLineEdit>(0, 1).SetText("1");
         nestedLayout1.CreateCellWidget<AbstractText>(0, 2).SetText("Y");
@@ -358,13 +388,12 @@ UIElement* UrhoLayout::CreateElements(UIElement* parent)
         ++row;
         CreateCellWidget<AbstractText>(row, 0).SetText("Two Buttons").SetFixedWidth(false);
         UrhoLayout& nestedLayout2 = (UrhoLayout&)CreateCellWidget<AbstractLayout>(row, 1);
-        nestedLayout2.SetScroll(false);
         nestedLayout2.CreateCellWidget<AbstractButton>(0, 0).SetText("1");
         nestedLayout2.CreateCellWidget<AbstractButton>(0, 1).SetText("2");
         ++row;
     }
     --count;
-    return container_;
+    return body_;
 }
 
 bool UrhoLayout::AddCellWidget(unsigned row, unsigned column, GenericWidget* childWidget)

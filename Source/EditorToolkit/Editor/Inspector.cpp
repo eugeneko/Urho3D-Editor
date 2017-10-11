@@ -8,7 +8,10 @@ Inspector::Inspector(AbstractMainWindow& mainWindow)
 {
     dialog_ = mainWindow.AddDialog(DialogLocationHint::DockLeft);
     dialog_->SetName("Inspector");
-    dialog_->CreateBodyWidget<AbstractLayout>();
+    AbstractScrollRegion* scrollRegion = dialog_->CreateBodyWidget<AbstractScrollRegion>();
+    scrollRegion->SetDynamicWidth(true);
+    AbstractLayout* layout = scrollRegion->CreateContent<AbstractLayout>();
+
 }
 
 }

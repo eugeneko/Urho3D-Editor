@@ -22,6 +22,17 @@ GenericWidget* GenericDialog::CreateBodyWidget(StringHash type)
 }
 
 //////////////////////////////////////////////////////////////////////////
+GenericWidget* AbstractScrollRegion::CreateContent(StringHash type)
+{
+    SharedPtr<GenericWidget> content = mainWindow_.CreateWidget(type, this);
+    if (!SetContent(content))
+        return nullptr;
+
+    content_ = content;
+    return content;
+}
+
+//////////////////////////////////////////////////////////////////////////
 void GenericHierarchyListItem::InsertChild(GenericHierarchyListItem* item, unsigned index)
 {
     children_.Insert(index, SharedPtr<GenericHierarchyListItem>(item));
@@ -48,6 +59,7 @@ SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, Gener
     using WidgetFactory = SharedPtr<GenericWidget>(AbstractMainWindow::*)(GenericWidget* parent);
     static const HashMap<StringHash, WidgetFactory> factory =
     {
+        { AbstractScrollRegion::GetTypeStatic(), &AbstractMainWindow::CreateScrollRegion },
         { AbstractLayout::GetTypeStatic(), &AbstractMainWindow::CreateLayout },
         { AbstractButton::GetTypeStatic(), &AbstractMainWindow::CreateButton},
         { AbstractText::GetTypeStatic(), &AbstractMainWindow::CreateText },
@@ -58,6 +70,11 @@ SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, Gener
     WidgetFactory createWidget = nullptr;
     factory.TryGetValue(type, createWidget);
     return createWidget ? (this->*createWidget)(parent) : nullptr;
+}
+
+SharedPtr<Urho3D::GenericWidget> AbstractMainWindow::CreateScrollRegion(GenericWidget* parent)
+{
+    return nullptr;
 }
 
 SharedPtr<GenericWidget> AbstractMainWindow::CreateLayout(GenericWidget* parent)
