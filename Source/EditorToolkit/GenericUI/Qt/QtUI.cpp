@@ -3,6 +3,7 @@
 #include <Urho3D/Core/ProcessUtils.h>
 #include <QKeySequence>
 #include <QMenuBar>
+#include <QScrollBar>
 
 namespace Urho3D
 {
@@ -44,15 +45,142 @@ QKeySequence Cast(const KeyBinding& binding)
 
 }
 
-void QtDockDialog::SetBodyWidget(GenericWidget* widget)
+bool QtDockDialog::SetContent(GenericWidget* content)
 {
-    if (QWidget* qwidget = dynamic_cast<QWidget*>(widget))
-        setWidget(qwidget);
+    if (auto contentWidget = dynamic_cast<QtWidget*>(content))
+    {
+        dock_->setWidget(contentWidget->CreateWidget());
+        return true;
+    }
+    return false;
 }
 
 void QtDockDialog::SetName(const String& name)
 {
-    setWindowTitle(Cast(name));
+    dock_->setWindowTitle(Cast(name));
+}
+
+QWidget* QtDockDialog::CreateWidget()
+{
+    dock_ = new QDockWidget();
+    return dock_;
+}
+
+//////////////////////////////////////////////////////////////////////////
+void QtScrollArea::SetDynamicWidth(bool dynamicWidth)
+{
+    dynamicWidth_ = dynamicWidth;
+    scrollArea_->setHorizontalScrollBarPolicy(dynamicWidth ? Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded);
+}
+
+QWidget* QtScrollArea::CreateWidget()
+{
+    scrollArea_ = new QScrollArea();
+    scrollArea_->setWidgetResizable(true);
+    scrollArea_->installEventFilter(this);
+    scrollArea_->verticalScrollBar()->installEventFilter(this);
+    return scrollArea_;
+}
+
+bool QtScrollArea::eventFilter(QObject* watched, QEvent* event)
+{
+    if (dynamicWidth_ && (watched == scrollArea_ || watched == scrollArea_->verticalScrollBar()) && event->type() == QEvent::Resize)
+        UpdateContentSize();
+    return false;
+}
+
+void QtScrollArea::UpdateContentSize()
+{
+    if (QWidget* content = scrollArea_->widget())
+        content->setMaximumWidth(scrollArea_->width() - scrollArea_->verticalScrollBar()->width());
+}
+
+bool QtScrollArea::SetContent(GenericWidget* content)
+{
+    if (auto contentWidget = dynamic_cast<QtWidget*>(content))
+    {
+        QWidget* widget = contentWidget->CreateWidget();
+        scrollArea_->setWidget(widget);
+        return true;
+    }
+    return false;
+}
+
+//////////////////////////////////////////////////////////////////////////
+QWidget* QtLayout::CreateWidget()
+{
+    widget_ = new QWidget();
+    widget_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    layout_ = new QGridLayout(widget_);
+    return widget_;
+}
+
+bool QtLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* child)
+{
+    if (auto childWidget = dynamic_cast<QtWidget*>(child))
+    {
+        layout_->addWidget(childWidget->CreateWidget(), row, column);
+        return true;
+    }
+    return false;
+}
+
+bool QtLayout::SetRowWidget(unsigned row, GenericWidget* child)
+{
+    if (auto childWidget = dynamic_cast<QtWidget*>(child))
+    {
+        layout_->addWidget(childWidget->CreateWidget(), row, 0, 1, -1);
+        return true;
+    }
+    return false;
+}
+
+//////////////////////////////////////////////////////////////////////////
+AbstractButton& QtButton::SetText(const String& text)
+{
+    pushButton_->setText(Cast(text));
+    return *this;
+}
+
+QWidget* QtButton::CreateWidget()
+{
+    pushButton_ = new QPushButton();
+    return pushButton_;
+}
+
+//////////////////////////////////////////////////////////////////////////
+AbstractText& QtText::SetText(const String& text)
+{
+    label_->setText(Cast(text));
+    return *this;
+}
+
+AbstractText& QtText::SetFixedWidth(bool fixedWidth)
+{
+    if (fixedWidth)
+        label_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    else
+        label_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    return *this;
+}
+
+QWidget* QtText::CreateWidget()
+{
+    label_ = new QLabel();
+    return label_;
+}
+
+//////////////////////////////////////////////////////////////////////////
+AbstractLineEdit& QtLineEdit::SetText(const String& text)
+{
+    lineEdit_->setText(Cast(text));
+    return *this;
+}
+
+QWidget* QtLineEdit::CreateWidget()
+{
+    lineEdit_ = new QLineEdit();
+    return lineEdit_;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -269,9 +397,11 @@ QtMainWindow::~QtMainWindow()
 
 GenericDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocationHint::Undocked*/)
 {
-    auto widget = new QtDockDialog(*this, nullptr);
-    addDockWidget(Cast(hint), widget);
-    return widget;
+    auto dialog = MakeShared<QtDockDialog>(*this, nullptr);
+    QDockWidget* dockWidget = dynamic_cast<QDockWidget*>(dialog->CreateWidget());
+    addDockWidget(Cast(hint), dockWidget);
+    dialogs_.Push(dialog);
+    return dialog;
 }
 
 void QtMainWindow::AddAction(const AbstractAction& actionDesc)

@@ -235,7 +235,7 @@ void EditorViewportLayout::UpdateViewportsSize()
 
 void EditorViewportLayout::UpdateActiveViewport(const IntVector2& mousePosition)
 {
-    activeViewport_ = FindViewport(mousePosition);
+    activeViewport_ = Min(viewports_.Size() - 1, FindViewport(mousePosition));
 
     // Send event.
     SendEvent(E_EDITORCURRENTVIEWPORTCHANGED,
@@ -245,7 +245,7 @@ void EditorViewportLayout::UpdateActiveViewport(const IntVector2& mousePosition)
 
 void EditorViewportLayout::UpdateHoveredViewport(const IntVector2& mousePosition)
 {
-    hoveredViewport_ = FindViewport(mousePosition);
+    hoveredViewport_ = Min(viewports_.Size() - 1, FindViewport(mousePosition));
 }
 
 unsigned EditorViewportLayout::FindViewport(const IntVector2& mousePosition)

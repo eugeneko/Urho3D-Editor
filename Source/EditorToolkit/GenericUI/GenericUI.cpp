@@ -14,15 +14,17 @@ GenericWidget::GenericWidget(AbstractMainWindow& mainWindow, GenericWidget* pare
 }
 
 //////////////////////////////////////////////////////////////////////////
-GenericWidget* GenericDialog::CreateBodyWidget(StringHash type)
+GenericWidget* GenericDialog::CreateContent(StringHash type)
 {
-    SharedPtr<GenericWidget> widget = mainWindow_.CreateWidget(type, this);
-    SetBodyWidget(widget);
-    return widget;
+    SharedPtr<GenericWidget> content = mainWindow_.CreateWidget(type, this);
+    if (!SetContent(content))
+        return nullptr;
+    content_ = content;
+    return content;
 }
 
 //////////////////////////////////////////////////////////////////////////
-GenericWidget* AbstractScrollRegion::CreateContent(StringHash type)
+GenericWidget* AbstractScrollArea::CreateContent(StringHash type)
 {
     SharedPtr<GenericWidget> content = mainWindow_.CreateWidget(type, this);
     if (!SetContent(content))
@@ -38,6 +40,7 @@ GenericWidget* AbstractLayout::CreateCellWidget(StringHash type, unsigned row, u
     SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
     if (!SetCellWidget(row, column, child))
         return nullptr;
+    children_.Push(child);
     return child;
 }
 
@@ -46,6 +49,7 @@ GenericWidget* AbstractLayout::CreateRowWidget(StringHash type, unsigned row)
     SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
     if (!SetRowWidget(row, child))
         return nullptr;
+    children_.Push(child);
     return child;
 }
 
@@ -76,7 +80,7 @@ SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, Gener
     using WidgetFactory = SharedPtr<GenericWidget>(AbstractMainWindow::*)(GenericWidget* parent);
     static const HashMap<StringHash, WidgetFactory> factory =
     {
-        { AbstractScrollRegion::GetTypeStatic(), &AbstractMainWindow::CreateScrollRegion },
+        { AbstractScrollArea::GetTypeStatic(), &AbstractMainWindow::CreateScrollArea },
         { AbstractLayout::GetTypeStatic(), &AbstractMainWindow::CreateLayout },
         { AbstractButton::GetTypeStatic(), &AbstractMainWindow::CreateButton},
         { AbstractText::GetTypeStatic(), &AbstractMainWindow::CreateText },
@@ -89,7 +93,7 @@ SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, Gener
     return createWidget ? (this->*createWidget)(parent) : nullptr;
 }
 
-SharedPtr<Urho3D::GenericWidget> AbstractMainWindow::CreateScrollRegion(GenericWidget* parent)
+SharedPtr<Urho3D::GenericWidget> AbstractMainWindow::CreateScrollArea(GenericWidget* parent)
 {
     return nullptr;
 }

@@ -18,7 +18,7 @@ class ScrollView;
 class UrhoWidget
 {
 public:
-    virtual UIElement* CreateElements(UIElement* parent) = 0;
+    virtual UIElement* CreateElement(UIElement* parent) = 0;
 };
 
 class UrhoDialog : public GenericDialog
@@ -27,32 +27,33 @@ class UrhoDialog : public GenericDialog
 
 public:
     UrhoDialog(AbstractMainWindow& mainWindow, GenericWidget* parent);
-    void SetBodyWidget(GenericWidget* widget) override;
     void SetName(const String& name) override;
+
+private:
+    bool SetContent(GenericWidget* content) override;
 
 private:
     SharedPtr<Window> window_;
     Text* windowTitle_ = nullptr;
     UIElement* bodyElement_ = nullptr; // #TODO Remove it
-    SharedPtr<GenericWidget> body_;
 };
 
-class UrhoScrollRegion : public AbstractScrollRegion, public UrhoWidget
+class UrhoScrollArea : public AbstractScrollArea, public UrhoWidget
 {
-    URHO3D_OBJECT(UrhoScrollRegion, AbstractScrollRegion);
+    URHO3D_OBJECT(UrhoScrollArea, AbstractScrollArea);
 
 public:
-    UrhoScrollRegion(AbstractMainWindow& mainWindow, GenericWidget* parent);
+    UrhoScrollArea(AbstractMainWindow& mainWindow, GenericWidget* parent);
 
     void SetDynamicWidth(bool dynamicWidth) override;
 
-    UIElement* CreateElements(UIElement* parent) override;
+    UIElement* CreateElement(UIElement* parent) override;
 
 private:
     bool SetContent(GenericWidget* content) override;
 
     void HandleResized(StringHash eventType, VariantMap& eventData);
-    void UpdateBodySize();
+    void UpdateContentSize();
 
 private:
     ScrollView* scrollView_ = nullptr;
@@ -69,11 +70,11 @@ public:
 
     void UpdateLayout();
 
-    UIElement* CreateElements(UIElement* parent) override;
+    UIElement* CreateElement(UIElement* parent) override;
 
 private:
-    bool SetCellWidget(unsigned row, unsigned column, GenericWidget* childWidget) override;
-    bool SetRowWidget(unsigned row, GenericWidget* childWidget) override;
+    bool SetCellWidget(unsigned row, unsigned column, GenericWidget* child) override;
+    bool SetRowWidget(unsigned row, GenericWidget* child) override;
 
     void HandleLayoutChanged(StringHash eventType, VariantMap& eventData);
     enum class RowType
@@ -82,9 +83,9 @@ private:
         MultipleColumns
     };
 
+private:
     UIElement* body_ = nullptr;
 
-    Vector<SharedPtr<GenericWidget>> children_;
     Vector<Pair<Vector<UIElement*>, RowType>> elements_;
 };
 
@@ -97,7 +98,7 @@ public:
     AbstractButton& SetText(const String& text) override;
 
 private:
-    UIElement* CreateElements(UIElement* parent) override;
+    UIElement* CreateElement(UIElement* parent) override;
 
     void UpdateContainerSize();
 
@@ -113,17 +114,17 @@ class UrhoText : public AbstractText, public UrhoWidget
 public:
     UrhoText(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractText(mainWindow, parent) {}
     AbstractText& SetText(const String& text) override;
-    AbstractText& SetFixedWidth(bool fixedSize) override;
+    AbstractText& SetFixedWidth(bool fixedWidth) override;
 
 private:
-    UIElement* CreateElements(UIElement* parent) override;
+    UIElement* CreateElement(UIElement* parent) override;
 
     void UpdateContainerSize();
 
 private:
     UIElement* container_ = nullptr;
     Text* text_ = nullptr;
-    bool fixedSize_ = true;
+    bool fixedWidth_ = true;
 };
 
 class UrhoLineEdit : public AbstractLineEdit, public UrhoWidget
@@ -135,7 +136,7 @@ public:
     AbstractLineEdit& SetText(const String& text) override;
 
 private:
-    UIElement* CreateElements(UIElement* parent) override;
+    UIElement* CreateElement(UIElement* parent) override;
 
 private:
     LineEdit* lineEdit_ = nullptr;
@@ -161,7 +162,7 @@ public:
     void DeselectItem(GenericHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
 
-    UIElement* CreateElements(UIElement* parent) override;
+    UIElement* CreateElement(UIElement* parent) override;
 
 private:
     void InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent);
@@ -250,7 +251,7 @@ public:
     void CollapseMenuPopups(Menu* menu) const;
 
 private:
-    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollRegion,     UrhoScrollRegion);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollArea,       UrhoScrollArea);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           UrhoLayout);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           UrhoButton);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             UrhoText);

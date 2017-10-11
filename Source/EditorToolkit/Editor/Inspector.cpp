@@ -6,9 +6,9 @@ namespace Urho3D
 Inspector::Inspector(AbstractMainWindow& mainWindow)
     : Object(mainWindow.GetContext())
 {
-    dialog_ = mainWindow.AddDialog(DialogLocationHint::DockLeft);
+    dialog_ = mainWindow.AddDialog(DialogLocationHint::DockRight);
     dialog_->SetName("Inspector");
-    AbstractScrollRegion* scrollRegion = dialog_->CreateBodyWidget<AbstractScrollRegion>();
+    AbstractScrollArea* scrollRegion = dialog_->CreateContent<AbstractScrollArea>();
     scrollRegion->SetDynamicWidth(true);
     AbstractLayout* layout = scrollRegion->CreateContent<AbstractLayout>();
 
@@ -23,6 +23,8 @@ Inspector::Inspector(AbstractMainWindow& mainWindow)
         nestedLayout1->CreateCellWidget<AbstractLineEdit>(0, 3)->SetText("2");
         nestedLayout1->CreateCellWidget<AbstractText>(0, 4)->SetText("Z");
         nestedLayout1->CreateCellWidget<AbstractLineEdit>(0, 5)->SetText("3");
+        nestedLayout1->CreateCellWidget<AbstractText>(0, 6)->SetText("W");
+        nestedLayout1->CreateCellWidget<AbstractLineEdit>(0, 7)->SetText("4");
         ++row;
         layout->CreateCellWidget<AbstractText>(row, 0)->SetText("Some long long long name").SetFixedWidth(false);
         layout->CreateCellWidget<AbstractLineEdit>(row, 1)->SetText("Some long long long edit");

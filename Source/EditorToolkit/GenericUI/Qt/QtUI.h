@@ -10,19 +10,119 @@
 #include <QAbstractItemModel>
 #include <QHeaderView>
 #include <QAction>
+#include <QPushButton>
+#include <QScrollArea>
+#include <QGridLayout>
+#include <QLineEdit>
 
 namespace Urho3D
 {
 
 class QtMainWindow;
 
-class QtDockDialog : public GenericDialog, public QDockWidget
+class QtWidget
+{
+public:
+    virtual QWidget* CreateWidget() = 0;
+};
+
+class QtDockDialog : public GenericDialog, public QtWidget
 {
 
 public:
-    QtDockDialog(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericDialog(mainWindow, parent), QDockWidget() { }
-    void SetBodyWidget(GenericWidget* widget) override;
+    QtDockDialog(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericDialog(mainWindow, parent) { }
     void SetName(const String& name) override;
+
+    QWidget* CreateWidget() override;
+
+private:
+    bool SetContent(GenericWidget* content) override;
+
+private:
+    QDockWidget* dock_ = nullptr;
+};
+
+class QtScrollArea : public AbstractScrollArea, public QtWidget, private QObject
+{
+public:
+    QtScrollArea(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractScrollArea(mainWindow, parent) { }
+
+    void SetDynamicWidth(bool dynamicWidth) override;
+
+    QWidget* CreateWidget() override;
+
+
+private:
+    bool SetContent(GenericWidget* content) override;
+
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
+    void UpdateContentSize();
+
+private:
+    bool dynamicWidth_ = false;
+    QScrollArea* scrollArea_ = nullptr;
+
+};
+
+class QtLayout : public AbstractLayout, public QtWidget
+{
+public:
+    QtLayout(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractLayout(mainWindow, parent) { }
+
+    QWidget* CreateWidget() override;
+
+private:
+    virtual bool SetCellWidget(unsigned row, unsigned column, GenericWidget* child) override;
+    virtual bool SetRowWidget(unsigned row, GenericWidget* child) override;
+
+private:
+    QWidget* widget_ = nullptr;
+    QGridLayout* layout_ = nullptr;
+
+};
+
+class QtButton : public AbstractButton, public QtWidget
+{
+public:
+    QtButton(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractButton(mainWindow, parent) { }
+    AbstractButton& SetText(const String& text) override;
+
+    QWidget* CreateWidget() override;
+
+private:
+    QPushButton* pushButton_ = nullptr;
+
+};
+
+class QtText : public AbstractText, public QtWidget
+{
+    URHO3D_OBJECT(AbstractText, GenericWidget);
+
+public:
+    QtText(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractText(mainWindow, parent) { }
+    AbstractText& SetText(const String& text) override;
+    AbstractText& SetFixedWidth(bool fixedWidth) override;
+
+    QWidget* CreateWidget() override;
+
+private:
+    QLabel* label_ = nullptr;
+
+};
+
+class QtLineEdit : public AbstractLineEdit, public QtWidget
+{
+    URHO3D_OBJECT(AbstractLineEdit, GenericWidget);
+
+public:
+    QtLineEdit(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractLineEdit(mainWindow, parent) { }
+    virtual AbstractLineEdit& SetText(const String& text) override;
+
+    QWidget* CreateWidget() override;
+
+private:
+    QLineEdit* lineEdit_ = nullptr;
 
 };
 
@@ -98,12 +198,18 @@ public:
     QAction* FindAction(const String& id) const;
 
 private:
-    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList, QtHierarchyList);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollArea,       QtScrollArea);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           QtLayout);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           QtButton);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             QtText);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         QtLineEdit);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList,    QtHierarchyList);
 
 private:
     SharedPtr<Context> context_;
     QApplication& application_;
     QtUrhoWidget urhoWidget_;
+    Vector<SharedPtr<GenericDialog>> dialogs_;
 
     HashMap<String, QAction*> actions_;
     QList<QtMenu> menus_;

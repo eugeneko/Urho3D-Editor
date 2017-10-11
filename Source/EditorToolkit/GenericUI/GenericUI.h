@@ -77,18 +77,25 @@ class GenericDialog : public GenericWidget
 
 public:
     GenericDialog(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
-    GenericWidget* CreateBodyWidget(StringHash type);
-    template <class T> T* CreateBodyWidget() { return dynamic_cast<T*>(CreateBodyWidget(T::GetTypeStatic())); }
-    virtual void SetBodyWidget(GenericWidget* widget) = 0;
+    GenericWidget* CreateContent(StringHash type);
+    template <class T> T* CreateContent() { return dynamic_cast<T*>(CreateContent(T::GetTypeStatic())); }
+
     virtual void SetName(const String& name) = 0;
+
+private:
+    virtual bool SetContent(GenericWidget* content) = 0;
+
+private:
+    SharedPtr<GenericWidget> content_;
+
 };
 
-class AbstractScrollRegion : public GenericWidget
+class AbstractScrollArea : public GenericWidget
 {
-    URHO3D_OBJECT(AbstractScrollRegion, GenericWidget);
+    URHO3D_OBJECT(AbstractScrollArea, GenericWidget);
 
 public:
-    AbstractScrollRegion(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+    AbstractScrollArea(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
 
     virtual void SetDynamicWidth(bool dynamicWidth) = 0;
 
@@ -117,8 +124,11 @@ public:
     template <class T> T* CreateRowWidget(unsigned row) { return dynamic_cast<T*>(CreateRowWidget(T::GetTypeStatic(), row)); }
 
 private:
-    virtual bool SetCellWidget(unsigned row, unsigned column, GenericWidget* childWidget) = 0;
-    virtual bool SetRowWidget(unsigned row, GenericWidget* childWidget) = 0;
+    virtual bool SetCellWidget(unsigned row, unsigned column, GenericWidget* child) = 0;
+    virtual bool SetRowWidget(unsigned row, GenericWidget* child) = 0;
+
+private:
+    Vector<SharedPtr<GenericWidget>> children_;
 
 };
 
@@ -138,7 +148,7 @@ class AbstractText : public GenericWidget
 public:
     AbstractText(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
     virtual AbstractText& SetText(const String& text) = 0;
-    virtual AbstractText& SetFixedWidth(bool fixedSize) = 0;
+    virtual AbstractText& SetFixedWidth(bool fixedWidth) = 0;
 };
 
 class AbstractLineEdit : public GenericWidget
@@ -206,7 +216,7 @@ public:
     }
 
 private:
-    virtual SharedPtr<GenericWidget> CreateScrollRegion(GenericWidget* parent);
+    virtual SharedPtr<GenericWidget> CreateScrollArea(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateLayout(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateButton(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateText(GenericWidget* parent);

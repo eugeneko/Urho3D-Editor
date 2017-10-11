@@ -22,7 +22,7 @@ HierarchyWindow::HierarchyWindow(AbstractMainWindow& mainWindow)
     dialog_ = mainWindow.AddDialog(DialogLocationHint::DockLeft);
     dialog_->SetName("Hierarchy");
 
-    hierarchyList_ = dialog_->CreateBodyWidget<GenericHierarchyList>();
+    hierarchyList_ = dialog_->CreateContent<GenericHierarchyList>();
     SubscribeToEvent(hierarchyList_, E_GENERICWIDGETCLICKED, URHO3D_HANDLER(HierarchyWindow, HandleListSelectionChanged));
     SetScene(scene_);
 }
