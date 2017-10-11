@@ -33,6 +33,23 @@ GenericWidget* AbstractScrollRegion::CreateContent(StringHash type)
 }
 
 //////////////////////////////////////////////////////////////////////////
+GenericWidget* AbstractLayout::CreateCellWidget(StringHash type, unsigned row, unsigned column)
+{
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
+    if (!SetCellWidget(row, column, child))
+        return nullptr;
+    return child;
+}
+
+GenericWidget* AbstractLayout::CreateRowWidget(StringHash type, unsigned row)
+{
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
+    if (!SetRowWidget(row, child))
+        return nullptr;
+    return child;
+}
+
+//////////////////////////////////////////////////////////////////////////
 void GenericHierarchyListItem::InsertChild(GenericHierarchyListItem* item, unsigned index)
 {
     children_.Insert(index, SharedPtr<GenericHierarchyListItem>(item));

@@ -46,9 +46,10 @@ public:
 
     void SetDynamicWidth(bool dynamicWidth) override;
 
+    UIElement* CreateElements(UIElement* parent) override;
+
 private:
     bool SetContent(GenericWidget* content) override;
-    UIElement* CreateElements(UIElement* parent) override;
 
     void HandleResized(StringHash eventType, VariantMap& eventData);
     void UpdateBodySize();
@@ -66,19 +67,14 @@ class UrhoLayout : public AbstractLayout, public UrhoWidget
 public:
     UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent);
 
-    GenericWidget& CreateCellWidget(StringHash type, unsigned row, unsigned column);
-    template <class T> T& CreateCellWidget(unsigned row, unsigned column) { return dynamic_cast<T&>(CreateCellWidget(T::GetTypeStatic(), row, column)); }
-
-    GenericWidget& CreateRowWidget(StringHash type, unsigned row);
-    template <class T> T& CreateRowWidget(unsigned row) { return dynamic_cast<T&>(CreateRowWidget(T::GetTypeStatic(), row)); }
-
     void UpdateLayout();
 
     UIElement* CreateElements(UIElement* parent) override;
 
 private:
-    bool AddCellWidget(unsigned row, unsigned column, GenericWidget* childWidget);
-    bool AddRowWidget(unsigned row, GenericWidget* childWidget);
+    bool SetCellWidget(unsigned row, unsigned column, GenericWidget* childWidget) override;
+    bool SetRowWidget(unsigned row, GenericWidget* childWidget) override;
+
     void HandleLayoutChanged(StringHash eventType, VariantMap& eventData);
     enum class RowType
     {

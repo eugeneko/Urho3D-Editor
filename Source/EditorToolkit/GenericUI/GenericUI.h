@@ -83,14 +83,6 @@ public:
     virtual void SetName(const String& name) = 0;
 };
 
-class AbstractLayout : public GenericWidget
-{
-    URHO3D_OBJECT(AbstractLayout, GenericWidget);
-
-public:
-    AbstractLayout(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
-};
-
 class AbstractScrollRegion : public GenericWidget
 {
     URHO3D_OBJECT(AbstractScrollRegion, GenericWidget);
@@ -108,6 +100,25 @@ private:
 
 private:
     SharedPtr<GenericWidget> content_;
+
+};
+
+class AbstractLayout : public GenericWidget
+{
+    URHO3D_OBJECT(AbstractLayout, GenericWidget);
+
+public:
+    AbstractLayout(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+
+    GenericWidget* CreateCellWidget(StringHash type, unsigned row, unsigned column);
+    template <class T> T* CreateCellWidget(unsigned row, unsigned column) { return dynamic_cast<T*>(CreateCellWidget(T::GetTypeStatic(), row, column)); }
+
+    GenericWidget* CreateRowWidget(StringHash type, unsigned row);
+    template <class T> T* CreateRowWidget(unsigned row) { return dynamic_cast<T*>(CreateRowWidget(T::GetTypeStatic(), row)); }
+
+private:
+    virtual bool SetCellWidget(unsigned row, unsigned column, GenericWidget* childWidget) = 0;
+    virtual bool SetRowWidget(unsigned row, GenericWidget* childWidget) = 0;
 
 };
 

@@ -225,22 +225,6 @@ UrhoLayout::UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent)
 {
 }
 
-GenericWidget& UrhoLayout::CreateCellWidget(StringHash type, unsigned row, unsigned column)
-{
-    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
-    const bool success = AddCellWidget(row, column, child);
-    assert(success);
-    return *child;
-}
-
-GenericWidget& UrhoLayout::CreateRowWidget(StringHash type, unsigned row)
-{
-    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
-    const bool success = AddRowWidget(row, child);
-    assert(success);
-    return *child;
-}
-
 void UrhoLayout::UpdateLayout()
 {
     // Disable layout update
@@ -363,40 +347,10 @@ UIElement* UrhoLayout::CreateElements(UIElement* parent)
 {
     body_ = parent->CreateChild<UIElement>("AL_Content");
     SubscribeToEvent(body_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
-
-    static int count = 0;
-    ++count;
-
-    if (count != 1)
-        return body_;
-    int row = 0;
-    for (int i = 0; i < 50; ++i)
-    {
-        CreateCellWidget<AbstractText>(row, 0).SetText("Position").SetFixedWidth(false);
-        UrhoLayout& nestedLayout1 = (UrhoLayout&)CreateCellWidget<AbstractLayout>(row, 1);
-        nestedLayout1.CreateCellWidget<AbstractText>(0, 0).SetText("X");
-        nestedLayout1.CreateCellWidget<AbstractLineEdit>(0, 1).SetText("1");
-        nestedLayout1.CreateCellWidget<AbstractText>(0, 2).SetText("Y");
-        nestedLayout1.CreateCellWidget<AbstractLineEdit>(0, 3).SetText("2");
-        nestedLayout1.CreateCellWidget<AbstractText>(0, 4).SetText("Z");
-        nestedLayout1.CreateCellWidget<AbstractLineEdit>(0, 5).SetText("3");
-        ++row;
-        CreateCellWidget<AbstractText>(row, 0).SetText("Some long long long name").SetFixedWidth(false);
-        CreateCellWidget<AbstractLineEdit>(row, 1).SetText("Some long long long edit");
-        ++row;
-        CreateRowWidget<AbstractButton>(row).SetText("Build");
-        ++row;
-        CreateCellWidget<AbstractText>(row, 0).SetText("Two Buttons").SetFixedWidth(false);
-        UrhoLayout& nestedLayout2 = (UrhoLayout&)CreateCellWidget<AbstractLayout>(row, 1);
-        nestedLayout2.CreateCellWidget<AbstractButton>(0, 0).SetText("1");
-        nestedLayout2.CreateCellWidget<AbstractButton>(0, 1).SetText("2");
-        ++row;
-    }
-    --count;
     return body_;
 }
 
-bool UrhoLayout::AddCellWidget(unsigned row, unsigned column, GenericWidget* childWidget)
+bool UrhoLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* childWidget)
 {
     // Save child
     children_.Push(SharedPtr<GenericWidget>(childWidget));
@@ -428,7 +382,7 @@ bool UrhoLayout::AddCellWidget(unsigned row, unsigned column, GenericWidget* chi
     return true;
 }
 
-bool UrhoLayout::AddRowWidget(unsigned row, GenericWidget* childWidget)
+bool UrhoLayout::SetRowWidget(unsigned row, GenericWidget* childWidget)
 {
     // Save child
     children_.Push(SharedPtr<GenericWidget>(childWidget));
