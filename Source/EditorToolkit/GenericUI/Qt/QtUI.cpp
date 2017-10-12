@@ -67,6 +67,14 @@ QWidget* QtDockDialog::CreateWidget()
 }
 
 //////////////////////////////////////////////////////////////////////////
+QWidget* QtDummyWidget::CreateWidget()
+{
+    QWidget* widget = new QWidget;
+    widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    return widget;
+}
+
+//////////////////////////////////////////////////////////////////////////
 void QtScrollArea::SetDynamicWidth(bool dynamicWidth)
 {
     dynamicWidth_ = dynamicWidth;
@@ -110,8 +118,9 @@ bool QtScrollArea::SetContent(GenericWidget* content)
 QWidget* QtLayout::CreateWidget()
 {
     widget_ = new QWidget();
-    widget_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     layout_ = new QGridLayout(widget_);
+    layout_->setVerticalSpacing(2);
+    layout_->setContentsMargins(2, 2, 2, 2);
     return widget_;
 }
 
@@ -136,6 +145,82 @@ bool QtLayout::SetRowWidget(unsigned row, GenericWidget* child)
 }
 
 //////////////////////////////////////////////////////////////////////////
+void QtCollapsiblePanel::SetExpanded(bool expanded)
+{
+    toggleButton_->setChecked(expanded);
+    expanded_ = expanded;
+    UpdateSize();
+}
+
+QWidget* QtCollapsiblePanel::CreateWidget()
+{
+    panel_ = new QWidget();
+
+    layout_ = new QGridLayout(panel_);
+    layout_->setVerticalSpacing(0);
+    layout_->setContentsMargins(0, 0, 0, 0);
+
+    toggleButton_ = new QToolButton();
+    toggleButton_->setStyleSheet("QToolButton {border: none;}");
+    toggleButton_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    toggleButton_->setArrowType(Qt::ArrowType::RightArrow);
+    toggleButton_->setCheckable(true);
+    toggleButton_->setChecked(expanded_);
+    layout_->addWidget(toggleButton_, 0, 0);
+
+    connect(toggleButton_, &QToolButton::clicked, this, &QtCollapsiblePanel::SetExpanded);
+    UpdateHeaderHeight();
+    UpdateSize();
+    return panel_;
+}
+
+bool QtCollapsiblePanel::SetHeader(GenericWidget* header)
+{
+    if (auto headerWidget = dynamic_cast<QtWidget*>(header))
+    {
+        QWidget* newHeader = headerWidget->CreateWidget();
+        layout_->removeWidget(header_);
+        layout_->addWidget(newHeader, 0, 1);
+        header_ = newHeader;
+        UpdateHeaderHeight();
+        UpdateSize();
+        return true;
+    }
+    return false;
+}
+
+bool QtCollapsiblePanel::SetBody(GenericWidget* body)
+{
+    if (auto bodyWidget = dynamic_cast<QtWidget*>(body))
+    {
+        QWidget* newBody = bodyWidget->CreateWidget();
+        layout_->removeWidget(body_);
+        layout_->addWidget(newBody, 1, 0, 1, -1);
+        body_ = newBody;
+        UpdateSize();
+        return true;
+    }
+    return false;
+}
+
+void QtCollapsiblePanel::UpdateHeaderHeight()
+{
+    headerHeight_ = toggleButton_->sizeHint().height();
+    if (header_)
+        headerHeight_ = Max(headerHeight_, header_->sizeHint().height());
+}
+
+void QtCollapsiblePanel::UpdateSize()
+{
+    toggleButton_->setArrowType(expanded_ ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
+//     int bodyHeight = body_ ? body_->sizeHint().height() : 0;
+//     panel_->setMinimumHeight(expanded_ ? headerHeight_ + bodyHeight : headerHeight_);
+//     panel_->setMaximumHeight(expanded_ ? headerHeight_ + bodyHeight : headerHeight_);
+    if (body_)
+        body_->setVisible(expanded_);
+}
+
+//////////////////////////////////////////////////////////////////////////
 AbstractButton& QtButton::SetText(const String& text)
 {
     pushButton_->setText(Cast(text));
@@ -145,6 +230,7 @@ AbstractButton& QtButton::SetText(const String& text)
 QWidget* QtButton::CreateWidget()
 {
     pushButton_ = new QPushButton();
+    pushButton_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
     return pushButton_;
 }
 
@@ -172,6 +258,19 @@ QWidget* QtLineEdit::CreateWidget()
 {
     lineEdit_ = new QLineEdit();
     return lineEdit_;
+}
+
+//////////////////////////////////////////////////////////////////////////
+AbstractCheckBox& QtCheckBox::SetChecked(bool checked)
+{
+    checkBox_->setChecked(checked);
+    return *this;
+}
+
+QWidget* QtCheckBox::CreateWidget()
+{
+    checkBox_ = new QCheckBox();
+    return checkBox_;
 }
 
 //////////////////////////////////////////////////////////////////////////

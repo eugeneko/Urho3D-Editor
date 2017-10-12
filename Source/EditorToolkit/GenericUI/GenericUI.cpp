@@ -54,6 +54,25 @@ GenericWidget* AbstractLayout::CreateRowWidget(StringHash type, unsigned row)
 }
 
 //////////////////////////////////////////////////////////////////////////
+GenericWidget* AbstractCollapsiblePanel::CreateHeader(StringHash type)
+{
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
+    if (!SetHeader(child))
+        return nullptr;
+    header_ = child;
+    return child;
+}
+
+GenericWidget* AbstractCollapsiblePanel::CreateBody(StringHash type)
+{
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
+    if (!SetBody(child))
+        return nullptr;
+    body_ = child;
+    return child;
+}
+
+//////////////////////////////////////////////////////////////////////////
 void GenericHierarchyListItem::InsertChild(GenericHierarchyListItem* item, unsigned index)
 {
     children_.Insert(index, SharedPtr<GenericHierarchyListItem>(item));
@@ -80,11 +99,14 @@ SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, Gener
     using WidgetFactory = SharedPtr<GenericWidget>(AbstractMainWindow::*)(GenericWidget* parent);
     static const HashMap<StringHash, WidgetFactory> factory =
     {
+        { AbstractDummyWidget::GetTypeStatic(), &AbstractMainWindow::CreateDummyWidget },
         { AbstractScrollArea::GetTypeStatic(), &AbstractMainWindow::CreateScrollArea },
         { AbstractLayout::GetTypeStatic(), &AbstractMainWindow::CreateLayout },
+        { AbstractCollapsiblePanel::GetTypeStatic(), &AbstractMainWindow::CreateCollapsiblePanel },
         { AbstractButton::GetTypeStatic(), &AbstractMainWindow::CreateButton},
         { AbstractText::GetTypeStatic(), &AbstractMainWindow::CreateText },
         { AbstractLineEdit::GetTypeStatic(), &AbstractMainWindow::CreateLineEdit },
+        { AbstractCheckBox::GetTypeStatic(), &AbstractMainWindow::CreateCheckBox },
         { GenericHierarchyList::GetTypeStatic(), &AbstractMainWindow::CreateHierarchyList },
     };
 
@@ -93,12 +115,22 @@ SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, Gener
     return createWidget ? (this->*createWidget)(parent) : nullptr;
 }
 
-SharedPtr<Urho3D::GenericWidget> AbstractMainWindow::CreateScrollArea(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateDummyWidget(GenericWidget* parent)
+{
+    return nullptr;
+}
+
+SharedPtr<GenericWidget> AbstractMainWindow::CreateScrollArea(GenericWidget* parent)
 {
     return nullptr;
 }
 
 SharedPtr<GenericWidget> AbstractMainWindow::CreateLayout(GenericWidget* parent)
+{
+    return nullptr;
+}
+
+SharedPtr<GenericWidget> AbstractMainWindow::CreateCollapsiblePanel(GenericWidget* parent)
 {
     return nullptr;
 }
@@ -114,6 +146,11 @@ SharedPtr<GenericWidget> AbstractMainWindow::CreateText(GenericWidget* parent)
 }
 
 SharedPtr<GenericWidget> AbstractMainWindow::CreateLineEdit(GenericWidget* parent)
+{
+    return nullptr;
+}
+
+SharedPtr<GenericWidget> AbstractMainWindow::CreateCheckBox(GenericWidget* parent)
 {
     return nullptr;
 }

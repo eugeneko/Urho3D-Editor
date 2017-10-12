@@ -90,6 +90,14 @@ private:
 
 };
 
+class AbstractDummyWidget : public GenericWidget
+{
+    URHO3D_OBJECT(AbstractDummyWidget, GenericWidget);
+
+public:
+    AbstractDummyWidget(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+};
+
 class AbstractScrollArea : public GenericWidget
 {
     URHO3D_OBJECT(AbstractScrollArea, GenericWidget);
@@ -132,6 +140,31 @@ private:
 
 };
 
+class AbstractCollapsiblePanel : public GenericWidget
+{
+    URHO3D_OBJECT(AbstractCollapsiblePanel, GenericWidget);
+
+public:
+    AbstractCollapsiblePanel(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+
+    virtual void SetExpanded(bool expanded) = 0;
+
+    GenericWidget* CreateHeader(StringHash type);
+    template <class T> T* CreateHeader() { return dynamic_cast<T*>(CreateHeader(T::GetTypeStatic())); }
+
+    GenericWidget* CreateBody(StringHash type);
+    template <class T> T* CreateBody() { return dynamic_cast<T*>(CreateBody(T::GetTypeStatic())); }
+
+private:
+    virtual bool SetHeader(GenericWidget* header) = 0;
+    virtual bool SetBody(GenericWidget* body) = 0;
+
+private:
+    SharedPtr<GenericWidget> header_;
+    SharedPtr<GenericWidget> body_;
+
+};
+
 class AbstractButton : public GenericWidget
 {
     URHO3D_OBJECT(AbstractButton, GenericWidget);
@@ -157,6 +190,15 @@ class AbstractLineEdit : public GenericWidget
 public:
     AbstractLineEdit(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
     virtual AbstractLineEdit& SetText(const String& text) = 0;
+};
+
+class AbstractCheckBox : public GenericWidget
+{
+    URHO3D_OBJECT(AbstractCheckBox, GenericWidget);
+
+public:
+    AbstractCheckBox(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
+    virtual AbstractCheckBox& SetChecked(bool checked) = 0;
 };
 
 class GenericHierarchyListItem : public Object
@@ -215,11 +257,14 @@ public:
     }
 
 private:
+    virtual SharedPtr<GenericWidget> CreateDummyWidget(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateScrollArea(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateLayout(GenericWidget* parent);
+    virtual SharedPtr<GenericWidget> CreateCollapsiblePanel(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateButton(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateText(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateLineEdit(GenericWidget* parent);
+    virtual SharedPtr<GenericWidget> CreateCheckBox(GenericWidget* parent);
     virtual SharedPtr<GenericWidget> CreateHierarchyList(GenericWidget* parent);
 };
 

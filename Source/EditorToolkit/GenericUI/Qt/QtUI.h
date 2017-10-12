@@ -14,6 +14,8 @@
 #include <QScrollArea>
 #include <QGridLayout>
 #include <QLineEdit>
+#include <QCheckBox>
+#include <QToolButton>
 
 namespace Urho3D
 {
@@ -42,7 +44,16 @@ private:
     QDockWidget* dock_ = nullptr;
 };
 
-class QtScrollArea : public AbstractScrollArea, public QtWidget, private QObject
+class QtDummyWidget : public AbstractDummyWidget, public QtWidget
+{
+public:
+    QtDummyWidget(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractDummyWidget(mainWindow, parent) { }
+
+    QWidget* CreateWidget() override;
+
+};
+
+class QtScrollArea : public QObject, public AbstractScrollArea, public QtWidget
 {
 public:
     QtScrollArea(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractScrollArea(mainWindow, parent) { }
@@ -82,6 +93,44 @@ private:
 
 };
 
+class QtCollapsiblePanel : public QObject, public AbstractCollapsiblePanel, public QtWidget
+{
+    Q_OBJECT
+
+public:
+    QtCollapsiblePanel(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCollapsiblePanel(mainWindow, parent) { }
+
+    void SetExpanded(bool expanded) override;
+
+    QWidget* CreateWidget() override;
+
+private:
+    bool SetHeader(GenericWidget* header) override;
+    bool SetBody(GenericWidget* body) override;
+
+    void UpdateHeaderHeight();
+    void UpdateSize();
+
+private:
+    /// Panel widget.
+    QWidget* panel_ = nullptr;
+    /// Main layout.
+    QGridLayout* layout_ = nullptr;
+    /// Button.
+    QToolButton* toggleButton_ = nullptr;
+    /// Header widget.
+    QWidget* header_ = nullptr;
+    /// Body widget.
+    QWidget* body_ = nullptr;
+    /// Is expanded?
+    bool expanded_ = false;
+    /// Height of the header.
+    int headerHeight_ = 0;
+    /// Height of the body.
+    int bodyHeight_ = 0;
+
+};
+
 class QtButton : public AbstractButton, public QtWidget
 {
 public:
@@ -116,13 +165,27 @@ class QtLineEdit : public AbstractLineEdit, public QtWidget
 
 public:
     QtLineEdit(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractLineEdit(mainWindow, parent) { }
-    virtual AbstractLineEdit& SetText(const String& text) override;
+    AbstractLineEdit& SetText(const String& text) override;
 
     QWidget* CreateWidget() override;
 
 private:
     QLineEdit* lineEdit_ = nullptr;
 
+};
+
+class QtCheckBox : public AbstractCheckBox, public QtWidget
+{
+    URHO3D_OBJECT(AbstractCheckBox, QtCheckBox);
+
+public:
+    QtCheckBox(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCheckBox(mainWindow, parent) { }
+    AbstractCheckBox& SetChecked(bool checked) override;
+
+    QWidget* CreateWidget() override;
+
+private:
+    QCheckBox* checkBox_ = nullptr;
 };
 
 class QtHierarchyListModel : public QAbstractItemModel
@@ -197,11 +260,14 @@ public:
     QAction* FindAction(const String& id) const;
 
 private:
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateDummyWidget,      QtDummyWidget);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollArea,       QtScrollArea);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           QtLayout);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCollapsiblePanel, QtCollapsiblePanel);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           QtButton);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             QtText);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         QtLineEdit);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCheckBox,         QtCheckBox);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList,    QtHierarchyList);
 
 private:
