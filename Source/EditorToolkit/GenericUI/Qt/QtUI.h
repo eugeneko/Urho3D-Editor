@@ -102,7 +102,6 @@ class QtText : public AbstractText, public QtWidget
 public:
     QtText(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractText(mainWindow, parent) { }
     AbstractText& SetText(const String& text) override;
-    AbstractText& SetFixedWidth(bool fixedWidth) override;
 
     QWidget* CreateWidget() override;
 

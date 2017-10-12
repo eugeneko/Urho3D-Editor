@@ -446,14 +446,7 @@ void UrhoButton::UpdateContainerSize()
 AbstractText& UrhoText::SetText(const String& text)
 {
     text_->SetText(text);
-    UpdateContainerSize();
-    return *this;
-}
-
-AbstractText& UrhoText::SetFixedWidth(bool fixedWidth)
-{
-    fixedWidth_ = fixedWidth;
-    UpdateContainerSize();
+    container_->SetFixedSize(text_->GetMinSize());
     return *this;
 }
 
@@ -463,22 +456,7 @@ UIElement* UrhoText::CreateElement(UIElement* parent)
     container_->SetClipChildren(true);
     text_ = container_->CreateChild<Text>();
     text_->SetStyleAuto();
-    UpdateContainerSize();
     return container_;
-}
-
-void UrhoText::UpdateContainerSize()
-{
-    if (fixedWidth_)
-    {
-        container_->SetFixedSize(text_->GetMinSize());
-    }
-    else
-    {
-        // Intentionally use min height to allow width trimming
-        container_->SetMinSize(text_->GetMinHeight(), text_->GetMinHeight());
-        container_->SetMaxSize(text_->GetMinSize());
-    }
 }
 
 //////////////////////////////////////////////////////////////////////////

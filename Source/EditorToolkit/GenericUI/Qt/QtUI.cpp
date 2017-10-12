@@ -155,15 +155,6 @@ AbstractText& QtText::SetText(const String& text)
     return *this;
 }
 
-AbstractText& QtText::SetFixedWidth(bool fixedWidth)
-{
-    if (fixedWidth)
-        label_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    else
-        label_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-    return *this;
-}
-
 QWidget* QtText::CreateWidget()
 {
     label_ = new QLabel();

@@ -114,17 +114,13 @@ class UrhoText : public AbstractText, public UrhoWidget
 public:
     UrhoText(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractText(mainWindow, parent) {}
     AbstractText& SetText(const String& text) override;
-    AbstractText& SetFixedWidth(bool fixedWidth) override;
 
 private:
     UIElement* CreateElement(UIElement* parent) override;
 
-    void UpdateContainerSize();
-
 private:
     UIElement* container_ = nullptr;
     Text* text_ = nullptr;
-    bool fixedWidth_ = true;
 };
 
 class UrhoLineEdit : public AbstractLineEdit, public UrhoWidget

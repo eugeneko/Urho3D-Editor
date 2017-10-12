@@ -15,7 +15,7 @@ Inspector::Inspector(AbstractMainWindow& mainWindow)
     int row = 0;
     for (int i = 0; i < 50; ++i)
     {
-        layout->CreateCellWidget<AbstractText>(row, 0)->SetText("Position").SetFixedWidth(false);
+        layout->CreateCellWidget<AbstractText>(row, 0)->SetText("Position");
         AbstractLayout* nestedLayout1 = layout->CreateCellWidget<AbstractLayout>(row, 1);
         nestedLayout1->CreateCellWidget<AbstractText>(0, 0)->SetText("X");
         nestedLayout1->CreateCellWidget<AbstractLineEdit>(0, 1)->SetText("1");
@@ -26,12 +26,12 @@ Inspector::Inspector(AbstractMainWindow& mainWindow)
         nestedLayout1->CreateCellWidget<AbstractText>(0, 6)->SetText("W");
         nestedLayout1->CreateCellWidget<AbstractLineEdit>(0, 7)->SetText("4");
         ++row;
-        layout->CreateCellWidget<AbstractText>(row, 0)->SetText("Some long long long name").SetFixedWidth(false);
+        layout->CreateCellWidget<AbstractText>(row, 0)->SetText("Some long long long name");
         layout->CreateCellWidget<AbstractLineEdit>(row, 1)->SetText("Some long long long edit");
         ++row;
         layout->CreateRowWidget<AbstractButton>(row)->SetText("Build");
         ++row;
-        layout->CreateCellWidget<AbstractText>(row, 0)->SetText("Two Buttons").SetFixedWidth(false);
+        layout->CreateCellWidget<AbstractText>(row, 0)->SetText("Two Buttons");
         AbstractLayout* nestedLayout2 = layout->CreateCellWidget<AbstractLayout>(row, 1);
         nestedLayout2->CreateCellWidget<AbstractButton>(0, 0)->SetText("1");
         nestedLayout2->CreateCellWidget<AbstractButton>(0, 1)->SetText("2");
