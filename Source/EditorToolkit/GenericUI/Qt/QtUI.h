@@ -15,6 +15,7 @@
 #include <QGridLayout>
 #include <QLineEdit>
 #include <QCheckBox>
+#include <QFrame>
 #include <QToolButton>
 
 namespace Urho3D
@@ -100,11 +101,13 @@ class QtCollapsiblePanel : public QObject, public AbstractCollapsiblePanel, publ
 public:
     QtCollapsiblePanel(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCollapsiblePanel(mainWindow, parent) { }
 
+    void SetHeaderText(const String& text) override;
     void SetExpanded(bool expanded) override;
 
     QWidget* CreateWidget() override;
 
 private:
+    bool SetHeaderPrefix(GenericWidget* header) override;
     bool SetHeaderSuffix(GenericWidget* header) override;
     bool SetBody(GenericWidget* body) override;
 
@@ -113,13 +116,17 @@ private:
 
 private:
     /// Panel widget.
-    QWidget* panel_ = nullptr;
+    QFrame* panel_ = nullptr;
     /// Main layout.
     QGridLayout* layout_ = nullptr;
     /// Button.
     QToolButton* toggleButton_ = nullptr;
-    /// Header widget.
+    /// Header prefix widget.
     QWidget* headerPrefix_ = nullptr;
+    /// Header title widget.
+    QLabel* headerText_ = nullptr;
+    /// Header suffix widget.
+    QWidget* headerSuffix_ = nullptr;
     /// Body widget.
     QWidget* body_ = nullptr;
     /// Is expanded?
@@ -263,7 +270,7 @@ private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateDummyWidget,      QtDummyWidget);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollArea,       QtScrollArea);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           QtLayout);
-    //URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCollapsiblePanel, QtCollapsiblePanel);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCollapsiblePanel, QtCollapsiblePanel);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           QtButton);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             QtText);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         QtLineEdit);

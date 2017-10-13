@@ -145,6 +145,11 @@ bool QtLayout::SetRowWidget(unsigned row, GenericWidget* child)
 }
 
 //////////////////////////////////////////////////////////////////////////
+void QtCollapsiblePanel::SetHeaderText(const String& text)
+{
+    headerText_->setText(Cast(text));
+}
+
 void QtCollapsiblePanel::SetExpanded(bool expanded)
 {
     toggleButton_->setChecked(expanded);
@@ -154,7 +159,8 @@ void QtCollapsiblePanel::SetExpanded(bool expanded)
 
 QWidget* QtCollapsiblePanel::CreateWidget()
 {
-    panel_ = new QWidget();
+    panel_ = new QFrame();
+    panel_->setFrameShape(QFrame::Box);
 
     layout_ = new QGridLayout(panel_);
     layout_->setVerticalSpacing(0);
@@ -168,20 +174,39 @@ QWidget* QtCollapsiblePanel::CreateWidget()
     toggleButton_->setChecked(expanded_);
     layout_->addWidget(toggleButton_, 0, 0);
 
+    headerText_ = new QLabel();
+    layout_->addWidget(headerText_, 0, 2, Qt::AlignLeft);
+    layout_->setColumnStretch(2, 1);
+
     connect(toggleButton_, &QToolButton::clicked, this, &QtCollapsiblePanel::SetExpanded);
     UpdateHeaderHeight();
     UpdateSize();
     return panel_;
 }
 
-bool QtCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
+bool QtCollapsiblePanel::SetHeaderPrefix(GenericWidget* header)
 {
-    if (auto headerWidget = dynamic_cast<QtWidget*>(header))
+    if (auto headerImpl = dynamic_cast<QtWidget*>(header))
     {
-        QWidget* newHeader = headerWidget->CreateWidget();
+        QWidget* newHeader = headerImpl->CreateWidget();
         layout_->removeWidget(headerPrefix_);
         layout_->addWidget(newHeader, 0, 1);
         headerPrefix_ = newHeader;
+        UpdateHeaderHeight();
+        UpdateSize();
+        return true;
+    }
+    return false;
+}
+
+bool QtCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
+{
+    if (auto headerImpl = dynamic_cast<QtWidget*>(header))
+    {
+        QWidget* newHeader = headerImpl->CreateWidget();
+        layout_->removeWidget(headerSuffix_);
+        layout_->addWidget(newHeader, 0, 3);
+        headerSuffix_ = newHeader;
         UpdateHeaderHeight();
         UpdateSize();
         return true;
