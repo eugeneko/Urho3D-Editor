@@ -60,6 +60,8 @@ private:
     ScrollView* scrollView_ = nullptr;
     UIElement* scrollPanel_ = nullptr;
     bool dynamicWidth_ = false;
+
+    unsigned layoutNestingLevel_ = 0;
 };
 
 class UrhoLayout : public AbstractLayout, public UrhoWidget

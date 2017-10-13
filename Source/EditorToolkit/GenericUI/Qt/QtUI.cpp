@@ -242,7 +242,10 @@ void QtCollapsiblePanel::UpdateSize()
 //     panel_->setMinimumHeight(expanded_ ? headerHeight_ + bodyHeight : headerHeight_);
 //     panel_->setMaximumHeight(expanded_ ? headerHeight_ + bodyHeight : headerHeight_);
     if (body_)
+    {
         body_->setVisible(expanded_);
+        panel_->updateGeometry();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////

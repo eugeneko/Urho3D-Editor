@@ -213,13 +213,17 @@ void UrhoScrollArea::HandleResized(StringHash /*eventType*/, VariantMap& /*event
 
 void UrhoScrollArea::UpdateContentSize()
 {
+    if (layoutNestingLevel_ > 0)
+        return;
+
+    ++layoutNestingLevel_;
     UIElement* body = scrollView_->GetContentElement();
     const IntRect& clipBorder = scrollPanel_->GetClipBorder();
     if (body)
     {
         body->SetFixedWidth(scrollPanel_->GetWidth() - clipBorder.left_ - clipBorder.right_);
-        scrollView_->OnResize(scrollView_->GetSize(), IntVector2::ZERO);
     }
+    --layoutNestingLevel_;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -233,7 +237,6 @@ void UrhoLayout::UpdateLayout()
     // Disable layout update
     body_->DisableLayoutUpdate();
 
-    const IntVector2 clientSize = body_->GetSize()/* - IntVector2(5, 0)*/;
     Vector<int> minRowHeight;
     Vector<int> minColumnWidth;
     Vector<int> maxColumnWidth;
@@ -277,7 +280,7 @@ void UrhoLayout::UpdateLayout()
         maxColumnStretch[i] = Max(0, maxColumnWidth[i] - minColumnWidth[i]);
 
     Vector<int> columnWidth = minColumnWidth;
-    int remainingStretch = Max(0, clientSize.x_ - minBodyWidth);
+    int remainingStretch = Max(0, body_->GetWidth() - minBodyWidth);
     unsigned remainingColumns = numColumns;
     while (remainingStretch > 0 && remainingColumns > 0)
     {
@@ -324,7 +327,7 @@ void UrhoLayout::UpdateLayout()
             if (!cellElement)
                 continue;
             cellElement->SetPosition(position);
-            cellElement->SetWidth(clientSize.x_);
+            cellElement->SetWidth(body_->GetWidth());
             position.x_ += cellElement->GetWidth();
         }
         else
@@ -432,6 +435,7 @@ void UrhoCollapsiblePanel::SetExpanded(bool expanded)
     if (body_)
         body_->SetVisible(expanded);
     panel_->SetHeight(panel_->GetEffectiveMinSize().y_);
+    //panel_->GetParent()->UpdateLayout();
 }
 
 bool UrhoCollapsiblePanel::SetHeaderPrefix(GenericWidget* header)
