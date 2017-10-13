@@ -54,12 +54,21 @@ GenericWidget* AbstractLayout::CreateRowWidget(StringHash type, unsigned row)
 }
 
 //////////////////////////////////////////////////////////////////////////
-GenericWidget* AbstractCollapsiblePanel::CreateHeader(StringHash type)
+GenericWidget* AbstractCollapsiblePanel::CreateHeaderPrefix(StringHash type)
 {
     SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
-    if (!SetHeader(child))
+    if (!SetHeaderPrefix(child))
         return nullptr;
-    header_ = child;
+    headerPrefix_ = child;
+    return child;
+}
+
+GenericWidget* AbstractCollapsiblePanel::CreateHeaderSuffix(StringHash type)
+{
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
+    if (!SetHeaderSuffix(child))
+        return nullptr;
+    headerSuffix_ = child;
     return child;
 }
 
@@ -94,6 +103,7 @@ int GenericHierarchyListItem::GetIndex()
     return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////
 SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, GenericWidget* parent)
 {
     using WidgetFactory = SharedPtr<GenericWidget>(AbstractMainWindow::*)(GenericWidget* parent);

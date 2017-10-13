@@ -174,14 +174,14 @@ QWidget* QtCollapsiblePanel::CreateWidget()
     return panel_;
 }
 
-bool QtCollapsiblePanel::SetHeader(GenericWidget* header)
+bool QtCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
 {
     if (auto headerWidget = dynamic_cast<QtWidget*>(header))
     {
         QWidget* newHeader = headerWidget->CreateWidget();
-        layout_->removeWidget(header_);
+        layout_->removeWidget(headerPrefix_);
         layout_->addWidget(newHeader, 0, 1);
-        header_ = newHeader;
+        headerPrefix_ = newHeader;
         UpdateHeaderHeight();
         UpdateSize();
         return true;
@@ -206,8 +206,8 @@ bool QtCollapsiblePanel::SetBody(GenericWidget* body)
 void QtCollapsiblePanel::UpdateHeaderHeight()
 {
     headerHeight_ = toggleButton_->sizeHint().height();
-    if (header_)
-        headerHeight_ = Max(headerHeight_, header_->sizeHint().height());
+    if (headerPrefix_)
+        headerHeight_ = Max(headerHeight_, headerPrefix_->sizeHint().height());
 }
 
 void QtCollapsiblePanel::UpdateSize()

@@ -147,20 +147,26 @@ class AbstractCollapsiblePanel : public GenericWidget
 public:
     AbstractCollapsiblePanel(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericWidget(mainWindow, parent) { }
 
+    virtual void SetHeaderText(const String& text) = 0;
     virtual void SetExpanded(bool expanded) = 0;
 
-    GenericWidget* CreateHeader(StringHash type);
-    template <class T> T* CreateHeader() { return dynamic_cast<T*>(CreateHeader(T::GetTypeStatic())); }
+    GenericWidget* CreateHeaderPrefix(StringHash type);
+    template <class T> T* CreateHeaderPrefix() { return dynamic_cast<T*>(CreateHeaderPrefix(T::GetTypeStatic())); }
+
+    GenericWidget* CreateHeaderSuffix(StringHash type);
+    template <class T> T* CreateHeaderSuffix() { return dynamic_cast<T*>(CreateHeaderSuffix(T::GetTypeStatic())); }
 
     GenericWidget* CreateBody(StringHash type);
     template <class T> T* CreateBody() { return dynamic_cast<T*>(CreateBody(T::GetTypeStatic())); }
 
 private:
-    virtual bool SetHeader(GenericWidget* header) = 0;
+    virtual bool SetHeaderPrefix(GenericWidget* header) = 0;
+    virtual bool SetHeaderSuffix(GenericWidget* header) = 0;
     virtual bool SetBody(GenericWidget* body) = 0;
 
 private:
-    SharedPtr<GenericWidget> header_;
+    SharedPtr<GenericWidget> headerPrefix_;
+    SharedPtr<GenericWidget> headerSuffix_;
     SharedPtr<GenericWidget> body_;
 
 };

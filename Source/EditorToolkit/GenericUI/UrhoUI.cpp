@@ -4,6 +4,8 @@
 #include <Urho3D/Graphics/GraphicsEvents.h>
 #include <Urho3D/UI/UI.h>
 #include <Urho3D/UI/UIEvents.h>
+#include <Urho3D/UI/ListView.h>
+#include <Urho3D/UI/CheckBox.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/Button.h>
 #include <Urho3D/UI/Menu.h>
@@ -204,7 +206,6 @@ UIElement* UrhoScrollArea::CreateElement(UIElement* parent)
     return scrollView_;
 }
 
-
 void UrhoScrollArea::HandleResized(StringHash /*eventType*/, VariantMap& /*eventData*/)
 {
     UpdateContentSize();
@@ -214,7 +215,7 @@ void UrhoScrollArea::UpdateContentSize()
 {
     UIElement* body = scrollView_->GetContentElement();
     const IntRect& clipBorder = scrollPanel_->GetClipBorder();
-    if (body && dynamicWidth_)
+    if (body)
     {
         body->SetFixedWidth(scrollPanel_->GetWidth() - clipBorder.left_ - clipBorder.right_);
         scrollView_->OnResize(scrollView_->GetSize(), IntVector2::ZERO);
@@ -252,7 +253,7 @@ void UrhoLayout::UpdateLayout()
         for (unsigned column = 0; column < numColumns; ++column)
         {
             UIElement* cellElement = rowElements[column];
-            if (!cellElement || cellElement->GetNumChildren() == 0)
+            if (!cellElement /*|| cellElement->GetNumChildren() == 0*/)
                 continue;
             const IntVector2 cellSize = cellElement->GetEffectiveMinSize();
             const IntVector2 maxCellSize = cellElement->GetMaxSize();
@@ -301,8 +302,14 @@ void UrhoLayout::UpdateLayout()
         }
     }
 
+    // Update body height
+    int bodyHeight = 0;
+    for (unsigned row = 0; row < numRows; ++row)
+        bodyHeight += minRowHeight[row];
+    body_->SetMinHeight(bodyHeight);
+    body_->SetHeight(bodyHeight);
+
     // Apply sizes
-    IntVector2 bodySize;
     IntVector2 position;
     for (unsigned row = 0; row < numRows; ++row)
     {
@@ -336,24 +343,31 @@ void UrhoLayout::UpdateLayout()
             }
         }
         position.y_ += rowHeight;
-        bodySize.x_ = Max(bodySize.x_, position.x_);
     }
-    bodySize.y_ = position.y_;
-    body_->SetSize(bodySize);
 
     // Update layout
     body_->EnableLayoutUpdate();
+    body_->UpdateLayout();
 }
 
 UIElement* UrhoLayout::CreateElement(UIElement* parent)
 {
     body_ = parent->CreateChild<UIElement>("AL_Content");
     SubscribeToEvent(body_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
+    //SubscribeToEvent(body_, E_VISIBLECHANGED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
     return body_;
 }
 
 bool UrhoLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* child)
 {
+    // Test element
+    auto urhoWidget = dynamic_cast<UrhoWidget*>(child);
+    if (!urhoWidget)
+    {
+        URHO3D_LOGERRORF("Cannot add unknown widget into row %u column %u", row, column);
+        return false;
+    }
+
     // Populate row
     if (elements_.Size() <= row)
         elements_.Resize(row + 1);
@@ -362,14 +376,6 @@ bool UrhoLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* chi
     Vector<UIElement*>& rowElements = elements_[row].first_;
     if (rowElements.Size() <= column)
         rowElements.Resize(column + 1);
-
-    // Test element
-    auto urhoWidget = dynamic_cast<UrhoWidget*>(child);
-    if (!urhoWidget)
-    {
-        URHO3D_LOGERRORF("Cannot add unknown widget into row %u column %u", row, column);
-        return false;
-    }
 
     // Add widget
     if (rowElements[column])
@@ -383,6 +389,14 @@ bool UrhoLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* chi
 
 bool UrhoLayout::SetRowWidget(unsigned row, GenericWidget* child)
 {
+    // Test element
+    auto urhoWidget = dynamic_cast<UrhoWidget*>(child);
+    if (!urhoWidget)
+    {
+        URHO3D_LOGERRORF("Cannot add unknown widget into row %u", row);
+        return false;
+    }
+
     // Populate row
     if (elements_.Size() <= row)
         elements_.Resize(row + 1);
@@ -392,14 +406,6 @@ bool UrhoLayout::SetRowWidget(unsigned row, GenericWidget* child)
     for (UIElement* cellElement : rowElements)
         body_->RemoveChild(cellElement);
     rowElements.Resize(1);
-
-    // Test element
-    auto urhoWidget = dynamic_cast<UrhoWidget*>(child);
-    if (!urhoWidget)
-    {
-        URHO3D_LOGERRORF("Cannot add unknown widget into row %u", row);
-        return false;
-    }
 
     // Add widget
     rowElements[0] = urhoWidget->CreateElement(body_);
@@ -412,6 +418,86 @@ bool UrhoLayout::SetRowWidget(unsigned row, GenericWidget* child)
 void UrhoLayout::HandleLayoutChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)
 {
     UpdateLayout();
+}
+
+//////////////////////////////////////////////////////////////////////////
+void UrhoCollapsiblePanel::SetHeaderText(const String& text)
+{
+    headerText_->SetText(text);
+}
+
+void UrhoCollapsiblePanel::SetExpanded(bool expanded)
+{
+    toggleButton_->SetChecked(expanded);
+    if (body_)
+        body_->SetVisible(expanded);
+    panel_->SetHeight(panel_->GetEffectiveMinSize().y_);
+}
+
+bool UrhoCollapsiblePanel::SetHeaderPrefix(GenericWidget* header)
+{
+    // Test element
+    auto headerImpl = dynamic_cast<UrhoWidget*>(header);
+    if (!headerImpl)
+        return false;
+
+    headerPrefix_->RemoveAllChildren();
+    headerImpl->CreateElement(headerPrefix_);
+
+    return true;
+}
+
+bool UrhoCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
+{
+    // Test element
+    auto headerImpl = dynamic_cast<UrhoWidget*>(header);
+    if (!headerImpl)
+        return false;
+
+    headerSuffix_->RemoveAllChildren();
+    headerImpl->CreateElement(headerSuffix_);
+
+    return true;
+}
+
+bool UrhoCollapsiblePanel::SetBody(GenericWidget* body)
+{
+    // Test element
+    auto bodyImpl = dynamic_cast<UrhoWidget*>(body);
+    if (!bodyImpl)
+        return false;
+
+    if (body_)
+        panel_->RemoveChild(body_);
+    body_ = bodyImpl->CreateElement(panel_);
+
+    return true;
+}
+
+UIElement* UrhoCollapsiblePanel::CreateElement(UIElement* parent)
+{
+    panel_ = parent->CreateChild<BorderImage>("CP_Panel");
+    panel_->SetStyle("ToolTipBorderImage");
+    panel_->SetLayout(LM_VERTICAL);
+
+    header_ = panel_->CreateChild<UIElement>("CP_Header");
+    header_->SetLayout(LM_HORIZONTAL);
+
+    toggleButton_ = header_->CreateChild<CheckBox>("CP_ToggleButton");
+    toggleButton_->SetStyle("HierarchyListViewOverlay");
+    SubscribeToEvent(toggleButton_, E_TOGGLED,
+        [this](StringHash /*eventType*/, VariantMap& /*eventData*/)
+    {
+        SetExpanded(toggleButton_->IsChecked());
+    });
+
+    headerPrefix_ = header_->CreateChild<UIElement>("CP_HeaderPrefix");
+    headerPrefix_->SetLayout(LM_HORIZONTAL);
+    headerText_ = header_->CreateChild<Text>("CP_HeaderText");
+    headerText_->SetStyleAuto();
+    headerSuffix_ = header_->CreateChild<UIElement>("CP_HeaderSuffix");
+    headerSuffix_->SetLayout(LM_HORIZONTAL);
+    return panel_;
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -105,7 +105,7 @@ public:
     QWidget* CreateWidget() override;
 
 private:
-    bool SetHeader(GenericWidget* header) override;
+    bool SetHeaderSuffix(GenericWidget* header) override;
     bool SetBody(GenericWidget* body) override;
 
     void UpdateHeaderHeight();
@@ -119,7 +119,7 @@ private:
     /// Button.
     QToolButton* toggleButton_ = nullptr;
     /// Header widget.
-    QWidget* header_ = nullptr;
+    QWidget* headerPrefix_ = nullptr;
     /// Body widget.
     QWidget* body_ = nullptr;
     /// Is expanded?
@@ -263,7 +263,7 @@ private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateDummyWidget,      QtDummyWidget);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollArea,       QtScrollArea);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           QtLayout);
-    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCollapsiblePanel, QtCollapsiblePanel);
+    //URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCollapsiblePanel, QtCollapsiblePanel);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           QtButton);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             QtText);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         QtLineEdit);

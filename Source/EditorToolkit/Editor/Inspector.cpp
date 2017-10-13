@@ -18,11 +18,13 @@ Inspector::Inspector(AbstractMainWindow& mainWindow)
         AbstractCollapsiblePanel* panel = layout->CreateRowWidget<AbstractCollapsiblePanel>(j);
         panel->SetExpanded(true);
 
-        AbstractLayout* headerLayout = panel->CreateHeader<AbstractLayout>();
-        headerLayout->CreateCellWidget<AbstractCheckBox>(0, 0);
-        headerLayout->CreateCellWidget<AbstractText>(0, 1)->SetText("Panel" + String(j));
-        headerLayout->CreateCellWidget<AbstractButton>(0, 2)->SetText("Butt");
-
+        AbstractLayout* headerPrefix = panel->CreateHeaderPrefix<AbstractLayout>();
+        headerPrefix->CreateCellWidget<AbstractButton>(0, 0)->SetText("x");
+//         panel->CreateHeaderPrefix<AbstractButton>()->SetText("x");;
+        panel->SetHeaderText("Panel" + String(j));
+//         panel->CreateHeaderSuffix<AbstractButton>()->SetText("Butt");;
+        AbstractLayout* headerSuffix = panel->CreateHeaderSuffix<AbstractLayout>();
+        headerSuffix->CreateCellWidget<AbstractButton>(0, 2)->SetText("Butt");
         AbstractLayout* bodyLayout = panel->CreateBody<AbstractLayout>();
         int row = 0;
         for (int i = 0; i < 10; ++i)
@@ -47,7 +49,7 @@ Inspector::Inspector(AbstractMainWindow& mainWindow)
             AbstractLayout* nestedLayout2 = bodyLayout->CreateCellWidget<AbstractLayout>(row, 1);
             nestedLayout2->CreateCellWidget<AbstractButton>(0, 0)->SetText("1");
             nestedLayout2->CreateCellWidget<AbstractButton>(0, 1)->SetText("2");
-            nestedLayout2->CreateCellWidget<AbstractCheckBox>(0, 2)->SetChecked(true);
+            //nestedLayout2->CreateCellWidget<AbstractCheckBox>(0, 2)->SetChecked(true);
             ++row;
         }
     }

@@ -2,7 +2,6 @@
 
 #include "GenericUI.h"
 #include <Urho3D/UI/Window.h>
-#include <Urho3D/UI/ListView.h>
 #include <Urho3D/UI/Text.h>
 
 namespace Urho3D
@@ -13,7 +12,9 @@ class UI;
 class Menu;
 class LineEdit;
 class Button;
+class CheckBox;
 class ScrollView;
+class ListView;
 
 class UrhoWidget
 {
@@ -87,6 +88,36 @@ private:
     UIElement* body_ = nullptr;
 
     Vector<Pair<Vector<UIElement*>, RowType>> elements_;
+};
+
+class UrhoCollapsiblePanel : public AbstractCollapsiblePanel, public UrhoWidget
+{
+    URHO3D_OBJECT(UrhoCollapsiblePanel, AbstractCollapsiblePanel);
+
+public:
+    UrhoCollapsiblePanel(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCollapsiblePanel(mainWindow, parent) { }
+
+    void SetHeaderText(const String& text) override;
+    void SetExpanded(bool expanded) override;
+
+    UIElement* CreateElement(UIElement* parent) override;
+
+private:
+    bool SetHeaderPrefix(GenericWidget* header) override;
+    bool SetHeaderSuffix(GenericWidget* header) override;
+    bool SetBody(GenericWidget* body) override;
+
+private:
+    BorderImage* panel_ = nullptr;
+    UIElement* header_ = nullptr;
+
+    CheckBox* toggleButton_ = nullptr;
+    UIElement* headerPrefix_ = nullptr;
+    Text* headerText_ = nullptr;
+    UIElement* headerSuffix_ = nullptr;
+
+    UIElement* body_ = nullptr;
+
 };
 
 class UrhoButton : public AbstractButton, public UrhoWidget
@@ -165,7 +196,7 @@ private:
     void HandleItemClicked(StringHash eventType, VariantMap& eventData);
 
 private:
-    SharedPtr<ListView> hierarchyList_;
+    ListView* hierarchyList_;
     GenericHierarchyListItem rootItem_;
 };
 
@@ -249,6 +280,7 @@ public:
 private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollArea,       UrhoScrollArea);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           UrhoLayout);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCollapsiblePanel, UrhoCollapsiblePanel);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           UrhoButton);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             UrhoText);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         UrhoLineEdit);
