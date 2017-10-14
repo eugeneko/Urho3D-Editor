@@ -171,6 +171,24 @@ private:
     LineEdit* lineEdit_ = nullptr;
 };
 
+class UrhoCheckBox : public AbstractCheckBox, public UrhoWidget
+{
+    URHO3D_OBJECT(UrhoCheckBox, AbstractCheckBox);
+
+public:
+    UrhoCheckBox(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCheckBox(mainWindow, parent) {}
+    AbstractCheckBox& SetChecked(bool checked) override;
+    //AbstractCheckBox& SetText(const String& text) override;
+
+private:
+    UIElement* CreateElement(UIElement* parent) override;
+
+private:
+    UIElement* panel_ = nullptr;
+    CheckBox* checkBox_ = nullptr;
+    Text* text_ = nullptr;
+};
+
 class UrhoHierarchyListItemWidget : public Text
 {
 public:
@@ -286,6 +304,7 @@ private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           UrhoButton);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             UrhoText);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         UrhoLineEdit);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCheckBox,         UrhoCheckBox);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList,    UrhoHierarchyList);
 
     void HandleResized(StringHash eventType, VariantMap& eventData);

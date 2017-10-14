@@ -566,6 +566,24 @@ UIElement* UrhoLineEdit::CreateElement(UIElement* parent)
 }
 
 //////////////////////////////////////////////////////////////////////////
+AbstractCheckBox& UrhoCheckBox::SetChecked(bool checked)
+{
+    checkBox_->SetChecked(checked);
+    return *this;
+}
+
+UIElement* UrhoCheckBox::CreateElement(UIElement* parent)
+{
+    panel_ = parent->CreateChild<UIElement>("ACB_Panel");
+    panel_->SetLayout(LM_HORIZONTAL);
+    checkBox_ = panel_->CreateChild<CheckBox>("ACB_CheckBox");
+    checkBox_->SetStyleAuto();
+    text_ = panel_->CreateChild<Text>("ACB_Text");
+    text_->SetStyleAuto();
+    return panel_;
+}
+
+//////////////////////////////////////////////////////////////////////////
 UrhoHierarchyList::UrhoHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent)
     : GenericHierarchyList(mainWindow, parent)
     , rootItem_(context_)

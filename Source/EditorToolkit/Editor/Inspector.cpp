@@ -19,8 +19,8 @@ Inspector::Inspector(AbstractMainWindow& mainWindow)
         panel->SetExpanded(true);
 
         AbstractLayout* headerPrefix = panel->CreateHeaderPrefix<AbstractLayout>();
-        headerPrefix->CreateCellWidget<AbstractButton>(0, 0)->SetText("x");
-//         panel->CreateHeaderPrefix<AbstractButton>()->SetText("x");;
+        headerPrefix->CreateCellWidget<AbstractCheckBox>(0, 0);
+//         panel->CreateHeaderPrefix<AbstractCheckBox>();
         panel->SetHeaderText("Panel" + String(j));
 //         panel->CreateHeaderSuffix<AbstractButton>()->SetText("Butt");;
         AbstractLayout* headerSuffix = panel->CreateHeaderSuffix<AbstractLayout>();
@@ -49,7 +49,7 @@ Inspector::Inspector(AbstractMainWindow& mainWindow)
             AbstractLayout* nestedLayout2 = bodyLayout->CreateCellWidget<AbstractLayout>(row, 1);
             nestedLayout2->CreateCellWidget<AbstractButton>(0, 0)->SetText("1");
             nestedLayout2->CreateCellWidget<AbstractButton>(0, 1)->SetText("2");
-            //nestedLayout2->CreateCellWidget<AbstractCheckBox>(0, 2)->SetChecked(true);
+            nestedLayout2->CreateCellWidget<AbstractCheckBox>(0, 2)->SetChecked(true);
             ++row;
         }
     }
