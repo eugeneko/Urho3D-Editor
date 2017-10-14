@@ -102,6 +102,17 @@ String PrintKeyBinding(const KeyBinding& keyBinding)
 
 }
 
+UrhoWidget* UrhoWidget::FromInterface(GenericWidget* widget)
+{
+    auto urhoWidget = dynamic_cast<UrhoWidget*>(widget);
+    if (!urhoWidget)
+    {
+        URHO3D_LOGERROR("Cannot cast widget to implementation");
+        return nullptr;
+    }
+    return urhoWidget;
+}
+
 //////////////////////////////////////////////////////////////////////////
 UrhoDialog::UrhoDialog(AbstractMainWindow& mainWindow, GenericWidget* parent)
     : GenericDialog(mainWindow, parent)
@@ -153,7 +164,7 @@ bool UrhoDialog::SetContent(GenericWidget* content)
         return false;
 
     bodyElement_->RemoveAllChildren();
-    urhoWidget->CreateElement(bodyElement_);
+    urhoWidget->Initialize(bodyElement_);
     return true;
 }
 
@@ -191,7 +202,7 @@ bool UrhoScrollArea::SetContent(GenericWidget* content)
         return false;
 
     // Set content
-    scrollView_->SetContentElement(urhoWidget->CreateElement(scrollPanel_));
+    scrollView_->SetContentElement(urhoWidget->Initialize(scrollPanel_));
     UpdateContentSize();
     return true;
 }
@@ -363,13 +374,9 @@ UIElement* UrhoLayout::CreateElement(UIElement* parent)
 
 bool UrhoLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* child)
 {
-    // Test element
-    auto urhoWidget = dynamic_cast<UrhoWidget*>(child);
-    if (!urhoWidget)
-    {
-        URHO3D_LOGERRORF("Cannot add unknown widget into row %u column %u", row, column);
+    UrhoWidget* childImpl = UrhoWidget::FromInterface(child);
+    if (!childImpl)
         return false;
-    }
 
     // Populate row
     if (elements_.Size() <= row)
@@ -383,7 +390,7 @@ bool UrhoLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* chi
     // Add widget
     if (rowElements[column])
         body_->RemoveChild(rowElements[column]);
-    rowElements[column] = urhoWidget->CreateElement(body_);
+    rowElements[column] = childImpl->Initialize(body_);
 
     // Update layout
     UpdateLayout();
@@ -393,12 +400,9 @@ bool UrhoLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* chi
 bool UrhoLayout::SetRowWidget(unsigned row, GenericWidget* child)
 {
     // Test element
-    auto urhoWidget = dynamic_cast<UrhoWidget*>(child);
-    if (!urhoWidget)
-    {
-        URHO3D_LOGERRORF("Cannot add unknown widget into row %u", row);
+    UrhoWidget* childImpl = UrhoWidget::FromInterface(child);
+    if (!childImpl)
         return false;
-    }
 
     // Populate row
     if (elements_.Size() <= row)
@@ -411,11 +415,21 @@ bool UrhoLayout::SetRowWidget(unsigned row, GenericWidget* child)
     rowElements.Resize(1);
 
     // Add widget
-    rowElements[0] = urhoWidget->CreateElement(body_);
+    rowElements[0] = childImpl->Initialize(body_);
 
     // Update layout
     UpdateLayout();
     return true;
+}
+
+void UrhoLayout::RemoveChild(GenericWidget* child)
+{
+    UrhoWidget* childImpl = UrhoWidget::FromInterface(child);
+    if (!childImpl)
+        return;
+
+    if (UIElement* childElement = childImpl->GetElement())
+        body_->RemoveChild(childElement);
 }
 
 void UrhoLayout::HandleLayoutChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)
@@ -446,7 +460,7 @@ bool UrhoCollapsiblePanel::SetHeaderPrefix(GenericWidget* header)
         return false;
 
     headerPrefix_->RemoveAllChildren();
-    headerImpl->CreateElement(headerPrefix_);
+    headerImpl->Initialize(headerPrefix_);
 
     return true;
 }
@@ -459,7 +473,7 @@ bool UrhoCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
         return false;
 
     headerSuffix_->RemoveAllChildren();
-    headerImpl->CreateElement(headerSuffix_);
+    headerImpl->Initialize(headerSuffix_);
 
     return true;
 }
@@ -473,7 +487,7 @@ bool UrhoCollapsiblePanel::SetBody(GenericWidget* body)
 
     if (body_)
         panel_->RemoveChild(body_);
-    body_ = bodyImpl->CreateElement(panel_);
+    body_ = bodyImpl->Initialize(panel_);
 
     return true;
 }

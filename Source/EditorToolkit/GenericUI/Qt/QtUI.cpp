@@ -1,6 +1,7 @@
 #include "QtUI.h"
 #include "QtUrhoHelpers.h"
 #include <Urho3D/Core/ProcessUtils.h>
+#include <Urho3D/IO/Log.h>
 #include <QKeySequence>
 #include <QMenuBar>
 #include <QScrollBar>
@@ -45,11 +46,23 @@ QKeySequence Cast(const KeyBinding& binding)
 
 }
 
+QtWidget* QtWidget::FromInterface(GenericWidget* widget)
+{
+    auto qtWidget = dynamic_cast<QtWidget*>(widget);
+    if (!qtWidget)
+    {
+        URHO3D_LOGERROR("Cannot cast widget to implementation");
+        return nullptr;
+    }
+    return qtWidget;
+}
+
+//////////////////////////////////////////////////////////////////////////
 bool QtDockDialog::SetContent(GenericWidget* content)
 {
-    if (auto contentWidget = dynamic_cast<QtWidget*>(content))
+    if (auto contentImpl = QtWidget::FromInterface(content))
     {
-        dock_->setWidget(contentWidget->CreateWidget());
+        dock_->setWidget(contentImpl->Initialize());
         return true;
     }
     return false;
@@ -105,9 +118,9 @@ void QtScrollArea::UpdateContentSize()
 
 bool QtScrollArea::SetContent(GenericWidget* content)
 {
-    if (auto contentWidget = dynamic_cast<QtWidget*>(content))
+    if (auto contentImpl = QtWidget::FromInterface(content))
     {
-        QWidget* widget = contentWidget->CreateWidget();
+        QWidget* widget = contentImpl->Initialize();
         scrollArea_->setWidget(widget);
         return true;
     }
@@ -126,9 +139,9 @@ QWidget* QtLayout::CreateWidget()
 
 bool QtLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* child)
 {
-    if (auto childWidget = dynamic_cast<QtWidget*>(child))
+    if (auto childImpl = QtWidget::FromInterface(child))
     {
-        layout_->addWidget(childWidget->CreateWidget(), row, column);
+        layout_->addWidget(childImpl->Initialize(), row, column);
         return true;
     }
     return false;
@@ -136,12 +149,17 @@ bool QtLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* child
 
 bool QtLayout::SetRowWidget(unsigned row, GenericWidget* child)
 {
-    if (auto childWidget = dynamic_cast<QtWidget*>(child))
+    if (auto childImpl = QtWidget::FromInterface(child))
     {
-        layout_->addWidget(childWidget->CreateWidget(), row, 0, 1, -1);
+        layout_->addWidget(childImpl->Initialize(), row, 0, 1, -1);
         return true;
     }
     return false;
+}
+
+void QtLayout::RemoveChild(GenericWidget* child)
+{
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -186,9 +204,9 @@ QWidget* QtCollapsiblePanel::CreateWidget()
 
 bool QtCollapsiblePanel::SetHeaderPrefix(GenericWidget* header)
 {
-    if (auto headerImpl = dynamic_cast<QtWidget*>(header))
+    if (auto headerImpl = QtWidget::FromInterface(header))
     {
-        QWidget* newHeader = headerImpl->CreateWidget();
+        QWidget* newHeader = headerImpl->Initialize();
         layout_->removeWidget(headerPrefix_);
         layout_->addWidget(newHeader, 0, 1);
         headerPrefix_ = newHeader;
@@ -201,9 +219,9 @@ bool QtCollapsiblePanel::SetHeaderPrefix(GenericWidget* header)
 
 bool QtCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
 {
-    if (auto headerImpl = dynamic_cast<QtWidget*>(header))
+    if (auto headerImpl = QtWidget::FromInterface(header))
     {
-        QWidget* newHeader = headerImpl->CreateWidget();
+        QWidget* newHeader = headerImpl->Initialize();
         layout_->removeWidget(headerSuffix_);
         layout_->addWidget(newHeader, 0, 3);
         headerSuffix_ = newHeader;
@@ -216,9 +234,9 @@ bool QtCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
 
 bool QtCollapsiblePanel::SetBody(GenericWidget* body)
 {
-    if (auto bodyWidget = dynamic_cast<QtWidget*>(body))
+    if (auto bodyImpl = QtWidget::FromInterface(body))
     {
-        QWidget* newBody = bodyWidget->CreateWidget();
+        QWidget* newBody = bodyImpl->Initialize();
         layout_->removeWidget(body_);
         layout_->addWidget(newBody, 1, 0, 1, -1);
         body_ = newBody;
@@ -424,20 +442,14 @@ int QtHierarchyListModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/
 //////////////////////////////////////////////////////////////////////////
 QtHierarchyList::QtHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent)
     : GenericHierarchyList(mainWindow, parent)
-    , model_(mainWindow, this)
 {
-    header()->hide();
-    setSelectionMode(QAbstractItemView::ExtendedSelection);
-    setDragDropMode(QAbstractItemView::DragDrop);
-    setDragEnabled(true);
-    setModel(&model_);
 }
 
 void QtHierarchyList::AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent)
 {
-    const QModelIndex parentIndex = model_.GetIndex(parent);
-    model_.RemoveItem(item, parentIndex);
-    model_.InsertItem(item, parentIndex);
+    const QModelIndex parentIndex = model_->GetIndex(parent);
+    model_->RemoveItem(item, parentIndex);
+    model_->InsertItem(item, parentIndex);
 }
 
 void QtHierarchyList::SelectItem(GenericHierarchyListItem* item)
@@ -453,6 +465,18 @@ void QtHierarchyList::DeselectItem(GenericHierarchyListItem* item)
 void QtHierarchyList::GetSelection(ItemVector& result)
 {
     //throw std::logic_error("The method or operation is not implemented.");
+}
+
+QWidget* QtHierarchyList::CreateWidget()
+{
+    treeView_ = new QTreeView();
+    model_.reset(new QtHierarchyListModel(mainWindow_, this));
+    treeView_->header()->hide();
+    treeView_->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    treeView_->setDragDropMode(QAbstractItemView::DragDrop);
+    treeView_->setDragEnabled(true);
+    treeView_->setModel(model_.data());
+    return treeView_;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -516,7 +540,7 @@ QtMainWindow::~QtMainWindow()
 GenericDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocationHint::Undocked*/)
 {
     auto dialog = MakeShared<QtDockDialog>(*this, nullptr);
-    QDockWidget* dockWidget = dynamic_cast<QDockWidget*>(dialog->CreateWidget());
+    QDockWidget* dockWidget = dynamic_cast<QDockWidget*>(dialog->Initialize());
     addDockWidget(Cast(hint), dockWidget);
     dialogs_.Push(dialog);
     return dialog;

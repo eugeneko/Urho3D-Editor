@@ -53,6 +53,13 @@ GenericWidget* AbstractLayout::CreateRowWidget(StringHash type, unsigned row)
     return child;
 }
 
+void AbstractLayout::RemoveAllChildren()
+{
+    for (GenericWidget* child : children_)
+        RemoveChild(child);
+    children_.Clear();
+}
+
 //////////////////////////////////////////////////////////////////////////
 GenericWidget* AbstractCollapsiblePanel::CreateHeaderPrefix(StringHash type)
 {

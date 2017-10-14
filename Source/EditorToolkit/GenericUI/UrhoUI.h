@@ -19,7 +19,18 @@ class ListView;
 class UrhoWidget
 {
 public:
+    static UrhoWidget* FromInterface(GenericWidget* widget);
+    UIElement* Initialize(UIElement* parent)
+    {
+        if (!element_ && parent)
+            element_ = CreateElement(parent);
+        return element_;
+    }
+    UIElement* GetElement() { return element_; }
+
+private:
     virtual UIElement* CreateElement(UIElement* parent) = 0;
+    UIElement* element_ = nullptr;
 };
 
 class UrhoDialog : public GenericDialog
@@ -48,9 +59,8 @@ public:
 
     void SetDynamicWidth(bool dynamicWidth) override;
 
-    UIElement* CreateElement(UIElement* parent) override;
-
 private:
+    UIElement* CreateElement(UIElement* parent) override;
     bool SetContent(GenericWidget* content) override;
 
     void HandleResized(StringHash eventType, VariantMap& eventData);
@@ -71,14 +81,13 @@ class UrhoLayout : public AbstractLayout, public UrhoWidget
 public:
     UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent);
 
-    void UpdateLayout();
-
-    UIElement* CreateElement(UIElement* parent) override;
-
 private:
+    UIElement* CreateElement(UIElement* parent) override;
     bool SetCellWidget(unsigned row, unsigned column, GenericWidget* child) override;
     bool SetRowWidget(unsigned row, GenericWidget* child) override;
+    void RemoveChild(GenericWidget* child) override;
 
+    void UpdateLayout();
     void HandleLayoutChanged(StringHash eventType, VariantMap& eventData);
     enum class RowType
     {
@@ -102,9 +111,9 @@ public:
     void SetHeaderText(const String& text) override;
     void SetExpanded(bool expanded) override;
 
-    UIElement* CreateElement(UIElement* parent) override;
 
 private:
+    UIElement* CreateElement(UIElement* parent) override;
     bool SetHeaderPrefix(GenericWidget* header) override;
     bool SetHeaderSuffix(GenericWidget* header) override;
     bool SetBody(GenericWidget* body) override;
@@ -209,9 +218,10 @@ public:
     void DeselectItem(GenericHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
 
-    UIElement* CreateElement(UIElement* parent) override;
 
 private:
+    UIElement* CreateElement(UIElement* parent) override;
+
     void InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent);
     void HandleItemClicked(StringHash eventType, VariantMap& eventData);
 

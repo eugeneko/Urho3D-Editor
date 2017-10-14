@@ -26,7 +26,18 @@ class QtMainWindow;
 class QtWidget
 {
 public:
+    static QtWidget* FromInterface(GenericWidget* widget);
+    QWidget* Initialize()
+    {
+        if (!widget_)
+            widget_ = CreateWidget();
+        return widget_;
+    }
+    QWidget* GetElement() { return widget_; }
+
+private:
     virtual QWidget* CreateWidget() = 0;
+    QWidget* widget_ = nullptr;
 };
 
 class QtDockDialog : public GenericDialog, public QtWidget
@@ -36,9 +47,9 @@ public:
     QtDockDialog(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericDialog(mainWindow, parent) { }
     void SetName(const String& name) override;
 
-    QWidget* CreateWidget() override;
 
 private:
+    QWidget* CreateWidget() override;
     bool SetContent(GenericWidget* content) override;
 
 private:
@@ -50,6 +61,7 @@ class QtDummyWidget : public AbstractDummyWidget, public QtWidget
 public:
     QtDummyWidget(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractDummyWidget(mainWindow, parent) { }
 
+private:
     QWidget* CreateWidget() override;
 
 };
@@ -61,10 +73,10 @@ public:
 
     void SetDynamicWidth(bool dynamicWidth) override;
 
-    QWidget* CreateWidget() override;
 
 
 private:
+    QWidget* CreateWidget() override;
     bool SetContent(GenericWidget* content) override;
 
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -82,11 +94,13 @@ class QtLayout : public AbstractLayout, public QtWidget
 public:
     QtLayout(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractLayout(mainWindow, parent) { }
 
-    QWidget* CreateWidget() override;
+
 
 private:
-    virtual bool SetCellWidget(unsigned row, unsigned column, GenericWidget* child) override;
-    virtual bool SetRowWidget(unsigned row, GenericWidget* child) override;
+    QWidget* CreateWidget() override;
+    bool SetCellWidget(unsigned row, unsigned column, GenericWidget* child) override;
+    bool SetRowWidget(unsigned row, GenericWidget* child) override;
+    void RemoveChild(GenericWidget* child) override;
 
 private:
     QWidget* widget_ = nullptr;
@@ -104,9 +118,9 @@ public:
     void SetHeaderText(const String& text) override;
     void SetExpanded(bool expanded) override;
 
-    QWidget* CreateWidget() override;
 
 private:
+    QWidget* CreateWidget() override;
     bool SetHeaderPrefix(GenericWidget* header) override;
     bool SetHeaderSuffix(GenericWidget* header) override;
     bool SetBody(GenericWidget* body) override;
@@ -144,9 +158,9 @@ public:
     QtButton(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractButton(mainWindow, parent) { }
     AbstractButton& SetText(const String& text) override;
 
-    QWidget* CreateWidget() override;
 
 private:
+    QWidget* CreateWidget() override;
     QPushButton* pushButton_ = nullptr;
 
 };
@@ -159,6 +173,7 @@ public:
     QtText(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractText(mainWindow, parent) { }
     AbstractText& SetText(const String& text) override;
 
+private:
     QWidget* CreateWidget() override;
 
 private:
@@ -174,6 +189,7 @@ public:
     QtLineEdit(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractLineEdit(mainWindow, parent) { }
     AbstractLineEdit& SetText(const String& text) override;
 
+private:
     QWidget* CreateWidget() override;
 
 private:
@@ -189,6 +205,7 @@ public:
     QtCheckBox(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCheckBox(mainWindow, parent) { }
     AbstractCheckBox& SetChecked(bool checked) override;
 
+private:
     QWidget* CreateWidget() override;
 
 private:
@@ -218,7 +235,7 @@ private:
 
 };
 
-class QtHierarchyList : public GenericHierarchyList, public QTreeView
+class QtHierarchyList : public GenericHierarchyList, public QtWidget
 {
 public:
     QtHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent);
@@ -229,8 +246,12 @@ public:
     void GetSelection(ItemVector& result) override;
 
 private:
+    QWidget* CreateWidget() override;
 
-    QtHierarchyListModel model_;
+private:
+
+    QTreeView* treeView_ = nullptr;
+    QScopedPointer<QtHierarchyListModel> model_;
 
 };
 

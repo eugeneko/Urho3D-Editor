@@ -131,9 +131,12 @@ public:
     GenericWidget* CreateRowWidget(StringHash type, unsigned row);
     template <class T> T* CreateRowWidget(unsigned row) { return dynamic_cast<T*>(CreateRowWidget(T::GetTypeStatic(), row)); }
 
+    void RemoveAllChildren();
+
 private:
     virtual bool SetCellWidget(unsigned row, unsigned column, GenericWidget* child) = 0;
     virtual bool SetRowWidget(unsigned row, GenericWidget* child) = 0;
+    virtual void RemoveChild(GenericWidget* child) = 0;
 
 private:
     Vector<SharedPtr<GenericWidget>> children_;
