@@ -139,7 +139,6 @@ private:
     void OnParentSet() override;
 
 private:
-    UIElement* container_ = nullptr;
     Text* text_ = nullptr;
 };
 

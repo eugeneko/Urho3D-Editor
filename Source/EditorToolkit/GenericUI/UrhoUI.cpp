@@ -537,7 +537,9 @@ UrhoText::UrhoText(AbstractMainWindow& mainWindow)
 AbstractText& UrhoText::SetText(const String& text)
 {
     text_->SetText(text);
-    container_->SetFixedSize(text_->GetMinSize());
+    IntVector2 size = text_->GetSize();
+    size.x_ = Max(size.x_, size.y_);
+    text_->SetFixedSize(size);
     return *this;
 }
 
@@ -545,12 +547,10 @@ void UrhoText::OnParentSet()
 {
     UIElement* parent = GetParentElement(this);
 
-    container_ = parent->CreateChild<UIElement>();
-    container_->SetClipChildren(true);
-    text_ = container_->CreateChild<Text>();
+    text_ = parent->CreateChild<Text>();
     text_->SetStyleAuto();
 
-    SetInternalElement(this, container_);
+    SetInternalElement(this, text_);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -149,6 +149,11 @@ public:
 
         inspector_ = MakeShared<Inspector>(mainWindow);
 
+        auto inspectable = MakeShared<MultipleSerializableInspector>(context_);
+        inspectable->AddObject(scene_->GetChildren()[10]);
+        inspectable->AddObject(scene_->GetChildren()[20]);
+        inspector_->SetInspectable(inspectable);
+
         if (blenderHotkeys)
         {
             using KB = KeyBinding;
