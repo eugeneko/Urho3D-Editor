@@ -102,12 +102,12 @@ String PrintKeyBinding(const KeyBinding& keyBinding)
 
 UIElement* GetInternalElement(GenericWidget* widget)
 {
-    return widget ? widget->GetInternalPointer<UIElement>() : nullptr;
+    return widget ? widget->GetInternalHandle<UIElement*>() : nullptr;
 }
 
 void SetInternalElement(GenericWidget* widget, UIElement* element)
 {
-    widget->SetInternalPointer(element);
+    widget->SetInternalHandle(element);
 }
 
 UIElement* GetParentElement(GenericWidget* widget)

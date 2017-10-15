@@ -62,7 +62,7 @@ GenericWidget* AbstractScrollArea::CreateContent(StringHash type)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool AbstractLayout::AddCell(GenericWidget* cell, unsigned row, unsigned column)
+bool AbstractLayout::SetCell(GenericWidget* cell, unsigned row, unsigned column)
 {
     if (!cell)
         return false;
@@ -85,12 +85,12 @@ bool AbstractLayout::AddCell(GenericWidget* cell, unsigned row, unsigned column)
 GenericWidget* AbstractLayout::CreateCell(StringHash type, unsigned row, unsigned column)
 {
     SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type);
-    if (!AddCell(child, row, column))
+    if (!SetCell(child, row, column))
         return nullptr;
     return child;
 }
 
-bool AbstractLayout::AddRow(GenericWidget* cell, unsigned row)
+bool AbstractLayout::SetRow(GenericWidget* cell, unsigned row)
 {
     if (!cell)
         return false;
@@ -113,7 +113,7 @@ bool AbstractLayout::AddRow(GenericWidget* cell, unsigned row)
 GenericWidget* AbstractLayout::CreateRow(StringHash type, unsigned row)
 {
     SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type);
-    if (!AddRow(child, row))
+    if (!SetRow(child, row))
         return nullptr;
     return child;
 }

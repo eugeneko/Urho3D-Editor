@@ -66,8 +66,8 @@ public:
     void SetParent(GenericWidget* parent);
     GenericWidget* GetParent() const { return parent_; }
 
-    template <class T> void SetInternalPointer(T* pointer) { internalPointer_ = MakeCustomValue(pointer); }
-    template <class T> T* GetInternalPointer() const { return internalPointer_.GetCustom<T*>(); }
+    template <class T> void SetInternalHandle(T pointer) { internalPointer_ = MakeCustomValue(pointer); }
+    template <class T> T GetInternalHandle() const { return internalPointer_.GetCustom<T>(); }
 
 private:
     /// Called when widget is attached to the root.
@@ -150,8 +150,8 @@ public:
     void RemoveAllChildren();
 
 private:
-    bool AddCell(GenericWidget* cell, unsigned row, unsigned column);
-    bool AddRow(GenericWidget* cell, unsigned row);
+    bool SetCell(GenericWidget* cell, unsigned row, unsigned column);
+    bool SetRow(GenericWidget* cell, unsigned row);
 
     virtual bool DoSetCell(unsigned row, unsigned column, GenericWidget* child) = 0;
     virtual bool DoSetRow(unsigned row, GenericWidget* child) = 0;

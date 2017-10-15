@@ -46,12 +46,12 @@ QKeySequence Cast(const KeyBinding& binding)
 
 QWidget* GetInternalWidget(GenericWidget* widget)
 {
-    return widget->GetInternalPointer<QWidget>();
+    return widget->GetInternalHandle<QWidget*>();
 }
 
 void SetInternalWidget(GenericWidget* widget, QWidget* element)
 {
-    widget->SetInternalPointer(element);
+    widget->SetInternalHandle(element);
 }
 
 }
