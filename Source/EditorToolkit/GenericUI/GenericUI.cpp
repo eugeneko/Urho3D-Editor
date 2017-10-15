@@ -1,91 +1,207 @@
 #include "GenericUI.h"
+#include <Urho3D/IO/Log.h>
 #include <Urho3D/Scene/SceneEvents.h>
 #include <Urho3D/Scene/Scene.h>
 
 namespace Urho3D
 {
 
-GenericWidget::GenericWidget(AbstractMainWindow& mainWindow, GenericWidget* parent)
+GenericWidget::GenericWidget(AbstractMainWindow& mainWindow)
     : Object(mainWindow.GetContext())
     , mainWindow_(mainWindow)
-    , parent_(parent)
 {
 
 }
 
+void GenericWidget::SetParent(GenericWidget* parent)
+{
+    parent_ = parent;
+    OnParentSet();
+}
+
 //////////////////////////////////////////////////////////////////////////
+bool GenericDialog::SetContent(GenericWidget* content)
+{
+    content_ = content;
+    content_->SetParent(this);
+
+    if (!DoSetContent(content))
+    {
+        content_ = nullptr;
+        return false;
+    }
+    return true;
+}
+
 GenericWidget* GenericDialog::CreateContent(StringHash type)
 {
-    SharedPtr<GenericWidget> content = mainWindow_.CreateWidget(type, this);
-    if (!SetContent(content))
-        return nullptr;
-    content_ = content;
-    return content;
+    SharedPtr<GenericWidget> content = mainWindow_.CreateWidget(type);
+    SetContent(content);
+    return content_;
 }
 
 //////////////////////////////////////////////////////////////////////////
+bool AbstractScrollArea::SetContent(GenericWidget* content)
+{
+    content_ = content;
+    content_->SetParent(this);
+
+    if (!DoSetContent(content))
+    {
+        content_ = nullptr;
+        return false;
+    }
+    return true;
+}
+
 GenericWidget* AbstractScrollArea::CreateContent(StringHash type)
 {
-    SharedPtr<GenericWidget> content = mainWindow_.CreateWidget(type, this);
-    if (!SetContent(content))
-        return nullptr;
-
-    content_ = content;
-    return content;
+    SharedPtr<GenericWidget> content = mainWindow_.CreateWidget(type);
+    SetContent(content);
+    return content_;
 }
 
 //////////////////////////////////////////////////////////////////////////
-GenericWidget* AbstractLayout::CreateCellWidget(StringHash type, unsigned row, unsigned column)
+bool AbstractLayout::AddCell(GenericWidget* cell, unsigned row, unsigned column)
 {
-    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
-    if (!SetCellWidget(row, column, child))
+    if (!cell)
+        return false;
+    if (!EnsureCell(row, column, RowType::MultiCellRow))
+    {
+        URHO3D_LOGERRORF("Cannot set column %u at row %u because the row has incompatible type", column, row);
+        return false;
+    }
+    if (rows_[row].columns_[column])
+    {
+        URHO3D_LOGERRORF("Cannot set column %u at row %u because the cell is already set", column, row);
+        return false;
+    }
+    rows_[row].columns_[column] = cell;
+    cell->SetParent(this);
+    DoSetCell(row, column, cell);
+    return true;
+}
+
+GenericWidget* AbstractLayout::CreateCell(StringHash type, unsigned row, unsigned column)
+{
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type);
+    if (!AddCell(child, row, column))
         return nullptr;
-    children_.Push(child);
     return child;
 }
 
-GenericWidget* AbstractLayout::CreateRowWidget(StringHash type, unsigned row)
+bool AbstractLayout::AddRow(GenericWidget* cell, unsigned row)
 {
-    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
-    if (!SetRowWidget(row, child))
+    if (!cell)
+        return false;
+    if (!EnsureRow(row, RowType::SimpleRow))
+    {
+        URHO3D_LOGERRORF("Cannot set row %u because the row has incompatible type", row);
+        return false;
+    }
+    if (rows_[row].columns_[0])
+    {
+        URHO3D_LOGERRORF("Cannot set row %u because the row is already set", row);
+        return false;
+    }
+    rows_[row].columns_[0] = cell;
+    cell->SetParent(this);
+    DoSetRow(row, cell);
+    return true;
+}
+
+GenericWidget* AbstractLayout::CreateRow(StringHash type, unsigned row)
+{
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type);
+    if (!AddRow(child, row))
         return nullptr;
-    children_.Push(child);
     return child;
 }
 
 void AbstractLayout::RemoveAllChildren()
 {
-    for (GenericWidget* child : children_)
-        RemoveChild(child);
-    children_.Clear();
+    for (RowData& row : rows_)
+        for (GenericWidget* cell : row.columns_)
+            if (cell)
+                DoRemoveChild(cell);
+    rows_.Clear();
+}
+
+bool AbstractLayout::EnsureRow(unsigned row, RowType type)
+{
+    if (rows_.Size() <= row)
+        rows_.Resize(row + 1);
+    if (rows_[row].type_ == RowType::EmptyRow)
+        rows_[row].type_ = type;
+    if (rows_[row].type_ == RowType::SimpleRow && rows_[row].columns_.Empty())
+        rows_[row].columns_.Push(nullptr);
+    return rows_[row].type_ == type;
+}
+
+bool AbstractLayout::EnsureCell(unsigned row, unsigned column, RowType type)
+{
+    const bool rowValid = EnsureRow(row, type);
+    if (rows_[row].columns_.Size() <= column)
+        rows_[row].columns_.Resize(column + 1);
+    return rowValid;
 }
 
 //////////////////////////////////////////////////////////////////////////
 GenericWidget* AbstractCollapsiblePanel::CreateHeaderPrefix(StringHash type)
 {
-    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
-    if (!SetHeaderPrefix(child))
-        return nullptr;
-    headerPrefix_ = child;
-    return child;
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type);
+    SetHeaderPrefix(child);
+    return headerPrefix_;
 }
 
 GenericWidget* AbstractCollapsiblePanel::CreateHeaderSuffix(StringHash type)
 {
-    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
-    if (!SetHeaderSuffix(child))
-        return nullptr;
-    headerSuffix_ = child;
-    return child;
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type);
+    SetHeaderSuffix(child);
+    return headerSuffix_;
 }
 
 GenericWidget* AbstractCollapsiblePanel::CreateBody(StringHash type)
 {
-    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type, this);
-    if (!SetBody(child))
-        return nullptr;
-    body_ = child;
-    return child;
+    SharedPtr<GenericWidget> child = mainWindow_.CreateWidget(type);
+    SetBody(child);
+    return body_;
+}
+
+bool AbstractCollapsiblePanel::SetHeaderPrefix(GenericWidget* header)
+{
+    headerPrefix_ = header;
+    headerPrefix_->SetParent(this);
+    if (!DoSetHeaderPrefix(header))
+    {
+        headerPrefix_ = nullptr;
+        return false;
+    }
+    return true;
+}
+
+bool AbstractCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
+{
+    headerSuffix_ = header;
+    headerSuffix_->SetParent(this);
+    if (!DoSetHeaderSuffix(header))
+    {
+        headerSuffix_ = nullptr;
+        return false;
+    }
+    return true;
+}
+
+bool AbstractCollapsiblePanel::SetBody(GenericWidget* body)
+{
+    body_ = body;
+    body_->SetParent(this);
+    if (!DoSetBody(body))
+    {
+        body_ = nullptr;
+        return false;
+    }
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -111,9 +227,9 @@ int GenericHierarchyListItem::GetIndex()
 }
 
 //////////////////////////////////////////////////////////////////////////
-SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type)
 {
-    using WidgetFactory = SharedPtr<GenericWidget>(AbstractMainWindow::*)(GenericWidget* parent);
+    using WidgetFactory = SharedPtr<GenericWidget>(AbstractMainWindow::*)();
     static const HashMap<StringHash, WidgetFactory> factory =
     {
         { AbstractDummyWidget::GetTypeStatic(), &AbstractMainWindow::CreateDummyWidget },
@@ -129,50 +245,50 @@ SharedPtr<GenericWidget> AbstractMainWindow::CreateWidget(StringHash type, Gener
 
     WidgetFactory createWidget = nullptr;
     factory.TryGetValue(type, createWidget);
-    return createWidget ? (this->*createWidget)(parent) : nullptr;
+    return createWidget ? (this->*createWidget)() : nullptr;
 }
 
-SharedPtr<GenericWidget> AbstractMainWindow::CreateDummyWidget(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateDummyWidget()
 {
     return nullptr;
 }
 
-SharedPtr<GenericWidget> AbstractMainWindow::CreateScrollArea(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateScrollArea()
 {
     return nullptr;
 }
 
-SharedPtr<GenericWidget> AbstractMainWindow::CreateLayout(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateLayout()
 {
     return nullptr;
 }
 
-SharedPtr<GenericWidget> AbstractMainWindow::CreateCollapsiblePanel(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateCollapsiblePanel()
 {
     return nullptr;
 }
 
-SharedPtr<GenericWidget> AbstractMainWindow::CreateButton(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateButton()
 {
     return nullptr;
 }
 
-SharedPtr<GenericWidget> AbstractMainWindow::CreateText(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateText()
 {
     return nullptr;
 }
 
-SharedPtr<GenericWidget> AbstractMainWindow::CreateLineEdit(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateLineEdit()
 {
     return nullptr;
 }
 
-SharedPtr<GenericWidget> AbstractMainWindow::CreateCheckBox(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateCheckBox()
 {
     return nullptr;
 }
 
-SharedPtr<GenericWidget> AbstractMainWindow::CreateHierarchyList(GenericWidget* parent)
+SharedPtr<GenericWidget> AbstractMainWindow::CreateHierarchyList()
 {
     return nullptr;
 }

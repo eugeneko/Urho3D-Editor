@@ -16,52 +16,37 @@ class CheckBox;
 class ScrollView;
 class ListView;
 
-class UrhoWidget
-{
-public:
-    static UrhoWidget* FromInterface(GenericWidget* widget);
-    UIElement* Initialize(UIElement* parent)
-    {
-        if (!element_ && parent)
-            element_ = CreateElement(parent);
-        return element_;
-    }
-    UIElement* GetElement() { return element_; }
-
-private:
-    virtual UIElement* CreateElement(UIElement* parent) = 0;
-    UIElement* element_ = nullptr;
-};
-
 class UrhoDialog : public GenericDialog
 {
     URHO3D_OBJECT(UrhoDialog, GenericDialog);
 
 public:
-    UrhoDialog(AbstractMainWindow& mainWindow, GenericWidget* parent);
+    UrhoDialog(AbstractMainWindow& mainWindow);
     void SetName(const String& name) override;
 
 private:
-    bool SetContent(GenericWidget* content) override;
+    void OnParentSet() override;
+    bool DoSetContent(GenericWidget* content) override;
 
 private:
-    SharedPtr<Window> window_;
+    Window* window_ = nullptr;
     Text* windowTitle_ = nullptr;
+    Button* buttonClose_ = nullptr;
     UIElement* bodyElement_ = nullptr; // #TODO Remove it
 };
 
-class UrhoScrollArea : public AbstractScrollArea, public UrhoWidget
+class UrhoScrollArea : public AbstractScrollArea
 {
     URHO3D_OBJECT(UrhoScrollArea, AbstractScrollArea);
 
 public:
-    UrhoScrollArea(AbstractMainWindow& mainWindow, GenericWidget* parent);
+    UrhoScrollArea(AbstractMainWindow& mainWindow);
 
     void SetDynamicWidth(bool dynamicWidth) override;
 
 private:
-    UIElement* CreateElement(UIElement* parent) override;
-    bool SetContent(GenericWidget* content) override;
+    void OnParentSet() override;
+    bool DoSetContent(GenericWidget* content) override;
 
     void HandleResized(StringHash eventType, VariantMap& eventData);
     void UpdateContentSize();
@@ -74,49 +59,42 @@ private:
     unsigned layoutNestingLevel_ = 0;
 };
 
-class UrhoLayout : public AbstractLayout, public UrhoWidget
+class UrhoLayout : public AbstractLayout
 {
     URHO3D_OBJECT(UrhoLayout, AbstractLayout);
 
 public:
-    UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent);
+    UrhoLayout(AbstractMainWindow& mainWindow);
 
 private:
-    UIElement* CreateElement(UIElement* parent) override;
-    bool SetCellWidget(unsigned row, unsigned column, GenericWidget* child) override;
-    bool SetRowWidget(unsigned row, GenericWidget* child) override;
-    void RemoveChild(GenericWidget* child) override;
+    void OnParentSet() override;
+    bool DoSetCell(unsigned row, unsigned column, GenericWidget* child) override;
+    bool DoSetRow(unsigned row, GenericWidget* child) override;
+    void DoRemoveChild(GenericWidget* child) override;
 
     void UpdateLayout();
     void HandleLayoutChanged(StringHash eventType, VariantMap& eventData);
-    enum class RowType
-    {
-        SingleColumn,
-        MultipleColumns
-    };
 
 private:
     UIElement* body_ = nullptr;
-
-    Vector<Pair<Vector<UIElement*>, RowType>> elements_;
 };
 
-class UrhoCollapsiblePanel : public AbstractCollapsiblePanel, public UrhoWidget
+class UrhoCollapsiblePanel : public AbstractCollapsiblePanel
 {
     URHO3D_OBJECT(UrhoCollapsiblePanel, AbstractCollapsiblePanel);
 
 public:
-    UrhoCollapsiblePanel(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCollapsiblePanel(mainWindow, parent) { }
+    UrhoCollapsiblePanel(AbstractMainWindow& mainWindow);
 
     void SetHeaderText(const String& text) override;
     void SetExpanded(bool expanded) override;
 
 
 private:
-    UIElement* CreateElement(UIElement* parent) override;
-    bool SetHeaderPrefix(GenericWidget* header) override;
-    bool SetHeaderSuffix(GenericWidget* header) override;
-    bool SetBody(GenericWidget* body) override;
+    void OnParentSet() override;
+    bool DoSetHeaderPrefix(GenericWidget* header) override;
+    bool DoSetHeaderSuffix(GenericWidget* header) override;
+    bool DoSetBody(GenericWidget* body) override;
 
 private:
     BorderImage* panel_ = nullptr;
@@ -131,66 +109,66 @@ private:
 
 };
 
-class UrhoButton : public AbstractButton, public UrhoWidget
+class UrhoButton : public AbstractButton
 {
     URHO3D_OBJECT(UrhoButton, AbstractButton);
 
 public:
-    UrhoButton(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractButton(mainWindow, parent) {}
+    UrhoButton(AbstractMainWindow& mainWindow);
     AbstractButton& SetText(const String& text) override;
 
 private:
-    UIElement* CreateElement(UIElement* parent) override;
+    void OnParentSet() override;
 
-    void UpdateContainerSize();
+    void UpdateButtonSize();
 
 private:
     Button* button_ = nullptr;
     Text* text_ = nullptr;
 };
 
-class UrhoText : public AbstractText, public UrhoWidget
+class UrhoText : public AbstractText
 {
     URHO3D_OBJECT(UrhoText, AbstractText);
 
 public:
-    UrhoText(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractText(mainWindow, parent) {}
+    UrhoText(AbstractMainWindow& mainWindow);
     AbstractText& SetText(const String& text) override;
 
 private:
-    UIElement* CreateElement(UIElement* parent) override;
+    void OnParentSet() override;
 
 private:
     UIElement* container_ = nullptr;
     Text* text_ = nullptr;
 };
 
-class UrhoLineEdit : public AbstractLineEdit, public UrhoWidget
+class UrhoLineEdit : public AbstractLineEdit
 {
     URHO3D_OBJECT(UrhoLineEdit, AbstractLineEdit);
 
 public:
-    UrhoLineEdit(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractLineEdit(mainWindow, parent) {}
+    UrhoLineEdit(AbstractMainWindow& mainWindow);
     AbstractLineEdit& SetText(const String& text) override;
 
 private:
-    UIElement* CreateElement(UIElement* parent) override;
+    void OnParentSet() override;
 
 private:
     LineEdit* lineEdit_ = nullptr;
 };
 
-class UrhoCheckBox : public AbstractCheckBox, public UrhoWidget
+class UrhoCheckBox : public AbstractCheckBox
 {
     URHO3D_OBJECT(UrhoCheckBox, AbstractCheckBox);
 
 public:
-    UrhoCheckBox(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCheckBox(mainWindow, parent) {}
+    UrhoCheckBox(AbstractMainWindow& mainWindow);
     AbstractCheckBox& SetChecked(bool checked) override;
     //AbstractCheckBox& SetText(const String& text) override;
 
 private:
-    UIElement* CreateElement(UIElement* parent) override;
+    void OnParentSet() override;
 
 private:
     UIElement* panel_ = nullptr;
@@ -202,17 +180,18 @@ class UrhoHierarchyListItemWidget : public Text
 {
 public:
     UrhoHierarchyListItemWidget(Context* context, GenericHierarchyListItem* item);
+    void ApplyStyle();
     GenericHierarchyListItem* GetItem() { return item_; }
 private:
     GenericHierarchyListItem* item_ = nullptr;;
 };
 
-class UrhoHierarchyList : public GenericHierarchyList, public UrhoWidget
+class UrhoHierarchyList : public GenericHierarchyList
 {
     URHO3D_OBJECT(UrhoHierarchyList, GenericHierarchyList);
 
 public:
-    UrhoHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent);
+    UrhoHierarchyList(AbstractMainWindow& mainWindow);
     void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) override;
     void SelectItem(GenericHierarchyListItem* item) override;
     void DeselectItem(GenericHierarchyListItem* item) override;
@@ -220,13 +199,13 @@ public:
 
 
 private:
-    UIElement* CreateElement(UIElement* parent) override;
+    void OnParentSet() override;
 
     void InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent);
     void HandleItemClicked(StringHash eventType, VariantMap& eventData);
 
 private:
-    ListView* hierarchyList_;
+    ListView* hierarchyList_ = nullptr;
     GenericHierarchyListItem rootItem_;
 };
 

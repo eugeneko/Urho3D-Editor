@@ -100,55 +100,27 @@ String PrintKeyBinding(const KeyBinding& keyBinding)
     return result;
 }
 
+UIElement* GetInternalElement(GenericWidget* widget)
+{
+    return widget ? widget->GetInternalPointer<UIElement>() : nullptr;
 }
 
-UrhoWidget* UrhoWidget::FromInterface(GenericWidget* widget)
+void SetInternalElement(GenericWidget* widget, UIElement* element)
 {
-    auto urhoWidget = dynamic_cast<UrhoWidget*>(widget);
-    if (!urhoWidget)
-    {
-        URHO3D_LOGERROR("Cannot cast widget to implementation");
-        return nullptr;
-    }
-    return urhoWidget;
+    widget->SetInternalPointer(element);
+}
+
+UIElement* GetParentElement(GenericWidget* widget)
+{
+    return GetInternalElement(widget->GetParent());
+}
+
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoDialog::UrhoDialog(AbstractMainWindow& mainWindow, GenericWidget* parent)
-    : GenericDialog(mainWindow, parent)
+UrhoDialog::UrhoDialog(AbstractMainWindow& mainWindow)
+    : GenericDialog(mainWindow)
 {
-    UI* ui = GetSubsystem<UI>();
-    UIElement* uiRoot = ui->GetRoot();
-
-    // Create window
-    window_ = uiRoot->CreateChild<Window>();
-    window_->SetStyleAuto();
-    window_->SetPosition(200, 200);
-    window_->SetMinSize(200, 200);
-    window_->SetResizeBorder(IntRect(6, 6, 6, 6));
-    window_->SetResizable(true);
-    window_->SetMovable(true);
-    window_->SetLayout(LM_VERTICAL, 6, IntRect(6, 6, 6, 6));
-    window_->SetName("Window");
-
-    // Create title
-    UIElement* titleBar = window_->CreateChild<UIElement>();
-    titleBar->SetMinSize(0, 24);
-    titleBar->SetVerticalAlignment(VA_TOP);
-    titleBar->SetLayoutMode(LM_HORIZONTAL);
-
-    windowTitle_ = titleBar->CreateChild<Text>();
-    windowTitle_->SetStyleAuto();
-    windowTitle_->SetName("WindowTitle");
-
-    Button* buttonClose = titleBar->CreateChild<Button>();
-    buttonClose->SetStyle("CloseButton");
-    buttonClose->SetName("CloseButton");
-
-    titleBar->SetFixedHeight(titleBar->GetMinHeight());
-
-    bodyElement_ = window_->CreateChild<UIElement>();
-    bodyElement_->SetLayoutMode(LM_VERTICAL);
 }
 
 void UrhoDialog::SetName(const String& name)
@@ -156,23 +128,55 @@ void UrhoDialog::SetName(const String& name)
     windowTitle_->SetText(name);
 }
 
-bool UrhoDialog::SetContent(GenericWidget* content)
+void UrhoDialog::OnParentSet()
 {
-    // Test element
-    auto urhoWidget = dynamic_cast<UrhoWidget*>(content);
-    if (!urhoWidget)
+    // #TODO Make main window root widget
+    UI* ui = GetSubsystem<UI>();
+    UIElement* uiRoot = ui->GetRoot();
+
+    // Create window
+    window_ = uiRoot->CreateChild<Window>("AD_Window");
+    window_->SetStyleAuto();
+    window_->SetPosition(200, 200);
+    window_->SetMinSize(200, 200);
+    window_->SetResizeBorder(IntRect(6, 6, 6, 6));
+    window_->SetResizable(true);
+    window_->SetMovable(true);
+    window_->SetLayout(LM_VERTICAL, 6, IntRect(6, 6, 6, 6));
+
+    // Create title
+    UIElement* titleBar = window_->CreateChild<UIElement>();
+    titleBar->SetMinSize(0, 24);
+    titleBar->SetVerticalAlignment(VA_TOP);
+    titleBar->SetLayoutMode(LM_HORIZONTAL);
+    titleBar->SetFixedHeight(titleBar->GetMinHeight());
+
+    windowTitle_ = titleBar->CreateChild<Text>("AD_WindowTitle");
+    windowTitle_->SetStyleAuto();
+
+    buttonClose_ = titleBar->CreateChild<Button>("AD_CloseButton");
+    buttonClose_->SetStyle("CloseButton");
+
+    bodyElement_ = window_->CreateChild<UIElement>();
+    bodyElement_->SetLayoutMode(LM_VERTICAL);
+
+    SetInternalElement(this, window_);
+}
+
+bool UrhoDialog::DoSetContent(GenericWidget* content)
+{
+    if (!GetInternalElement(content))
         return false;
 
     bodyElement_->RemoveAllChildren();
-    urhoWidget->Initialize(bodyElement_);
+    bodyElement_->AddChild(GetInternalElement(content));
     return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoScrollArea::UrhoScrollArea(AbstractMainWindow& mainWindow, GenericWidget* parent)
-    : AbstractScrollArea(mainWindow, parent)
+UrhoScrollArea::UrhoScrollArea(AbstractMainWindow& mainWindow)
+    : AbstractScrollArea(mainWindow)
 {
-
 }
 
 void UrhoScrollArea::SetDynamicWidth(bool dynamicWidth)
@@ -194,27 +198,26 @@ void UrhoScrollArea::SetDynamicWidth(bool dynamicWidth)
     }
 }
 
-bool UrhoScrollArea::SetContent(GenericWidget* content)
+bool UrhoScrollArea::DoSetContent(GenericWidget* content)
 {
-    // Test element
-    auto urhoWidget = dynamic_cast<UrhoWidget*>(content);
-    if (!urhoWidget)
+    if (!GetInternalElement(content))
         return false;
 
-    // Set content
-    scrollView_->SetContentElement(urhoWidget->Initialize(scrollPanel_));
-    UpdateContentSize();
+    scrollView_->SetContentElement(GetInternalElement(content));
     return true;
 }
 
-UIElement* UrhoScrollArea::CreateElement(UIElement* parent)
+void UrhoScrollArea::OnParentSet()
 {
+    UIElement* parent = GetParentElement(this);
+
     scrollView_ = parent->CreateChild<ScrollView>("ASR_ScrollView");
     scrollView_->SetStyleAuto();
 
     scrollPanel_ = scrollView_->GetScrollPanel();
     SubscribeToEvent(scrollPanel_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoScrollArea, HandleResized));
-    return scrollView_;
+
+    SetInternalElement(this, scrollView_);
 }
 
 void UrhoScrollArea::HandleResized(StringHash /*eventType*/, VariantMap& /*eventData*/)
@@ -238,8 +241,8 @@ void UrhoScrollArea::UpdateContentSize()
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoLayout::UrhoLayout(AbstractMainWindow& mainWindow, GenericWidget* parent)
-    : AbstractLayout(mainWindow, parent)
+UrhoLayout::UrhoLayout(AbstractMainWindow& mainWindow)
+    : AbstractLayout(mainWindow)
 {
 }
 
@@ -253,26 +256,25 @@ void UrhoLayout::UpdateLayout()
     Vector<int> maxColumnWidth;
 
     // Compute sizes
-    const unsigned numRows = elements_.Size();
+    const unsigned numRows = rows_.Size();
     minRowHeight.Resize(numRows, 0);
     for (unsigned row = 0; row < numRows; ++row)
     {
-        const RowType rowType = elements_[row].second_;
-        const Vector<UIElement*>& rowElements = elements_[row].first_;
-        const unsigned numColumns = rowElements.Size();
+        const RowType rowType = rows_[row].type_;
+        const unsigned numColumns = rows_[row].columns_.Size();
         if (minColumnWidth.Size() <= numColumns)
             minColumnWidth.Resize(numColumns, 0);
         if (maxColumnWidth.Size() <= numColumns)
             maxColumnWidth.Resize(numColumns, 0);
         for (unsigned column = 0; column < numColumns; ++column)
         {
-            UIElement* cellElement = rowElements[column];
+            UIElement* cellElement = GetInternalElement(rows_[row].columns_[column]);
             if (!cellElement /*|| cellElement->GetNumChildren() == 0*/)
                 continue;
             const IntVector2 cellSize = cellElement->GetEffectiveMinSize();
             const IntVector2 maxCellSize = cellElement->GetMaxSize();
 
-            if (rowType != RowType::SingleColumn)
+            if (rowType != RowType::SimpleRow)
             {
                 minColumnWidth[column] = Max(minColumnWidth[column], cellSize.x_);
                 maxColumnWidth[column] = Max(maxColumnWidth[column], maxCellSize.x_);
@@ -327,26 +329,25 @@ void UrhoLayout::UpdateLayout()
     IntVector2 position;
     for (unsigned row = 0; row < numRows; ++row)
     {
-        const RowType rowType = elements_[row].second_;
-        const Vector<UIElement*>& rowElements = elements_[row].first_;
+        const RowType rowType = rows_[row].type_;
         const int rowHeight = minRowHeight[row];
         position.x_ = 0;
-        if (rowType == RowType::SingleColumn)
+        if (rowType == RowType::SimpleRow)
         {
             // Create single column
-            UIElement* cellElement = rowElements[0];
+            UIElement* cellElement = GetInternalElement(rows_[row].columns_[0]);
             if (!cellElement)
                 continue;
             cellElement->SetPosition(position);
             cellElement->SetWidth(body_->GetWidth());
             position.x_ += cellElement->GetWidth();
         }
-        else
+        else if (rowType == AbstractLayout::RowType::MultiCellRow)
         {
             // Iterate over columns
-            for (unsigned column = 0; column < rowElements.Size(); ++column)
+            for (unsigned column = 0; column < rows_[row].columns_.Size(); ++column)
             {
-                UIElement* cellElement = rowElements[column];
+                UIElement* cellElement = GetInternalElement(rows_[row].columns_[column]);
                 if (!cellElement)
                     continue;
 
@@ -364,71 +365,39 @@ void UrhoLayout::UpdateLayout()
     body_->UpdateLayout();
 }
 
-UIElement* UrhoLayout::CreateElement(UIElement* parent)
+void UrhoLayout::OnParentSet()
 {
+    UIElement* parent = GetParentElement(this);
+
     body_ = parent->CreateChild<UIElement>("AL_Content");
     SubscribeToEvent(body_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
-    //SubscribeToEvent(body_, E_VISIBLECHANGED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
-    return body_;
+
+    SetInternalElement(this, body_);
 }
 
-bool UrhoLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* child)
+bool UrhoLayout::DoSetCell(unsigned row, unsigned column, GenericWidget* child)
 {
-    UrhoWidget* childImpl = UrhoWidget::FromInterface(child);
-    if (!childImpl)
+    if (!GetInternalElement(child))
         return false;
 
-    // Populate row
-    if (elements_.Size() <= row)
-        elements_.Resize(row + 1);
-
-    elements_[row].second_ = RowType::MultipleColumns;
-    Vector<UIElement*>& rowElements = elements_[row].first_;
-    if (rowElements.Size() <= column)
-        rowElements.Resize(column + 1);
-
-    // Add widget
-    if (rowElements[column])
-        body_->RemoveChild(rowElements[column]);
-    rowElements[column] = childImpl->Initialize(body_);
-
-    // Update layout
+    body_->AddChild(GetInternalElement(child));
     UpdateLayout();
     return true;
 }
 
-bool UrhoLayout::SetRowWidget(unsigned row, GenericWidget* child)
+bool UrhoLayout::DoSetRow(unsigned row, GenericWidget* child)
 {
-    // Test element
-    UrhoWidget* childImpl = UrhoWidget::FromInterface(child);
-    if (!childImpl)
+    if (!GetInternalElement(child))
         return false;
 
-    // Populate row
-    if (elements_.Size() <= row)
-        elements_.Resize(row + 1);
-
-    elements_[row].second_ = RowType::SingleColumn;
-    Vector<UIElement*>& rowElements = elements_[row].first_;
-    for (UIElement* cellElement : rowElements)
-        body_->RemoveChild(cellElement);
-    rowElements.Resize(1);
-
-    // Add widget
-    rowElements[0] = childImpl->Initialize(body_);
-
-    // Update layout
+    body_->AddChild(GetInternalElement(child));
     UpdateLayout();
     return true;
 }
 
-void UrhoLayout::RemoveChild(GenericWidget* child)
+void UrhoLayout::DoRemoveChild(GenericWidget* child)
 {
-    UrhoWidget* childImpl = UrhoWidget::FromInterface(child);
-    if (!childImpl)
-        return;
-
-    if (UIElement* childElement = childImpl->GetElement())
+    if (UIElement* childElement = GetInternalElement(child))
         body_->RemoveChild(childElement);
 }
 
@@ -438,6 +407,11 @@ void UrhoLayout::HandleLayoutChanged(StringHash /*eventType*/, VariantMap& /*eve
 }
 
 //////////////////////////////////////////////////////////////////////////
+UrhoCollapsiblePanel::UrhoCollapsiblePanel(AbstractMainWindow& mainWindow)
+    : AbstractCollapsiblePanel(mainWindow)
+{
+}
+
 void UrhoCollapsiblePanel::SetHeaderText(const String& text)
 {
     headerText_->SetText(text);
@@ -452,48 +426,45 @@ void UrhoCollapsiblePanel::SetExpanded(bool expanded)
     //panel_->GetParent()->UpdateLayout();
 }
 
-bool UrhoCollapsiblePanel::SetHeaderPrefix(GenericWidget* header)
+bool UrhoCollapsiblePanel::DoSetHeaderPrefix(GenericWidget* header)
 {
-    // Test element
-    auto headerImpl = dynamic_cast<UrhoWidget*>(header);
-    if (!headerImpl)
+    if (!GetInternalElement(header))
         return false;
 
     headerPrefix_->RemoveAllChildren();
-    headerImpl->Initialize(headerPrefix_);
+    headerPrefix_->AddChild(GetInternalElement(header));
 
     return true;
 }
 
-bool UrhoCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
+bool UrhoCollapsiblePanel::DoSetHeaderSuffix(GenericWidget* header)
 {
-    // Test element
-    auto headerImpl = dynamic_cast<UrhoWidget*>(header);
-    if (!headerImpl)
+    if (!GetInternalElement(header))
         return false;
 
     headerSuffix_->RemoveAllChildren();
-    headerImpl->Initialize(headerSuffix_);
+    headerSuffix_->AddChild(GetInternalElement(header));
 
     return true;
 }
 
-bool UrhoCollapsiblePanel::SetBody(GenericWidget* body)
+bool UrhoCollapsiblePanel::DoSetBody(GenericWidget* body)
 {
-    // Test element
-    auto bodyImpl = dynamic_cast<UrhoWidget*>(body);
-    if (!bodyImpl)
+    if (!GetInternalElement(body))
         return false;
 
     if (body_)
         panel_->RemoveChild(body_);
-    body_ = bodyImpl->Initialize(panel_);
+    body_ = GetInternalElement(body);
+    panel_->AddChild(body_);
 
     return true;
 }
 
-UIElement* UrhoCollapsiblePanel::CreateElement(UIElement* parent)
+void UrhoCollapsiblePanel::OnParentSet()
 {
+    UIElement* parent = GetParentElement(this);
+
     panel_ = parent->CreateChild<BorderImage>("CP_Panel");
     panel_->SetStyle("ToolTipBorderImage");
     panel_->SetLayout(LM_VERTICAL);
@@ -515,38 +486,54 @@ UIElement* UrhoCollapsiblePanel::CreateElement(UIElement* parent)
     headerText_->SetStyleAuto();
     headerSuffix_ = header_->CreateChild<UIElement>("CP_HeaderSuffix");
     headerSuffix_->SetLayout(LM_HORIZONTAL);
-    return panel_;
+
+    SetInternalElement(this, panel_);
 }
 
 //////////////////////////////////////////////////////////////////////////
+UrhoButton::UrhoButton(AbstractMainWindow& mainWindow)
+    : AbstractButton(mainWindow)
+{
+}
+
 AbstractButton& UrhoButton::SetText(const String& text)
 {
     text_->SetText(text);
-    UpdateContainerSize();
+    UpdateButtonSize();
     return *this;
 }
 
-UIElement* UrhoButton::CreateElement(UIElement* parent)
+void UrhoButton::OnParentSet()
 {
+    UIElement* parent = GetParentElement(this);
+
     button_ = parent->CreateChild<Button>();
     button_->SetStyleAuto();
     button_->SetClipChildren(true);
+
     text_ = button_->CreateChild<Text>();
     text_->SetStyleAuto();
     text_->SetAlignment(HA_CENTER, VA_CENTER);
     text_->SetMinHeight(static_cast<int>(text_->GetRowHeight()));
-    UpdateContainerSize();
-    return button_;
+
+    UpdateButtonSize();
+
+    SetInternalElement(this, button_);
 }
 
-void UrhoButton::UpdateContainerSize()
+void UrhoButton::UpdateButtonSize()
 {
-    button_->SetMinSize(text_->GetMinHeight(), text_->GetMinHeight());
-    button_->SetMaxWidth(Max(text_->GetMinWidth(), text_->GetMinHeight()) + 4);
-    button_->SetMaxHeight(text_->GetMinHeight() + 4);
+    IntVector2 size = text_->GetMinSize() + IntVector2(4, 4);
+    size.x_ = Max(size.x_, size.y_);
+    button_->SetFixedSize(size);
 }
 
 //////////////////////////////////////////////////////////////////////////
+UrhoText::UrhoText(AbstractMainWindow& mainWindow)
+    : AbstractText(mainWindow)
+{
+}
+
 AbstractText& UrhoText::SetText(const String& text)
 {
     text_->SetText(text);
@@ -554,52 +541,72 @@ AbstractText& UrhoText::SetText(const String& text)
     return *this;
 }
 
-UIElement* UrhoText::CreateElement(UIElement* parent)
+void UrhoText::OnParentSet()
 {
+    UIElement* parent = GetParentElement(this);
+
     container_ = parent->CreateChild<UIElement>();
     container_->SetClipChildren(true);
     text_ = container_->CreateChild<Text>();
     text_->SetStyleAuto();
-    return container_;
+
+    SetInternalElement(this, container_);
 }
 
 //////////////////////////////////////////////////////////////////////////
+UrhoLineEdit::UrhoLineEdit(AbstractMainWindow& mainWindow)
+    : AbstractLineEdit(mainWindow)
+{
+}
+
 AbstractLineEdit& UrhoLineEdit::SetText(const String& text)
 {
     lineEdit_->SetText(text);
     return *this;
 }
 
-UIElement* UrhoLineEdit::CreateElement(UIElement* parent)
+void UrhoLineEdit::OnParentSet()
 {
+    UIElement* parent = GetParentElement(this);
+
     lineEdit_ = parent->CreateChild<LineEdit>();
     lineEdit_->SetStyleAuto();
     const int defaultHeight = static_cast<int>(lineEdit_->GetTextElement()->GetRowHeight());
     lineEdit_->SetMinSize(defaultHeight * 2, defaultHeight);
-    return lineEdit_;
+
+    SetInternalElement(this, lineEdit_);
 }
 
 //////////////////////////////////////////////////////////////////////////
+UrhoCheckBox::UrhoCheckBox(AbstractMainWindow& mainWindow)
+    : AbstractCheckBox(mainWindow)
+{
+}
+
 AbstractCheckBox& UrhoCheckBox::SetChecked(bool checked)
 {
     checkBox_->SetChecked(checked);
     return *this;
 }
 
-UIElement* UrhoCheckBox::CreateElement(UIElement* parent)
+void UrhoCheckBox::OnParentSet()
 {
+    UIElement* parent = GetParentElement(this);
+
     panel_ = parent->CreateChild<UIElement>("ACB_Panel");
     panel_->SetLayout(LM_HORIZONTAL);
     checkBox_ = panel_->CreateChild<CheckBox>("ACB_CheckBox");
-    checkBox_->SetStyleAuto();
     text_ = panel_->CreateChild<Text>("ACB_Text");
+
+    SetInternalElement(this, panel_);
+
+    checkBox_->SetStyleAuto();
     text_->SetStyleAuto();
-    return panel_;
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoHierarchyList::UrhoHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent)
-    : GenericHierarchyList(mainWindow, parent)
+UrhoHierarchyList::UrhoHierarchyList(AbstractMainWindow& mainWindow)
+    : GenericHierarchyList(mainWindow)
     , rootItem_(context_)
 {
 }
@@ -646,24 +653,27 @@ void UrhoHierarchyList::GetSelection(ItemVector& result)
     }
 }
 
-UIElement* UrhoHierarchyList::CreateElement(UIElement* parent)
+void UrhoHierarchyList::OnParentSet()
 {
-    hierarchyList_ = parent->CreateChild<ListView>();
+    UIElement* parent = GetParentElement(this);
+
+    hierarchyList_ = parent->CreateChild<ListView>("AHL_HierarchyList");
+    hierarchyList_->SetStyle("HierarchyListView");
     hierarchyList_->SetInternal(true);
-    hierarchyList_->SetName("HierarchyList");
     hierarchyList_->SetHighlightMode(HM_ALWAYS);
     hierarchyList_->SetMultiselect(true);
     hierarchyList_->SetSelectOnClickEnd(true);
     hierarchyList_->SetHierarchyMode(true);
-    hierarchyList_->SetStyle("HierarchyListView");
     SubscribeToEvent(hierarchyList_, E_ITEMCLICKED, URHO3D_HANDLER(UrhoHierarchyList, HandleItemClicked));
-    return hierarchyList_;
+
+    SetInternalElement(this, hierarchyList_);
 }
 
 void UrhoHierarchyList::InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent)
 {
     auto itemWidget = MakeShared<UrhoHierarchyListItemWidget>(context_, item);
     itemWidget->SetText(item->GetText());
+    itemWidget->ApplyStyle();
     item->SetInternalPointer(itemWidget);
 
     UIElement* parentWidget = parent ? dynamic_cast<UIElement*>(parent->GetInternalPointer()) : nullptr;
@@ -690,6 +700,10 @@ void UrhoHierarchyList::HandleItemClicked(StringHash /*eventType*/, VariantMap& 
 UrhoHierarchyListItemWidget::UrhoHierarchyListItemWidget(Context* context, GenericHierarchyListItem* item)
     : Text(context)
     , item_(item)
+{
+}
+
+void UrhoHierarchyListItemWidget::ApplyStyle()
 {
     SetStyle("FileSelectorListText");
 }
@@ -861,8 +875,10 @@ UrhoMainWindow::UrhoMainWindow(Context* context)
 
 GenericDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
 {
-    dialogs_.Push(MakeShared<UrhoDialog>(*this, nullptr));
-    return dialogs_.Back();
+    auto dialog = MakeShared<UrhoDialog>(*this);
+    dialog->SetParent(nullptr);
+    dialogs_.Push(dialog);
+    return dialog;
 }
 
 void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)

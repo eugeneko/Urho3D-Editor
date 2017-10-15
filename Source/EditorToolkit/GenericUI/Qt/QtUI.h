@@ -23,61 +23,42 @@ namespace Urho3D
 
 class QtMainWindow;
 
-class QtWidget
-{
-public:
-    static QtWidget* FromInterface(GenericWidget* widget);
-    QWidget* Initialize()
-    {
-        if (!widget_)
-            widget_ = CreateWidget();
-        return widget_;
-    }
-    QWidget* GetElement() { return widget_; }
-
-private:
-    virtual QWidget* CreateWidget() = 0;
-    QWidget* widget_ = nullptr;
-};
-
-class QtDockDialog : public GenericDialog, public QtWidget
+class QtDockDialog : public GenericDialog
 {
 
 public:
-    QtDockDialog(AbstractMainWindow& mainWindow, GenericWidget* parent) : GenericDialog(mainWindow, parent) { }
+    QtDockDialog(AbstractMainWindow& mainWindow);
     void SetName(const String& name) override;
 
 
 private:
-    QWidget* CreateWidget() override;
-    bool SetContent(GenericWidget* content) override;
+    bool DoSetContent(GenericWidget* content) override;
 
 private:
     QDockWidget* dock_ = nullptr;
 };
 
-class QtDummyWidget : public AbstractDummyWidget, public QtWidget
+class QtDummyWidget : public AbstractDummyWidget
 {
 public:
-    QtDummyWidget(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractDummyWidget(mainWindow, parent) { }
+    QtDummyWidget(AbstractMainWindow& mainWindow);
 
 private:
-    QWidget* CreateWidget() override;
+    QWidget* widget_ = nullptr;
 
 };
 
-class QtScrollArea : public QObject, public AbstractScrollArea, public QtWidget
+class QtScrollArea : public QObject, public AbstractScrollArea
 {
 public:
-    QtScrollArea(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractScrollArea(mainWindow, parent) { }
+    QtScrollArea(AbstractMainWindow& mainWindow);
 
     void SetDynamicWidth(bool dynamicWidth) override;
 
 
 
 private:
-    QWidget* CreateWidget() override;
-    bool SetContent(GenericWidget* content) override;
+    bool DoSetContent(GenericWidget* content) override;
 
     bool eventFilter(QObject *watched, QEvent *event) override;
 
@@ -89,18 +70,17 @@ private:
 
 };
 
-class QtLayout : public AbstractLayout, public QtWidget
+class QtLayout : public AbstractLayout
 {
 public:
-    QtLayout(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractLayout(mainWindow, parent) { }
+    QtLayout(AbstractMainWindow& mainWindow);
 
 
 
 private:
-    QWidget* CreateWidget() override;
-    bool SetCellWidget(unsigned row, unsigned column, GenericWidget* child) override;
-    bool SetRowWidget(unsigned row, GenericWidget* child) override;
-    void RemoveChild(GenericWidget* child) override;
+    bool DoSetCell(unsigned row, unsigned column, GenericWidget* child) override;
+    bool DoSetRow(unsigned row, GenericWidget* child) override;
+    void DoRemoveChild(GenericWidget* child) override;
 
 private:
     QWidget* widget_ = nullptr;
@@ -108,22 +88,21 @@ private:
 
 };
 
-class QtCollapsiblePanel : public QObject, public AbstractCollapsiblePanel, public QtWidget
+class QtCollapsiblePanel : public QObject, public AbstractCollapsiblePanel
 {
     Q_OBJECT
 
 public:
-    QtCollapsiblePanel(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCollapsiblePanel(mainWindow, parent) { }
+    QtCollapsiblePanel(AbstractMainWindow& mainWindow);
 
     void SetHeaderText(const String& text) override;
     void SetExpanded(bool expanded) override;
 
 
 private:
-    QWidget* CreateWidget() override;
-    bool SetHeaderPrefix(GenericWidget* header) override;
-    bool SetHeaderSuffix(GenericWidget* header) override;
-    bool SetBody(GenericWidget* body) override;
+    bool DoSetHeaderPrefix(GenericWidget* header) override;
+    bool DoSetHeaderSuffix(GenericWidget* header) override;
+    bool DoSetBody(GenericWidget* body) override;
 
     void UpdateHeaderHeight();
     void UpdateSize();
@@ -152,61 +131,51 @@ private:
 
 };
 
-class QtButton : public AbstractButton, public QtWidget
+class QtButton : public AbstractButton
 {
 public:
-    QtButton(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractButton(mainWindow, parent) { }
+    QtButton(AbstractMainWindow& mainWindow);
     AbstractButton& SetText(const String& text) override;
 
 
 private:
-    QWidget* CreateWidget() override;
     QPushButton* pushButton_ = nullptr;
 
 };
 
-class QtText : public AbstractText, public QtWidget
+class QtText : public AbstractText
 {
     URHO3D_OBJECT(AbstractText, GenericWidget);
 
 public:
-    QtText(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractText(mainWindow, parent) { }
+    QtText(AbstractMainWindow& mainWindow);
     AbstractText& SetText(const String& text) override;
-
-private:
-    QWidget* CreateWidget() override;
 
 private:
     QLabel* label_ = nullptr;
 
 };
 
-class QtLineEdit : public AbstractLineEdit, public QtWidget
+class QtLineEdit : public AbstractLineEdit
 {
     URHO3D_OBJECT(AbstractLineEdit, GenericWidget);
 
 public:
-    QtLineEdit(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractLineEdit(mainWindow, parent) { }
+    QtLineEdit(AbstractMainWindow& mainWindow);
     AbstractLineEdit& SetText(const String& text) override;
-
-private:
-    QWidget* CreateWidget() override;
 
 private:
     QLineEdit* lineEdit_ = nullptr;
 
 };
 
-class QtCheckBox : public AbstractCheckBox, public QtWidget
+class QtCheckBox : public AbstractCheckBox
 {
     URHO3D_OBJECT(AbstractCheckBox, QtCheckBox);
 
 public:
-    QtCheckBox(AbstractMainWindow& mainWindow, GenericWidget* parent) : AbstractCheckBox(mainWindow, parent) { }
+    QtCheckBox(AbstractMainWindow& mainWindow);
     AbstractCheckBox& SetChecked(bool checked) override;
-
-private:
-    QWidget* CreateWidget() override;
 
 private:
     QCheckBox* checkBox_ = nullptr;
@@ -215,7 +184,7 @@ private:
 class QtHierarchyListModel : public QAbstractItemModel
 {
 public:
-    QtHierarchyListModel(AbstractMainWindow& mainWindow, GenericWidget* parent);
+    QtHierarchyListModel(AbstractMainWindow& mainWindow);
 
     void InsertItem(GenericHierarchyListItem* item, const QModelIndex& parentIndex);
     void RemoveItem(GenericHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow = -1);
@@ -235,18 +204,15 @@ private:
 
 };
 
-class QtHierarchyList : public GenericHierarchyList, public QtWidget
+class QtHierarchyList : public GenericHierarchyList
 {
 public:
-    QtHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent);
+    QtHierarchyList(AbstractMainWindow& mainWindow);
 
     void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) override;
     void SelectItem(GenericHierarchyListItem* item) override;
     void DeselectItem(GenericHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
-
-private:
-    QWidget* CreateWidget() override;
 
 private:
 

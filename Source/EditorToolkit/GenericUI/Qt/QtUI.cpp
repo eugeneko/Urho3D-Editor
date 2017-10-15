@@ -44,28 +44,33 @@ QKeySequence Cast(const KeyBinding& binding)
     return QKeySequence(key);
 }
 
+QWidget* GetInternalWidget(GenericWidget* widget)
+{
+    return widget->GetInternalPointer<QWidget>();
 }
 
-QtWidget* QtWidget::FromInterface(GenericWidget* widget)
+void SetInternalWidget(GenericWidget* widget, QWidget* element)
 {
-    auto qtWidget = dynamic_cast<QtWidget*>(widget);
-    if (!qtWidget)
-    {
-        URHO3D_LOGERROR("Cannot cast widget to implementation");
-        return nullptr;
-    }
-    return qtWidget;
+    widget->SetInternalPointer(element);
+}
+
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool QtDockDialog::SetContent(GenericWidget* content)
+bool QtDockDialog::DoSetContent(GenericWidget* content)
 {
-    if (auto contentImpl = QtWidget::FromInterface(content))
-    {
-        dock_->setWidget(contentImpl->Initialize());
-        return true;
-    }
-    return false;
+    if (!GetInternalWidget(content))
+        return false;
+
+    dock_->setWidget(GetInternalWidget(content));
+    return true;
+}
+
+QtDockDialog::QtDockDialog(AbstractMainWindow& mainWindow)
+    : GenericDialog(mainWindow)
+    , dock_(new QDockWidget())
+{
+    SetInternalWidget(this, dock_);
 }
 
 void QtDockDialog::SetName(const String& name)
@@ -73,34 +78,32 @@ void QtDockDialog::SetName(const String& name)
     dock_->setWindowTitle(Cast(name));
 }
 
-QWidget* QtDockDialog::CreateWidget()
+//////////////////////////////////////////////////////////////////////////
+QtDummyWidget::QtDummyWidget(AbstractMainWindow& mainWindow)
+    : AbstractDummyWidget(mainWindow)
+    , widget_(new QWidget())
 {
-    dock_ = new QDockWidget();
-    return dock_;
+    widget_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+
+    SetInternalWidget(this, widget_);
 }
 
 //////////////////////////////////////////////////////////////////////////
-QWidget* QtDummyWidget::CreateWidget()
+QtScrollArea::QtScrollArea(AbstractMainWindow& mainWindow)
+    : AbstractScrollArea(mainWindow)
+    , scrollArea_(new QScrollArea())
 {
-    QWidget* widget = new QWidget;
-    widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-    return widget;
+    scrollArea_->setWidgetResizable(true);
+    scrollArea_->installEventFilter(this);
+    scrollArea_->verticalScrollBar()->installEventFilter(this);
+
+    SetInternalWidget(this, scrollArea_);
 }
 
-//////////////////////////////////////////////////////////////////////////
 void QtScrollArea::SetDynamicWidth(bool dynamicWidth)
 {
     dynamicWidth_ = dynamicWidth;
     scrollArea_->setHorizontalScrollBarPolicy(dynamicWidth ? Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded);
-}
-
-QWidget* QtScrollArea::CreateWidget()
-{
-    scrollArea_ = new QScrollArea();
-    scrollArea_->setWidgetResizable(true);
-    scrollArea_->installEventFilter(this);
-    scrollArea_->verticalScrollBar()->installEventFilter(this);
-    return scrollArea_;
 }
 
 bool QtScrollArea::eventFilter(QObject* watched, QEvent* event)
@@ -116,68 +119,54 @@ void QtScrollArea::UpdateContentSize()
         content->setMaximumWidth(scrollArea_->width() - scrollArea_->verticalScrollBar()->width());
 }
 
-bool QtScrollArea::SetContent(GenericWidget* content)
+bool QtScrollArea::DoSetContent(GenericWidget* content)
 {
-    if (auto contentImpl = QtWidget::FromInterface(content))
-    {
-        QWidget* widget = contentImpl->Initialize();
-        scrollArea_->setWidget(widget);
-        return true;
-    }
-    return false;
+    if (!GetInternalWidget(content))
+        return false;
+
+    scrollArea_->setWidget(GetInternalWidget(content));
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////////
-QWidget* QtLayout::CreateWidget()
+QtLayout::QtLayout(AbstractMainWindow& mainWindow)
+    : AbstractLayout(mainWindow)
+    , widget_(new QWidget())
 {
-    widget_ = new QWidget();
     layout_ = new QGridLayout(widget_);
     layout_->setVerticalSpacing(2);
     layout_->setContentsMargins(2, 2, 2, 2);
-    return widget_;
+    SetInternalWidget(this, widget_);
 }
 
-bool QtLayout::SetCellWidget(unsigned row, unsigned column, GenericWidget* child)
+bool QtLayout::DoSetCell(unsigned row, unsigned column, GenericWidget* child)
 {
-    if (auto childImpl = QtWidget::FromInterface(child))
-    {
-        layout_->addWidget(childImpl->Initialize(), row, column);
-        return true;
-    }
-    return false;
+    if (!GetInternalWidget(child))
+        return false;
+
+    layout_->addWidget(GetInternalWidget(child), row, column);
+    return true;
 }
 
-bool QtLayout::SetRowWidget(unsigned row, GenericWidget* child)
+bool QtLayout::DoSetRow(unsigned row, GenericWidget* child)
 {
-    if (auto childImpl = QtWidget::FromInterface(child))
-    {
-        layout_->addWidget(childImpl->Initialize(), row, 0, 1, -1);
-        return true;
-    }
-    return false;
+    if (!GetInternalWidget(child))
+        return false;
+
+    layout_->addWidget(GetInternalWidget(child), row, 0, 1, -1);
+    return true;
 }
 
-void QtLayout::RemoveChild(GenericWidget* child)
+void QtLayout::DoRemoveChild(GenericWidget* child)
 {
 
 }
 
 //////////////////////////////////////////////////////////////////////////
-void QtCollapsiblePanel::SetHeaderText(const String& text)
+QtCollapsiblePanel::QtCollapsiblePanel(AbstractMainWindow& mainWindow)
+    : AbstractCollapsiblePanel(mainWindow)
+    , panel_(new QFrame())
 {
-    headerText_->setText(Cast(text));
-}
-
-void QtCollapsiblePanel::SetExpanded(bool expanded)
-{
-    toggleButton_->setChecked(expanded);
-    expanded_ = expanded;
-    UpdateSize();
-}
-
-QWidget* QtCollapsiblePanel::CreateWidget()
-{
-    panel_ = new QFrame();
     panel_->setFrameShape(QFrame::Box);
 
     layout_ = new QGridLayout(panel_);
@@ -199,51 +188,56 @@ QWidget* QtCollapsiblePanel::CreateWidget()
     connect(toggleButton_, &QToolButton::clicked, this, &QtCollapsiblePanel::SetExpanded);
     UpdateHeaderHeight();
     UpdateSize();
-    return panel_;
+
+    SetInternalWidget(this, panel_);
 }
 
-bool QtCollapsiblePanel::SetHeaderPrefix(GenericWidget* header)
+void QtCollapsiblePanel::SetHeaderText(const String& text)
 {
-    if (auto headerImpl = QtWidget::FromInterface(header))
-    {
-        QWidget* newHeader = headerImpl->Initialize();
-        layout_->removeWidget(headerPrefix_);
-        layout_->addWidget(newHeader, 0, 1);
-        headerPrefix_ = newHeader;
-        UpdateHeaderHeight();
-        UpdateSize();
-        return true;
-    }
-    return false;
+    headerText_->setText(Cast(text));
 }
 
-bool QtCollapsiblePanel::SetHeaderSuffix(GenericWidget* header)
+void QtCollapsiblePanel::SetExpanded(bool expanded)
 {
-    if (auto headerImpl = QtWidget::FromInterface(header))
-    {
-        QWidget* newHeader = headerImpl->Initialize();
-        layout_->removeWidget(headerSuffix_);
-        layout_->addWidget(newHeader, 0, 3);
-        headerSuffix_ = newHeader;
-        UpdateHeaderHeight();
-        UpdateSize();
-        return true;
-    }
-    return false;
+    toggleButton_->setChecked(expanded);
+    expanded_ = expanded;
+    UpdateSize();
 }
 
-bool QtCollapsiblePanel::SetBody(GenericWidget* body)
+bool QtCollapsiblePanel::DoSetHeaderPrefix(GenericWidget* header)
 {
-    if (auto bodyImpl = QtWidget::FromInterface(body))
-    {
-        QWidget* newBody = bodyImpl->Initialize();
-        layout_->removeWidget(body_);
-        layout_->addWidget(newBody, 1, 0, 1, -1);
-        body_ = newBody;
-        UpdateSize();
-        return true;
-    }
-    return false;
+    if (!GetInternalWidget(header))
+        return false;
+    layout_->removeWidget(headerPrefix_);
+    headerPrefix_ = GetInternalWidget(header);
+    layout_->addWidget(headerPrefix_, 0, 1);
+    UpdateHeaderHeight();
+    UpdateSize();
+    return true;
+}
+
+bool QtCollapsiblePanel::DoSetHeaderSuffix(GenericWidget* header)
+{
+    if (!GetInternalWidget(header))
+        return false;
+
+    layout_->removeWidget(headerSuffix_);
+    headerSuffix_ = GetInternalWidget(header);
+    layout_->addWidget(headerSuffix_, 0, 3);
+    UpdateHeaderHeight();
+    UpdateSize();
+    return true;
+}
+
+bool QtCollapsiblePanel::DoSetBody(GenericWidget* body)
+{
+    if (!GetInternalWidget(body))
+        return false;
+    layout_->removeWidget(body_);
+    body_ = GetInternalWidget(body);
+    layout_->addWidget(body_, 1, 0, 1, -1);
+    UpdateSize();
+    return true;
 }
 
 void QtCollapsiblePanel::UpdateHeaderHeight()
@@ -267,60 +261,65 @@ void QtCollapsiblePanel::UpdateSize()
 }
 
 //////////////////////////////////////////////////////////////////////////
+QtButton::QtButton(AbstractMainWindow& mainWindow)
+    : AbstractButton(mainWindow)
+    , pushButton_(new QPushButton())
+{
+    pushButton_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+
+    SetInternalWidget(this, pushButton_);
+}
+
 AbstractButton& QtButton::SetText(const String& text)
 {
     pushButton_->setText(Cast(text));
     return *this;
 }
 
-QWidget* QtButton::CreateWidget()
+//////////////////////////////////////////////////////////////////////////
+QtText::QtText(AbstractMainWindow& mainWindow)
+    : AbstractText(mainWindow)
+    , label_(new QLabel())
 {
-    pushButton_ = new QPushButton();
-    pushButton_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
-    return pushButton_;
+    SetInternalWidget(this, label_);
 }
 
-//////////////////////////////////////////////////////////////////////////
 AbstractText& QtText::SetText(const String& text)
 {
     label_->setText(Cast(text));
     return *this;
 }
 
-QWidget* QtText::CreateWidget()
+//////////////////////////////////////////////////////////////////////////
+QtLineEdit::QtLineEdit(AbstractMainWindow& mainWindow)
+    : AbstractLineEdit(mainWindow)
+    , lineEdit_(new QLineEdit())
 {
-    label_ = new QLabel();
-    return label_;
+    SetInternalWidget(this, lineEdit_);
 }
 
-//////////////////////////////////////////////////////////////////////////
 AbstractLineEdit& QtLineEdit::SetText(const String& text)
 {
     lineEdit_->setText(Cast(text));
     return *this;
 }
 
-QWidget* QtLineEdit::CreateWidget()
+//////////////////////////////////////////////////////////////////////////
+QtCheckBox::QtCheckBox(AbstractMainWindow& mainWindow)
+    : AbstractCheckBox(mainWindow)
+    , checkBox_(new QCheckBox())
 {
-    lineEdit_ = new QLineEdit();
-    return lineEdit_;
+    SetInternalWidget(this, checkBox_);
 }
 
-//////////////////////////////////////////////////////////////////////////
 AbstractCheckBox& QtCheckBox::SetChecked(bool checked)
 {
     checkBox_->setChecked(checked);
     return *this;
 }
 
-QWidget* QtCheckBox::CreateWidget()
-{
-    checkBox_ = new QCheckBox();
-    return checkBox_;
-}
-
 //////////////////////////////////////////////////////////////////////////
-QtHierarchyListModel::QtHierarchyListModel(AbstractMainWindow& mainWindow, GenericWidget* parent)
+QtHierarchyListModel::QtHierarchyListModel(AbstractMainWindow& mainWindow)
     : rootItem_(mainWindow.GetContext())
 {
 }
@@ -440,9 +439,18 @@ int QtHierarchyListModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtHierarchyList::QtHierarchyList(AbstractMainWindow& mainWindow, GenericWidget* parent)
-    : GenericHierarchyList(mainWindow, parent)
+QtHierarchyList::QtHierarchyList(AbstractMainWindow& mainWindow)
+    : GenericHierarchyList(mainWindow)
+    , treeView_(new QTreeView())
+    , model_(new QtHierarchyListModel(mainWindow_))
 {
+    treeView_->header()->hide();
+    treeView_->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    treeView_->setDragDropMode(QAbstractItemView::DragDrop);
+    treeView_->setDragEnabled(true);
+    treeView_->setModel(model_.data());
+
+    SetInternalWidget(this, treeView_);
 }
 
 void QtHierarchyList::AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent)
@@ -465,18 +473,6 @@ void QtHierarchyList::DeselectItem(GenericHierarchyListItem* item)
 void QtHierarchyList::GetSelection(ItemVector& result)
 {
     //throw std::logic_error("The method or operation is not implemented.");
-}
-
-QWidget* QtHierarchyList::CreateWidget()
-{
-    treeView_ = new QTreeView();
-    model_.reset(new QtHierarchyListModel(mainWindow_, this));
-    treeView_->header()->hide();
-    treeView_->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    treeView_->setDragDropMode(QAbstractItemView::DragDrop);
-    treeView_->setDragEnabled(true);
-    treeView_->setModel(model_.data());
-    return treeView_;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -539,8 +535,9 @@ QtMainWindow::~QtMainWindow()
 
 GenericDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocationHint::Undocked*/)
 {
-    auto dialog = MakeShared<QtDockDialog>(*this, nullptr);
-    QDockWidget* dockWidget = dynamic_cast<QDockWidget*>(dialog->Initialize());
+    auto dialog = MakeShared<QtDockDialog>(*this);
+    dialog->SetParent(nullptr);
+    QDockWidget* dockWidget = dynamic_cast<QDockWidget*>(GetInternalWidget(dialog));
     addDockWidget(Cast(hint), dockWidget);
     dialogs_.Push(dialog);
     return dialog;
