@@ -23,7 +23,7 @@ namespace Urho3D
 
 class QtMainWindow;
 
-class QtDockDialog : public GenericDialog
+class QtDockDialog : public AbstractDialog
 {
 
 public:
@@ -32,7 +32,7 @@ public:
 
 
 private:
-    bool DoSetContent(GenericWidget* content) override;
+    bool DoSetContent(AbstractWidget* content) override;
 
 private:
     QDockWidget* dock_ = nullptr;
@@ -58,7 +58,7 @@ public:
 
 
 private:
-    bool DoSetContent(GenericWidget* content) override;
+    bool DoSetContent(AbstractWidget* content) override;
 
     bool eventFilter(QObject *watched, QEvent *event) override;
 
@@ -78,9 +78,9 @@ public:
 
 
 private:
-    bool DoSetCell(unsigned row, unsigned column, GenericWidget* child) override;
-    bool DoSetRow(unsigned row, GenericWidget* child) override;
-    void DoRemoveChild(GenericWidget* child) override;
+    bool DoSetCell(unsigned row, unsigned column, AbstractWidget* child) override;
+    bool DoSetRow(unsigned row, AbstractWidget* child) override;
+    void DoRemoveChild(AbstractWidget* child) override;
 
 private:
     QWidget* widget_ = nullptr;
@@ -100,9 +100,9 @@ public:
 
 
 private:
-    bool DoSetHeaderPrefix(GenericWidget* header) override;
-    bool DoSetHeaderSuffix(GenericWidget* header) override;
-    bool DoSetBody(GenericWidget* body) override;
+    bool DoSetHeaderPrefix(AbstractWidget* header) override;
+    bool DoSetHeaderSuffix(AbstractWidget* header) override;
+    bool DoSetBody(AbstractWidget* body) override;
 
     void UpdateHeaderHeight();
     void UpdateSize();
@@ -145,7 +145,7 @@ private:
 
 class QtText : public AbstractText
 {
-    URHO3D_OBJECT(AbstractText, GenericWidget);
+    URHO3D_OBJECT(AbstractText, AbstractWidget);
 
 public:
     QtText(AbstractMainWindow& mainWindow);
@@ -160,7 +160,7 @@ private:
 class QtLineEdit : public QObject, public AbstractLineEdit
 {
     Q_OBJECT
-    URHO3D_OBJECT(AbstractLineEdit, GenericWidget);
+    URHO3D_OBJECT(AbstractLineEdit, AbstractWidget);
 
 public:
     QtLineEdit(AbstractMainWindow& mainWindow);
@@ -190,11 +190,11 @@ class QtHierarchyListModel : public QAbstractItemModel
 public:
     QtHierarchyListModel(AbstractMainWindow& mainWindow);
 
-    void InsertItem(GenericHierarchyListItem* item, const QModelIndex& parentIndex);
-    void RemoveItem(GenericHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow = -1);
+    void InsertItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex);
+    void RemoveItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow = -1);
 
-    QModelIndex GetIndex(GenericHierarchyListItem* item, QModelIndex hint = QModelIndex());
-    GenericHierarchyListItem* GetItem(const QModelIndex& index) const;
+    QModelIndex GetIndex(AbstractHierarchyListItem* item, QModelIndex hint = QModelIndex());
+    AbstractHierarchyListItem* GetItem(const QModelIndex& index) const;
 private:
 
     QVariant data(const QModelIndex& index, int role) const override;
@@ -204,18 +204,18 @@ private:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override { return 1; }
 
-    GenericHierarchyListItem rootItem_;
+    AbstractHierarchyListItem rootItem_;
 
 };
 
-class QtHierarchyList : public GenericHierarchyList
+class QtHierarchyList : public AbstractHierarchyList
 {
 public:
     QtHierarchyList(AbstractMainWindow& mainWindow);
 
-    void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) override;
-    void SelectItem(GenericHierarchyListItem* item) override;
-    void DeselectItem(GenericHierarchyListItem* item) override;
+    void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) override;
+    void SelectItem(AbstractHierarchyListItem* item) override;
+    void DeselectItem(AbstractHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
 
 private:
@@ -225,13 +225,13 @@ private:
 
 };
 
-class QtMenu : public GenericMenu
+class QtMenu : public AbstractMenu
 {
 public:
     QtMenu(QtMainWindow* host, QMenu* menu);
     QtMenu(QtMainWindow* host, QAction* action);
-    GenericMenu* AddMenu(const String& name) override;
-    GenericMenu* AddAction(const String& name, const String& actionId) override;
+    AbstractMenu* AddMenu(const String& name) override;
+    AbstractMenu* AddAction(const String& name, const String& actionId) override;
 private:
     QtMainWindow* host_ = nullptr;
     QMenu* menu_ = nullptr;
@@ -247,9 +247,9 @@ public:
     QtMainWindow(QApplication& application);
     ~QtMainWindow() override;
 
-    GenericDialog* AddDialog(DialogLocationHint hint) override;
+    AbstractDialog* AddDialog(DialogLocationHint hint) override;
     void AddAction(const AbstractAction& actionDesc) override;
-    GenericMenu* AddMenu(const String& name) override;
+    AbstractMenu* AddMenu(const String& name) override;
 
     Context* GetContext() override;
     AbstractInput* GetInput() override;
@@ -272,7 +272,7 @@ private:
     SharedPtr<Context> context_;
     QApplication& application_;
     QtUrhoWidget urhoWidget_;
-    Vector<SharedPtr<GenericDialog>> dialogs_;
+    Vector<SharedPtr<AbstractDialog>> dialogs_;
 
     HashMap<String, QAction*> actions_;
     QList<QtMenu> menus_;

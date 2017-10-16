@@ -14,22 +14,14 @@ class Scene;
 class Node;
 class Serializable;
 class Selection;
-class GenericDialog;
+class AbstractDialog;
 
-/// Generic UI widget clicked.
-URHO3D_EVENT(E_GENERICWIDGETCLICKED, GenericWidgetClicked)
+/// Abstract UI widget clicked.
+URHO3D_EVENT(E_ABSTRACTWIDGETCLICKED, AbstractWidgetClicked)
 {
-    URHO3D_PARAM(P_ELEMENT, Element);   // GenericWidget ptr
-    URHO3D_PARAM(P_ITEM, Item);         // GenericWidget ptr (optional)
+    URHO3D_PARAM(P_ELEMENT, Element);   // AbstractWidget ptr
+    URHO3D_PARAM(P_ITEM, Item);         // AbstractWidget ptr (optional)
 }
-
-class GenericDocument : public Object
-{
-    URHO3D_OBJECT(GenericDocument, Object);
-
-public:
-    GenericDocument(Context* context) : Object(context) { }
-};
 
 enum class DialogLocationHint
 {
@@ -48,23 +40,23 @@ struct AbstractAction
     KeyBinding keyBinding_;
 };
 
-class GenericMenu
+class AbstractMenu
 {
 public:
-    virtual GenericMenu* AddMenu(const String& name) = 0;
-    virtual GenericMenu* AddAction(const String& name, const String& actionId) = 0;
+    virtual AbstractMenu* AddMenu(const String& name) = 0;
+    virtual AbstractMenu* AddAction(const String& name, const String& actionId) = 0;
 };
 
 // #TODO: Rename file
-class GenericWidget : public Object
+class AbstractWidget : public Object
 {
-    URHO3D_OBJECT(GenericWidget, Object);
+    URHO3D_OBJECT(AbstractWidget, Object);
 
 public:
-    GenericWidget(AbstractMainWindow& mainWindow);
+    AbstractWidget(AbstractMainWindow& mainWindow);
 
-    void SetParent(GenericWidget* parent);
-    GenericWidget* GetParent() const { return parent_; }
+    void SetParent(AbstractWidget* parent);
+    AbstractWidget* GetParent() const { return parent_; }
 
     template <class T> void SetInternalHandle(T pointer) { internalPointer_ = MakeCustomValue(pointer); }
     template <class T> T GetInternalHandle() const { return internalPointer_.GetCustom<T>(); }
@@ -79,86 +71,86 @@ protected:
     AbstractMainWindow& mainWindow_;
 
 private:
-    GenericWidget* parent_ = nullptr;
+    AbstractWidget* parent_ = nullptr;
     Variant internalPointer_;
     bool attachedToRoot_ = false;
 };
 
-class GenericDialog : public GenericWidget
+class AbstractDialog : public AbstractWidget
 {
-    URHO3D_OBJECT(GenericDialog, GenericWidget);
+    URHO3D_OBJECT(AbstractDialog, AbstractWidget);
 
 public:
-    GenericDialog(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
+    AbstractDialog(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
 
-    GenericWidget* CreateContent(StringHash type);
+    AbstractWidget* CreateContent(StringHash type);
     template <class T> T* CreateContent() { return dynamic_cast<T*>(CreateContent(T::GetTypeStatic())); }
 
     virtual void SetName(const String& name) = 0;
 
 private:
-    bool SetContent(GenericWidget* content);
+    bool SetContent(AbstractWidget* content);
 
-    virtual bool DoSetContent(GenericWidget* content) = 0;
+    virtual bool DoSetContent(AbstractWidget* content) = 0;
 
 private:
-    SharedPtr<GenericWidget> content_;
+    SharedPtr<AbstractWidget> content_;
 
 };
 
-class AbstractDummyWidget : public GenericWidget
+class AbstractDummyWidget : public AbstractWidget
 {
-    URHO3D_OBJECT(AbstractDummyWidget, GenericWidget);
+    URHO3D_OBJECT(AbstractDummyWidget, AbstractWidget);
 
 public:
-    AbstractDummyWidget(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
+    AbstractDummyWidget(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
 };
 
-class AbstractScrollArea : public GenericWidget
+class AbstractScrollArea : public AbstractWidget
 {
-    URHO3D_OBJECT(AbstractScrollArea, GenericWidget);
+    URHO3D_OBJECT(AbstractScrollArea, AbstractWidget);
 
 public:
-    AbstractScrollArea(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
+    AbstractScrollArea(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
 
     virtual void SetDynamicWidth(bool dynamicWidth) = 0;
 
-    GenericWidget* CreateContent(StringHash type);
+    AbstractWidget* CreateContent(StringHash type);
     template <class T> T* CreateContent() { return dynamic_cast<T*>(CreateContent(T::GetTypeStatic())); }
 
 private:
-    bool SetContent(GenericWidget* content);
+    bool SetContent(AbstractWidget* content);
 
-    virtual bool DoSetContent(GenericWidget* content) = 0;
+    virtual bool DoSetContent(AbstractWidget* content) = 0;
 
 private:
-    SharedPtr<GenericWidget> content_;
+    SharedPtr<AbstractWidget> content_;
 
 };
 
-class AbstractLayout : public GenericWidget
+class AbstractLayout : public AbstractWidget
 {
-    URHO3D_OBJECT(AbstractLayout, GenericWidget);
+    URHO3D_OBJECT(AbstractLayout, AbstractWidget);
 
 public:
-    AbstractLayout(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
+    AbstractLayout(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
 
-    GenericWidget* CreateCell(StringHash type, unsigned row, unsigned column);
+    AbstractWidget* CreateCell(StringHash type, unsigned row, unsigned column);
     template <class T> T* CreateCell(unsigned row, unsigned column) { return dynamic_cast<T*>(CreateCell(T::GetTypeStatic(), row, column)); }
 
-    GenericWidget* CreateRow(StringHash type, unsigned row);
+    AbstractWidget* CreateRow(StringHash type, unsigned row);
     template <class T> T* CreateRow(unsigned row) { return dynamic_cast<T*>(CreateRow(T::GetTypeStatic(), row)); }
 
     void RemoveRow(unsigned row);
     void RemoveAllChildren();
 
 private:
-    bool SetCell(GenericWidget* cell, unsigned row, unsigned column);
-    bool SetRow(GenericWidget* cell, unsigned row);
+    bool SetCell(AbstractWidget* cell, unsigned row, unsigned column);
+    bool SetRow(AbstractWidget* cell, unsigned row);
 
-    virtual bool DoSetCell(unsigned row, unsigned column, GenericWidget* child) = 0;
-    virtual bool DoSetRow(unsigned row, GenericWidget* child) = 0;
-    virtual void DoRemoveChild(GenericWidget* child) = 0;
+    virtual bool DoSetCell(unsigned row, unsigned column, AbstractWidget* child) = 0;
+    virtual bool DoSetRow(unsigned row, AbstractWidget* child) = 0;
+    virtual void DoRemoveChild(AbstractWidget* child) = 0;
 
 protected:
     enum class RowType
@@ -171,7 +163,7 @@ protected:
     struct RowData
     {
         RowType type_ = RowType::EmptyRow;
-        Vector<SharedPtr<GenericWidget>> columns_;
+        Vector<SharedPtr<AbstractWidget>> columns_;
     };
 
     bool EnsureRow(unsigned row, RowType type);
@@ -181,66 +173,66 @@ protected:
 
 };
 
-class AbstractCollapsiblePanel : public GenericWidget
+class AbstractCollapsiblePanel : public AbstractWidget
 {
-    URHO3D_OBJECT(AbstractCollapsiblePanel, GenericWidget);
+    URHO3D_OBJECT(AbstractCollapsiblePanel, AbstractWidget);
 
 public:
-    AbstractCollapsiblePanel(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
+    AbstractCollapsiblePanel(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
 
     virtual void SetHeaderText(const String& text) = 0;
     virtual void SetExpanded(bool expanded) = 0;
 
-    GenericWidget* CreateHeaderPrefix(StringHash type);
+    AbstractWidget* CreateHeaderPrefix(StringHash type);
     template <class T> T* CreateHeaderPrefix() { return dynamic_cast<T*>(CreateHeaderPrefix(T::GetTypeStatic())); }
 
-    GenericWidget* CreateHeaderSuffix(StringHash type);
+    AbstractWidget* CreateHeaderSuffix(StringHash type);
     template <class T> T* CreateHeaderSuffix() { return dynamic_cast<T*>(CreateHeaderSuffix(T::GetTypeStatic())); }
 
-    GenericWidget* CreateBody(StringHash type);
+    AbstractWidget* CreateBody(StringHash type);
     template <class T> T* CreateBody() { return dynamic_cast<T*>(CreateBody(T::GetTypeStatic())); }
 
 private:
-    virtual bool SetHeaderPrefix(GenericWidget* header);
-    virtual bool SetHeaderSuffix(GenericWidget* header);
-    virtual bool SetBody(GenericWidget* body);
+    virtual bool SetHeaderPrefix(AbstractWidget* header);
+    virtual bool SetHeaderSuffix(AbstractWidget* header);
+    virtual bool SetBody(AbstractWidget* body);
 
-    virtual bool DoSetHeaderPrefix(GenericWidget* header) = 0;
-    virtual bool DoSetHeaderSuffix(GenericWidget* header) = 0;
-    virtual bool DoSetBody(GenericWidget* body) = 0;
+    virtual bool DoSetHeaderPrefix(AbstractWidget* header) = 0;
+    virtual bool DoSetHeaderSuffix(AbstractWidget* header) = 0;
+    virtual bool DoSetBody(AbstractWidget* body) = 0;
 
 private:
-    SharedPtr<GenericWidget> headerPrefix_;
-    SharedPtr<GenericWidget> headerSuffix_;
-    SharedPtr<GenericWidget> body_;
+    SharedPtr<AbstractWidget> headerPrefix_;
+    SharedPtr<AbstractWidget> headerSuffix_;
+    SharedPtr<AbstractWidget> body_;
 
 };
 
-class AbstractButton : public GenericWidget
+class AbstractButton : public AbstractWidget
 {
-    URHO3D_OBJECT(AbstractButton, GenericWidget);
+    URHO3D_OBJECT(AbstractButton, AbstractWidget);
 
 public:
-    AbstractButton(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
+    AbstractButton(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetText(const String& text) = 0;
 };
 
-class AbstractText : public GenericWidget
+class AbstractText : public AbstractWidget
 {
-    URHO3D_OBJECT(AbstractText, GenericWidget);
+    URHO3D_OBJECT(AbstractText, AbstractWidget);
 
 public:
-    AbstractText(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
+    AbstractText(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetText(const String& text) = 0;
     virtual unsigned GetTextWidth() const = 0;
 };
 
-class AbstractLineEdit : public GenericWidget
+class AbstractLineEdit : public AbstractWidget
 {
-    URHO3D_OBJECT(AbstractLineEdit, GenericWidget);
+    URHO3D_OBJECT(AbstractLineEdit, AbstractWidget);
 
 public:
-    AbstractLineEdit(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
+    AbstractLineEdit(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetText(const String& text) = 0;
     virtual const String& GetText() const = 0;
 
@@ -249,50 +241,50 @@ public:
     std::function<void()> onTextFinished_;
 };
 
-class AbstractCheckBox : public GenericWidget
+class AbstractCheckBox : public AbstractWidget
 {
-    URHO3D_OBJECT(AbstractCheckBox, GenericWidget);
+    URHO3D_OBJECT(AbstractCheckBox, AbstractWidget);
 
 public:
-    AbstractCheckBox(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
+    AbstractCheckBox(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetChecked(bool checked) = 0;
 };
 
-class GenericHierarchyListItem : public Object
+class AbstractHierarchyListItem : public Object
 {
-    URHO3D_OBJECT(GenericHierarchyListItem, Object);
+    URHO3D_OBJECT(AbstractHierarchyListItem, Object);
 
 public:
-    GenericHierarchyListItem(Context* context) : Object(context) { }
-    void SetParent(GenericHierarchyListItem* parent) { parent_ = parent; }
+    AbstractHierarchyListItem(Context* context) : Object(context) { }
+    void SetParent(AbstractHierarchyListItem* parent) { parent_ = parent; }
     void SetInternalPointer(Object* internalPointer) { internalPointer_ = internalPointer; }
     Object* GetInternalPointer() const { return internalPointer_; }
 
-    void InsertChild(GenericHierarchyListItem* item, unsigned index);
+    void InsertChild(AbstractHierarchyListItem* item, unsigned index);
     void RemoveChild(unsigned index);
-    GenericHierarchyListItem* GetParent() const { return parent_; }
+    AbstractHierarchyListItem* GetParent() const { return parent_; }
     unsigned GetNumChildren() const { return children_.Size(); }
-    GenericHierarchyListItem* GetChild(unsigned index) const { return index < children_.Size() ? children_[index] : nullptr; }
+    AbstractHierarchyListItem* GetChild(unsigned index) const { return index < children_.Size() ? children_[index] : nullptr; }
     int GetIndex();
 
     virtual String GetText() { return String::EMPTY; }
 
 private:
-    GenericHierarchyListItem* parent_ = nullptr;
+    AbstractHierarchyListItem* parent_ = nullptr;
     Object* internalPointer_ = nullptr;
-    Vector<SharedPtr<GenericHierarchyListItem>> children_;
+    Vector<SharedPtr<AbstractHierarchyListItem>> children_;
 };
 
-class GenericHierarchyList : public GenericWidget
+class AbstractHierarchyList : public AbstractWidget
 {
-    URHO3D_OBJECT(GenericHierarchyList, GenericWidget);
+    URHO3D_OBJECT(AbstractHierarchyList, AbstractWidget);
 
 public:
-    using ItemVector = PODVector<GenericHierarchyListItem*>;
-    GenericHierarchyList(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
-    virtual void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) = 0;
-    virtual void SelectItem(GenericHierarchyListItem* item) = 0;
-    virtual void DeselectItem(GenericHierarchyListItem* item) = 0;
+    using ItemVector = PODVector<AbstractHierarchyListItem*>;
+    AbstractHierarchyList(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    virtual void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) = 0;
+    virtual void SelectItem(AbstractHierarchyListItem* item) = 0;
+    virtual void DeselectItem(AbstractHierarchyListItem* item) = 0;
     virtual void GetSelection(ItemVector& result) = 0;
     ItemVector GetSelection() { ItemVector result; GetSelection(result); return result; }
 };
@@ -300,10 +292,10 @@ public:
 class AbstractMainWindow
 {
 public:
-    SharedPtr<GenericWidget> CreateWidget(StringHash type);
-    virtual GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) = 0;
+    SharedPtr<AbstractWidget> CreateWidget(StringHash type);
+    virtual AbstractDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) = 0;
     virtual void AddAction(const AbstractAction& actionDesc) = 0;
-    virtual GenericMenu* AddMenu(const String& name) = 0;
+    virtual AbstractMenu* AddMenu(const String& name) = 0;
 
     virtual Context* GetContext() = 0;
     virtual AbstractInput* GetInput() = 0;
@@ -314,19 +306,19 @@ public:
     }
 
 private:
-    virtual SharedPtr<GenericWidget> CreateDummyWidget();
-    virtual SharedPtr<GenericWidget> CreateScrollArea();
-    virtual SharedPtr<GenericWidget> CreateLayout();
-    virtual SharedPtr<GenericWidget> CreateCollapsiblePanel();
-    virtual SharedPtr<GenericWidget> CreateButton();
-    virtual SharedPtr<GenericWidget> CreateText();
-    virtual SharedPtr<GenericWidget> CreateLineEdit();
-    virtual SharedPtr<GenericWidget> CreateCheckBox();
-    virtual SharedPtr<GenericWidget> CreateHierarchyList();
+    virtual SharedPtr<AbstractWidget> CreateDummyWidget();
+    virtual SharedPtr<AbstractWidget> CreateScrollArea();
+    virtual SharedPtr<AbstractWidget> CreateLayout();
+    virtual SharedPtr<AbstractWidget> CreateCollapsiblePanel();
+    virtual SharedPtr<AbstractWidget> CreateButton();
+    virtual SharedPtr<AbstractWidget> CreateText();
+    virtual SharedPtr<AbstractWidget> CreateLineEdit();
+    virtual SharedPtr<AbstractWidget> CreateCheckBox();
+    virtual SharedPtr<AbstractWidget> CreateHierarchyList();
 };
 
 }
 
 #define URHO3D_IMPLEMENT_WIDGET_FACTORY(factory, implementation) \
-    SharedPtr<GenericWidget> factory() override { return MakeShared<implementation>(*this); }
+    SharedPtr<AbstractWidget> factory() override { return MakeShared<implementation>(*this); }
 

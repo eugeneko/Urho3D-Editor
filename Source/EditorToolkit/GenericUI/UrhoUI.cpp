@@ -100,17 +100,17 @@ String PrintKeyBinding(const KeyBinding& keyBinding)
     return result;
 }
 
-UIElement* GetInternalElement(GenericWidget* widget)
+UIElement* GetInternalElement(AbstractWidget* widget)
 {
     return widget ? widget->GetInternalHandle<UIElement*>() : nullptr;
 }
 
-void SetInternalElement(GenericWidget* widget, UIElement* element)
+void SetInternalElement(AbstractWidget* widget, UIElement* element)
 {
     widget->SetInternalHandle(element);
 }
 
-UIElement* GetParentElement(GenericWidget* widget)
+UIElement* GetParentElement(AbstractWidget* widget)
 {
     return GetInternalElement(widget->GetParent());
 }
@@ -119,7 +119,7 @@ UIElement* GetParentElement(GenericWidget* widget)
 
 //////////////////////////////////////////////////////////////////////////
 UrhoDialog::UrhoDialog(AbstractMainWindow& mainWindow)
-    : GenericDialog(mainWindow)
+    : AbstractDialog(mainWindow)
 {
 }
 
@@ -163,7 +163,7 @@ void UrhoDialog::OnParentSet()
     SetInternalElement(this, window_);
 }
 
-bool UrhoDialog::DoSetContent(GenericWidget* content)
+bool UrhoDialog::DoSetContent(AbstractWidget* content)
 {
     if (!GetInternalElement(content))
         return false;
@@ -198,7 +198,7 @@ void UrhoScrollArea::SetDynamicWidth(bool dynamicWidth)
     }
 }
 
-bool UrhoScrollArea::DoSetContent(GenericWidget* content)
+bool UrhoScrollArea::DoSetContent(AbstractWidget* content)
 {
     if (!GetInternalElement(content))
         return false;
@@ -375,7 +375,7 @@ void UrhoLayout::OnParentSet()
     SetInternalElement(this, body_);
 }
 
-bool UrhoLayout::DoSetCell(unsigned row, unsigned column, GenericWidget* child)
+bool UrhoLayout::DoSetCell(unsigned row, unsigned column, AbstractWidget* child)
 {
     if (!GetInternalElement(child))
         return false;
@@ -385,7 +385,7 @@ bool UrhoLayout::DoSetCell(unsigned row, unsigned column, GenericWidget* child)
     return true;
 }
 
-bool UrhoLayout::DoSetRow(unsigned row, GenericWidget* child)
+bool UrhoLayout::DoSetRow(unsigned row, AbstractWidget* child)
 {
     if (!GetInternalElement(child))
         return false;
@@ -395,7 +395,7 @@ bool UrhoLayout::DoSetRow(unsigned row, GenericWidget* child)
     return true;
 }
 
-void UrhoLayout::DoRemoveChild(GenericWidget* child)
+void UrhoLayout::DoRemoveChild(AbstractWidget* child)
 {
     if (UIElement* childElement = GetInternalElement(child))
         body_->RemoveChild(childElement);
@@ -424,7 +424,7 @@ void UrhoCollapsiblePanel::SetExpanded(bool expanded)
     UpdateContentSize();
 }
 
-bool UrhoCollapsiblePanel::DoSetHeaderPrefix(GenericWidget* header)
+bool UrhoCollapsiblePanel::DoSetHeaderPrefix(AbstractWidget* header)
 {
     if (!GetInternalElement(header))
         return false;
@@ -435,7 +435,7 @@ bool UrhoCollapsiblePanel::DoSetHeaderPrefix(GenericWidget* header)
     return true;
 }
 
-bool UrhoCollapsiblePanel::DoSetHeaderSuffix(GenericWidget* header)
+bool UrhoCollapsiblePanel::DoSetHeaderSuffix(AbstractWidget* header)
 {
     if (!GetInternalElement(header))
         return false;
@@ -446,7 +446,7 @@ bool UrhoCollapsiblePanel::DoSetHeaderSuffix(GenericWidget* header)
     return true;
 }
 
-bool UrhoCollapsiblePanel::DoSetBody(GenericWidget* body)
+bool UrhoCollapsiblePanel::DoSetBody(AbstractWidget* body)
 {
     if (!GetInternalElement(body))
         return false;
@@ -631,12 +631,12 @@ void UrhoCheckBox::OnParentSet()
 
 //////////////////////////////////////////////////////////////////////////
 UrhoHierarchyList::UrhoHierarchyList(AbstractMainWindow& mainWindow)
-    : GenericHierarchyList(mainWindow)
+    : AbstractHierarchyList(mainWindow)
     , rootItem_(context_)
 {
 }
 
-void UrhoHierarchyList::AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent)
+void UrhoHierarchyList::AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent)
 {
     hierarchyList_->DisableInternalLayoutUpdate();
     if (parent)
@@ -648,7 +648,7 @@ void UrhoHierarchyList::AddItem(GenericHierarchyListItem* item, unsigned index, 
     hierarchyList_->UpdateInternalLayout();
 }
 
-void UrhoHierarchyList::SelectItem(GenericHierarchyListItem* item)
+void UrhoHierarchyList::SelectItem(AbstractHierarchyListItem* item)
 {
     if (auto itemWidget = dynamic_cast<UIElement*>(item->GetInternalPointer()))
     {
@@ -658,7 +658,7 @@ void UrhoHierarchyList::SelectItem(GenericHierarchyListItem* item)
     }
 }
 
-void UrhoHierarchyList::DeselectItem(GenericHierarchyListItem* item)
+void UrhoHierarchyList::DeselectItem(AbstractHierarchyListItem* item)
 {
     if (auto itemWidget = dynamic_cast<UIElement*>(item->GetInternalPointer()))
     {
@@ -694,7 +694,7 @@ void UrhoHierarchyList::OnParentSet()
     SetInternalElement(this, hierarchyList_);
 }
 
-void UrhoHierarchyList::InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent)
+void UrhoHierarchyList::InsertItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent)
 {
     auto itemWidget = MakeShared<UrhoHierarchyListItemWidget>(context_, item);
     itemWidget->SetText(item->GetText());
@@ -715,14 +715,14 @@ void UrhoHierarchyList::HandleItemClicked(StringHash /*eventType*/, VariantMap& 
     RefCounted* element = eventData[ItemClicked::P_ITEM].GetPtr();
     if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
     {
-        SendEvent(E_GENERICWIDGETCLICKED,
-            GenericWidgetClicked::P_ELEMENT, this,
-            GenericWidgetClicked::P_ITEM, item->GetItem());
+        SendEvent(E_ABSTRACTWIDGETCLICKED,
+            AbstractWidgetClicked::P_ELEMENT, this,
+            AbstractWidgetClicked::P_ITEM, item->GetItem());
     }
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoHierarchyListItemWidget::UrhoHierarchyListItemWidget(Context* context, GenericHierarchyListItem* item)
+UrhoHierarchyListItemWidget::UrhoHierarchyListItemWidget(Context* context, AbstractHierarchyListItem* item)
     : Text(context)
     , item_(item)
 {
@@ -862,7 +862,7 @@ UrhoMenu::UrhoMenu(UrhoMainWindow& mainWindow, UIElement* parent, const String& 
     parent->AddChild(menu_);
 }
 
-GenericMenu* UrhoMenu::AddMenu(const String& name)
+AbstractMenu* UrhoMenu::AddMenu(const String& name)
 {
     if (!popup_)
         return nullptr;
@@ -870,7 +870,7 @@ GenericMenu* UrhoMenu::AddMenu(const String& name)
     return children_.Back();
 }
 
-GenericMenu* UrhoMenu::AddAction(const String& name, const String& actionId)
+AbstractMenu* UrhoMenu::AddAction(const String& name, const String& actionId)
 {
     if (!popup_)
         return nullptr;
@@ -898,7 +898,7 @@ UrhoMainWindow::UrhoMainWindow(Context* context)
     SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(UrhoMainWindow, HandleResized));
 }
 
-GenericDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
+AbstractDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
 {
     auto dialog = MakeShared<UrhoDialog>(*this);
     dialog->SetParent(nullptr);
@@ -911,7 +911,7 @@ void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)
     actions_[actionDesc.id_] = actionDesc;
 }
 
-GenericMenu* UrhoMainWindow::AddMenu(const String& name)
+AbstractMenu* UrhoMainWindow::AddMenu(const String& name)
 {
     if (!menuBar_)
     {

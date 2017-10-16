@@ -16,9 +16,9 @@ class CheckBox;
 class ScrollView;
 class ListView;
 
-class UrhoDialog : public GenericDialog
+class UrhoDialog : public AbstractDialog
 {
-    URHO3D_OBJECT(UrhoDialog, GenericDialog);
+    URHO3D_OBJECT(UrhoDialog, AbstractDialog);
 
 public:
     UrhoDialog(AbstractMainWindow& mainWindow);
@@ -26,7 +26,7 @@ public:
 
 private:
     void OnParentSet() override;
-    bool DoSetContent(GenericWidget* content) override;
+    bool DoSetContent(AbstractWidget* content) override;
 
 private:
     Window* window_ = nullptr;
@@ -46,7 +46,7 @@ public:
 
 private:
     void OnParentSet() override;
-    bool DoSetContent(GenericWidget* content) override;
+    bool DoSetContent(AbstractWidget* content) override;
 
     void HandleResized(StringHash eventType, VariantMap& eventData);
     void UpdateContentSize();
@@ -68,9 +68,9 @@ public:
 
 private:
     void OnParentSet() override;
-    bool DoSetCell(unsigned row, unsigned column, GenericWidget* child) override;
-    bool DoSetRow(unsigned row, GenericWidget* child) override;
-    void DoRemoveChild(GenericWidget* child) override;
+    bool DoSetCell(unsigned row, unsigned column, AbstractWidget* child) override;
+    bool DoSetRow(unsigned row, AbstractWidget* child) override;
+    void DoRemoveChild(AbstractWidget* child) override;
 
     void UpdateLayout();
     void HandleLayoutChanged(StringHash eventType, VariantMap& eventData);
@@ -92,9 +92,9 @@ public:
 
 private:
     void OnParentSet() override;
-    bool DoSetHeaderPrefix(GenericWidget* header) override;
-    bool DoSetHeaderSuffix(GenericWidget* header) override;
-    bool DoSetBody(GenericWidget* body) override;
+    bool DoSetHeaderPrefix(AbstractWidget* header) override;
+    bool DoSetHeaderSuffix(AbstractWidget* header) override;
+    bool DoSetBody(AbstractWidget* body) override;
 
     void UpdateContentSize();
 
@@ -183,34 +183,34 @@ private:
 class UrhoHierarchyListItemWidget : public Text
 {
 public:
-    UrhoHierarchyListItemWidget(Context* context, GenericHierarchyListItem* item);
+    UrhoHierarchyListItemWidget(Context* context, AbstractHierarchyListItem* item);
     void ApplyStyle();
-    GenericHierarchyListItem* GetItem() { return item_; }
+    AbstractHierarchyListItem* GetItem() { return item_; }
 private:
-    GenericHierarchyListItem* item_ = nullptr;;
+    AbstractHierarchyListItem* item_ = nullptr;;
 };
 
-class UrhoHierarchyList : public GenericHierarchyList
+class UrhoHierarchyList : public AbstractHierarchyList
 {
-    URHO3D_OBJECT(UrhoHierarchyList, GenericHierarchyList);
+    URHO3D_OBJECT(UrhoHierarchyList, AbstractHierarchyList);
 
 public:
     UrhoHierarchyList(AbstractMainWindow& mainWindow);
-    void AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent) override;
-    void SelectItem(GenericHierarchyListItem* item) override;
-    void DeselectItem(GenericHierarchyListItem* item) override;
+    void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) override;
+    void SelectItem(AbstractHierarchyListItem* item) override;
+    void DeselectItem(AbstractHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
 
 
 private:
     void OnParentSet() override;
 
-    void InsertItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent);
+    void InsertItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent);
     void HandleItemClicked(StringHash eventType, VariantMap& eventData);
 
 private:
     ListView* hierarchyList_ = nullptr;
-    GenericHierarchyListItem rootItem_;
+    AbstractHierarchyListItem rootItem_;
 };
 
 class StandardUrhoInput : public StandardInput, public Object
@@ -250,15 +250,15 @@ private:
     UI* ui_ = nullptr;
 };
 
-class UrhoMenu : public GenericMenu, public Object
+class UrhoMenu : public AbstractMenu, public Object
 {
     URHO3D_OBJECT(UrhoMenu, Object);
 
 public:
     static const StringHash VAR_ACTION;
     UrhoMenu(UrhoMainWindow& mainWindow, UIElement* parent, const String& text, const String& actionId, bool hasPopup, bool topLevel);
-    GenericMenu* AddMenu(const String& name) override;
-    GenericMenu* AddAction(const String& name, const String& actionId) override;
+    AbstractMenu* AddMenu(const String& name) override;
+    AbstractMenu* AddAction(const String& name, const String& actionId) override;
 
 private:
     void HandleMenuSelected(StringHash eventType, VariantMap& eventData);
@@ -280,9 +280,9 @@ class UrhoMainWindow : public AbstractMainWindow, public Object
 public:
     UrhoMainWindow(Context* context);
 
-    GenericDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
+    AbstractDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
     void AddAction(const AbstractAction& actionDesc) override;
-    GenericMenu* AddMenu(const String& name) override;
+    AbstractMenu* AddMenu(const String& name) override;
 
     Context* GetContext() override { return Object::GetContext(); }
     AbstractInput* GetInput() override { return &input_; }

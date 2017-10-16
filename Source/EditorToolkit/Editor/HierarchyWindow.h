@@ -12,10 +12,10 @@ class AbstractMainWindow;
 class Scene;
 class Node;
 
-class HierarchyWindowItem : public GenericHierarchyListItem
+class HierarchyWindowItem : public AbstractHierarchyListItem
 {
 public:
-    HierarchyWindowItem(Object* object) : GenericHierarchyListItem(object->GetContext()), object_(object) { }
+    HierarchyWindowItem(Object* object) : AbstractHierarchyListItem(object->GetContext()), object_(object) { }
     Object* GetObject() { return object_; }
 
     String GetText() override;
@@ -35,12 +35,12 @@ public:
     Selection::ObjectSet GetSelectedObjects();
 
 private:
-    GenericHierarchyListItem* FindItem(Object* object);
+    AbstractHierarchyListItem* FindItem(Object* object);
     /// Subtract right set from left one.
     void Subtract(const Selection::ObjectSet& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const;
     /// Gather selection from hierarchy list.
     void GatherHierarchyListSelections(Selection::ObjectSet& result) const;
-    GenericHierarchyListItem* CreateListItem(Object* object);
+    AbstractHierarchyListItem* CreateListItem(Object* object);
     void AddNode(Node* node);
 
     // @name Editor and UI Events
@@ -76,11 +76,11 @@ private:
     // @}
 
 private:
-    SharedPtr<GenericDialog> dialog_;
-    GenericHierarchyList* hierarchyList_ = nullptr;
+    SharedPtr<AbstractDialog> dialog_;
+    AbstractHierarchyList* hierarchyList_ = nullptr;
     SharedPtr<Scene> scene_;
     SharedPtr<Selection> selection_;
-    HashMap<WeakPtr<Object>, WeakPtr<GenericHierarchyListItem>> objectsToItems_;
+    HashMap<WeakPtr<Object>, WeakPtr<AbstractHierarchyListItem>> objectsToItems_;
 
     bool suppressEditorSelectionChanges_ = false;
 };

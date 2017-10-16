@@ -235,7 +235,7 @@ public:
             selection->GetSelectedNodesAndComponents();
         });
 
-        GenericMenu* menuEdit = mainWindow.AddMenu("Edit");
+        AbstractMenu* menuEdit = mainWindow.AddMenu("Edit");
         menuEdit->AddAction("Cut", "EditCut");
         menuEdit->AddAction("Copy", "EditCopy");
         menuEdit->AddAction("Paste", "EditPaste");

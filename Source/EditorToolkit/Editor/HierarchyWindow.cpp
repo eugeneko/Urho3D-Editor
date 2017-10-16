@@ -22,8 +22,8 @@ HierarchyWindow::HierarchyWindow(AbstractMainWindow& mainWindow)
     dialog_ = mainWindow.AddDialog(DialogLocationHint::DockLeft);
     dialog_->SetName("Hierarchy");
 
-    hierarchyList_ = dialog_->CreateContent<GenericHierarchyList>();
-    SubscribeToEvent(hierarchyList_, E_GENERICWIDGETCLICKED, URHO3D_HANDLER(HierarchyWindow, HandleListSelectionChanged));
+    hierarchyList_ = dialog_->CreateContent<AbstractHierarchyList>();
+    SubscribeToEvent(hierarchyList_, E_ABSTRACTWIDGETCLICKED, URHO3D_HANDLER(HierarchyWindow, HandleListSelectionChanged));
     SetScene(scene_);
 }
 
@@ -72,7 +72,7 @@ Selection::ObjectSet HierarchyWindow::GetSelectedObjects()
     return result;
 }
 
-GenericHierarchyListItem* HierarchyWindow::FindItem(Object* object)
+AbstractHierarchyListItem* HierarchyWindow::FindItem(Object* object)
 {
     if (object)
         return objectsToItems_[WeakPtr<Object>(object)];
@@ -91,13 +91,13 @@ void HierarchyWindow::Subtract(const Selection::ObjectSet& lhs, const Selection:
 void HierarchyWindow::GatherHierarchyListSelections(Selection::ObjectSet& result) const
 {
     // TODO: Cache
-    for (GenericHierarchyListItem* item : hierarchyList_->GetSelection())
+    for (AbstractHierarchyListItem* item : hierarchyList_->GetSelection())
         if (HierarchyWindowItem* derivedItem = static_cast<HierarchyWindowItem*>(item))
             if (Object* object = derivedItem->GetObject())
                 result.Insert(object);
 }
 
-GenericHierarchyListItem* HierarchyWindow::CreateListItem(Object* object)
+AbstractHierarchyListItem* HierarchyWindow::CreateListItem(Object* object)
 {
     auto item = new HierarchyWindowItem(object);
     objectsToItems_[WeakPtr<Object>(object)] = item;
@@ -112,15 +112,15 @@ GenericHierarchyListItem* HierarchyWindow::CreateListItem(Object* object)
 void HierarchyWindow::AddNode(Node* node)
 {
     Node* parent = node->GetParent();
-    GenericHierarchyListItem* parentItem = FindItem(parent);
-    GenericHierarchyListItem* objectItem = CreateListItem(node);
+    AbstractHierarchyListItem* parentItem = FindItem(parent);
+    AbstractHierarchyListItem* objectItem = CreateListItem(node);
 
     hierarchyList_->AddItem(objectItem, M_MAX_UNSIGNED, parentItem);
 }
 
 void HierarchyWindow::HandleListSelectionChanged(StringHash eventType, VariantMap& eventData)
 {
-    if (eventData[GenericWidgetClicked::P_ITEM].GetPtr() != nullptr)
+    if (eventData[AbstractWidgetClicked::P_ITEM].GetPtr() != nullptr)
     {
         suppressEditorSelectionChanges_ = true;
         selection_->SetSelection(GetSelectedObjects());
@@ -143,14 +143,14 @@ void HierarchyWindow::HandleEditorSelectionChanged(StringHash /*eventType*/, Var
 
     // Deselect old objects
     for (Object* object : toDeselect)
-        if (GenericHierarchyListItem* item = FindItem(object))
+        if (AbstractHierarchyListItem* item = FindItem(object))
             hierarchyList_->DeselectItem(item);
 
     // Select new objects
     bool wasScrolled = false;
     for (Object* object : toSelect)
     {
-        if (GenericHierarchyListItem* item = FindItem(object))
+        if (AbstractHierarchyListItem* item = FindItem(object))
         {
             hierarchyList_->SelectItem(item);
             if (!wasScrolled)

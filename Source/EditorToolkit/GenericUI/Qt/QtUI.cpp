@@ -44,12 +44,12 @@ QKeySequence Cast(const KeyBinding& binding)
     return QKeySequence(key);
 }
 
-QWidget* GetInternalWidget(GenericWidget* widget)
+QWidget* GetInternalWidget(AbstractWidget* widget)
 {
     return widget->GetInternalHandle<QWidget*>();
 }
 
-void SetInternalWidget(GenericWidget* widget, QWidget* element)
+void SetInternalWidget(AbstractWidget* widget, QWidget* element)
 {
     widget->SetInternalHandle(element);
 }
@@ -57,7 +57,7 @@ void SetInternalWidget(GenericWidget* widget, QWidget* element)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool QtDockDialog::DoSetContent(GenericWidget* content)
+bool QtDockDialog::DoSetContent(AbstractWidget* content)
 {
     if (!GetInternalWidget(content))
         return false;
@@ -67,7 +67,7 @@ bool QtDockDialog::DoSetContent(GenericWidget* content)
 }
 
 QtDockDialog::QtDockDialog(AbstractMainWindow& mainWindow)
-    : GenericDialog(mainWindow)
+    : AbstractDialog(mainWindow)
     , dock_(new QDockWidget())
 {
     SetInternalWidget(this, dock_);
@@ -119,7 +119,7 @@ void QtScrollArea::UpdateContentSize()
         content->setMaximumWidth(scrollArea_->width() - scrollArea_->verticalScrollBar()->width());
 }
 
-bool QtScrollArea::DoSetContent(GenericWidget* content)
+bool QtScrollArea::DoSetContent(AbstractWidget* content)
 {
     if (!GetInternalWidget(content))
         return false;
@@ -139,7 +139,7 @@ QtLayout::QtLayout(AbstractMainWindow& mainWindow)
     SetInternalWidget(this, widget_);
 }
 
-bool QtLayout::DoSetCell(unsigned row, unsigned column, GenericWidget* child)
+bool QtLayout::DoSetCell(unsigned row, unsigned column, AbstractWidget* child)
 {
     if (!GetInternalWidget(child))
         return false;
@@ -148,7 +148,7 @@ bool QtLayout::DoSetCell(unsigned row, unsigned column, GenericWidget* child)
     return true;
 }
 
-bool QtLayout::DoSetRow(unsigned row, GenericWidget* child)
+bool QtLayout::DoSetRow(unsigned row, AbstractWidget* child)
 {
     if (!GetInternalWidget(child))
         return false;
@@ -157,7 +157,7 @@ bool QtLayout::DoSetRow(unsigned row, GenericWidget* child)
     return true;
 }
 
-void QtLayout::DoRemoveChild(GenericWidget* child)
+void QtLayout::DoRemoveChild(AbstractWidget* child)
 {
     if (!GetInternalWidget(child))
         return;
@@ -210,7 +210,7 @@ void QtCollapsiblePanel::SetExpanded(bool expanded)
     UpdateSize();
 }
 
-bool QtCollapsiblePanel::DoSetHeaderPrefix(GenericWidget* header)
+bool QtCollapsiblePanel::DoSetHeaderPrefix(AbstractWidget* header)
 {
     if (!GetInternalWidget(header))
         return false;
@@ -222,7 +222,7 @@ bool QtCollapsiblePanel::DoSetHeaderPrefix(GenericWidget* header)
     return true;
 }
 
-bool QtCollapsiblePanel::DoSetHeaderSuffix(GenericWidget* header)
+bool QtCollapsiblePanel::DoSetHeaderSuffix(AbstractWidget* header)
 {
     if (!GetInternalWidget(header))
         return false;
@@ -235,7 +235,7 @@ bool QtCollapsiblePanel::DoSetHeaderSuffix(GenericWidget* header)
     return true;
 }
 
-bool QtCollapsiblePanel::DoSetBody(GenericWidget* body)
+bool QtCollapsiblePanel::DoSetBody(AbstractWidget* body)
 {
     if (!GetInternalWidget(body))
         return false;
@@ -351,9 +351,9 @@ QtHierarchyListModel::QtHierarchyListModel(AbstractMainWindow& mainWindow)
 {
 }
 
-void QtHierarchyListModel::InsertItem(GenericHierarchyListItem* item, const QModelIndex& parentIndex)
+void QtHierarchyListModel::InsertItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex)
 {
-    GenericHierarchyListItem* parentItem = GetItem(parentIndex);
+    AbstractHierarchyListItem* parentItem = GetItem(parentIndex);
 
     if (!parentIndex.isValid())
     {
@@ -374,9 +374,9 @@ void QtHierarchyListModel::InsertItem(GenericHierarchyListItem* item, const QMod
     }
 }
 
-void QtHierarchyListModel::RemoveItem(GenericHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow)
+void QtHierarchyListModel::RemoveItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow)
 {
-    GenericHierarchyListItem* parentItem = GetItem(parentIndex);
+    AbstractHierarchyListItem* parentItem = GetItem(parentIndex);
     const int objectIndex = item->GetIndex();
     if (objectIndex >= 0)
     {
@@ -386,27 +386,27 @@ void QtHierarchyListModel::RemoveItem(GenericHierarchyListItem* item, const QMod
     }
 }
 
-QModelIndex QtHierarchyListModel::GetIndex(GenericHierarchyListItem* item, QModelIndex hint)
+QModelIndex QtHierarchyListModel::GetIndex(AbstractHierarchyListItem* item, QModelIndex hint)
 {
     if (!item)
         return QModelIndex();
-    if (hint.isValid() && static_cast<GenericHierarchyListItem*>(hint.internalPointer()) == item)
+    if (hint.isValid() && static_cast<AbstractHierarchyListItem*>(hint.internalPointer()) == item)
         return hint;
 
-    GenericHierarchyListItem* parent = item->GetParent();
+    AbstractHierarchyListItem* parent = item->GetParent();
     const int childIndex = item->GetIndex();
     return index(childIndex, 0, GetIndex(parent));
 }
 
-GenericHierarchyListItem* QtHierarchyListModel::GetItem(const QModelIndex& index) const
+AbstractHierarchyListItem* QtHierarchyListModel::GetItem(const QModelIndex& index) const
 {
     if (index.isValid())
     {
-        GenericHierarchyListItem* item = static_cast<GenericHierarchyListItem*>(index.internalPointer());
+        AbstractHierarchyListItem* item = static_cast<AbstractHierarchyListItem*>(index.internalPointer());
         if (item)
             return item;
     }
-    return const_cast<GenericHierarchyListItem*>(&rootItem_);
+    return const_cast<AbstractHierarchyListItem*>(&rootItem_);
 }
 
 QVariant QtHierarchyListModel::data(const QModelIndex& index, int role) const
@@ -414,7 +414,7 @@ QVariant QtHierarchyListModel::data(const QModelIndex& index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    GenericHierarchyListItem* item = GetItem(index);
+    AbstractHierarchyListItem* item = GetItem(index);
     switch (role)
     {
     case Qt::DisplayRole:
@@ -436,8 +436,8 @@ QModelIndex QtHierarchyListModel::index(int row, int column, const QModelIndex& 
     if (parent.isValid() && parent.column() != 0)
         return QModelIndex();
 
-    GenericHierarchyListItem* parentItem = GetItem(parent);
-    GenericHierarchyListItem* childItem = static_cast<GenericHierarchyListItem*>(parentItem->GetChild(row));
+    AbstractHierarchyListItem* parentItem = GetItem(parent);
+    AbstractHierarchyListItem* childItem = static_cast<AbstractHierarchyListItem*>(parentItem->GetChild(row));
     if (childItem)
         return createIndex(row, column, childItem);
     else
@@ -449,8 +449,8 @@ QModelIndex QtHierarchyListModel::parent(const QModelIndex& index) const
     if (!index.isValid())
         return QModelIndex();
 
-    GenericHierarchyListItem* childItem = GetItem(index);
-    GenericHierarchyListItem* parentItem = static_cast<GenericHierarchyListItem*>(childItem->GetParent());
+    AbstractHierarchyListItem* childItem = GetItem(index);
+    AbstractHierarchyListItem* parentItem = static_cast<AbstractHierarchyListItem*>(childItem->GetParent());
 
     if (childItem == &rootItem_)
         return QModelIndex();
@@ -460,14 +460,14 @@ QModelIndex QtHierarchyListModel::parent(const QModelIndex& index) const
 
 int QtHierarchyListModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/) const
 {
-    GenericHierarchyListItem* parentItem = GetItem(parent);
+    AbstractHierarchyListItem* parentItem = GetItem(parent);
 
     return parentItem->GetNumChildren();
 }
 
 //////////////////////////////////////////////////////////////////////////
 QtHierarchyList::QtHierarchyList(AbstractMainWindow& mainWindow)
-    : GenericHierarchyList(mainWindow)
+    : AbstractHierarchyList(mainWindow)
     , treeView_(new QTreeView())
     , model_(new QtHierarchyListModel(mainWindow_))
 {
@@ -480,19 +480,19 @@ QtHierarchyList::QtHierarchyList(AbstractMainWindow& mainWindow)
     SetInternalWidget(this, treeView_);
 }
 
-void QtHierarchyList::AddItem(GenericHierarchyListItem* item, unsigned index, GenericHierarchyListItem* parent)
+void QtHierarchyList::AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent)
 {
     const QModelIndex parentIndex = model_->GetIndex(parent);
     model_->RemoveItem(item, parentIndex);
     model_->InsertItem(item, parentIndex);
 }
 
-void QtHierarchyList::SelectItem(GenericHierarchyListItem* item)
+void QtHierarchyList::SelectItem(AbstractHierarchyListItem* item)
 {
     //throw std::logic_error("The method or operation is not implemented.");
 }
 
-void QtHierarchyList::DeselectItem(GenericHierarchyListItem* item)
+void QtHierarchyList::DeselectItem(AbstractHierarchyListItem* item)
 {
     //throw std::logic_error("The method or operation is not implemented.");
 }
@@ -517,7 +517,7 @@ QtMenu::QtMenu(QtMainWindow* host, QAction* action)
 
 }
 
-GenericMenu* QtMenu::AddMenu(const String& name)
+AbstractMenu* QtMenu::AddMenu(const String& name)
 {
     if (!menu_)
         return nullptr;
@@ -526,7 +526,7 @@ GenericMenu* QtMenu::AddMenu(const String& name)
     return &children_.back();
 }
 
-GenericMenu* QtMenu::AddAction(const String& name, const String& actionId)
+AbstractMenu* QtMenu::AddAction(const String& name, const String& actionId)
 {
     if (!menu_)
         return nullptr;
@@ -560,7 +560,7 @@ QtMainWindow::~QtMainWindow()
         delete item.second_;
 }
 
-GenericDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocationHint::Undocked*/)
+AbstractDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocationHint::Undocked*/)
 {
     auto dialog = MakeShared<QtDockDialog>(*this);
     dialog->SetParent(nullptr);
@@ -579,7 +579,7 @@ void QtMainWindow::AddAction(const AbstractAction& actionDesc)
     actions_[actionDesc.id_] = action;
 }
 
-GenericMenu* QtMainWindow::AddMenu(const String& name)
+AbstractMenu* QtMainWindow::AddMenu(const String& name)
 {
     QMenu* menu = menuBar()->addMenu(Cast(name));
     menus_.push_back(QtMenu(this, menu));

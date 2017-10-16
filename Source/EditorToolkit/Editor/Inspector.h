@@ -187,7 +187,7 @@ public:
     void SetInspectable(Inspectable* inspectable);
 
 private:
-    GenericDialog* dialog_ = nullptr;
+    AbstractDialog* dialog_ = nullptr;
     AbstractScrollArea* scrollRegion_ = nullptr;
     AbstractLayout* layout_ = nullptr;
 
