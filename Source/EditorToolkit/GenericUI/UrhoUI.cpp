@@ -503,11 +503,10 @@ UrhoButton::UrhoButton(AbstractMainWindow& mainWindow)
 {
 }
 
-AbstractButton& UrhoButton::SetText(const String& text)
+void UrhoButton::SetText(const String& text)
 {
     text_->SetText(text);
     UpdateButtonSize();
-    return *this;
 }
 
 void UrhoButton::OnParentSet()
@@ -541,13 +540,12 @@ UrhoText::UrhoText(AbstractMainWindow& mainWindow)
 {
 }
 
-AbstractText& UrhoText::SetText(const String& text)
+void UrhoText::SetText(const String& text)
 {
     text_->SetText(text);
     IntVector2 size = text_->GetMinSize();
     size.x_ = Max(size.x_, size.y_);
     text_->SetFixedSize(size);
-    return *this;
 }
 
 unsigned UrhoText::GetTextWidth() const
@@ -571,12 +569,11 @@ UrhoLineEdit::UrhoLineEdit(AbstractMainWindow& mainWindow)
 {
 }
 
-AbstractLineEdit& UrhoLineEdit::SetText(const String& text)
+void UrhoLineEdit::SetText(const String& text)
 {
     suppressTextChange_ = true;
     lineEdit_->SetText(text);
     suppressTextChange_ = false;
-    return *this;
 }
 
 const String& UrhoLineEdit::GetText() const
@@ -612,10 +609,9 @@ UrhoCheckBox::UrhoCheckBox(AbstractMainWindow& mainWindow)
 {
 }
 
-AbstractCheckBox& UrhoCheckBox::SetChecked(bool checked)
+void UrhoCheckBox::SetChecked(bool checked)
 {
     checkBox_->SetChecked(checked);
-    return *this;
 }
 
 void UrhoCheckBox::OnParentSet()

@@ -222,7 +222,7 @@ class AbstractButton : public GenericWidget
 
 public:
     AbstractButton(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
-    virtual AbstractButton& SetText(const String& text) = 0;
+    virtual void SetText(const String& text) = 0;
 };
 
 class AbstractText : public GenericWidget
@@ -231,7 +231,7 @@ class AbstractText : public GenericWidget
 
 public:
     AbstractText(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
-    virtual AbstractText& SetText(const String& text) = 0;
+    virtual void SetText(const String& text) = 0;
     virtual unsigned GetTextWidth() const = 0;
 };
 
@@ -241,7 +241,7 @@ class AbstractLineEdit : public GenericWidget
 
 public:
     AbstractLineEdit(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
-    virtual AbstractLineEdit& SetText(const String& text) = 0;
+    virtual void SetText(const String& text) = 0;
     virtual const String& GetText() const = 0;
 
 public:
@@ -255,7 +255,7 @@ class AbstractCheckBox : public GenericWidget
 
 public:
     AbstractCheckBox(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
-    virtual AbstractCheckBox& SetChecked(bool checked) = 0;
+    virtual void SetChecked(bool checked) = 0;
 };
 
 class GenericHierarchyListItem : public Object

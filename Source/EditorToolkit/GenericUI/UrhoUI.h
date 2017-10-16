@@ -117,7 +117,7 @@ class UrhoButton : public AbstractButton
 
 public:
     UrhoButton(AbstractMainWindow& mainWindow);
-    AbstractButton& SetText(const String& text) override;
+    void SetText(const String& text) override;
 
 private:
     void OnParentSet() override;
@@ -135,7 +135,7 @@ class UrhoText : public AbstractText
 
 public:
     UrhoText(AbstractMainWindow& mainWindow);
-    AbstractText& SetText(const String& text) override;
+    void SetText(const String& text) override;
     unsigned GetTextWidth() const override;
 
 private:
@@ -151,7 +151,7 @@ class UrhoLineEdit : public AbstractLineEdit
 
 public:
     UrhoLineEdit(AbstractMainWindow& mainWindow);
-    AbstractLineEdit& SetText(const String& text) override;
+    void SetText(const String& text) override;
     const String& GetText() const override;
 
 private:
@@ -168,7 +168,7 @@ class UrhoCheckBox : public AbstractCheckBox
 
 public:
     UrhoCheckBox(AbstractMainWindow& mainWindow);
-    AbstractCheckBox& SetChecked(bool checked) override;
+    void SetChecked(bool checked) override;
     //AbstractCheckBox& SetText(const String& text) override;
 
 private:

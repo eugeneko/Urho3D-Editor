@@ -135,7 +135,7 @@ class QtButton : public AbstractButton
 {
 public:
     QtButton(AbstractMainWindow& mainWindow);
-    AbstractButton& SetText(const String& text) override;
+    void SetText(const String& text) override;
 
 
 private:
@@ -149,7 +149,7 @@ class QtText : public AbstractText
 
 public:
     QtText(AbstractMainWindow& mainWindow);
-    AbstractText& SetText(const String& text) override;
+    void SetText(const String& text) override;
     unsigned GetTextWidth() const override;
 
 private:
@@ -164,7 +164,7 @@ class QtLineEdit : public QObject, public AbstractLineEdit
 
 public:
     QtLineEdit(AbstractMainWindow& mainWindow);
-    AbstractLineEdit& SetText(const String& text) override;
+    void SetText(const String& text) override;
     const String& GetText() const override;
 
 private:
@@ -179,7 +179,7 @@ class QtCheckBox : public AbstractCheckBox
 
 public:
     QtCheckBox(AbstractMainWindow& mainWindow);
-    AbstractCheckBox& SetChecked(bool checked) override;
+    void SetChecked(bool checked) override;
 
 private:
     QCheckBox* checkBox_ = nullptr;

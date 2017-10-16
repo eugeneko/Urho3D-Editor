@@ -276,10 +276,9 @@ QtButton::QtButton(AbstractMainWindow& mainWindow)
     SetInternalWidget(this, pushButton_);
 }
 
-AbstractButton& QtButton::SetText(const String& text)
+void QtButton::SetText(const String& text)
 {
     pushButton_->setText(Cast(text));
-    return *this;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -290,10 +289,9 @@ QtText::QtText(AbstractMainWindow& mainWindow)
     SetInternalWidget(this, label_);
 }
 
-AbstractText& QtText::SetText(const String& text)
+void QtText::SetText(const String& text)
 {
     label_->setText(Cast(text));
-    return *this;
 }
 
 unsigned QtText::GetTextWidth() const
@@ -323,10 +321,9 @@ QtLineEdit::QtLineEdit(AbstractMainWindow& mainWindow)
     SetInternalWidget(this, lineEdit_);
 }
 
-AbstractLineEdit& QtLineEdit::SetText(const String& text)
+void QtLineEdit::SetText(const String& text)
 {
     lineEdit_->setText(Cast(text));
-    return *this;
 }
 
 const String& QtLineEdit::GetText() const
@@ -343,10 +340,9 @@ QtCheckBox::QtCheckBox(AbstractMainWindow& mainWindow)
     SetInternalWidget(this, checkBox_);
 }
 
-AbstractCheckBox& QtCheckBox::SetChecked(bool checked)
+void QtCheckBox::SetChecked(bool checked)
 {
     checkBox_->setChecked(checked);
-    return *this;
 }
 
 //////////////////////////////////////////////////////////////////////////
