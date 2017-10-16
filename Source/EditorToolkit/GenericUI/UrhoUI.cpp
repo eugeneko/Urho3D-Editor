@@ -420,10 +420,7 @@ void UrhoCollapsiblePanel::SetHeaderText(const String& text)
 void UrhoCollapsiblePanel::SetExpanded(bool expanded)
 {
     toggleButton_->SetChecked(expanded);
-    if (body_)
-        body_->SetVisible(expanded);
-    panel_->SetHeight(panel_->GetEffectiveMinSize().y_);
-    //panel_->GetParent()->UpdateLayout();
+    UpdateContentSize();
 }
 
 bool UrhoCollapsiblePanel::DoSetHeaderPrefix(GenericWidget* header)
@@ -458,7 +455,16 @@ bool UrhoCollapsiblePanel::DoSetBody(GenericWidget* body)
     body_ = GetInternalElement(body);
     panel_->AddChild(body_);
 
+    UpdateContentSize();
+
     return true;
+}
+
+void UrhoCollapsiblePanel::UpdateContentSize()
+{
+    if (body_)
+        body_->SetVisible(toggleButton_->IsChecked());
+    panel_->SetHeight(panel_->GetEffectiveMinSize().y_);
 }
 
 void UrhoCollapsiblePanel::OnParentSet()
@@ -537,7 +543,7 @@ UrhoText::UrhoText(AbstractMainWindow& mainWindow)
 AbstractText& UrhoText::SetText(const String& text)
 {
     text_->SetText(text);
-    IntVector2 size = text_->GetSize();
+    IntVector2 size = text_->GetMinSize();
     size.x_ = Max(size.x_, size.y_);
     text_->SetFixedSize(size);
     return *this;

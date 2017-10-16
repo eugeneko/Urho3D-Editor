@@ -145,23 +145,32 @@ void MultipleSerializableInspector::BuildUI(AbstractLayout* layout)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void MultiplePanelInspector::AddPanel(Inspectable* panel)
+void MultipleSerializableInspectorPanel::BuildUI(AbstractCollapsiblePanel* panel)
 {
-    panels_.Push(SharedPtr<Inspectable>(panel));
+    if (content_.GetNumObjects() == 0)
+        return;
+
+    const String typeName = content_.GetObjects()[0]->GetTypeName();
+    enabledCheckBox_ = panel->CreateHeaderPrefix<AbstractCheckBox>();
+    panel->SetHeaderText(typeName);
+    contentLayout_ = panel->CreateBody<AbstractLayout>();
+    content_.BuildUI(contentLayout_);
 }
 
-void MultiplePanelInspector::BuildUI(AbstractLayout* layout)
+//////////////////////////////////////////////////////////////////////////
+void MultiplePanelInspectable::AddPanel(InspectablePanel* panel)
 {
-//     for (unsigned i = 0; i < panels_.Size(); ++i)
-//     {
-//         AbstractCollapsiblePanel* collapsiblePanel
-//         layout->
-//     }
-//     layout->
-//
-//     for ()
-//     {
-//     }
+    panels_.Push(SharedPtr<InspectablePanel>(panel));
+}
+
+void MultiplePanelInspectable::BuildUI(AbstractLayout* layout)
+{
+    for (unsigned i = 0; i < panels_.Size(); ++i)
+    {
+        AbstractCollapsiblePanel* collapsiblePanel = layout->CreateRow<AbstractCollapsiblePanel>(i);
+        collapsiblePanel->SetExpanded(true);
+        panels_[i]->BuildUI(collapsiblePanel);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////

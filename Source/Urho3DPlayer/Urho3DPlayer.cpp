@@ -149,9 +149,12 @@ public:
 
         inspector_ = MakeShared<Inspector>(mainWindow);
 
-        auto inspectable = MakeShared<MultipleSerializableInspector>(context_);
-        inspectable->AddObject(scene_->GetChildren()[10]);
-        inspectable->AddObject(scene_->GetChildren()[20]);
+        auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+        inspectorPanel->AddObject(scene_->GetChildren()[10]);
+        inspectorPanel->AddObject(scene_->GetChildren()[20]);
+
+        auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
+        inspectable->AddPanel(inspectorPanel);
         inspector_->SetInspectable(inspectable);
 
         if (blenderHotkeys)

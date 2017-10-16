@@ -64,6 +64,8 @@ public:
     MultipleSerializableInspector(Context* context) : Inspectable(context) { }
 
     bool AddObject(Serializable* object);
+    const PODVector<Serializable*>& GetObjects() const { return objects_; }
+    unsigned GetNumObjects() const { return objects_.Size(); }
 
     void BuildUI(AbstractLayout* layout) override;
 
@@ -73,18 +75,46 @@ private:
 
 };
 
-class MultiplePanelInspector : public Inspectable
+class InspectablePanel : public Object
 {
-    URHO3D_OBJECT(MultiplePanelInspector, Inspectable);
+    URHO3D_OBJECT(InspectablePanel, Object);
 
 public:
-    MultiplePanelInspector(Context* context) : Inspectable(context) { }
-    void AddPanel(Inspectable* panel);
+    InspectablePanel(Context* context) : Object(context) { }
+
+    virtual void BuildUI(AbstractCollapsiblePanel* panel) = 0;
+};
+
+class MultipleSerializableInspectorPanel : public InspectablePanel
+{
+    URHO3D_OBJECT(MultipleSerializableInspectorPanel, InspectablePanel);
+
+public:
+    MultipleSerializableInspectorPanel(Context* context) : InspectablePanel(context), content_(context) { }
+
+    bool AddObject(Serializable* object) { return content_.AddObject(object); }
+
+    void BuildUI(AbstractCollapsiblePanel* panel) override;
+
+private:
+    MultipleSerializableInspector content_;
+
+    AbstractCheckBox* enabledCheckBox_ = nullptr;
+    AbstractLayout* contentLayout_ = nullptr;
+};
+
+class MultiplePanelInspectable : public Inspectable
+{
+    URHO3D_OBJECT(MultiplePanelInspectable, Inspectable);
+
+public:
+    MultiplePanelInspectable(Context* context) : Inspectable(context) { }
+    void AddPanel(InspectablePanel* panel);
 
     void BuildUI(AbstractLayout* layout) override;
 
 private:
-    Vector<SharedPtr<Inspectable>> panels_;
+    Vector<SharedPtr<InspectablePanel>> panels_;
 };
 
 class Inspector : public Object

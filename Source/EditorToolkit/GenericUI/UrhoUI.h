@@ -96,6 +96,8 @@ private:
     bool DoSetHeaderSuffix(GenericWidget* header) override;
     bool DoSetBody(GenericWidget* body) override;
 
+    void UpdateContentSize();
+
 private:
     BorderImage* panel_ = nullptr;
     UIElement* header_ = nullptr;
