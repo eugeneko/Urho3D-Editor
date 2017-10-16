@@ -242,10 +242,11 @@ class AbstractLineEdit : public GenericWidget
 public:
     AbstractLineEdit(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
     virtual AbstractLineEdit& SetText(const String& text) = 0;
+    virtual const String& GetText() const = 0;
 
 public:
-    std::function<void(const String& value)> onTextEdited_;
-    std::function<void(const String& value)> onTextFinished_;
+    std::function<void()> onTextEdited_;
+    std::function<void()> onTextFinished_;
 };
 
 class AbstractCheckBox : public GenericWidget

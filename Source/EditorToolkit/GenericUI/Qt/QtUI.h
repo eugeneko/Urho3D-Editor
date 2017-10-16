@@ -157,16 +157,19 @@ private:
 
 };
 
-class QtLineEdit : public AbstractLineEdit
+class QtLineEdit : public QObject, public AbstractLineEdit
 {
+    Q_OBJECT
     URHO3D_OBJECT(AbstractLineEdit, GenericWidget);
 
 public:
     QtLineEdit(AbstractMainWindow& mainWindow);
     AbstractLineEdit& SetText(const String& text) override;
+    const String& GetText() const override;
 
 private:
     QLineEdit* lineEdit_ = nullptr;
+    mutable String cachedText_;
 
 };
 

@@ -5,6 +5,44 @@
 namespace Urho3D
 {
 
+namespace AttributeMetadata
+{
+    static const StringHash P_APPLY_ON_COMMIT("ApplyOnCommit");
+}
+
+class AttributeMetadataInjector : public Object
+{
+    URHO3D_OBJECT(AttributeMetadataInjector, Object);
+
+public:
+    AttributeMetadataInjector(Context* context) : Object(context) { }
+
+    void AddMetadata(StringHash objectType, const String& attributeName, StringHash metadataKey, const Variant& metadata)
+    {
+        injectedMetadata_[objectType][attributeName][metadataKey] = metadata;
+    }
+
+    const Variant& GetMetadata(StringHash objectType, const String& attributeName, StringHash metadataKey)
+    {
+        auto objectMetadata = injectedMetadata_.Find(objectType);
+        if (objectMetadata == injectedMetadata_.End())
+            return Variant::EMPTY;
+
+        auto attributeMetadata = objectMetadata->second_.Find(attributeName);
+        if (attributeMetadata == objectMetadata->second_.End())
+            return Variant::EMPTY;
+
+        auto metadata = attributeMetadata->second_.Find(metadataKey);
+        if (metadata == attributeMetadata->second_.End())
+            return Variant::EMPTY;
+
+        return metadata->second_;
+    }
+
+private:
+    HashMap<StringHash, HashMap<String, HashMap<StringHash, Variant>>> injectedMetadata_;
+};
+
 class Inspectable : public Object
 {
     URHO3D_OBJECT(Inspectable, Object);
@@ -27,7 +65,7 @@ public:
 
 public:
     std::function<void()> onChanged_;
-    std::function<void()> onEntered_;
+    std::function<void()> onCommitted_;
 };
 
 class StringAttributeEditor : public AttributeEditor
@@ -50,6 +88,7 @@ public:
 
 private:
     void UnpackVariant(const Variant& source, float dest[]) const;
+    void PackVariant(Variant& dest, float source[]) const;
 
 private:
     unsigned numComponents_ = 1;
@@ -67,6 +106,8 @@ public:
     MultipleSerializableInspector(Context* context) : Inspectable(context) { }
 
     void SetMaxLabelLength(unsigned maxLength) { maxLabelLength_ = maxLength; }
+    void SetMetadataInjector(AttributeMetadataInjector* metadataInjector) { metadataInjector_ = metadataInjector; }
+
     bool AddObject(Serializable* object);
     const PODVector<Serializable*>& GetObjects() const { return objects_; }
     unsigned GetNumObjects() const { return objects_.Size(); }
@@ -74,13 +115,22 @@ public:
     void BuildUI(AbstractLayout* layout) override;
 
 private:
-    //AttributeEditor* BuildAttributeUI(AbstractLayout* layout, unsigned row);
+    SharedPtr<AttributeEditor> CreateAttributeEditor(unsigned attributeIndex, const AttributeInfo& attributeInfo);
+    const Variant& GetAttributeMetadata(StringHash objectType, const AttributeInfo& attributeInfo, StringHash metadataKey);
+    void LoadAttributeValues(unsigned attributeIndex, Vector<Variant>& values);
+    void StoreAttributeValues(unsigned attributeIndex, const Vector<Variant>& values);
+    void HandleAttributeChanged(unsigned attributeIndex);
+    void HandleAttribureCommitted(unsigned attributeIndex);
 
 private:
     unsigned maxLabelLength_ = M_MAX_UNSIGNED;
-    PODVector<Serializable*> objects_;
-    Vector<SharedPtr<AttributeEditor>> attributes_;
+    SharedPtr<AttributeMetadataInjector> metadataInjector_;
 
+    PODVector<Serializable*> objects_;
+    StringHash objectType_;
+    Vector<SharedPtr<AttributeEditor>> attributeEditors_;
+
+    Vector<Variant> attributeValues_;
 };
 
 class InspectablePanel : public Object
@@ -101,6 +151,8 @@ public:
     MultipleSerializableInspectorPanel(Context* context) : InspectablePanel(context), content_(context) { }
 
     void SetMaxLabelLength(unsigned maxLength) { content_.SetMaxLabelLength(maxLength); }
+    void SetMetadataInjector(AttributeMetadataInjector* metadataInjector) { content_.SetMetadataInjector(metadataInjector); }
+
     bool AddObject(Serializable* object) { return content_.AddObject(object); }
 
     void BuildUI(AbstractCollapsiblePanel* panel) override;

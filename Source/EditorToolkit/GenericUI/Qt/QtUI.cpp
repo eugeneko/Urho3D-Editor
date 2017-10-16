@@ -306,6 +306,20 @@ QtLineEdit::QtLineEdit(AbstractMainWindow& mainWindow)
     : AbstractLineEdit(mainWindow)
     , lineEdit_(new QLineEdit())
 {
+    connect(lineEdit_, &QLineEdit::textEdited,
+        [=]()
+    {
+        if (onTextEdited_)
+            onTextEdited_();
+    });
+
+    connect(lineEdit_, &QLineEdit::returnPressed,
+        [=]()
+    {
+        if (onTextFinished_)
+            onTextFinished_();
+    });
+
     SetInternalWidget(this, lineEdit_);
 }
 
@@ -313,6 +327,12 @@ AbstractLineEdit& QtLineEdit::SetText(const String& text)
 {
     lineEdit_->setText(Cast(text));
     return *this;
+}
+
+const String& QtLineEdit::GetText() const
+{
+    cachedText_ = Cast(lineEdit_->text());
+    return cachedText_;
 }
 
 //////////////////////////////////////////////////////////////////////////

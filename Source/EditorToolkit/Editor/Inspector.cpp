@@ -1,4 +1,5 @@
 #include "Inspector.h"
+#include <Urho3D/Core/StringUtils.h>
 
 namespace Urho3D
 {
@@ -24,9 +25,17 @@ void VectorAttributeEditor::BuildUI(AbstractLayout* layout, unsigned row, bool o
         AbstractText* componentLabel = internalLayout_->CreateCell<AbstractText>(0, cell++);
         componentLabel->SetText(labels[i]);
         AbstractLineEdit* componentValue = internalLayout_->CreateCell<AbstractLineEdit>(0, cell++);
-        componentValue->onTextEdited_ = [this](const String& value)
+        componentValue->onTextEdited_ = [=]()
         {
-
+            componentsDefined_[i] = true;
+            componentsValues_[i] = ToFloat(componentValue->GetText());
+            if (onChanged_)
+                onChanged_();
+        };
+        componentValue->onTextFinished_ = [=]()
+        {
+            if (onCommitted_)
+                onCommitted_();
         };
         componentEditors_.Push(componentValue);
     }
@@ -60,6 +69,15 @@ void VectorAttributeEditor::SetValues(const Vector<Variant>& values)
 
 void VectorAttributeEditor::GetValues(Vector<Variant>& values)
 {
+    for (unsigned i = 0; i < values.Size(); ++i)
+    {
+        float components[4];
+        UnpackVariant(values[i], components);
+        for (unsigned j = 0; j < numComponents_; ++j)
+            if (componentsDefined_[j])
+                components[j] = componentsValues_[j];
+        PackVariant(values[i], components);
+    }
 
 }
 
@@ -103,6 +121,31 @@ void VectorAttributeEditor::UnpackVariant(const Variant& source, float dest[]) c
     }
 }
 
+void VectorAttributeEditor::PackVariant(Variant& dest, float source[]) const
+{
+    switch (numComponents_)
+    {
+    case 1:
+        dest = source[0];
+        break;
+
+    case 2:
+        dest = Vector2(source[0], source[1]);
+        break;
+
+    case 3:
+        dest = Vector3(source[0], source[1], source[2]);
+        break;
+
+    case 4:
+        dest = Vector4(source[0], source[1], source[2], source[4]);
+        break;
+
+    default:
+        assert(0);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////////
 bool MultipleSerializableInspector::AddObject(Serializable* object)
 {
@@ -116,6 +159,7 @@ bool MultipleSerializableInspector::AddObject(Serializable* object)
             return false;
     }
 
+    objectType_ = object->GetType();
     objects_.Push(object);
     return true;
 }
@@ -148,21 +192,100 @@ void MultipleSerializableInspector::BuildUI(AbstractLayout* layout)
             attributeNameText->SetText(attributeInfo.name_);
         }
 
-        // Gather values
-        values.Clear();
-        for (Serializable* object : objects_)
-            values.Push(object->GetAttribute(i));
-
-        if (attributeInfo.type_ == VAR_VECTOR3)
+        // Try to create attribute editor
+        SharedPtr<AttributeEditor> attributeEditor = CreateAttributeEditor(i, attributeInfo);
+        attributeEditors_.Push(attributeEditor);
+        if (attributeEditor)
         {
-            auto editor = MakeShared<VectorAttributeEditor>(context_, 3);
-            editor->BuildUI(layout, row, occupyRow);
-            editor->SetValues(values);
-            attributes_.Push(editor);
+            const bool applyOnCommit = GetAttributeMetadata(objectType_, attributeInfo, AttributeMetadata::P_APPLY_ON_COMMIT).GetBool();
+
+            attributeEditor->BuildUI(layout, row, occupyRow);
+
+            values.Clear();
+            for (Serializable* object : objects_)
+                values.Push(object->GetAttribute(i));
+
+            attributeEditor->SetValues(values);
+            attributeEditor->onChanged_ = [=]()
+            {
+                if (!applyOnCommit)
+                    HandleAttributeChanged(i);
+            };
+            attributeEditor->onCommitted_ = [=]()
+            {
+                if (applyOnCommit)
+                    HandleAttributeChanged(i);
+                HandleAttribureCommitted(i);
+            };
         }
+
         ++row;
     }
     layout->CreateRow<AbstractDummyWidget>(row);
+}
+
+SharedPtr<AttributeEditor> MultipleSerializableInspector::CreateAttributeEditor(
+    unsigned attributeIndex, const AttributeInfo& attributeInfo)
+{
+    switch (attributeInfo.type_)
+    {
+    case VAR_VECTOR3:
+        {
+            auto editor = MakeShared<VectorAttributeEditor>(context_, 3);
+            return editor;
+        }
+    default:
+        return nullptr;
+    }
+}
+
+const Variant& MultipleSerializableInspector::GetAttributeMetadata(
+    StringHash objectType, const AttributeInfo& attributeInfo, StringHash metadataKey)
+{
+    if (metadataInjector_)
+    {
+        const Variant& injectedMetadata = metadataInjector_->GetMetadata(objectType, attributeInfo.name_, metadataKey);
+        if (!injectedMetadata.IsEmpty())
+            return injectedMetadata;
+    }
+    return attributeInfo.GetMetadata(metadataKey);
+
+}
+
+void MultipleSerializableInspector::LoadAttributeValues(unsigned attributeIndex, Vector<Variant>& values)
+{
+    values.Resize(objects_.Size());
+    for (unsigned i = 0; i < objects_.Size(); ++i)
+        values[i] = objects_[i]->GetAttribute(attributeIndex);
+}
+
+void MultipleSerializableInspector::StoreAttributeValues(unsigned attributeIndex, const Vector<Variant>& values)
+{
+    assert(values.Size() == objects_.Size());
+    for (unsigned i = 0; i < objects_.Size(); ++i)
+        objects_[i]->SetAttribute(attributeIndex, values[i]);
+}
+
+void MultipleSerializableInspector::HandleAttributeChanged(unsigned attributeIndex)
+{
+    AttributeEditor* attributeEditor = attributeEditors_[attributeIndex];
+    if (!attributeEditor)
+        return;
+
+    // Update serializable attribute values
+    LoadAttributeValues(attributeIndex, attributeValues_);
+    attributeEditor->GetValues(attributeValues_);
+    StoreAttributeValues(attributeIndex, attributeValues_);
+
+    // Update values in UI
+    LoadAttributeValues(attributeIndex, attributeValues_);
+    attributeEditor->SetValues(attributeValues_);
+}
+
+void MultipleSerializableInspector::HandleAttribureCommitted(unsigned attributeIndex)
+{
+    if (!attributeEditors_[attributeIndex])
+        return;
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -149,7 +149,11 @@ public:
 
         inspector_ = MakeShared<Inspector>(mainWindow);
 
+        auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
+        attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
+
         auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+        inspectorPanel->SetMetadataInjector(attributeMetadataInjector);
         inspectorPanel->SetMaxLabelLength(100);
         inspectorPanel->AddObject(scene_->GetChildren()[10]);
         inspectorPanel->AddObject(scene_->GetChildren()[20]);

@@ -152,12 +152,14 @@ class UrhoLineEdit : public AbstractLineEdit
 public:
     UrhoLineEdit(AbstractMainWindow& mainWindow);
     AbstractLineEdit& SetText(const String& text) override;
+    const String& GetText() const override;
 
 private:
     void OnParentSet() override;
 
 private:
     LineEdit* lineEdit_ = nullptr;
+    bool suppressTextChange_ = false;
 };
 
 class UrhoCheckBox : public AbstractCheckBox

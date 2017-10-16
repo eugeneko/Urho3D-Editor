@@ -573,8 +573,15 @@ UrhoLineEdit::UrhoLineEdit(AbstractMainWindow& mainWindow)
 
 AbstractLineEdit& UrhoLineEdit::SetText(const String& text)
 {
+    suppressTextChange_ = true;
     lineEdit_->SetText(text);
+    suppressTextChange_ = false;
     return *this;
+}
+
+const String& UrhoLineEdit::GetText() const
+{
+    return lineEdit_->GetText();
 }
 
 void UrhoLineEdit::OnParentSet()
@@ -585,15 +592,15 @@ void UrhoLineEdit::OnParentSet()
     lineEdit_->SetStyleAuto();
     const int defaultHeight = static_cast<int>(lineEdit_->GetTextElement()->GetRowHeight());
     lineEdit_->SetMinSize(defaultHeight * 2, defaultHeight);
-    SubscribeToEvent(lineEdit_, E_TEXTENTRY, [this](StringHash /*eventType*/, VariantMap& /*eventData*/)
+    SubscribeToEvent(lineEdit_, E_TEXTCHANGED, [this](StringHash /*eventType*/, VariantMap& /*eventData*/)
     {
-        if (onTextEdited_)
-            onTextEdited_(lineEdit_->GetText());
+        if (!suppressTextChange_ && onTextEdited_)
+            onTextEdited_();
     });
     SubscribeToEvent(lineEdit_, E_TEXTFINISHED, [this](StringHash /*eventType*/, VariantMap& /*eventData*/)
     {
         if (onTextFinished_)
-            onTextFinished_(lineEdit_->GetText());
+            onTextFinished_();
     });
 
     SetInternalElement(this, lineEdit_);
