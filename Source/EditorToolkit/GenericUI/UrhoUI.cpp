@@ -399,6 +399,7 @@ void UrhoLayout::DoRemoveChild(GenericWidget* child)
 {
     if (UIElement* childElement = GetInternalElement(child))
         body_->RemoveChild(childElement);
+    SetInternalElement(child, nullptr);
 }
 
 void UrhoLayout::HandleLayoutChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)
@@ -549,6 +550,11 @@ AbstractText& UrhoText::SetText(const String& text)
     return *this;
 }
 
+unsigned UrhoText::GetTextWidth() const
+{
+    return text_->GetMinWidth();
+}
+
 void UrhoText::OnParentSet()
 {
     UIElement* parent = GetParentElement(this);
@@ -579,6 +585,16 @@ void UrhoLineEdit::OnParentSet()
     lineEdit_->SetStyleAuto();
     const int defaultHeight = static_cast<int>(lineEdit_->GetTextElement()->GetRowHeight());
     lineEdit_->SetMinSize(defaultHeight * 2, defaultHeight);
+    SubscribeToEvent(lineEdit_, E_TEXTENTRY, [this](StringHash /*eventType*/, VariantMap& /*eventData*/)
+    {
+        if (onTextEdited_)
+            onTextEdited_(lineEdit_->GetText());
+    });
+    SubscribeToEvent(lineEdit_, E_TEXTFINISHED, [this](StringHash /*eventType*/, VariantMap& /*eventData*/)
+    {
+        if (onTextFinished_)
+            onTextFinished_(lineEdit_->GetText());
+    });
 
     SetInternalElement(this, lineEdit_);
 }

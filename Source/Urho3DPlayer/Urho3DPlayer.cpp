@@ -150,6 +150,7 @@ public:
         inspector_ = MakeShared<Inspector>(mainWindow);
 
         auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+        inspectorPanel->SetMaxLabelLength(100);
         inspectorPanel->AddObject(scene_->GetChildren()[10]);
         inspectorPanel->AddObject(scene_->GetChildren()[20]);
 

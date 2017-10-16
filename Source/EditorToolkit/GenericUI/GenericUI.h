@@ -69,6 +69,8 @@ public:
     template <class T> void SetInternalHandle(T pointer) { internalPointer_ = MakeCustomValue(pointer); }
     template <class T> T GetInternalHandle() const { return internalPointer_.GetCustom<T>(); }
 
+    AbstractMainWindow* GetMainWindow() const { return &mainWindow_; }
+
 private:
     /// Called when widget is attached to the root.
     virtual void OnParentSet() { }
@@ -147,6 +149,7 @@ public:
     GenericWidget* CreateRow(StringHash type, unsigned row);
     template <class T> T* CreateRow(unsigned row) { return dynamic_cast<T*>(CreateRow(T::GetTypeStatic(), row)); }
 
+    void RemoveRow(unsigned row);
     void RemoveAllChildren();
 
 private:
@@ -229,6 +232,7 @@ class AbstractText : public GenericWidget
 public:
     AbstractText(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
     virtual AbstractText& SetText(const String& text) = 0;
+    virtual unsigned GetTextWidth() const = 0;
 };
 
 class AbstractLineEdit : public GenericWidget
@@ -238,6 +242,10 @@ class AbstractLineEdit : public GenericWidget
 public:
     AbstractLineEdit(AbstractMainWindow& mainWindow) : GenericWidget(mainWindow) { }
     virtual AbstractLineEdit& SetText(const String& text) = 0;
+
+public:
+    std::function<void(const String& value)> onTextEdited_;
+    std::function<void(const String& value)> onTextFinished_;
 };
 
 class AbstractCheckBox : public GenericWidget

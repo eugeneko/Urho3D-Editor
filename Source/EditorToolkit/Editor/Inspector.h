@@ -21,10 +21,13 @@ class AttributeEditor : public Object
 
 public:
     AttributeEditor(Context* context) : Object(context) { }
-    virtual void BuildUI(AbstractLayout* layout, unsigned& row, unsigned column) = 0;
+    virtual void BuildUI(AbstractLayout* layout, unsigned row, bool occupyRow) = 0;
     virtual void SetValues(const Vector<Variant>& values) = 0;
     virtual void GetValues(Vector<Variant>& values) = 0;
 
+public:
+    std::function<void()> onChanged_;
+    std::function<void()> onEntered_;
 };
 
 class StringAttributeEditor : public AttributeEditor
@@ -41,7 +44,7 @@ class VectorAttributeEditor : public AttributeEditor
 
 public:
     VectorAttributeEditor(Context* context, unsigned numComponents);
-    void BuildUI(AbstractLayout* layout, unsigned& row, unsigned column) override;
+    void BuildUI(AbstractLayout* layout, unsigned row, bool occupyRow) override;
     void SetValues(const Vector<Variant>& values) override;
     void GetValues(Vector<Variant>& values) override;
 
@@ -63,6 +66,7 @@ class MultipleSerializableInspector : public Inspectable
 public:
     MultipleSerializableInspector(Context* context) : Inspectable(context) { }
 
+    void SetMaxLabelLength(unsigned maxLength) { maxLabelLength_ = maxLength; }
     bool AddObject(Serializable* object);
     const PODVector<Serializable*>& GetObjects() const { return objects_; }
     unsigned GetNumObjects() const { return objects_.Size(); }
@@ -70,6 +74,10 @@ public:
     void BuildUI(AbstractLayout* layout) override;
 
 private:
+    //AttributeEditor* BuildAttributeUI(AbstractLayout* layout, unsigned row);
+
+private:
+    unsigned maxLabelLength_ = M_MAX_UNSIGNED;
     PODVector<Serializable*> objects_;
     Vector<SharedPtr<AttributeEditor>> attributes_;
 
@@ -92,6 +100,7 @@ class MultipleSerializableInspectorPanel : public InspectablePanel
 public:
     MultipleSerializableInspectorPanel(Context* context) : InspectablePanel(context), content_(context) { }
 
+    void SetMaxLabelLength(unsigned maxLength) { content_.SetMaxLabelLength(maxLength); }
     bool AddObject(Serializable* object) { return content_.AddObject(object); }
 
     void BuildUI(AbstractCollapsiblePanel* panel) override;

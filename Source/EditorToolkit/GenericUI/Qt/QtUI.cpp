@@ -159,7 +159,13 @@ bool QtLayout::DoSetRow(unsigned row, GenericWidget* child)
 
 void QtLayout::DoRemoveChild(GenericWidget* child)
 {
+    if (!GetInternalWidget(child))
+        return;
 
+    QWidget* widget = GetInternalWidget(child);
+    layout_->removeWidget(widget);
+    delete widget;
+    SetInternalWidget(child, nullptr);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -288,6 +294,11 @@ AbstractText& QtText::SetText(const String& text)
 {
     label_->setText(Cast(text));
     return *this;
+}
+
+unsigned QtText::GetTextWidth() const
+{
+    return static_cast<unsigned>(label_->sizeHint().width());
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -136,6 +136,7 @@ class UrhoText : public AbstractText
 public:
     UrhoText(AbstractMainWindow& mainWindow);
     AbstractText& SetText(const String& text) override;
+    unsigned GetTextWidth() const override;
 
 private:
     void OnParentSet() override;

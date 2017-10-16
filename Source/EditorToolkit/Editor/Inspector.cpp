@@ -10,9 +10,13 @@ VectorAttributeEditor::VectorAttributeEditor(Context* context, unsigned numCompo
     assert(numComponents >= 1 && numComponents <= 4);
 }
 
-void VectorAttributeEditor::BuildUI(AbstractLayout* layout, unsigned& row, unsigned column)
+void VectorAttributeEditor::BuildUI(AbstractLayout* layout, unsigned row, bool occupyRow)
 {
-    internalLayout_ = layout->CreateCell<AbstractLayout>(row, column);
+    if (occupyRow)
+        internalLayout_ = layout->CreateRow<AbstractLayout>(row);
+    else
+        internalLayout_ = layout->CreateCell<AbstractLayout>(row, 1);
+
     unsigned cell = 0;
     const char* labels[] = { "X", "Y", "Z", "W" };
     for (unsigned i = 0; i < numComponents_; ++i)
@@ -20,6 +24,10 @@ void VectorAttributeEditor::BuildUI(AbstractLayout* layout, unsigned& row, unsig
         AbstractText* componentLabel = internalLayout_->CreateCell<AbstractText>(0, cell++);
         componentLabel->SetText(labels[i]);
         AbstractLineEdit* componentValue = internalLayout_->CreateCell<AbstractLineEdit>(0, cell++);
+        componentValue->onTextEdited_ = [this](const String& value)
+        {
+
+        };
         componentEditors_.Push(componentValue);
     }
 }
@@ -124,8 +132,21 @@ void MultipleSerializableInspector::BuildUI(AbstractLayout* layout)
     for (unsigned i = 0; i < attributes.Size(); ++i)
     {
         const AttributeInfo& attributeInfo = attributes[i];
-        AbstractText* attributeNameText = layout->CreateCell<AbstractText>(row, 0);
+
+        // Create text at row and check the width
+        AbstractText* attributeNameText = layout->CreateRow<AbstractText>(row);
         attributeNameText->SetText(attributeInfo.name_);
+
+        // Re-create text if small enough
+        const bool occupyRow = attributeNameText->GetTextWidth() > maxLabelLength_;
+        if (occupyRow)
+            ++row;
+        else
+        {
+            layout->RemoveRow(row);
+            attributeNameText = layout->CreateCell<AbstractText>(row, 0);
+            attributeNameText->SetText(attributeInfo.name_);
+        }
 
         // Gather values
         values.Clear();
@@ -135,7 +156,7 @@ void MultipleSerializableInspector::BuildUI(AbstractLayout* layout)
         if (attributeInfo.type_ == VAR_VECTOR3)
         {
             auto editor = MakeShared<VectorAttributeEditor>(context_, 3);
-            editor->BuildUI(layout, row, 1);
+            editor->BuildUI(layout, row, occupyRow);
             editor->SetValues(values);
             attributes_.Push(editor);
         }

@@ -150,6 +150,7 @@ class QtText : public AbstractText
 public:
     QtText(AbstractMainWindow& mainWindow);
     AbstractText& SetText(const String& text) override;
+    unsigned GetTextWidth() const override;
 
 private:
     QLabel* label_ = nullptr;

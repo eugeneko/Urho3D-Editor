@@ -118,13 +118,35 @@ GenericWidget* AbstractLayout::CreateRow(StringHash type, unsigned row)
     return child;
 }
 
+void AbstractLayout::RemoveRow(unsigned row)
+{
+    if (row >= rows_.Size())
+        return;
+
+    Vector<RowData> rowsCopy = rows_;
+    rows_[row].type_ = RowType::EmptyRow;
+    rows_[row].columns_.Clear();
+
+    for (GenericWidget* cell : rowsCopy[row].columns_)
+    {
+        if (cell)
+            DoRemoveChild(cell);
+    }
+}
+
 void AbstractLayout::RemoveAllChildren()
 {
-    for (RowData& row : rows_)
+    Vector<RowData> rowsCopy = rows_;
+    rows_.Clear();
+
+    for (RowData& row : rowsCopy)
+    {
         for (GenericWidget* cell : row.columns_)
+        {
             if (cell)
                 DoRemoveChild(cell);
-    rows_.Clear();
+        }
+    }
 }
 
 bool AbstractLayout::EnsureRow(unsigned row, RowType type)
