@@ -299,6 +299,10 @@ public:
     AbstractView3D(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
     /// Set the content of the view.
     virtual void SetView(Scene* scene, Camera* camera) = 0;
+    /// Set auto update.
+    virtual void SetAutoUpdate(bool autoUpdate) = 0;
+    /// Update view.
+    virtual void UpdateView() = 0;
 
 };
 

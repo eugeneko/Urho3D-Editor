@@ -9,6 +9,7 @@
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/Button.h>
 #include <Urho3D/UI/Menu.h>
+#include <Urho3D/UI/View3D.h>
 #include <Urho3D/UI/LineEdit.h>
 #include <numeric>
 
@@ -732,6 +733,32 @@ void UrhoHierarchyListItemWidget::ApplyStyle()
 {
     SetStyle("FileSelectorListText");
 }
+
+//////////////////////////////////////////////////////////////////////////
+void UrhoView3D::SetView(Scene* scene, Camera* camera)
+{
+    view3D_->SetView(scene, camera);
+}
+
+void UrhoView3D::SetAutoUpdate(bool autoUpdate)
+{
+    view3D_->SetAutoUpdate(autoUpdate);
+}
+
+void UrhoView3D::UpdateView()
+{
+    view3D_->QueueUpdate();
+}
+
+void UrhoView3D::OnParentSet()
+{
+    UIElement* parent = GetParentElement(this);
+
+    view3D_ = parent->CreateChild<View3D>();
+
+    SetInternalElement(this, view3D_);
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 StandardUrhoInput::StandardUrhoInput(Context* context)

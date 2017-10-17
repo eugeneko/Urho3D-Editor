@@ -7,14 +7,16 @@
 namespace Urho3D
 {
 
-class UrhoMainWindow;
 class UI;
 class Menu;
 class LineEdit;
 class Button;
 class CheckBox;
 class ScrollView;
+class View3D;
 class ListView;
+
+class UrhoMainWindow;
 
 class UrhoDialog : public AbstractDialog
 {
@@ -213,6 +215,24 @@ private:
     AbstractHierarchyListItem rootItem_;
 };
 
+class UrhoView3D : public AbstractView3D
+{
+    URHO3D_OBJECT(UrhoView3D, AbstractView3D);
+
+public:
+    UrhoView3D(AbstractMainWindow& mainWindow) : AbstractView3D(mainWindow) { }
+    void SetView(Scene* scene, Camera* camera) override;
+    void SetAutoUpdate(bool autoUpdate) override;
+    void UpdateView() override;
+
+private:
+    void OnParentSet() override;
+
+private:
+    View3D* view3D_ = nullptr;
+
+};
+
 class StandardUrhoInput : public StandardInput, public Object
 {
     URHO3D_OBJECT(StandardUrhoInput, Object);
@@ -299,6 +319,7 @@ private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         UrhoLineEdit);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCheckBox,         UrhoCheckBox);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList,    UrhoHierarchyList);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateView3D,           UrhoView3D);
 
     void HandleResized(StringHash eventType, VariantMap& eventData);
 

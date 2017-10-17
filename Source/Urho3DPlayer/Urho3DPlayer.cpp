@@ -151,6 +151,7 @@ public:
             dialog->SetName("View3D");
 
             AbstractView3D* view = dialog->CreateContent<AbstractView3D>();
+            view->SetAutoUpdate(false);
             view->SetView(scene_, scene_->GetChild("Camera")->GetComponent<Camera>());
         }
 

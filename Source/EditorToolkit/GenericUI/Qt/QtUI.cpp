@@ -527,27 +527,35 @@ void QtUrhoRenderSurface::SetView(Scene* scene, Camera* camera)
     viewport_->SetCamera(camera);
 }
 
+void QtUrhoRenderSurface::SetAutoUpdate(bool autoUpdate)
+{
+    autoUpdate_ = autoUpdate;
+}
+
 void QtUrhoRenderSurface::paintEvent(QPaintEvent* event)
 {
     if (!renderTexture_ || !depthTexture_ || !viewport_)
         return;
 
-    if (!renderTexture_->GetImage(*image_))
-        return;
-
-    const int imageWidth = static_cast<int>(image_->GetWidth());
-    const int imageHeight = static_cast<int>(image_->GetHeight());
-    const QSize imageSize(imageWidth, imageHeight);
-    if (imageData_.size() != imageSize)
-        imageData_ = QImage(imageSize, QImage::Format_RGBA8888);
-
-    unsigned char* sourceData = image_->GetData();
-    for (int y = 0; y < imageHeight; ++y)
+    // Get image if dirty
+    if (imageDirty_ && renderTexture_->GetImage(*image_))
     {
-        const unsigned stride = imageWidth * 4;
-        memcpy(imageData_.scanLine(y), sourceData, stride);
-        sourceData += stride;
+        const int imageWidth = static_cast<int>(image_->GetWidth());
+        const int imageHeight = static_cast<int>(image_->GetHeight());
+        const QSize imageSize(imageWidth, imageHeight);
+        if (imageData_.size() != imageSize)
+            imageData_ = QImage(imageSize, QImage::Format_RGBA8888);
+
+        unsigned char* sourceData = image_->GetData();
+        for (int y = 0; y < imageHeight; ++y)
+        {
+            const unsigned stride = imageWidth * 4;
+            memcpy(imageData_.scanLine(y), sourceData, stride);
+            sourceData += stride;
+        }
     }
+
+    // Draw image
     QPainter painter(this);
     painter.drawImage(QPoint(0, 0), imageData_);
 }
@@ -557,6 +565,7 @@ void QtUrhoRenderSurface::resizeEvent(QResizeEvent* event)
     if (!renderTexture_ || !depthTexture_ || !viewport_)
         return;
 
+    imageDirty_ = false;
     viewport_->UnsubscribeFromEvent(E_RENDERSURFACEUPDATE);
     viewport_->UnsubscribeFromEvent(E_ENDVIEWRENDER);
 
@@ -567,19 +576,29 @@ void QtUrhoRenderSurface::resizeEvent(QResizeEvent* event)
     RenderSurface* surface = renderTexture_->GetRenderSurface();
     surface->SetViewport(0, viewport_);
     surface->SetLinkedDepthStencil(depthTexture_->GetRenderSurface());
-    surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
+    surface->SetUpdateMode(SURFACE_MANUALUPDATE);
 
     viewport_->SubscribeToEvent(E_RENDERSURFACEUPDATE,
         [=](StringHash eventType, VariantMap& eventData)
     {
-        surface->QueueUpdate();
+        if (RenderSurface* surface = renderTexture_->GetRenderSurface())
+        {
+            if (autoUpdate_)
+                surface->QueueUpdate();
+        }
     });
 
     viewport_->SubscribeToEvent(E_ENDVIEWRENDER,
         [=](StringHash eventType, VariantMap& eventData)
     {
-        update();
+        if (eventData[EndViewRender::P_TEXTURE].GetPtr() == renderTexture_)
+        {
+            imageDirty_ = true;
+            update();
+        }
     });
+
+    surface->QueueUpdate();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -600,6 +619,16 @@ QtView3D::QtView3D(AbstractMainWindow& mainWindow)
 void QtView3D::SetView(Scene* scene, Camera* camera)
 {
     widget_->SetView(scene, camera);
+}
+
+void QtView3D::SetAutoUpdate(bool autoUpdate)
+{
+    widget_->SetAutoUpdate(autoUpdate);
+}
+
+void QtView3D::UpdateView()
+{
+    widget_->update();
 }
 
 //////////////////////////////////////////////////////////////////////////

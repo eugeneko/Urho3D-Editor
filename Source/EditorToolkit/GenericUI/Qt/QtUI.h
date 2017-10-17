@@ -237,6 +237,7 @@ public:
     QtUrhoRenderSurface(Texture2D* renderTexture, Texture2D* depthTexture, Viewport* viewport, Image* image_, QWidget* parent = nullptr);
     /// Set the content of the view.
     void SetView(Scene* scene, Camera* camera);
+    void SetAutoUpdate(bool autoUpdate);
 
 private:
     virtual void paintEvent(QPaintEvent* event) override;
@@ -248,6 +249,8 @@ private:
     WeakPtr<Viewport> viewport_;
     WeakPtr<Image> image_;
     QImage imageData_;
+    bool autoUpdate_ = true;
+    bool imageDirty_ = false;
 
 };
 
@@ -255,8 +258,9 @@ class QtView3D : public AbstractView3D
 {
 public:
     QtView3D(AbstractMainWindow& mainWindow);
-    /// Set the content of the view.
     void SetView(Scene* scene, Camera* camera) override;
+    void SetAutoUpdate(bool autoUpdate) override;
+    void UpdateView() override;
 
 private:
     QtUrhoRenderSurface* widget_ = nullptr;
