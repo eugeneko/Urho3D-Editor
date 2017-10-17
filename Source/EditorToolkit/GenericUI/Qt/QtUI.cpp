@@ -1,10 +1,14 @@
 #include "QtUI.h"
 #include "QtUrhoHelpers.h"
 #include <Urho3D/Core/ProcessUtils.h>
+#include <Urho3D/Graphics/Graphics.h>
+#include <Urho3D/Graphics/GraphicsEvents.h>
 #include <Urho3D/IO/Log.h>
 #include <QKeySequence>
 #include <QMenuBar>
 #include <QScrollBar>
+#include <QPainter>
+#include <QResizeEvent>
 
 namespace Urho3D
 {
@@ -503,6 +507,102 @@ void QtHierarchyList::GetSelection(ItemVector& result)
 }
 
 //////////////////////////////////////////////////////////////////////////
+QtUrhoRenderSurface::QtUrhoRenderSurface(Texture2D* renderTexture, Texture2D* depthTexture, Viewport* viewport, Image* image_,
+    QWidget* parent /*= nullptr*/)
+    : QWidget(parent)
+    , renderTexture_(renderTexture)
+    , depthTexture_(depthTexture)
+    , viewport_(viewport)
+    , image_(image_)
+{
+    renderTexture_->SetNumLevels(1);
+    depthTexture_->SetNumLevels(1);
+}
+
+void QtUrhoRenderSurface::SetView(Scene* scene, Camera* camera)
+{
+    if (!renderTexture_ || !depthTexture_ || !viewport_)
+        return;
+    viewport_->SetScene(scene);
+    viewport_->SetCamera(camera);
+}
+
+void QtUrhoRenderSurface::paintEvent(QPaintEvent* event)
+{
+    if (!renderTexture_ || !depthTexture_ || !viewport_)
+        return;
+
+    if (!renderTexture_->GetImage(*image_))
+        return;
+
+    const int imageWidth = static_cast<int>(image_->GetWidth());
+    const int imageHeight = static_cast<int>(image_->GetHeight());
+    const QSize imageSize(imageWidth, imageHeight);
+    if (imageData_.size() != imageSize)
+        imageData_ = QImage(imageSize, QImage::Format_RGBA8888);
+
+    unsigned char* sourceData = image_->GetData();
+    for (int y = 0; y < imageHeight; ++y)
+    {
+        const unsigned stride = imageWidth * 4;
+        memcpy(imageData_.scanLine(y), sourceData, stride);
+        sourceData += stride;
+    }
+    QPainter painter(this);
+    painter.drawImage(QPoint(0, 0), imageData_);
+}
+
+void QtUrhoRenderSurface::resizeEvent(QResizeEvent* event)
+{
+    if (!renderTexture_ || !depthTexture_ || !viewport_)
+        return;
+
+    viewport_->UnsubscribeFromEvent(E_RENDERSURFACEUPDATE);
+    viewport_->UnsubscribeFromEvent(E_ENDVIEWRENDER);
+
+    const QSize size = event->size().expandedTo(QSize(1, 1));
+    renderTexture_->SetSize(size.width(), size.height(), Graphics::GetRGBAFormat(), TEXTURE_RENDERTARGET);
+    depthTexture_->SetSize(size.width(), size.height(), Graphics::GetDepthStencilFormat(), TEXTURE_DEPTHSTENCIL);
+
+    RenderSurface* surface = renderTexture_->GetRenderSurface();
+    surface->SetViewport(0, viewport_);
+    surface->SetLinkedDepthStencil(depthTexture_->GetRenderSurface());
+    surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
+
+    viewport_->SubscribeToEvent(E_RENDERSURFACEUPDATE,
+        [=](StringHash eventType, VariantMap& eventData)
+    {
+        surface->QueueUpdate();
+    });
+
+    viewport_->SubscribeToEvent(E_ENDVIEWRENDER,
+        [=](StringHash eventType, VariantMap& eventData)
+    {
+        update();
+    });
+}
+
+//////////////////////////////////////////////////////////////////////////
+QtView3D::QtView3D(AbstractMainWindow& mainWindow)
+    : AbstractView3D(mainWindow)
+    , renderTexture_(new Texture2D(context_))
+    , depthTexture_(new Texture2D(context_))
+    , viewport_(new Viewport(context_))
+    , image_(new Image(context_))
+{
+    // Setup Qt
+    widget_ = new QtUrhoRenderSurface(renderTexture_, depthTexture_, viewport_, image_);
+    widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    SetInternalWidget(this, widget_);
+}
+
+void QtView3D::SetView(Scene* scene, Camera* camera)
+{
+    widget_->SetView(scene, camera);
+}
+
+//////////////////////////////////////////////////////////////////////////
 QtMenu::QtMenu(QtMainWindow* host, QMenu* menu)
     : host_(host)
     , menu_(menu)
@@ -550,7 +650,6 @@ QtMainWindow::QtMainWindow(QApplication& application)
 {
     urhoWidget_.Initialize(Engine::ParseParameters(GetArguments()));
     setCentralWidget(&urhoWidget_);
-    showMaximized();
 }
 
 QtMainWindow::~QtMainWindow()

@@ -146,6 +146,14 @@ public:
 //         hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow);
 //         hierarchyWindow_->SetScene(scene_);
 //         hierarchyWindow_->SetSelection(selection);
+        {
+            AbstractDialog* dialog = mainWindow.AddDialog(DialogLocationHint::DockLeft);
+            dialog->SetName("View3D");
+
+            AbstractView3D* view = dialog->CreateContent<AbstractView3D>();
+            view->SetView(scene_, scene_->GetChild("Camera")->GetComponent<Camera>());
+        }
+
 
         inspector_ = MakeShared<Inspector>(mainWindow);
 
@@ -259,6 +267,7 @@ int QtEditorMain()
     QApplication applicaton(argcStub, argvStub);
     QtMainWindow mainWindow(applicaton);
     DefaultEditor defaultEditor(mainWindow, false);
+    mainWindow.showMaximized();
     return applicaton.exec();
 }
 

@@ -16,7 +16,11 @@
 #include <QLineEdit>
 #include <QCheckBox>
 #include <QFrame>
+#include <QImage>
 #include <QToolButton>
+#include <Urho3D/Graphics/Texture2D.h>
+#include <Urho3D/Graphics/RenderSurface.h>
+#include <Urho3D/Resource/Image.h>
 
 namespace Urho3D
 {
@@ -60,7 +64,7 @@ public:
 private:
     bool DoSetContent(AbstractWidget* content) override;
 
-    bool eventFilter(QObject *watched, QEvent *event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
     void UpdateContentSize();
 
@@ -225,6 +229,43 @@ private:
 
 };
 
+class QtUrhoRenderSurface : public QWidget
+{
+    Q_OBJECT
+
+public:
+    QtUrhoRenderSurface(Texture2D* renderTexture, Texture2D* depthTexture, Viewport* viewport, Image* image_, QWidget* parent = nullptr);
+    /// Set the content of the view.
+    void SetView(Scene* scene, Camera* camera);
+
+private:
+    virtual void paintEvent(QPaintEvent* event) override;
+    virtual void resizeEvent(QResizeEvent* event) override;
+
+private:
+    WeakPtr<Texture2D> renderTexture_;
+    WeakPtr<Texture2D> depthTexture_;
+    WeakPtr<Viewport> viewport_;
+    WeakPtr<Image> image_;
+    QImage imageData_;
+
+};
+
+class QtView3D : public AbstractView3D
+{
+public:
+    QtView3D(AbstractMainWindow& mainWindow);
+    /// Set the content of the view.
+    void SetView(Scene* scene, Camera* camera) override;
+
+private:
+    QtUrhoRenderSurface* widget_ = nullptr;
+    SharedPtr<Texture2D> renderTexture_;
+    SharedPtr<Texture2D> depthTexture_;
+    SharedPtr<Viewport> viewport_;
+    SharedPtr<Image> image_;
+};
+
 class QtMenu : public AbstractMenu
 {
 public:
@@ -267,6 +308,7 @@ private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         QtLineEdit);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCheckBox,         QtCheckBox);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList,    QtHierarchyList);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateView3D,           QtView3D);
 
 private:
     SharedPtr<Context> context_;

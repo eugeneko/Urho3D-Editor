@@ -309,11 +309,13 @@ void MultiplePanelInspectable::AddPanel(InspectablePanel* panel)
 
 void MultiplePanelInspectable::BuildUI(AbstractLayout* layout)
 {
-    for (unsigned i = 0; i < panels_.Size(); ++i)
+    unsigned row = 0;
+    for (InspectablePanel* panel : panels_)
     {
-        AbstractCollapsiblePanel* collapsiblePanel = layout->CreateRow<AbstractCollapsiblePanel>(i);
+        AbstractCollapsiblePanel* collapsiblePanel = layout->CreateRow<AbstractCollapsiblePanel>(row);
         collapsiblePanel->SetExpanded(true);
-        panels_[i]->BuildUI(collapsiblePanel);
+        panel->BuildUI(collapsiblePanel);
+        ++row;
     }
 }
 

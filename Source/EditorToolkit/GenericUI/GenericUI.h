@@ -9,10 +9,12 @@
 namespace Urho3D
 {
 
-class AbstractMainWindow;
 class Scene;
 class Node;
+class Camera;
 class Serializable;
+
+class AbstractMainWindow;
 class Selection;
 class AbstractDialog;
 
@@ -289,6 +291,17 @@ public:
     ItemVector GetSelection() { ItemVector result; GetSelection(result); return result; }
 };
 
+class AbstractView3D : public AbstractWidget
+{
+    URHO3D_OBJECT(AbstractView3D, AbstractWidget);
+
+public:
+    AbstractView3D(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    /// Set the content of the view.
+    virtual void SetView(Scene* scene, Camera* camera) = 0;
+
+};
+
 class AbstractMainWindow
 {
 public:
@@ -306,15 +319,16 @@ public:
     }
 
 private:
-    virtual SharedPtr<AbstractWidget> CreateDummyWidget();
-    virtual SharedPtr<AbstractWidget> CreateScrollArea();
-    virtual SharedPtr<AbstractWidget> CreateLayout();
-    virtual SharedPtr<AbstractWidget> CreateCollapsiblePanel();
-    virtual SharedPtr<AbstractWidget> CreateButton();
-    virtual SharedPtr<AbstractWidget> CreateText();
-    virtual SharedPtr<AbstractWidget> CreateLineEdit();
-    virtual SharedPtr<AbstractWidget> CreateCheckBox();
-    virtual SharedPtr<AbstractWidget> CreateHierarchyList();
+    virtual SharedPtr<AbstractWidget> CreateDummyWidget() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateScrollArea() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateLayout() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateCollapsiblePanel() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateButton() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateText() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateLineEdit() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateCheckBox() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateHierarchyList() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateView3D() { return nullptr; }
 };
 
 }

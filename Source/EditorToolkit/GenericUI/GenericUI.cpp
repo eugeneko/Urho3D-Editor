@@ -263,56 +263,12 @@ SharedPtr<AbstractWidget> AbstractMainWindow::CreateWidget(StringHash type)
         { AbstractLineEdit::GetTypeStatic(), &AbstractMainWindow::CreateLineEdit },
         { AbstractCheckBox::GetTypeStatic(), &AbstractMainWindow::CreateCheckBox },
         { AbstractHierarchyList::GetTypeStatic(), &AbstractMainWindow::CreateHierarchyList },
+        { AbstractView3D::GetTypeStatic(), &AbstractMainWindow::CreateView3D },
     };
 
     WidgetFactory createWidget = nullptr;
     factory.TryGetValue(type, createWidget);
     return createWidget ? (this->*createWidget)() : nullptr;
-}
-
-SharedPtr<AbstractWidget> AbstractMainWindow::CreateDummyWidget()
-{
-    return nullptr;
-}
-
-SharedPtr<AbstractWidget> AbstractMainWindow::CreateScrollArea()
-{
-    return nullptr;
-}
-
-SharedPtr<AbstractWidget> AbstractMainWindow::CreateLayout()
-{
-    return nullptr;
-}
-
-SharedPtr<AbstractWidget> AbstractMainWindow::CreateCollapsiblePanel()
-{
-    return nullptr;
-}
-
-SharedPtr<AbstractWidget> AbstractMainWindow::CreateButton()
-{
-    return nullptr;
-}
-
-SharedPtr<AbstractWidget> AbstractMainWindow::CreateText()
-{
-    return nullptr;
-}
-
-SharedPtr<AbstractWidget> AbstractMainWindow::CreateLineEdit()
-{
-    return nullptr;
-}
-
-SharedPtr<AbstractWidget> AbstractMainWindow::CreateCheckBox()
-{
-    return nullptr;
-}
-
-SharedPtr<AbstractWidget> AbstractMainWindow::CreateHierarchyList()
-{
-    return nullptr;
 }
 
 }
