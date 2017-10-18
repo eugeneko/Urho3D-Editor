@@ -1,6 +1,6 @@
 #include "EditorViewportLayout.h"
 #include "EditorEvents.h"
-#include "../GenericUI/AbstractInput.h"
+#include "../AbstractUI/AbstractInput.h"
 #include <Urho3D/Graphics/Graphics.h>
 #include <Urho3D/Graphics/GraphicsEvents.h>
 #include <Urho3D/Graphics/Renderer.h>

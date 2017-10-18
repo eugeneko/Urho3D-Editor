@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../UrhoUI.h"
+#include "../Urho/UrhoUI.h"
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Engine/Engine.h>
 #include <Urho3D/IO/PackageFile.h>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../GenericUI.h"
-#include "../UrhoUI.h"
+#include "../AbstractUI.h"
+#include "../Urho/UrhoUI.h"
 #include "QtUrhoWidget.h"
 #include <QApplication>
 #include <QMainWindow>

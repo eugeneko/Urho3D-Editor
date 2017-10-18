@@ -1,7 +1,7 @@
 #include "ObjectSelector.h"
 #include "Selection.h"
-#include "../GenericUI/AbstractInput.h"
-#include "../GenericUI/KeyBinding.h"
+#include "../AbstractUI/AbstractInput.h"
+#include "../AbstractUI/KeyBinding.h"
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/Scene/Scene.h>

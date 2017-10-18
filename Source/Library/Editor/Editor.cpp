@@ -1,6 +1,6 @@
 #include "Editor.h"
 #include "EditorViewportLayout.h"
-#include "../GenericUI/GenericUI.h"
+#include "../AbstractUI/AbstractUI.h"
 #include <Urho3D/Core/CoreEvents.h>
 
 namespace Urho3D

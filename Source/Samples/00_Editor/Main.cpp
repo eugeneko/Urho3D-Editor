@@ -16,20 +16,20 @@
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
 
-#include "../EditorToolkit/GenericUI/GenericUI.h"
-#include "../EditorToolkit/GenericUI/UrhoUI.h"
-#include "../EditorToolkit/GenericUI/KeyBinding.h"
-#include "../EditorToolkit/GenericUI/Qt/QtUI.h"
-#include "../EditorToolkit/Editor/CameraController.h"
-#include "../EditorToolkit/Editor/Editor.h"
-#include "../EditorToolkit/Editor/Selection.h"
-#include "../EditorToolkit/Editor/HierarchyWindow.h"
-#include "../EditorToolkit/Editor/ObjectSelector.h"
-#include "../EditorToolkit/Editor/EditorViewportLayout.h"
-#include "../EditorToolkit/Editor/DebugGeometryRenderer.h"
-#include "../EditorToolkit/Editor/Gizmo.h"
-#include "../EditorToolkit/Editor/Inspector.h"
-#include "../EditorToolkit/Editor/Transformable.h"
+#include "../../Library/AbstractUI/AbstractUI.h"
+#include "../../Library/AbstractUI/KeyBinding.h"
+#include "../../Library/AbstractUI/Urho/UrhoUI.h"
+#include "../../Library/AbstractUI/Qt/QtUI.h"
+#include "../../Library/Editor/CameraController.h"
+#include "../../Library/Editor/Editor.h"
+#include "../../Library/Editor/Selection.h"
+#include "../../Library/Editor/HierarchyWindow.h"
+#include "../../Library/Editor/ObjectSelector.h"
+#include "../../Library/Editor/EditorViewportLayout.h"
+#include "../../Library/Editor/DebugGeometryRenderer.h"
+#include "../../Library/Editor/Gizmo.h"
+#include "../../Library/Editor/Inspector.h"
+#include "../../Library/Editor/Transformable.h"
 
 #include <Urho3D/DebugNew.h>
 
@@ -301,5 +301,5 @@ private:
 };
 
 
-// URHO3D_DEFINE_MAIN(QtEditorMain())
-URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)
+URHO3D_DEFINE_MAIN(QtEditorMain())
+// URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)

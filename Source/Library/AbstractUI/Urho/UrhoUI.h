@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GenericUI.h"
+#include "../AbstractUI.h"
 #include <Urho3D/UI/Window.h>
 #include <Urho3D/UI/Text.h>
 

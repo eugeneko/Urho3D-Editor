@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Selection.h"
-#include "../GenericUI/GenericUI.h"
+#include "../AbstractUI/AbstractUI.h"
 #include <Urho3D/Core/Object.h>
 #include <Urho3D/Container/HashMap.h>
 

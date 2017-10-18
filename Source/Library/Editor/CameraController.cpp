@@ -1,8 +1,8 @@
 #include "CameraController.h"
 #include "EditorViewportLayout.h"
 #include "EditorEvents.h"
-#include "../GenericUI/AbstractInput.h"
-#include "../GenericUI/KeyBinding.h"
+#include "../AbstractUI/AbstractInput.h"
+#include "../AbstractUI/KeyBinding.h"
 
 namespace Urho3D
 {

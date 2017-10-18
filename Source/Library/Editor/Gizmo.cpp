@@ -1,6 +1,6 @@
 #include "Gizmo.h"
 #include "Transformable.h"
-#include "../GenericUI/AbstractInput.h"
+#include "../AbstractUI/AbstractInput.h"
 // #include "Transformable.h"
 // #include "SceneActions.h"
 // #include "SceneDocument.h"

@@ -1,4 +1,4 @@
-#include "GenericUI.h"
+#include "AbstractUI.h"
 #include <Urho3D/IO/Log.h>
 #include <Urho3D/Scene/SceneEvents.h>
 #include <Urho3D/Scene/Scene.h>

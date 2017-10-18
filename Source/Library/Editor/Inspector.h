@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../GenericUI/GenericUI.h"
+#include "../AbstractUI/AbstractUI.h"
 
 namespace Urho3D
 {
