@@ -18,12 +18,12 @@ class ListView;
 
 class UrhoMainWindow;
 
-class UrhoDialog : public AbstractDialog
+class UrhoDock : public AbstractDock
 {
-    URHO3D_OBJECT(UrhoDialog, AbstractDialog);
+    URHO3D_OBJECT(UrhoDock, AbstractDock);
 
 public:
-    UrhoDialog(AbstractMainWindow& mainWindow);
+    UrhoDock(AbstractMainWindow& mainWindow);
     void SetName(const String& name) override;
 
 private:
@@ -300,7 +300,7 @@ class UrhoMainWindow : public AbstractMainWindow, public Object
 public:
     UrhoMainWindow(Context* context);
 
-    AbstractDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) override;
+    AbstractDock* AddDock(DockLocation hint) override;
     void AddAction(const AbstractAction& actionDesc) override;
     AbstractMenu* AddMenu(const String& name) override;
 
@@ -324,7 +324,7 @@ private:
     void HandleResized(StringHash eventType, VariantMap& eventData);
 
 private:
-    Vector<SharedPtr<UrhoDialog>> dialogs_;
+    Vector<SharedPtr<UrhoDock>> dialogs_;
     StandardUrhoInput input_;
 
     HashMap<String, AbstractAction> actions_;

@@ -19,17 +19,17 @@ namespace
 static int argcStub = 0;
 static char* argvStub[] = { nullptr };
 
-Qt::DockWidgetArea Cast(DialogLocationHint value)
+Qt::DockWidgetArea Cast(DockLocation value)
 {
     switch (value)
     {
-    case DialogLocationHint::DockLeft:
+    case DockLocation::Left:
         return Qt::LeftDockWidgetArea;
-    case DialogLocationHint::DockRight:
+    case DockLocation::Right:
         return Qt::RightDockWidgetArea;
-    case DialogLocationHint::DockBottom:
+    case DockLocation::Bottom:
         return Qt::BottomDockWidgetArea;
-    case DialogLocationHint::DockTop:
+    case DockLocation::Top:
         return Qt::TopDockWidgetArea;
     default:
         return Qt::NoDockWidgetArea;
@@ -61,7 +61,7 @@ void SetInternalWidget(AbstractWidget* widget, QWidget* element)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool QtDockDialog::DoSetContent(AbstractWidget* content)
+bool QtDock::DoSetContent(AbstractWidget* content)
 {
     if (!GetInternalWidget(content))
         return false;
@@ -70,14 +70,14 @@ bool QtDockDialog::DoSetContent(AbstractWidget* content)
     return true;
 }
 
-QtDockDialog::QtDockDialog(AbstractMainWindow& mainWindow)
-    : AbstractDialog(mainWindow)
+QtDock::QtDock(AbstractMainWindow& mainWindow)
+    : AbstractDock(mainWindow)
     , dock_(new QDockWidget())
 {
     SetInternalWidget(this, dock_);
 }
 
-void QtDockDialog::SetName(const String& name)
+void QtDock::SetName(const String& name)
 {
     dock_->setWindowTitle(Cast(name));
 }
@@ -688,9 +688,9 @@ QtMainWindow::~QtMainWindow()
         delete item.second_;
 }
 
-AbstractDialog* QtMainWindow::AddDialog(DialogLocationHint hint /*= DialogLocationHint::Undocked*/)
+AbstractDock* QtMainWindow::AddDock(DockLocation hint /*= DialogLocationHint::Undocked*/)
 {
-    auto dialog = MakeShared<QtDockDialog>(*this);
+    auto dialog = MakeShared<QtDock>(*this);
     dialog->SetParent(nullptr);
     QDockWidget* dockWidget = dynamic_cast<QDockWidget*>(GetInternalWidget(dialog));
     addDockWidget(Cast(hint), dockWidget);

@@ -27,11 +27,11 @@ namespace Urho3D
 
 class QtMainWindow;
 
-class QtDockDialog : public AbstractDialog
+class QtDock : public AbstractDock
 {
 
 public:
-    QtDockDialog(AbstractMainWindow& mainWindow);
+    QtDock(AbstractMainWindow& mainWindow);
     void SetName(const String& name) override;
 
 
@@ -292,7 +292,7 @@ public:
     QtMainWindow(QApplication& application);
     ~QtMainWindow() override;
 
-    AbstractDialog* AddDialog(DialogLocationHint hint) override;
+    AbstractDock* AddDock(DockLocation hint) override;
     void AddAction(const AbstractAction& actionDesc) override;
     AbstractMenu* AddMenu(const String& name) override;
 
@@ -318,7 +318,7 @@ private:
     SharedPtr<Context> context_;
     QApplication& application_;
     QtUrhoWidget urhoWidget_;
-    Vector<SharedPtr<AbstractDialog>> dialogs_;
+    Vector<SharedPtr<AbstractDock>> dialogs_;
 
     HashMap<String, QAction*> actions_;
     QList<QtMenu> menus_;

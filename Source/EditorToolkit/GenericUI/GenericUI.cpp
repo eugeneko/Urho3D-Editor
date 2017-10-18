@@ -20,7 +20,7 @@ void AbstractWidget::SetParent(AbstractWidget* parent)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool AbstractDialog::SetContent(AbstractWidget* content)
+bool AbstractDock::SetContent(AbstractWidget* content)
 {
     content_ = content;
     content_->SetParent(this);
@@ -33,7 +33,7 @@ bool AbstractDialog::SetContent(AbstractWidget* content)
     return true;
 }
 
-AbstractWidget* AbstractDialog::CreateContent(StringHash type)
+AbstractWidget* AbstractDock::CreateContent(StringHash type)
 {
     SharedPtr<AbstractWidget> content = mainWindow_.CreateWidget(type);
     SetContent(content);

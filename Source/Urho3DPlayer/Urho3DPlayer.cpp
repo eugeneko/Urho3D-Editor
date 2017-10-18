@@ -147,7 +147,7 @@ public:
 //         hierarchyWindow_->SetScene(scene_);
 //         hierarchyWindow_->SetSelection(selection);
         {
-            AbstractDialog* dialog = mainWindow.AddDialog(DialogLocationHint::DockLeft);
+            AbstractDock* dialog = mainWindow.AddDock(DockLocation::Left);
             dialog->SetName("View3D");
 
             AbstractView3D* view = dialog->CreateContent<AbstractView3D>();

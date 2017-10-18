@@ -76,7 +76,7 @@ private:
     // @}
 
 private:
-    SharedPtr<AbstractDialog> dialog_;
+    SharedPtr<AbstractDock> dialog_;
     AbstractHierarchyList* hierarchyList_ = nullptr;
     SharedPtr<Scene> scene_;
     SharedPtr<Selection> selection_;

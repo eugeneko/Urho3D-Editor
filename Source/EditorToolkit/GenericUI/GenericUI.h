@@ -16,7 +16,7 @@ class Serializable;
 
 class AbstractMainWindow;
 class Selection;
-class AbstractDialog;
+class AbstractDock;
 
 /// Abstract UI widget clicked.
 URHO3D_EVENT(E_ABSTRACTWIDGETCLICKED, AbstractWidgetClicked)
@@ -25,13 +25,12 @@ URHO3D_EVENT(E_ABSTRACTWIDGETCLICKED, AbstractWidgetClicked)
     URHO3D_PARAM(P_ITEM, Item);         // AbstractWidget ptr (optional)
 }
 
-enum class DialogLocationHint
+enum class DockLocation
 {
-    Undocked,
-    DockLeft,
-    DockRight,
-    DockTop,
-    DockBottom,
+    Left,
+    Right,
+    Top,
+    Bottom,
 };
 
 struct AbstractAction
@@ -78,12 +77,12 @@ private:
     bool attachedToRoot_ = false;
 };
 
-class AbstractDialog : public AbstractWidget
+class AbstractDock : public AbstractWidget
 {
-    URHO3D_OBJECT(AbstractDialog, AbstractWidget);
+    URHO3D_OBJECT(AbstractDock, AbstractWidget);
 
 public:
-    AbstractDialog(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractDock(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
 
     AbstractWidget* CreateContent(StringHash type);
     template <class T> T* CreateContent() { return dynamic_cast<T*>(CreateContent(T::GetTypeStatic())); }
@@ -310,7 +309,7 @@ class AbstractMainWindow
 {
 public:
     SharedPtr<AbstractWidget> CreateWidget(StringHash type);
-    virtual AbstractDialog* AddDialog(DialogLocationHint hint = DialogLocationHint::Undocked) = 0;
+    virtual AbstractDock* AddDock(DockLocation hint = DockLocation::Left) = 0;
     virtual void AddAction(const AbstractAction& actionDesc) = 0;
     virtual AbstractMenu* AddMenu(const String& name) = 0;
 

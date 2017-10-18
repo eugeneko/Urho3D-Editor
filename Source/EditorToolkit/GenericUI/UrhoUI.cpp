@@ -119,17 +119,17 @@ UIElement* GetParentElement(AbstractWidget* widget)
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoDialog::UrhoDialog(AbstractMainWindow& mainWindow)
-    : AbstractDialog(mainWindow)
+UrhoDock::UrhoDock(AbstractMainWindow& mainWindow)
+    : AbstractDock(mainWindow)
 {
 }
 
-void UrhoDialog::SetName(const String& name)
+void UrhoDock::SetName(const String& name)
 {
     windowTitle_->SetText(name);
 }
 
-void UrhoDialog::OnParentSet()
+void UrhoDock::OnParentSet()
 {
     // #TODO Make main window root widget
     UI* ui = GetSubsystem<UI>();
@@ -164,7 +164,7 @@ void UrhoDialog::OnParentSet()
     SetInternalElement(this, window_);
 }
 
-bool UrhoDialog::DoSetContent(AbstractWidget* content)
+bool UrhoDock::DoSetContent(AbstractWidget* content)
 {
     if (!GetInternalElement(content))
         return false;
@@ -925,9 +925,9 @@ UrhoMainWindow::UrhoMainWindow(Context* context)
     SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(UrhoMainWindow, HandleResized));
 }
 
-AbstractDialog* UrhoMainWindow::AddDialog(DialogLocationHint hint)
+AbstractDock* UrhoMainWindow::AddDock(DockLocation hint)
 {
-    auto dialog = MakeShared<UrhoDialog>(*this);
+    auto dialog = MakeShared<UrhoDock>(*this);
     dialog->SetParent(nullptr);
     dialogs_.Push(dialog);
     return dialog;
