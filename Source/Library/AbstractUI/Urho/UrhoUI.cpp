@@ -1,4 +1,5 @@
 #include "UrhoUI.h"
+#include "GridLayout.h"
 #include <Urho3D/IO/Log.h>
 #include <Urho3D/Graphics/Graphics.h>
 #include <Urho3D/Graphics/GraphicsEvents.h>
@@ -247,131 +248,12 @@ UrhoLayout::UrhoLayout(AbstractMainWindow& mainWindow)
 {
 }
 
-void UrhoLayout::UpdateLayout()
-{
-    // Disable layout update
-    body_->DisableLayoutUpdate();
-
-    Vector<int> minRowHeight;
-    Vector<int> minColumnWidth;
-    Vector<int> maxColumnWidth;
-
-    // Compute sizes
-    const unsigned numRows = rows_.Size();
-    minRowHeight.Resize(numRows, 0);
-    for (unsigned row = 0; row < numRows; ++row)
-    {
-        const RowType rowType = rows_[row].type_;
-        const unsigned numColumns = rows_[row].columns_.Size();
-        if (minColumnWidth.Size() <= numColumns)
-            minColumnWidth.Resize(numColumns, 0);
-        if (maxColumnWidth.Size() <= numColumns)
-            maxColumnWidth.Resize(numColumns, 0);
-        for (unsigned column = 0; column < numColumns; ++column)
-        {
-            UIElement* cellElement = GetInternalElement(rows_[row].columns_[column]);
-            if (!cellElement /*|| cellElement->GetNumChildren() == 0*/)
-                continue;
-            const IntVector2 cellSize = cellElement->GetEffectiveMinSize();
-            const IntVector2 maxCellSize = cellElement->GetMaxSize();
-
-            if (rowType != RowType::SimpleRow)
-            {
-                minColumnWidth[column] = Max(minColumnWidth[column], cellSize.x_);
-                maxColumnWidth[column] = Max(maxColumnWidth[column], maxCellSize.x_);
-            }
-            minRowHeight[row] = Max(minRowHeight[row], cellSize.y_);
-        }
-    }
-
-    // Compute width stretch
-    const unsigned numColumns = minColumnWidth.Size();
-    const int minBodyWidth = std::accumulate(&*minColumnWidth.Begin(), &*minColumnWidth.End(), 0);
-
-    Vector<int> maxColumnStretch;
-    maxColumnStretch.Resize(numColumns, 0);
-    for (unsigned i = 0; i < numColumns; ++i)
-        maxColumnStretch[i] = Max(0, maxColumnWidth[i] - minColumnWidth[i]);
-
-    Vector<int> columnWidth = minColumnWidth;
-    int remainingStretch = Max(0, body_->GetWidth() - minBodyWidth);
-    unsigned remainingColumns = numColumns;
-    while (remainingStretch > 0 && remainingColumns > 0)
-    {
-        // Compute number of stretchable columns
-        remainingColumns = 0;
-        for (unsigned i = 0; i < numColumns; ++i)
-            if (columnWidth[i] < maxColumnWidth[i])
-                ++remainingColumns;
-        if (remainingColumns == 0)
-            break;
-
-        // Stretch columns
-        const int columnDelta = (remainingStretch + remainingColumns - 1) / remainingColumns;
-        for (unsigned i = 0; i < numColumns; ++i)
-        {
-            if (columnWidth[i] < maxColumnWidth[i])
-            {
-                const int oldWidth = columnWidth[i];
-                columnWidth[i] = Min(maxColumnWidth[i], columnWidth[i] + Min(columnDelta, remainingStretch));
-                remainingStretch -= columnWidth[i] - oldWidth;
-            }
-        }
-    }
-
-    // Update body height
-    int bodyHeight = 0;
-    for (unsigned row = 0; row < numRows; ++row)
-        bodyHeight += minRowHeight[row];
-    body_->SetMinHeight(bodyHeight);
-    body_->SetHeight(bodyHeight);
-
-    // Apply sizes
-    IntVector2 position;
-    for (unsigned row = 0; row < numRows; ++row)
-    {
-        const RowType rowType = rows_[row].type_;
-        const int rowHeight = minRowHeight[row];
-        position.x_ = 0;
-        if (rowType == RowType::SimpleRow)
-        {
-            // Create single column
-            UIElement* cellElement = GetInternalElement(rows_[row].columns_[0]);
-            if (!cellElement)
-                continue;
-            cellElement->SetPosition(position);
-            cellElement->SetWidth(body_->GetWidth());
-            position.x_ += cellElement->GetWidth();
-        }
-        else if (rowType == AbstractLayout::RowType::MultiCellRow)
-        {
-            // Iterate over columns
-            for (unsigned column = 0; column < rows_[row].columns_.Size(); ++column)
-            {
-                UIElement* cellElement = GetInternalElement(rows_[row].columns_[column]);
-                if (!cellElement)
-                    continue;
-
-                const int width = columnWidth[column];
-                cellElement->SetPosition(position);
-                cellElement->SetSize(width, rowHeight);
-                position.x_ += width;
-            }
-        }
-        position.y_ += rowHeight;
-    }
-
-    // Update layout
-    body_->EnableLayoutUpdate();
-    body_->UpdateLayout();
-}
-
 void UrhoLayout::OnParentSet()
 {
     UIElement* parent = GetParentElement(this);
 
-    body_ = parent->CreateChild<UIElement>("AL_Content");
-    SubscribeToEvent(body_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoLayout, HandleLayoutChanged));
+    body_ = new GridLayout(context_);
+    parent->AddChild(body_);
 
     SetInternalElement(this, body_);
 }
@@ -381,8 +263,9 @@ bool UrhoLayout::DoSetCell(unsigned row, unsigned column, AbstractWidget* child)
     if (!GetInternalElement(child))
         return false;
 
-    body_->AddChild(GetInternalElement(child));
-    UpdateLayout();
+    body_->InsertItem(row, column, GetInternalElement(child));
+    body_->SetRowGroup(row, 0);
+    body_->UpdateLayout();
     return true;
 }
 
@@ -391,8 +274,9 @@ bool UrhoLayout::DoSetRow(unsigned row, AbstractWidget* child)
     if (!GetInternalElement(child))
         return false;
 
-    body_->AddChild(GetInternalElement(child));
-    UpdateLayout();
+    body_->InsertItem(row, 0, GetInternalElement(child));
+    body_->SetRowGroup(row, 1);
+    body_->UpdateLayout();
     return true;
 }
 
@@ -401,11 +285,7 @@ void UrhoLayout::DoRemoveChild(AbstractWidget* child)
     if (UIElement* childElement = GetInternalElement(child))
         body_->RemoveChild(childElement);
     SetInternalElement(child, nullptr);
-}
-
-void UrhoLayout::HandleLayoutChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)
-{
-    UpdateLayout();
+    body_->UpdateLayout();
 }
 
 //////////////////////////////////////////////////////////////////////////

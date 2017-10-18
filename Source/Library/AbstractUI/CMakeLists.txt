@@ -15,6 +15,8 @@ add_library(AbstractUI
     ${CMAKE_CURRENT_SOURCE_DIR}/KeyBinding.h
     ${CMAKE_CURRENT_SOURCE_DIR}/AbstractInput.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AbstractInput.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Urho/GridLayout.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Urho/GridLayout.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Urho/UrhoUI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Urho/UrhoUI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Qt/QtUI.cpp

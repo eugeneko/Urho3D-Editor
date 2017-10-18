@@ -17,6 +17,7 @@ class View3D;
 class ListView;
 
 class UrhoMainWindow;
+class GridLayout;
 
 class UrhoDock : public AbstractDock
 {
@@ -74,11 +75,8 @@ private:
     bool DoSetRow(unsigned row, AbstractWidget* child) override;
     void DoRemoveChild(AbstractWidget* child) override;
 
-    void UpdateLayout();
-    void HandleLayoutChanged(StringHash eventType, VariantMap& eventData);
-
 private:
-    UIElement* body_ = nullptr;
+    GridLayout* body_ = nullptr;
 };
 
 class UrhoCollapsiblePanel : public AbstractCollapsiblePanel
