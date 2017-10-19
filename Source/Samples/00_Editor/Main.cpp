@@ -28,6 +28,7 @@
 #include "../../Library/Editor/EditorViewportLayout.h"
 #include "../../Library/Editor/DebugGeometryRenderer.h"
 #include "../../Library/Editor/Gizmo.h"
+#include "../../Library/Editor/ResourceBrowser.h"
 #include "../../Library/Editor/Inspector.h"
 #include "../../Library/Editor/Transformable.h"
 
@@ -155,6 +156,8 @@ public:
 //             view->SetView(scene_, scene_->GetChild("Camera")->GetComponent<Camera>());
 //         }
 
+        resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow);
+        resourceBrowser_->ScanResources();
 
         inspector_ = MakeShared<Inspector>(mainWindow);
 
@@ -258,6 +261,7 @@ private:
 
     SharedPtr<HierarchyWindow> hierarchyWindow_;
     SharedPtr<Inspector> inspector_;
+    SharedPtr<ResourceBrowser> resourceBrowser_;
     SharedPtr<Scene> scene_;
 };
 

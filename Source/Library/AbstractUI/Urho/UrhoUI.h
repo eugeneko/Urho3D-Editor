@@ -152,7 +152,7 @@ class UrhoLineEdit : public AbstractLineEdit
 public:
     UrhoLineEdit(AbstractMainWindow* mainWindow);
     void SetText(const String& text) override;
-    const String& GetText() const override;
+    String GetText() const override;
 
 private:
     void OnParentSet() override;
@@ -197,6 +197,7 @@ class UrhoHierarchyList : public AbstractHierarchyList
 public:
     UrhoHierarchyList(AbstractMainWindow* mainWindow);
     void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) override;
+    void RemoveAllItems() override;
     void SelectItem(AbstractHierarchyListItem* item) override;
     void DeselectItem(AbstractHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;

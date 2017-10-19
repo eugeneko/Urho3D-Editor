@@ -21,6 +21,8 @@ add_library(Editor
     ${CMAKE_CURRENT_SOURCE_DIR}/Gizmo.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Inspector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Inspector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ResourceBrowser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ResourceBrowser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Transformable.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Transformable.h
 )

@@ -169,11 +169,10 @@ class QtLineEdit : public QObject, public AbstractLineEdit
 public:
     QtLineEdit(AbstractMainWindow* mainWindow);
     void SetText(const String& text) override;
-    const String& GetText() const override;
+    String GetText() const override;
 
 private:
     QLineEdit* lineEdit_ = nullptr;
-    mutable String cachedText_;
 
 };
 
@@ -194,7 +193,7 @@ class QtHierarchyListModel : public QAbstractItemModel
 public:
     QtHierarchyListModel(AbstractMainWindow* mainWindow);
 
-    void InsertItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex);
+    void InsertItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex, int row = M_MAX_INT);
     void RemoveItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow = -1);
 
     QModelIndex GetIndex(AbstractHierarchyListItem* item, QModelIndex hint = QModelIndex());
@@ -218,6 +217,7 @@ public:
     QtHierarchyList(AbstractMainWindow* mainWindow);
 
     void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) override;
+    void RemoveAllItems() override;
     void SelectItem(AbstractHierarchyListItem* item) override;
     void DeselectItem(AbstractHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;

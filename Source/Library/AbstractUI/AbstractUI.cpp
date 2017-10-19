@@ -238,14 +238,12 @@ void AbstractHierarchyListItem::RemoveChild(unsigned index)
     children_.Erase(index);
 }
 
-int AbstractHierarchyListItem::GetIndex()
+int AbstractHierarchyListItem::FindChild(const AbstractHierarchyListItem* child) const
 {
-    if (parent_)
-    {
-        const unsigned idx = parent_->children_.IndexOf(SharedPtr<AbstractHierarchyListItem>(this));
-        return idx < parent_->children_.Size() ? static_cast<int>(idx) : -1;
-    }
-    return 0;
+    for (unsigned i = 0; i < children_.Size(); ++i)
+        if (children_[i] == child)
+            return static_cast<int>(i);
+    return -1;
 }
 
 //////////////////////////////////////////////////////////////////////////

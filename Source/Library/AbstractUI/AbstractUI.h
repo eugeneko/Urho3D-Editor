@@ -235,7 +235,7 @@ class AbstractLineEdit : public AbstractWidget
 public:
     AbstractLineEdit(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetText(const String& text) = 0;
-    virtual const String& GetText() const = 0;
+    virtual String GetText() const = 0;
 
 public:
     std::function<void()> onTextEdited_;
@@ -266,7 +266,8 @@ public:
     AbstractHierarchyListItem* GetParent() const { return parent_; }
     unsigned GetNumChildren() const { return children_.Size(); }
     AbstractHierarchyListItem* GetChild(unsigned index) const { return index < children_.Size() ? children_[index] : nullptr; }
-    int GetIndex();
+    int FindChild(const AbstractHierarchyListItem* child) const;
+    int GetIndex() const { return parent_ ? parent_->FindChild(this) : 0; }
 
     virtual String GetText() { return String::EMPTY; }
 
@@ -284,6 +285,7 @@ public:
     using ItemVector = PODVector<AbstractHierarchyListItem*>;
     AbstractHierarchyList(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
     virtual void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) = 0;
+    virtual void RemoveAllItems() = 0;
     virtual void SelectItem(AbstractHierarchyListItem* item) = 0;
     virtual void DeselectItem(AbstractHierarchyListItem* item) = 0;
     virtual void GetSelection(ItemVector& result) = 0;

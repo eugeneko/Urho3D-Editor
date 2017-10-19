@@ -457,7 +457,7 @@ void UrhoLineEdit::SetText(const String& text)
     suppressTextChange_ = false;
 }
 
-const String& UrhoLineEdit::GetText() const
+String UrhoLineEdit::GetText() const
 {
     return lineEdit_->GetText();
 }
@@ -527,6 +527,11 @@ void UrhoHierarchyList::AddItem(AbstractHierarchyListItem* item, unsigned index,
     InsertItem(item, index, parent);
     hierarchyList_->EnableInternalLayoutUpdate();
     hierarchyList_->UpdateInternalLayout();
+}
+
+void UrhoHierarchyList::RemoveAllItems()
+{
+    hierarchyList_->RemoveAllItems();
 }
 
 void UrhoHierarchyList::SelectItem(AbstractHierarchyListItem* item)

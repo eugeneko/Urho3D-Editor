@@ -330,10 +330,9 @@ void QtLineEdit::SetText(const String& text)
     lineEdit_->setText(Cast(text));
 }
 
-const String& QtLineEdit::GetText() const
+String QtLineEdit::GetText() const
 {
-    cachedText_ = Cast(lineEdit_->text());
-    return cachedText_;
+    return Cast(lineEdit_->text());
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -355,33 +354,21 @@ QtHierarchyListModel::QtHierarchyListModel(AbstractMainWindow* mainWindow)
 {
 }
 
-void QtHierarchyListModel::InsertItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex)
+void QtHierarchyListModel::InsertItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex, int row)
 {
     AbstractHierarchyListItem* parentItem = GetItem(parentIndex);
+    const int numChildren = static_cast<int>(parentItem->GetNumChildren());
+    row = Clamp(row, 0, numChildren);
 
-    if (!parentIndex.isValid())
-    {
-        const int childIndex = static_cast<int>(parentItem->GetNumChildren());
-        beginInsertRows(QModelIndex(), childIndex, childIndex);
-        parentItem->InsertChild(item, M_MAX_UNSIGNED);
-        endInsertRows();
-    }
-    else
-    {
-        const int childIndex = item->GetIndex();
-        if (childIndex >= 0)
-        {
-            beginInsertRows(parentIndex, childIndex, childIndex);
-            parentItem->InsertChild(item, childIndex);
-            endInsertRows();
-        }
-    }
+    beginInsertRows(QModelIndex(), row, row);
+    parentItem->InsertChild(item, static_cast<unsigned>(row));
+    endInsertRows();
 }
 
 void QtHierarchyListModel::RemoveItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow)
 {
     AbstractHierarchyListItem* parentItem = GetItem(parentIndex);
-    const int objectIndex = item->GetIndex();
+    const int objectIndex = parentItem->FindChild(item);
     if (objectIndex >= 0)
     {
         beginRemoveRows(parentIndex, objectIndex, objectIndex);
@@ -392,14 +379,13 @@ void QtHierarchyListModel::RemoveItem(AbstractHierarchyListItem* item, const QMo
 
 QModelIndex QtHierarchyListModel::GetIndex(AbstractHierarchyListItem* item, QModelIndex hint)
 {
-    if (!item)
+    if (!item || !item->GetParent())
         return QModelIndex();
     if (hint.isValid() && static_cast<AbstractHierarchyListItem*>(hint.internalPointer()) == item)
         return hint;
 
     AbstractHierarchyListItem* parent = item->GetParent();
-    const int childIndex = item->GetIndex();
-    return index(childIndex, 0, GetIndex(parent));
+    return index(item->GetIndex(), 0, GetIndex(parent));
 }
 
 AbstractHierarchyListItem* QtHierarchyListModel::GetItem(const QModelIndex& index) const
@@ -489,6 +475,13 @@ void QtHierarchyList::AddItem(AbstractHierarchyListItem* item, unsigned index, A
     const QModelIndex parentIndex = model_->GetIndex(parent);
     model_->RemoveItem(item, parentIndex);
     model_->InsertItem(item, parentIndex);
+}
+
+void QtHierarchyList::RemoveAllItems()
+{
+    // #TODO Reset more gracefully
+    model_.reset(new QtHierarchyListModel(mainWindow_));
+    treeView_->setModel(model_.data());
 }
 
 void QtHierarchyList::SelectItem(AbstractHierarchyListItem* item)
