@@ -6,8 +6,8 @@
 namespace Urho3D
 {
 
-AbstractWidget::AbstractWidget(AbstractMainWindow& mainWindow)
-    : Object(mainWindow.GetContext())
+AbstractWidget::AbstractWidget(AbstractMainWindow* mainWindow)
+    : Object(mainWindow->GetContext())
     , mainWindow_(mainWindow)
 {
 
@@ -35,7 +35,7 @@ bool AbstractDock::SetContent(AbstractWidget* content)
 
 AbstractWidget* AbstractDock::CreateContent(StringHash type)
 {
-    SharedPtr<AbstractWidget> content = mainWindow_.CreateWidget(type);
+    SharedPtr<AbstractWidget> content = mainWindow_->CreateWidget(type);
     SetContent(content);
     return content_;
 }
@@ -56,7 +56,7 @@ bool AbstractScrollArea::SetContent(AbstractWidget* content)
 
 AbstractWidget* AbstractScrollArea::CreateContent(StringHash type)
 {
-    SharedPtr<AbstractWidget> content = mainWindow_.CreateWidget(type);
+    SharedPtr<AbstractWidget> content = mainWindow_->CreateWidget(type);
     SetContent(content);
     return content_;
 }
@@ -84,7 +84,7 @@ bool AbstractLayout::SetCell(AbstractWidget* cell, unsigned row, unsigned column
 
 AbstractWidget* AbstractLayout::CreateCell(StringHash type, unsigned row, unsigned column)
 {
-    SharedPtr<AbstractWidget> child = mainWindow_.CreateWidget(type);
+    SharedPtr<AbstractWidget> child = mainWindow_->CreateWidget(type);
     if (!SetCell(child, row, column))
         return nullptr;
     return child;
@@ -112,7 +112,7 @@ bool AbstractLayout::SetRow(AbstractWidget* cell, unsigned row)
 
 AbstractWidget* AbstractLayout::CreateRow(StringHash type, unsigned row)
 {
-    SharedPtr<AbstractWidget> child = mainWindow_.CreateWidget(type);
+    SharedPtr<AbstractWidget> child = mainWindow_->CreateWidget(type);
     if (!SetRow(child, row))
         return nullptr;
     return child;
@@ -171,21 +171,21 @@ bool AbstractLayout::EnsureCell(unsigned row, unsigned column, RowType type)
 //////////////////////////////////////////////////////////////////////////
 AbstractWidget* AbstractCollapsiblePanel::CreateHeaderPrefix(StringHash type)
 {
-    SharedPtr<AbstractWidget> child = mainWindow_.CreateWidget(type);
+    SharedPtr<AbstractWidget> child = mainWindow_->CreateWidget(type);
     SetHeaderPrefix(child);
     return headerPrefix_;
 }
 
 AbstractWidget* AbstractCollapsiblePanel::CreateHeaderSuffix(StringHash type)
 {
-    SharedPtr<AbstractWidget> child = mainWindow_.CreateWidget(type);
+    SharedPtr<AbstractWidget> child = mainWindow_->CreateWidget(type);
     SetHeaderSuffix(child);
     return headerSuffix_;
 }
 
 AbstractWidget* AbstractCollapsiblePanel::CreateBody(StringHash type)
 {
-    SharedPtr<AbstractWidget> child = mainWindow_.CreateWidget(type);
+    SharedPtr<AbstractWidget> child = mainWindow_->CreateWidget(type);
     SetBody(child);
     return body_;
 }

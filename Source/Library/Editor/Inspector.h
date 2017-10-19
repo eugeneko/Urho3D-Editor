@@ -183,7 +183,7 @@ class Inspector : public Object
     URHO3D_OBJECT(Inspector, Object);
 
 public:
-    Inspector(AbstractMainWindow& mainWindow);
+    Inspector(AbstractMainWindow* mainWindow);
     void SetInspectable(Inspectable* inspectable);
 
 private:

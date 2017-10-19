@@ -24,7 +24,7 @@ class UrhoDock : public AbstractDock
     URHO3D_OBJECT(UrhoDock, AbstractDock);
 
 public:
-    UrhoDock(AbstractMainWindow& mainWindow);
+    UrhoDock(AbstractMainWindow* mainWindow);
     void SetName(const String& name) override;
 
 private:
@@ -43,7 +43,7 @@ class UrhoScrollArea : public AbstractScrollArea
     URHO3D_OBJECT(UrhoScrollArea, AbstractScrollArea);
 
 public:
-    UrhoScrollArea(AbstractMainWindow& mainWindow);
+    UrhoScrollArea(AbstractMainWindow* mainWindow);
 
     void SetDynamicWidth(bool dynamicWidth) override;
 
@@ -67,7 +67,7 @@ class UrhoLayout : public AbstractLayout
     URHO3D_OBJECT(UrhoLayout, AbstractLayout);
 
 public:
-    UrhoLayout(AbstractMainWindow& mainWindow);
+    UrhoLayout(AbstractMainWindow* mainWindow);
 
 private:
     void OnParentSet() override;
@@ -84,7 +84,7 @@ class UrhoCollapsiblePanel : public AbstractCollapsiblePanel
     URHO3D_OBJECT(UrhoCollapsiblePanel, AbstractCollapsiblePanel);
 
 public:
-    UrhoCollapsiblePanel(AbstractMainWindow& mainWindow);
+    UrhoCollapsiblePanel(AbstractMainWindow* mainWindow);
 
     void SetHeaderText(const String& text) override;
     void SetExpanded(bool expanded) override;
@@ -116,7 +116,7 @@ class UrhoButton : public AbstractButton
     URHO3D_OBJECT(UrhoButton, AbstractButton);
 
 public:
-    UrhoButton(AbstractMainWindow& mainWindow);
+    UrhoButton(AbstractMainWindow* mainWindow);
     void SetText(const String& text) override;
 
 private:
@@ -134,7 +134,7 @@ class UrhoText : public AbstractText
     URHO3D_OBJECT(UrhoText, AbstractText);
 
 public:
-    UrhoText(AbstractMainWindow& mainWindow);
+    UrhoText(AbstractMainWindow* mainWindow);
     void SetText(const String& text) override;
     unsigned GetTextWidth() const override;
 
@@ -150,7 +150,7 @@ class UrhoLineEdit : public AbstractLineEdit
     URHO3D_OBJECT(UrhoLineEdit, AbstractLineEdit);
 
 public:
-    UrhoLineEdit(AbstractMainWindow& mainWindow);
+    UrhoLineEdit(AbstractMainWindow* mainWindow);
     void SetText(const String& text) override;
     const String& GetText() const override;
 
@@ -167,7 +167,7 @@ class UrhoCheckBox : public AbstractCheckBox
     URHO3D_OBJECT(UrhoCheckBox, AbstractCheckBox);
 
 public:
-    UrhoCheckBox(AbstractMainWindow& mainWindow);
+    UrhoCheckBox(AbstractMainWindow* mainWindow);
     void SetChecked(bool checked) override;
     //AbstractCheckBox& SetText(const String& text) override;
 
@@ -195,7 +195,7 @@ class UrhoHierarchyList : public AbstractHierarchyList
     URHO3D_OBJECT(UrhoHierarchyList, AbstractHierarchyList);
 
 public:
-    UrhoHierarchyList(AbstractMainWindow& mainWindow);
+    UrhoHierarchyList(AbstractMainWindow* mainWindow);
     void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) override;
     void SelectItem(AbstractHierarchyListItem* item) override;
     void DeselectItem(AbstractHierarchyListItem* item) override;
@@ -218,7 +218,7 @@ class UrhoView3D : public AbstractView3D
     URHO3D_OBJECT(UrhoView3D, AbstractView3D);
 
 public:
-    UrhoView3D(AbstractMainWindow& mainWindow) : AbstractView3D(mainWindow) { }
+    UrhoView3D(AbstractMainWindow* mainWindow) : AbstractView3D(mainWindow) { }
     void SetView(Scene* scene, Camera* camera) override;
     void SetAutoUpdate(bool autoUpdate) override;
     void UpdateView() override;
@@ -274,7 +274,7 @@ class UrhoMenu : public AbstractMenu, public Object
 
 public:
     static const StringHash VAR_ACTION;
-    UrhoMenu(UrhoMainWindow& mainWindow, UIElement* parent, const String& text, const String& actionId, bool hasPopup, bool topLevel);
+    UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& text, const String& actionId, bool hasPopup, bool topLevel);
     AbstractMenu* AddMenu(const String& name) override;
     AbstractMenu* AddAction(const String& name, const String& actionId) override;
 
@@ -282,7 +282,7 @@ private:
     void HandleMenuSelected(StringHash eventType, VariantMap& eventData);
 
 private:
-    UrhoMainWindow& mainWindow_;
+    UrhoMainWindow* mainWindow_;
     // #TODO Hide em
     Menu* menu_ = nullptr;
     Text* text_ = nullptr;

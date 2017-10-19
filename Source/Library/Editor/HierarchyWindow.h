@@ -29,7 +29,7 @@ class HierarchyWindow : public Object
     URHO3D_OBJECT(HierarchyWindow, Object);
 
 public:
-    HierarchyWindow(AbstractMainWindow& mainWindow);
+    HierarchyWindow(AbstractMainWindow* mainWindow);
     void SetScene(Scene* scene);
     void SetSelection(Selection* selection);
     Selection::ObjectSet GetSelectedObjects();

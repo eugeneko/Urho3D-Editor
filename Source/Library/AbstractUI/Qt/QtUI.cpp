@@ -70,7 +70,7 @@ bool QtDock::DoSetContent(AbstractWidget* content)
     return true;
 }
 
-QtDock::QtDock(AbstractMainWindow& mainWindow)
+QtDock::QtDock(AbstractMainWindow* mainWindow)
     : AbstractDock(mainWindow)
     , dock_(new QDockWidget())
 {
@@ -83,7 +83,7 @@ void QtDock::SetName(const String& name)
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtDummyWidget::QtDummyWidget(AbstractMainWindow& mainWindow)
+QtDummyWidget::QtDummyWidget(AbstractMainWindow* mainWindow)
     : AbstractDummyWidget(mainWindow)
     , widget_(new QWidget())
 {
@@ -93,7 +93,7 @@ QtDummyWidget::QtDummyWidget(AbstractMainWindow& mainWindow)
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtScrollArea::QtScrollArea(AbstractMainWindow& mainWindow)
+QtScrollArea::QtScrollArea(AbstractMainWindow* mainWindow)
     : AbstractScrollArea(mainWindow)
     , scrollArea_(new QScrollArea())
 {
@@ -133,7 +133,7 @@ bool QtScrollArea::DoSetContent(AbstractWidget* content)
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtLayout::QtLayout(AbstractMainWindow& mainWindow)
+QtLayout::QtLayout(AbstractMainWindow* mainWindow)
     : AbstractLayout(mainWindow)
     , widget_(new QWidget())
 {
@@ -173,7 +173,7 @@ void QtLayout::DoRemoveChild(AbstractWidget* child)
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtCollapsiblePanel::QtCollapsiblePanel(AbstractMainWindow& mainWindow)
+QtCollapsiblePanel::QtCollapsiblePanel(AbstractMainWindow* mainWindow)
     : AbstractCollapsiblePanel(mainWindow)
     , panel_(new QFrame())
 {
@@ -271,7 +271,7 @@ void QtCollapsiblePanel::UpdateSize()
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtButton::QtButton(AbstractMainWindow& mainWindow)
+QtButton::QtButton(AbstractMainWindow* mainWindow)
     : AbstractButton(mainWindow)
     , pushButton_(new QPushButton())
 {
@@ -286,7 +286,7 @@ void QtButton::SetText(const String& text)
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtText::QtText(AbstractMainWindow& mainWindow)
+QtText::QtText(AbstractMainWindow* mainWindow)
     : AbstractText(mainWindow)
     , label_(new QLabel())
 {
@@ -304,7 +304,7 @@ unsigned QtText::GetTextWidth() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtLineEdit::QtLineEdit(AbstractMainWindow& mainWindow)
+QtLineEdit::QtLineEdit(AbstractMainWindow* mainWindow)
     : AbstractLineEdit(mainWindow)
     , lineEdit_(new QLineEdit())
 {
@@ -337,7 +337,7 @@ const String& QtLineEdit::GetText() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtCheckBox::QtCheckBox(AbstractMainWindow& mainWindow)
+QtCheckBox::QtCheckBox(AbstractMainWindow* mainWindow)
     : AbstractCheckBox(mainWindow)
     , checkBox_(new QCheckBox())
 {
@@ -350,8 +350,8 @@ void QtCheckBox::SetChecked(bool checked)
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtHierarchyListModel::QtHierarchyListModel(AbstractMainWindow& mainWindow)
-    : rootItem_(mainWindow.GetContext())
+QtHierarchyListModel::QtHierarchyListModel(AbstractMainWindow* mainWindow)
+    : rootItem_(mainWindow->GetContext())
 {
 }
 
@@ -470,7 +470,7 @@ int QtHierarchyListModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtHierarchyList::QtHierarchyList(AbstractMainWindow& mainWindow)
+QtHierarchyList::QtHierarchyList(AbstractMainWindow* mainWindow)
     : AbstractHierarchyList(mainWindow)
     , treeView_(new QTreeView())
     , model_(new QtHierarchyListModel(mainWindow_))
@@ -602,7 +602,7 @@ void QtUrhoRenderSurface::resizeEvent(QResizeEvent* event)
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtView3D::QtView3D(AbstractMainWindow& mainWindow)
+QtView3D::QtView3D(AbstractMainWindow* mainWindow)
     : AbstractView3D(mainWindow)
     , renderTexture_(new Texture2D(context_))
     , depthTexture_(new Texture2D(context_))
@@ -690,7 +690,7 @@ QtMainWindow::~QtMainWindow()
 
 AbstractDock* QtMainWindow::AddDock(DockLocation hint /*= DialogLocationHint::Undocked*/)
 {
-    auto dialog = MakeShared<QtDock>(*this);
+    auto dialog = MakeShared<QtDock>(this);
     dialog->SetParent(nullptr);
     QDockWidget* dockWidget = dynamic_cast<QDockWidget*>(GetInternalWidget(dialog));
     addDockWidget(Cast(hint), dockWidget);

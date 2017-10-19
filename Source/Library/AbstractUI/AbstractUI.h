@@ -54,7 +54,7 @@ class AbstractWidget : public Object
     URHO3D_OBJECT(AbstractWidget, Object);
 
 public:
-    AbstractWidget(AbstractMainWindow& mainWindow);
+    AbstractWidget(AbstractMainWindow* mainWindow);
 
     void SetParent(AbstractWidget* parent);
     AbstractWidget* GetParent() const { return parent_; }
@@ -62,14 +62,14 @@ public:
     template <class T> void SetInternalHandle(T pointer) { internalPointer_ = MakeCustomValue(pointer); }
     template <class T> T GetInternalHandle() const { return internalPointer_.GetCustom<T>(); }
 
-    AbstractMainWindow* GetMainWindow() const { return &mainWindow_; }
+    AbstractMainWindow* GetMainWindow() const { return mainWindow_; }
 
 private:
     /// Called when widget is attached to the root.
     virtual void OnParentSet() { }
 
 protected:
-    AbstractMainWindow& mainWindow_;
+    AbstractMainWindow* mainWindow_;
 
 private:
     AbstractWidget* parent_ = nullptr;
@@ -82,7 +82,7 @@ class AbstractDock : public AbstractWidget
     URHO3D_OBJECT(AbstractDock, AbstractWidget);
 
 public:
-    AbstractDock(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractDock(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
 
     AbstractWidget* CreateContent(StringHash type);
     template <class T> T* CreateContent() { return dynamic_cast<T*>(CreateContent(T::GetTypeStatic())); }
@@ -104,7 +104,7 @@ class AbstractDummyWidget : public AbstractWidget
     URHO3D_OBJECT(AbstractDummyWidget, AbstractWidget);
 
 public:
-    AbstractDummyWidget(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractDummyWidget(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
 };
 
 class AbstractScrollArea : public AbstractWidget
@@ -112,7 +112,7 @@ class AbstractScrollArea : public AbstractWidget
     URHO3D_OBJECT(AbstractScrollArea, AbstractWidget);
 
 public:
-    AbstractScrollArea(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractScrollArea(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
 
     virtual void SetDynamicWidth(bool dynamicWidth) = 0;
 
@@ -134,7 +134,7 @@ class AbstractLayout : public AbstractWidget
     URHO3D_OBJECT(AbstractLayout, AbstractWidget);
 
 public:
-    AbstractLayout(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractLayout(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
 
     AbstractWidget* CreateCell(StringHash type, unsigned row, unsigned column);
     template <class T> T* CreateCell(unsigned row, unsigned column) { return dynamic_cast<T*>(CreateCell(T::GetTypeStatic(), row, column)); }
@@ -179,7 +179,7 @@ class AbstractCollapsiblePanel : public AbstractWidget
     URHO3D_OBJECT(AbstractCollapsiblePanel, AbstractWidget);
 
 public:
-    AbstractCollapsiblePanel(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractCollapsiblePanel(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
 
     virtual void SetHeaderText(const String& text) = 0;
     virtual void SetExpanded(bool expanded) = 0;
@@ -214,7 +214,7 @@ class AbstractButton : public AbstractWidget
     URHO3D_OBJECT(AbstractButton, AbstractWidget);
 
 public:
-    AbstractButton(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractButton(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetText(const String& text) = 0;
 };
 
@@ -223,7 +223,7 @@ class AbstractText : public AbstractWidget
     URHO3D_OBJECT(AbstractText, AbstractWidget);
 
 public:
-    AbstractText(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractText(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetText(const String& text) = 0;
     virtual unsigned GetTextWidth() const = 0;
 };
@@ -233,7 +233,7 @@ class AbstractLineEdit : public AbstractWidget
     URHO3D_OBJECT(AbstractLineEdit, AbstractWidget);
 
 public:
-    AbstractLineEdit(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractLineEdit(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetText(const String& text) = 0;
     virtual const String& GetText() const = 0;
 
@@ -247,7 +247,7 @@ class AbstractCheckBox : public AbstractWidget
     URHO3D_OBJECT(AbstractCheckBox, AbstractWidget);
 
 public:
-    AbstractCheckBox(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractCheckBox(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetChecked(bool checked) = 0;
 };
 
@@ -282,7 +282,7 @@ class AbstractHierarchyList : public AbstractWidget
 
 public:
     using ItemVector = PODVector<AbstractHierarchyListItem*>;
-    AbstractHierarchyList(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractHierarchyList(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
     virtual void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) = 0;
     virtual void SelectItem(AbstractHierarchyListItem* item) = 0;
     virtual void DeselectItem(AbstractHierarchyListItem* item) = 0;
@@ -295,7 +295,7 @@ class AbstractView3D : public AbstractWidget
     URHO3D_OBJECT(AbstractView3D, AbstractWidget);
 
 public:
-    AbstractView3D(AbstractMainWindow& mainWindow) : AbstractWidget(mainWindow) { }
+    AbstractView3D(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
     /// Set the content of the view.
     virtual void SetView(Scene* scene, Camera* camera) = 0;
     /// Set auto update.
@@ -337,5 +337,5 @@ private:
 }
 
 #define URHO3D_IMPLEMENT_WIDGET_FACTORY(factory, implementation) \
-    SharedPtr<AbstractWidget> factory() override { return MakeShared<implementation>(*this); }
+    SharedPtr<AbstractWidget> factory() override { return MakeShared<implementation>(this); }
 

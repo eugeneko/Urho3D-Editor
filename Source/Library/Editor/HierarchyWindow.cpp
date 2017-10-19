@@ -16,10 +16,10 @@ String HierarchyWindowItem::GetText()
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindow::HierarchyWindow(AbstractMainWindow& mainWindow)
-    : Object(mainWindow.GetContext())
+HierarchyWindow::HierarchyWindow(AbstractMainWindow* mainWindow)
+    : Object(mainWindow->GetContext())
 {
-    dialog_ = mainWindow.AddDock(DockLocation::Left);
+    dialog_ = mainWindow->AddDock(DockLocation::Left);
     dialog_->SetName("Hierarchy");
 
     hierarchyList_ = dialog_->CreateContent<AbstractHierarchyList>();

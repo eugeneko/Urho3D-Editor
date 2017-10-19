@@ -320,10 +320,10 @@ void MultiplePanelInspectable::BuildUI(AbstractLayout* layout)
 }
 
 //////////////////////////////////////////////////////////////////////////
-Inspector::Inspector(AbstractMainWindow& mainWindow)
-    : Object(mainWindow.GetContext())
+Inspector::Inspector(AbstractMainWindow* mainWindow)
+    : Object(mainWindow->GetContext())
 {
-    dialog_ = mainWindow.AddDock(DockLocation::Right);
+    dialog_ = mainWindow->AddDock(DockLocation::Right);
     dialog_->SetName("Inspector");
     scrollRegion_ = dialog_->CreateContent<AbstractScrollArea>();
     layout_ = scrollRegion_->CreateContent<AbstractLayout>();

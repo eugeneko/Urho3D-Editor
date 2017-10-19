@@ -17,7 +17,7 @@ class Editor : public Object
 
 public:
     /// Construct.
-    Editor(AbstractMainWindow& mainWindow);
+    Editor(AbstractMainWindow* mainWindow);
     /// Set editor context.
     void SetEditorContext(AbstractEditorContext* editorContext) { editorContext_ = editorContext; }
     /// Add overlay.

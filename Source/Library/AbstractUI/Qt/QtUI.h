@@ -31,7 +31,7 @@ class QtDock : public AbstractDock
 {
 
 public:
-    QtDock(AbstractMainWindow& mainWindow);
+    QtDock(AbstractMainWindow* mainWindow);
     void SetName(const String& name) override;
 
 
@@ -45,7 +45,7 @@ private:
 class QtDummyWidget : public AbstractDummyWidget
 {
 public:
-    QtDummyWidget(AbstractMainWindow& mainWindow);
+    QtDummyWidget(AbstractMainWindow* mainWindow);
 
 private:
     QWidget* widget_ = nullptr;
@@ -55,7 +55,7 @@ private:
 class QtScrollArea : public QObject, public AbstractScrollArea
 {
 public:
-    QtScrollArea(AbstractMainWindow& mainWindow);
+    QtScrollArea(AbstractMainWindow* mainWindow);
 
     void SetDynamicWidth(bool dynamicWidth) override;
 
@@ -77,7 +77,7 @@ private:
 class QtLayout : public AbstractLayout
 {
 public:
-    QtLayout(AbstractMainWindow& mainWindow);
+    QtLayout(AbstractMainWindow* mainWindow);
 
 
 
@@ -97,7 +97,7 @@ class QtCollapsiblePanel : public QObject, public AbstractCollapsiblePanel
     Q_OBJECT
 
 public:
-    QtCollapsiblePanel(AbstractMainWindow& mainWindow);
+    QtCollapsiblePanel(AbstractMainWindow* mainWindow);
 
     void SetHeaderText(const String& text) override;
     void SetExpanded(bool expanded) override;
@@ -138,7 +138,7 @@ private:
 class QtButton : public AbstractButton
 {
 public:
-    QtButton(AbstractMainWindow& mainWindow);
+    QtButton(AbstractMainWindow* mainWindow);
     void SetText(const String& text) override;
 
 
@@ -152,7 +152,7 @@ class QtText : public AbstractText
     URHO3D_OBJECT(AbstractText, AbstractWidget);
 
 public:
-    QtText(AbstractMainWindow& mainWindow);
+    QtText(AbstractMainWindow* mainWindow);
     void SetText(const String& text) override;
     unsigned GetTextWidth() const override;
 
@@ -167,7 +167,7 @@ class QtLineEdit : public QObject, public AbstractLineEdit
     URHO3D_OBJECT(AbstractLineEdit, AbstractWidget);
 
 public:
-    QtLineEdit(AbstractMainWindow& mainWindow);
+    QtLineEdit(AbstractMainWindow* mainWindow);
     void SetText(const String& text) override;
     const String& GetText() const override;
 
@@ -182,7 +182,7 @@ class QtCheckBox : public AbstractCheckBox
     URHO3D_OBJECT(AbstractCheckBox, QtCheckBox);
 
 public:
-    QtCheckBox(AbstractMainWindow& mainWindow);
+    QtCheckBox(AbstractMainWindow* mainWindow);
     void SetChecked(bool checked) override;
 
 private:
@@ -192,7 +192,7 @@ private:
 class QtHierarchyListModel : public QAbstractItemModel
 {
 public:
-    QtHierarchyListModel(AbstractMainWindow& mainWindow);
+    QtHierarchyListModel(AbstractMainWindow* mainWindow);
 
     void InsertItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex);
     void RemoveItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow = -1);
@@ -215,7 +215,7 @@ private:
 class QtHierarchyList : public AbstractHierarchyList
 {
 public:
-    QtHierarchyList(AbstractMainWindow& mainWindow);
+    QtHierarchyList(AbstractMainWindow* mainWindow);
 
     void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) override;
     void SelectItem(AbstractHierarchyListItem* item) override;
@@ -257,7 +257,7 @@ private:
 class QtView3D : public AbstractView3D
 {
 public:
-    QtView3D(AbstractMainWindow& mainWindow);
+    QtView3D(AbstractMainWindow* mainWindow);
     void SetView(Scene* scene, Camera* camera) override;
     void SetAutoUpdate(bool autoUpdate) override;
     void UpdateView() override;

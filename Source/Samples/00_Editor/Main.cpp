@@ -95,8 +95,8 @@ class DefaultEditor : public Object
     URHO3D_OBJECT(DefaultEditor, Object);
 
 public:
-    DefaultEditor(AbstractMainWindow& mainWindow, bool blenderHotkeys)
-        : Object(mainWindow.GetContext())
+    DefaultEditor(AbstractMainWindow* mainWindow, bool blenderHotkeys)
+        : Object(mainWindow->GetContext())
     {
         scene_ = MakeShared<Scene>(context_);
         CreateScene(scene_);
@@ -143,17 +143,17 @@ public:
         editor_->AddOverlay(debugGeometryRenderer_);
         editor_->AddSubsystem(selectionTransform);
 
-//         hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow);
-//         hierarchyWindow_->SetScene(scene_);
-//         hierarchyWindow_->SetSelection(selection);
-        {
-            AbstractDock* dialog = mainWindow.AddDock(DockLocation::Left);
-            dialog->SetName("View3D");
-
-            AbstractView3D* view = dialog->CreateContent<AbstractView3D>();
-            view->SetAutoUpdate(false);
-            view->SetView(scene_, scene_->GetChild("Camera")->GetComponent<Camera>());
-        }
+        hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow);
+        hierarchyWindow_->SetScene(scene_);
+        hierarchyWindow_->SetSelection(selection);
+//         {
+//             AbstractDock* dialog = mainWindow->AddDock(DockLocation::Left);
+//             dialog->SetName("View3D");
+//
+//             AbstractView3D* view = dialog->CreateContent<AbstractView3D>();
+//             view->SetAutoUpdate(false);
+//             view->SetView(scene_, scene_->GetChild("Camera")->GetComponent<Camera>());
+//         }
 
 
         inspector_ = MakeShared<Inspector>(mainWindow);
@@ -234,17 +234,17 @@ public:
             });
         }
 
-        mainWindow.AddAction("EditCut", KeyBinding::Key(KEY_X) + KeyBinding::CTRL, [=]() {});
-        mainWindow.AddAction("EditCopy", KeyBinding::Key(KEY_C) + KeyBinding::CTRL, [=]() {});
-        mainWindow.AddAction("EditPaste", KeyBinding::Key(KEY_V) + KeyBinding::CTRL, [=]() {});
-        mainWindow.AddAction("EditDelete", KeyBinding::Key(KEY_DELETE),
+        mainWindow->AddAction("EditCut", KeyBinding::Key(KEY_X) + KeyBinding::CTRL, [=]() {});
+        mainWindow->AddAction("EditCopy", KeyBinding::Key(KEY_C) + KeyBinding::CTRL, [=]() {});
+        mainWindow->AddAction("EditPaste", KeyBinding::Key(KEY_V) + KeyBinding::CTRL, [=]() {});
+        mainWindow->AddAction("EditDelete", KeyBinding::Key(KEY_DELETE),
             [=]()
         {
             // #TODO Implement me
             selection->GetSelectedNodesAndComponents();
         });
 
-        AbstractMenu* menuEdit = mainWindow.AddMenu("Edit");
+        AbstractMenu* menuEdit = mainWindow->AddMenu("Edit");
         menuEdit->AddAction("Cut", "EditCut");
         menuEdit->AddAction("Copy", "EditCopy");
         menuEdit->AddAction("Paste", "EditPaste");
@@ -267,7 +267,7 @@ int QtEditorMain()
     static char* argvStub[] = { nullptr };
     QApplication applicaton(argcStub, argvStub);
     QtMainWindow mainWindow(applicaton);
-    DefaultEditor defaultEditor(mainWindow, false);
+    DefaultEditor defaultEditor(&mainWindow, false);
     mainWindow.showMaximized();
     return applicaton.exec();
 }
@@ -292,7 +292,7 @@ public:
         ui->GetRoot()->SetDefaultStyle(style);
 
         mainWindow_ = MakeShared<UrhoMainWindow>(context_);
-        editor_ = MakeShared<DefaultEditor>(*mainWindow_, false);
+        editor_ = MakeShared<DefaultEditor>(mainWindow_, false);
     }
 
 private:

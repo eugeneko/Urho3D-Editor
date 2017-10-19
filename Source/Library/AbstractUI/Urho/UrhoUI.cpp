@@ -120,7 +120,7 @@ UIElement* GetParentElement(AbstractWidget* widget)
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoDock::UrhoDock(AbstractMainWindow& mainWindow)
+UrhoDock::UrhoDock(AbstractMainWindow* mainWindow)
     : AbstractDock(mainWindow)
 {
 }
@@ -176,7 +176,7 @@ bool UrhoDock::DoSetContent(AbstractWidget* content)
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoScrollArea::UrhoScrollArea(AbstractMainWindow& mainWindow)
+UrhoScrollArea::UrhoScrollArea(AbstractMainWindow* mainWindow)
     : AbstractScrollArea(mainWindow)
 {
 }
@@ -243,7 +243,7 @@ void UrhoScrollArea::UpdateContentSize()
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoLayout::UrhoLayout(AbstractMainWindow& mainWindow)
+UrhoLayout::UrhoLayout(AbstractMainWindow* mainWindow)
     : AbstractLayout(mainWindow)
 {
 }
@@ -289,7 +289,7 @@ void UrhoLayout::DoRemoveChild(AbstractWidget* child)
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoCollapsiblePanel::UrhoCollapsiblePanel(AbstractMainWindow& mainWindow)
+UrhoCollapsiblePanel::UrhoCollapsiblePanel(AbstractMainWindow* mainWindow)
     : AbstractCollapsiblePanel(mainWindow)
 {
 }
@@ -379,7 +379,7 @@ void UrhoCollapsiblePanel::OnParentSet()
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoButton::UrhoButton(AbstractMainWindow& mainWindow)
+UrhoButton::UrhoButton(AbstractMainWindow* mainWindow)
     : AbstractButton(mainWindow)
 {
 }
@@ -416,7 +416,7 @@ void UrhoButton::UpdateButtonSize()
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoText::UrhoText(AbstractMainWindow& mainWindow)
+UrhoText::UrhoText(AbstractMainWindow* mainWindow)
     : AbstractText(mainWindow)
 {
 }
@@ -445,7 +445,7 @@ void UrhoText::OnParentSet()
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoLineEdit::UrhoLineEdit(AbstractMainWindow& mainWindow)
+UrhoLineEdit::UrhoLineEdit(AbstractMainWindow* mainWindow)
     : AbstractLineEdit(mainWindow)
 {
 }
@@ -485,7 +485,7 @@ void UrhoLineEdit::OnParentSet()
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoCheckBox::UrhoCheckBox(AbstractMainWindow& mainWindow)
+UrhoCheckBox::UrhoCheckBox(AbstractMainWindow* mainWindow)
     : AbstractCheckBox(mainWindow)
 {
 }
@@ -511,7 +511,7 @@ void UrhoCheckBox::OnParentSet()
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoHierarchyList::UrhoHierarchyList(AbstractMainWindow& mainWindow)
+UrhoHierarchyList::UrhoHierarchyList(AbstractMainWindow* mainWindow)
     : AbstractHierarchyList(mainWindow)
     , rootItem_(context_)
 {
@@ -700,15 +700,15 @@ int StandardUrhoInput::GetMouseWheelMove() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoMenu::UrhoMenu(UrhoMainWindow& mainWindow, UIElement* parent, const String& text, const String& actionId,
+UrhoMenu::UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& text, const String& actionId,
     bool hasPopup, bool topLevel)
-    : Object(mainWindow.GetContext())
+    : Object(mainWindow->GetContext())
     , mainWindow_(mainWindow)
 {
     AbstractAction* action = nullptr;
     if (!actionId.Empty())
     {
-        action = mainWindow_.FindAction(actionId);
+        action = mainWindow_->FindAction(actionId);
     }
 
     menu_ = new Menu(context_);
@@ -790,7 +790,7 @@ void UrhoMenu::HandleMenuSelected(StringHash eventType, VariantMap& eventData)
     if (menu_->GetPopup())
         return;
 
-    mainWindow_.CollapseMenuPopups(menu_);
+    mainWindow_->CollapseMenuPopups(menu_);
 
     if (actionCallback_)
         actionCallback_();
@@ -807,7 +807,7 @@ UrhoMainWindow::UrhoMainWindow(Context* context)
 
 AbstractDock* UrhoMainWindow::AddDock(DockLocation hint)
 {
-    auto dialog = MakeShared<UrhoDock>(*this);
+    auto dialog = MakeShared<UrhoDock>(this);
     dialog->SetParent(nullptr);
     dialogs_.Push(dialog);
     return dialog;
@@ -830,7 +830,7 @@ AbstractMenu* UrhoMainWindow::AddMenu(const String& name)
         menuBar_->SetStyle("EditorMenuBar");
     }
 
-    menus_.Push(MakeShared<UrhoMenu>(*this, menuBar_, name, "", true, true));
+    menus_.Push(MakeShared<UrhoMenu>(this, menuBar_, name, "", true, true));
     return menus_.Back();
 }
 
