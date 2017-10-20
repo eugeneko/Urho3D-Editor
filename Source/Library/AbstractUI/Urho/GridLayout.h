@@ -45,6 +45,7 @@ private:
     void HandleLayoutUpdated(StringHash eventType, VariantMap& eventData);
 
     void UpdateChildrenLayout();
+    void StretchSizes(Vector<int>& sizes, const Vector<int>& maxSizes, int value);
     void EnsureRow(unsigned row);
     void EnsureCell(unsigned row, unsigned column);
 
@@ -52,7 +53,9 @@ private:
 
     unsigned childrenLayoutNestingLevel_ = 0;
     Vector<GridRowGroup> groupData_;
+    Vector<int> rowHeights_;
     Vector<int> minRowHeights_;
+    Vector<int> maxRowHeights_;
     int minWidth_ = 0;
     int minHeight_ = 0;
 };

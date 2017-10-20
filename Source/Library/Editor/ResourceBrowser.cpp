@@ -51,9 +51,8 @@ ResourceBrowser::ResourceBrowser(AbstractMainWindow* mainWindow)
     dock_ = mainWindow->AddDock(DockLocation::Bottom);
     dock_->SetName("Resource Browser");
 
-    //layout_ = dock_->CreateContent<AbstractLayout>();
-    //directoriesView_ = layout_->CreateCell<AbstractHierarchyList>(0, 0);
-    directoriesView_ = dock_->CreateContent<AbstractHierarchyList>();
+    layout_ = dock_->CreateContent<AbstractLayout>();
+    directoriesView_ = layout_->CreateCell<AbstractHierarchyList>(0, 0);
 }
 
 void ResourceBrowser::ScanResources()

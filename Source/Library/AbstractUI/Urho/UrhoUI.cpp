@@ -237,7 +237,8 @@ void UrhoScrollArea::UpdateContentSize()
     const IntRect& clipBorder = scrollPanel_->GetClipBorder();
     if (body)
     {
-        body->SetFixedWidth(scrollPanel_->GetWidth() - clipBorder.left_ - clipBorder.right_);
+        body->SetWidth(Max(body->GetMinWidth(), scrollPanel_->GetWidth() - clipBorder.left_ - clipBorder.right_));
+        body->SetHeight(Max(body->GetMinHeight(), scrollPanel_->GetHeight() - clipBorder.top_ - clipBorder.bottom_));
     }
     --layoutNestingLevel_;
 }
@@ -336,6 +337,7 @@ bool UrhoCollapsiblePanel::DoSetBody(AbstractWidget* body)
         panel_->RemoveChild(body_);
     body_ = GetInternalElement(body);
     panel_->AddChild(body_);
+    SubscribeToEvent(body_, E_RESIZED, URHO3D_HANDLER(UrhoCollapsiblePanel, HandleBodyResized));
 
     UpdateContentSize();
 
@@ -344,9 +346,19 @@ bool UrhoCollapsiblePanel::DoSetBody(AbstractWidget* body)
 
 void UrhoCollapsiblePanel::UpdateContentSize()
 {
-    if (body_)
-        body_->SetVisible(toggleButton_->IsChecked());
-    panel_->SetHeight(panel_->GetEffectiveMinSize().y_);
+    const bool expanded = toggleButton_->IsChecked();
+    const int bodyHeight = body_ && expanded ? body_->GetEffectiveMinSize().y_ : 0;
+    const int headerHeight = header_->GetEffectiveMinSize().y_;
+    if (body_ && !expanded)
+        body_->SetVisible(false);
+    panel_->SetFixedHeight(bodyHeight + headerHeight);
+    if (body_ && expanded)
+        body_->SetVisible(true);
+}
+
+void UrhoCollapsiblePanel::HandleBodyResized(StringHash eventType, VariantMap& eventData)
+{
+    UpdateContentSize();
 }
 
 void UrhoCollapsiblePanel::OnParentSet()

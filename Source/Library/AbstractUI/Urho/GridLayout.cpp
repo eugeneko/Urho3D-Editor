@@ -56,6 +56,8 @@ void GridLayout::UpdateChildrenLayout()
     // Update min row heights
     minRowHeights_.Clear();
     minRowHeights_.Resize(rows_.Size(), 0);
+    maxRowHeights_.Clear();
+    maxRowHeights_.Resize(rows_.Size(), 0);
 
     // Gather limits
     for (unsigned groupIndex = 0; groupIndex < groupData_.Size(); ++groupIndex)
@@ -93,6 +95,7 @@ void GridLayout::UpdateChildrenLayout()
                 group.minColumnWidth_[columnIndex] = Max(cell.minWidth_, Max(group.minColumnWidth_[columnIndex], minSize.x_));
                 group.maxColumnWidth_[columnIndex] = Max(group.maxColumnWidth_[columnIndex], maxSize.x_);
                 minRowHeights_[rowIndex] = Max(cell.minHeight_, Max(minRowHeights_[rowIndex], minSize.y_));
+                maxRowHeights_[rowIndex] = Max(cell.minHeight_, Max(maxRowHeights_[rowIndex], maxSize.y_));
             }
         }
 
@@ -114,42 +117,22 @@ void GridLayout::UpdateChildrenLayout()
 
     // Resize self
     SetMinSize(minWidth_, minHeight_);
-    SetMaxHeight(minHeight_);
+    //SetMaxHeight(minHeight_);
 
-    // Compute actual sizes
+    // Stretch x
+    const int height = Max(minHeight_, GetHeight());
     const int width = Max(minWidth_, GetWidth());
     for (unsigned groupIndex = 0; groupIndex < groupData_.Size(); ++groupIndex)
     {
         GridRowGroup& group = groupData_[groupIndex];
         const unsigned numColumns = group.minColumnWidth_.Size();
-
-        // Compute horizontal stretch
         group.columnWidth_ = group.minColumnWidth_;
-        int remainingStretch = Max(0, width - group.minWidth_);
-        unsigned remainingColumns = numColumns;
-        while (remainingStretch > 0 && remainingColumns > 0)
-        {
-            // Count stretchable columns
-            remainingColumns = 0;
-            for (unsigned i = 0; i < numColumns; ++i)
-                if (group.columnWidth_[i] < group.maxColumnWidth_[i])
-                    ++remainingColumns;
-            if (remainingColumns == 0)
-                break;
-
-            // Stretch remaining columns
-            const int delta = (remainingStretch + remainingColumns - 1) / remainingColumns;
-            for (unsigned i = 0; i < numColumns; ++i)
-            {
-                if (group.columnWidth_[i] < group.maxColumnWidth_[i])
-                {
-                    const int oldWidth = group.columnWidth_[i];
-                    group.columnWidth_[i] = Min(group.maxColumnWidth_[i], group.columnWidth_[i] + Min(delta, remainingStretch));
-                    remainingStretch -= group.columnWidth_[i] - oldWidth;
-                }
-            }
-        }
+        StretchSizes(group.columnWidth_, group.maxColumnWidth_, width - group.minWidth_);
     }
+
+    // Stretch y
+    rowHeights_ = minRowHeights_;
+    StretchSizes(rowHeights_, maxRowHeights_, height - minHeight_);
 
     // Apply layout
     int y = 0;
@@ -157,7 +140,7 @@ void GridLayout::UpdateChildrenLayout()
     {
         const GridRow& row = rows_[rowIndex];
         const GridRowGroup& group = groupData_[row.group_];
-        const int rowHeight = minRowHeights_[rowIndex];
+        const int rowHeight = rowHeights_[rowIndex];
 
         // Iterate over columns
         int x = 0;
@@ -181,6 +164,36 @@ void GridLayout::UpdateChildrenLayout()
 
     --childrenLayoutNestingLevel_;
     EnableLayoutUpdate();
+}
+
+void GridLayout::StretchSizes(Vector<int>& sizes, const Vector<int>& maxSizes, int value)
+{
+    // Compute horizontal stretch
+    const unsigned numElements = sizes.Size();
+    int remainingStretch = Max(0, value);
+    unsigned remainingColumns = numElements;
+    while (remainingStretch > 0 && remainingColumns > 0)
+    {
+        // Count stretchable columns
+        remainingColumns = 0;
+        for (unsigned i = 0; i < numElements; ++i)
+            if (sizes[i] < maxSizes[i])
+                ++remainingColumns;
+        if (remainingColumns == 0)
+            break;
+
+        // Stretch remaining columns
+        const int delta = (remainingStretch + remainingColumns - 1) / remainingColumns;
+        for (unsigned i = 0; i < numElements; ++i)
+        {
+            if (sizes[i] < maxSizes[i])
+            {
+                const int oldWidth = sizes[i];
+                sizes[i] = Min(maxSizes[i], sizes[i] + Min(delta, remainingStretch));
+                remainingStretch -= sizes[i] - oldWidth;
+            }
+        }
+    }
 }
 
 void GridLayout::EnsureRow(unsigned row)

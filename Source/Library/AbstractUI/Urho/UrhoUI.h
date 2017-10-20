@@ -97,6 +97,7 @@ private:
     bool DoSetBody(AbstractWidget* body) override;
 
     void UpdateContentSize();
+    void HandleBodyResized(StringHash eventType, VariantMap& eventData);
 
 private:
     BorderImage* panel_ = nullptr;
