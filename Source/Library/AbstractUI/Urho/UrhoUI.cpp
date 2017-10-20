@@ -529,6 +529,11 @@ UrhoHierarchyList::UrhoHierarchyList(AbstractMainWindow* mainWindow)
 {
 }
 
+void UrhoHierarchyList::SetMultiselect(bool multiselect)
+{
+    hierarchyList_->SetMultiselect(multiselect);
+}
+
 void UrhoHierarchyList::AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent)
 {
     hierarchyList_->DisableInternalLayoutUpdate();
@@ -584,7 +589,6 @@ void UrhoHierarchyList::OnParentSet()
     hierarchyList_->SetStyle("HierarchyListView");
     hierarchyList_->SetInternal(true);
     hierarchyList_->SetHighlightMode(HM_ALWAYS);
-    hierarchyList_->SetMultiselect(true);
     hierarchyList_->SetSelectOnClickEnd(true);
     hierarchyList_->SetHierarchyMode(true);
     SubscribeToEvent(hierarchyList_, E_ITEMCLICKED, URHO3D_HANDLER(UrhoHierarchyList, HandleItemClicked));
@@ -613,9 +617,8 @@ void UrhoHierarchyList::HandleItemClicked(StringHash /*eventType*/, VariantMap& 
     RefCounted* element = eventData[ItemClicked::P_ITEM].GetPtr();
     if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
     {
-        SendEvent(E_ABSTRACTWIDGETCLICKED,
-            AbstractWidgetClicked::P_ELEMENT, this,
-            AbstractWidgetClicked::P_ITEM, item->GetItem());
+        if (onItemClicked_)
+            onItemClicked_(item->GetItem());
     }
 }
 

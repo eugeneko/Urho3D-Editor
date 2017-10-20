@@ -196,7 +196,7 @@ public:
     void InsertItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex, int row = M_MAX_INT);
     void RemoveItem(AbstractHierarchyListItem* item, const QModelIndex& parentIndex, int hintRow = -1);
 
-    QModelIndex GetIndex(AbstractHierarchyListItem* item, QModelIndex hint = QModelIndex());
+    QModelIndex GetIndex(AbstractHierarchyListItem* item, const QModelIndex& hint = QModelIndex());
     AbstractHierarchyListItem* GetItem(const QModelIndex& index) const;
 private:
 
@@ -211,11 +211,14 @@ private:
 
 };
 
-class QtHierarchyList : public AbstractHierarchyList
+class QtHierarchyList : public QObject, public AbstractHierarchyList
 {
+    Q_OBJECT
+
 public:
     QtHierarchyList(AbstractMainWindow* mainWindow);
 
+    void SetMultiselect(bool multiselect) override;
     void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) override;
     void RemoveAllItems() override;
     void SelectItem(AbstractHierarchyListItem* item) override;

@@ -23,7 +23,11 @@ HierarchyWindow::HierarchyWindow(AbstractMainWindow* mainWindow)
     dialog_->SetName("Hierarchy");
 
     hierarchyList_ = dialog_->CreateContent<AbstractHierarchyList>();
-    SubscribeToEvent(hierarchyList_, E_ABSTRACTWIDGETCLICKED, URHO3D_HANDLER(HierarchyWindow, HandleListSelectionChanged));
+    hierarchyList_->SetMultiselect(true);
+    hierarchyList_->onItemClicked_ = [=](AbstractHierarchyListItem* item)
+    {
+        HandleListSelectionChanged();
+    };
     SetScene(scene_);
 }
 
@@ -118,14 +122,11 @@ void HierarchyWindow::AddNode(Node* node)
     hierarchyList_->AddItem(objectItem, M_MAX_UNSIGNED, parentItem);
 }
 
-void HierarchyWindow::HandleListSelectionChanged(StringHash eventType, VariantMap& eventData)
+void HierarchyWindow::HandleListSelectionChanged()
 {
-    if (eventData[AbstractWidgetClicked::P_ITEM].GetPtr() != nullptr)
-    {
-        suppressEditorSelectionChanges_ = true;
-        selection_->SetSelection(GetSelectedObjects());
-        suppressEditorSelectionChanges_ = false;
-    }
+    suppressEditorSelectionChanges_ = true;
+    selection_->SetSelection(GetSelectedObjects());
+    suppressEditorSelectionChanges_ = false;
 }
 
 void HierarchyWindow::HandleEditorSelectionChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)

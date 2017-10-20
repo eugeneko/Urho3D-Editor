@@ -46,7 +46,7 @@ private:
     // @name Editor and UI Events
     // @{
 
-    void HandleListSelectionChanged(StringHash eventType, VariantMap& eventData);
+    void HandleListSelectionChanged();
     void HandleEditorSelectionChanged(StringHash eventType, VariantMap& eventData);
 
     // @}

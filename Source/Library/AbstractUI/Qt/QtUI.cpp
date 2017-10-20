@@ -377,7 +377,7 @@ void QtHierarchyListModel::RemoveItem(AbstractHierarchyListItem* item, const QMo
     }
 }
 
-QModelIndex QtHierarchyListModel::GetIndex(AbstractHierarchyListItem* item, QModelIndex hint)
+QModelIndex QtHierarchyListModel::GetIndex(AbstractHierarchyListItem* item, const QModelIndex& hint)
 {
     if (!item || !item->GetParent())
         return QModelIndex();
@@ -462,12 +462,26 @@ QtHierarchyList::QtHierarchyList(AbstractMainWindow* mainWindow)
     , model_(new QtHierarchyListModel(mainWindow_))
 {
     treeView_->header()->hide();
-    treeView_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     treeView_->setDragDropMode(QAbstractItemView::DragDrop);
     treeView_->setDragEnabled(true);
     treeView_->setModel(model_.data());
 
+    connect(treeView_, &QTreeView::clicked,
+        [=](const QModelIndex& index)
+    {
+        if (AbstractHierarchyListItem* item = model_->GetItem(index))
+        {
+            if (onItemClicked_)
+                onItemClicked_(item);
+        }
+    });
+
     SetInternalWidget(this, treeView_);
+}
+
+void QtHierarchyList::SetMultiselect(bool multiselect)
+{
+    treeView_->setSelectionMode(multiselect ? QAbstractItemView::ExtendedSelection : QAbstractItemView::SingleSelection);
 }
 
 void QtHierarchyList::AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent)
@@ -486,17 +500,27 @@ void QtHierarchyList::RemoveAllItems()
 
 void QtHierarchyList::SelectItem(AbstractHierarchyListItem* item)
 {
-    //throw std::logic_error("The method or operation is not implemented.");
+    QItemSelectionModel* selectionModel = treeView_->selectionModel();
+    const QModelIndex itemIndex = model_->GetIndex(item);
+    if (itemIndex.isValid())
+        selectionModel->select(itemIndex, QItemSelectionModel::Select);
 }
 
 void QtHierarchyList::DeselectItem(AbstractHierarchyListItem* item)
 {
-    //throw std::logic_error("The method or operation is not implemented.");
+    QItemSelectionModel* selectionModel = treeView_->selectionModel();
+    const QModelIndex itemIndex = model_->GetIndex(item);
+    if (itemIndex.isValid())
+        selectionModel->select(itemIndex, QItemSelectionModel::Deselect);
 }
 
 void QtHierarchyList::GetSelection(ItemVector& result)
 {
-    //throw std::logic_error("The method or operation is not implemented.");
+    QItemSelectionModel* selectionModel = treeView_->selectionModel();
+    QModelIndexList selection = selectionModel->selectedIndexes();
+    for (const QModelIndex& index : selection)
+        if (AbstractHierarchyListItem* item = model_->GetItem(index))
+            result.Push(item);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -672,6 +696,10 @@ QtMainWindow::QtMainWindow(QApplication& application)
 {
     urhoWidget_.Initialize(Engine::ParseParameters(GetArguments()));
     setCentralWidget(&urhoWidget_);
+    setCorner(Qt::TopLeftCorner, Qt::LeftDockWidgetArea);
+    setCorner(Qt::TopRightCorner, Qt::RightDockWidgetArea);
+    setCorner(Qt::BottomLeftCorner, Qt::BottomDockWidgetArea);
+    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 }
 
 QtMainWindow::~QtMainWindow()

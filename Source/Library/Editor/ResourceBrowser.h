@@ -7,32 +7,20 @@ namespace Urho3D
 
 class FileSystem;
 
-class ResourceFileDesc : public AbstractHierarchyListItem
-{
-    String fullName_;
-    unsigned resourceDirIndex_ = 0;
-    String name_;
-};
+class ResourceFileDesc;
+class ResourceDirectoryDesc;
 
-class ResourceDirectoryDesc : public RefCounted
+class ResourceFileItem : public AbstractHierarchyListItem
 {
 public:
-    ResourceDirectoryDesc(const String& directoryKey, const String& name);
+    ResourceFileItem(Context* context, ResourceFileDesc* directory);
+    ResourceFileDesc* GetDesc() const { return file_; }
 
-    void AddChild(const SharedPtr<ResourceDirectoryDesc>& child);
-    void SortChildren();
-    void Clear();
-
-    const String& GetName() const { return name_; }
-
-    const Vector<SharedPtr<ResourceDirectoryDesc>>& GetChildren() const { return children_; }
+    String GetText() override;
 
 private:
 
-    String directoryKey_;
-    String name_;
-    Vector<SharedPtr<ResourceDirectoryDesc>> children_;
-    //Vector<ResourceFileDesc> files_;
+    ResourceFileDesc* file_ = nullptr;
 };
 
 class ResourceDirectoryItem : public AbstractHierarchyListItem
@@ -41,11 +29,31 @@ public:
     ResourceDirectoryItem(Context* context, ResourceDirectoryDesc* directory);
     ResourceDirectoryDesc* GetDesc() const { return directory_; }
 
-    String GetText() override { return directory_->GetName(); }
+    String GetText() override;
 
 private:
 
     ResourceDirectoryDesc* directory_ = nullptr;
+};
+
+class ResourceFileDesc : public RefCounted
+{
+public:
+    String resourceKey_;
+    unsigned resourceDirIndex_ = 0;
+    String name_;
+    WeakPtr<ResourceFileItem> item_;
+};
+
+class ResourceDirectoryDesc : public RefCounted
+{
+public:
+    String directoryKey_;
+    String fullPath_;
+    String name_;
+    Vector<SharedPtr<ResourceDirectoryDesc>> children_;
+    Vector<SharedPtr<ResourceFileDesc>> files_;
+    WeakPtr<ResourceDirectoryItem> item_;
 };
 
 class ResourceBrowser : public Object
@@ -55,11 +63,18 @@ class ResourceBrowser : public Object
 public:
     ResourceBrowser(AbstractMainWindow* mainWindow);
     void ScanResources();
+    const ResourceDirectoryDesc* GetSelectedDirectory() const;
+    bool SelectDirectory(const String& directoryKey);
 
 private:
+    static void SortChildrenDirectories(ResourceDirectoryDesc& directory);
+    static void ClearDirectory(ResourceDirectoryDesc& directory);
+
     void ScanResourceDirectory(const String& path, unsigned resourceDirIndex);
-    void AddDirectory(const String& directoryKey);
-    void UpdateDirectoryUI(ResourceDirectoryItem* directory);
+    void AddDirectory(const String& directoryKey, const String& resourceDir, unsigned resourceDirIndex);
+    void ScanResourceFiles(ResourceDirectoryDesc& directory, unsigned resourceDirIndex);
+    void UpdateDirectoryView(ResourceDirectoryDesc& directory, unsigned index, ResourceDirectoryItem* parent);
+    void UpdateFileView(ResourceDirectoryDesc& directory);
 
 private:
     FileSystem* fileSystem_ = nullptr;
@@ -67,6 +82,7 @@ private:
     AbstractDock* dock_ = nullptr;
     AbstractLayout* layout_ = nullptr;
     AbstractHierarchyList* directoriesView_ = nullptr;
+    AbstractHierarchyList* filesView_ = nullptr;
     ResourceDirectoryDesc rootDirectory_;
     HashMap<String, ResourceDirectoryDesc*> directories_;
 };

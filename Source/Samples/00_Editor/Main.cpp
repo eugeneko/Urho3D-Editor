@@ -269,6 +269,7 @@ int QtEditorMain()
 {
     static int argcStub = 0;
     static char* argvStub[] = { nullptr };
+    QApplication::setStyle("Fusion");
     QApplication applicaton(argcStub, argvStub);
     QtMainWindow mainWindow(applicaton);
     DefaultEditor defaultEditor(&mainWindow, false);

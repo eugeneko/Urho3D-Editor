@@ -18,13 +18,6 @@ class AbstractMainWindow;
 class Selection;
 class AbstractDock;
 
-/// Abstract UI widget clicked.
-URHO3D_EVENT(E_ABSTRACTWIDGETCLICKED, AbstractWidgetClicked)
-{
-    URHO3D_PARAM(P_ELEMENT, Element);   // AbstractWidget ptr
-    URHO3D_PARAM(P_ITEM, Item);         // AbstractWidget ptr (optional)
-}
-
 enum class DockLocation
 {
     Left,
@@ -284,12 +277,16 @@ class AbstractHierarchyList : public AbstractWidget
 public:
     using ItemVector = PODVector<AbstractHierarchyListItem*>;
     AbstractHierarchyList(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
+    virtual void SetMultiselect(bool multiselect) = 0;
     virtual void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) = 0;
     virtual void RemoveAllItems() = 0;
     virtual void SelectItem(AbstractHierarchyListItem* item) = 0;
     virtual void DeselectItem(AbstractHierarchyListItem* item) = 0;
     virtual void GetSelection(ItemVector& result) = 0;
     ItemVector GetSelection() { ItemVector result; GetSelection(result); return result; }
+
+public:
+    std::function<void(AbstractHierarchyListItem* item)> onItemClicked_;
 };
 
 class AbstractView3D : public AbstractWidget
