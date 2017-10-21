@@ -106,7 +106,7 @@ public:
     MultipleSerializableInspector(Context* context) : Inspectable(context) { }
 
     void SetMaxLabelLength(unsigned maxLength) { maxLabelLength_ = maxLength; }
-    void SetMetadataInjector(AttributeMetadataInjector* metadataInjector) { metadataInjector_ = metadataInjector; }
+    void SetMetadataInjector(const SharedPtr<AttributeMetadataInjector>& metadataInjector) { metadataInjector_ = metadataInjector; }
 
     bool AddObject(Serializable* object);
     const PODVector<Serializable*>& GetObjects() const { return objects_; }
@@ -150,10 +150,10 @@ class MultipleSerializableInspectorPanel : public InspectablePanel
 public:
     MultipleSerializableInspectorPanel(Context* context) : InspectablePanel(context), content_(context) { }
 
-    void SetMaxLabelLength(unsigned maxLength) { content_.SetMaxLabelLength(maxLength); }
-    void SetMetadataInjector(AttributeMetadataInjector* metadataInjector) { content_.SetMetadataInjector(metadataInjector); }
+    void SetMaxLabelLength(unsigned maxLength);
+    void SetMetadataInjector(const SharedPtr<AttributeMetadataInjector>& metadataInjector);
 
-    bool AddObject(Serializable* object) { return content_.AddObject(object); }
+    bool AddObject(Serializable* object);
 
     void BuildUI(AbstractCollapsiblePanel* panel) override;
 
@@ -170,7 +170,7 @@ class MultiplePanelInspectable : public Inspectable
 
 public:
     MultiplePanelInspectable(Context* context) : Inspectable(context) { }
-    void AddPanel(InspectablePanel* panel);
+    void AddPanel(const SharedPtr<InspectablePanel>& panel);
 
     void BuildUI(AbstractLayout* layout) override;
 
@@ -184,7 +184,7 @@ class Inspector : public Object
 
 public:
     Inspector(AbstractMainWindow* mainWindow);
-    void SetInspectable(Inspectable* inspectable);
+    void SetInspectable(const SharedPtr<Inspectable>& inspectable);
 
 private:
     AbstractDock* dialog_ = nullptr;

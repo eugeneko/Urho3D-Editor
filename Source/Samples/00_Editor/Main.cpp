@@ -1,6 +1,9 @@
+#include <Urho3D/AngelScript/ScriptFile.h>
+#include <Urho3D/Audio/Sound.h>
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Engine/Application.h>
 #include <Urho3D/Engine/Engine.h>
+#include <Urho3D/Graphics/Animation.h>
 #include <Urho3D/Graphics/Camera.h>
 #include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Graphics/Graphics.h>
@@ -9,12 +12,20 @@
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/Graphics/Renderer.h>
 #include <Urho3D/Graphics/StaticModel.h>
+#include <Urho3D/Graphics/Technique.h>
+#include <Urho3D/Graphics/ParticleEffect.h>
+#include <Urho3D/Graphics/ParticleEmitter.h>
+#include <Urho3D/Graphics/Texture3D.h>
+#include <Urho3D/Graphics/TextureCube.h>
 #include <Urho3D/Input/Input.h>
+#include <Urho3D/LuaScript/LuaFile.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
+#include <Urho3D/Urho2D/AnimationSet2D.h>
+#include <Urho3D/Urho2D/ParticleEffect2D.h>
 
 #include "../../Library/AbstractUI/AbstractUI.h"
 #include "../../Library/AbstractUI/KeyBinding.h"
@@ -157,6 +168,39 @@ public:
 //         }
 
         resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow);
+        resourceBrowser_->AddXmlExtension(".xml");
+        resourceBrowser_->AddExtensionLayers<Font>({ ".ttf", ".otf" });
+        resourceBrowser_->AddExtensionLayers<Sound>({ ".ogg", ".wav" });
+        resourceBrowser_->AddExtensionLayers<Image>({ ".dds", ".png", ".jpg", ".jpeg", ".hdr", ".bmp", ".tga", ".ktx", ".pvr" });
+        resourceBrowser_->AddExtensionLayers({ ".obj", ".fbx", ".dae", ".blend" }, "Raw Model");
+        resourceBrowser_->AddExtensionLayers<ScriptFile>({ ".as" });
+        resourceBrowser_->AddExtensionLayers<LuaFile>({ ".lua" });
+        resourceBrowser_->AddExtensionLayers({ ".hlsl", ".glsl" }, "Shader");
+        resourceBrowser_->AddExtensionLayers({ ".html" }, "HTML");
+        resourceBrowser_->AddBinaryLayer<Scene>("USCN");
+        resourceBrowser_->AddBinaryLayer("USCN", "Package");
+        resourceBrowser_->AddBinaryLayer("ULZ4", "Compressed Package");
+        resourceBrowser_->AddBinaryLayer<ScriptFile>("ASBC");
+        resourceBrowser_->AddBinaryLayers<Model>({ "UMDL", "UMD2" });
+        resourceBrowser_->AddBinaryLayer("USHD", "Compiled Shader");
+        resourceBrowser_->AddBinaryLayer<Animation>("UANI");
+        resourceBrowser_->AddXmlLayer<Scene>("scene");
+        resourceBrowser_->AddXmlLayer<Node>("node");
+        resourceBrowser_->AddXmlLayer<Material>("material");
+        resourceBrowser_->AddXmlLayer<Technique>("technique");
+        resourceBrowser_->AddXmlLayer<ParticleEffect>("particleeffect");
+        resourceBrowser_->AddXmlLayer<ParticleEmitter>("particleemitter");
+        resourceBrowser_->AddXmlLayer<Texture2D>("texture");
+        resourceBrowser_->AddXmlLayer("element", "UI Element");
+        resourceBrowser_->AddXmlLayer("elements", "UI Elements");
+        resourceBrowser_->AddXmlLayer("animation", "Animation Metadata");
+        resourceBrowser_->AddXmlLayer("renderpath", "Render Path");
+        resourceBrowser_->AddXmlLayer("TextureAtlas", "Texture Atlas");
+        resourceBrowser_->AddXmlLayer<ParticleEffect2D>("particleEmitterConfig");
+        resourceBrowser_->AddXmlLayer<Texture3D>("texture3d");
+        resourceBrowser_->AddXmlLayer<TextureCube>("cubemap");
+        resourceBrowser_->AddXmlLayer<AnimationSet2D>("spriter_data");
+        resourceBrowser_->AddXmlLayer<XMLFile>("xml");
         resourceBrowser_->ScanResources();
 
         inspector_ = MakeShared<Inspector>(mainWindow);

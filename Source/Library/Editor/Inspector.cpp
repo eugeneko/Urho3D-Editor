@@ -289,6 +289,21 @@ void MultipleSerializableInspector::HandleAttribureCommitted(unsigned attributeI
 }
 
 //////////////////////////////////////////////////////////////////////////
+void MultipleSerializableInspectorPanel::SetMaxLabelLength(unsigned maxLength)
+{
+    content_.SetMaxLabelLength(maxLength);
+}
+
+void MultipleSerializableInspectorPanel::SetMetadataInjector(const SharedPtr<AttributeMetadataInjector>& metadataInjector)
+{
+    content_.SetMetadataInjector(metadataInjector);
+}
+
+bool MultipleSerializableInspectorPanel::AddObject(Serializable* object)
+{
+    return content_.AddObject(object);
+}
+
 void MultipleSerializableInspectorPanel::BuildUI(AbstractCollapsiblePanel* panel)
 {
     if (content_.GetNumObjects() == 0)
@@ -302,7 +317,7 @@ void MultipleSerializableInspectorPanel::BuildUI(AbstractCollapsiblePanel* panel
 }
 
 //////////////////////////////////////////////////////////////////////////
-void MultiplePanelInspectable::AddPanel(InspectablePanel* panel)
+void MultiplePanelInspectable::AddPanel(const SharedPtr<InspectablePanel>& panel)
 {
     panels_.Push(SharedPtr<InspectablePanel>(panel));
 }
@@ -329,7 +344,7 @@ Inspector::Inspector(AbstractMainWindow* mainWindow)
     layout_ = scrollRegion_->CreateContent<AbstractLayout>();
 }
 
-void Inspector::SetInspectable(Inspectable* inspectable)
+void Inspector::SetInspectable(const SharedPtr<Inspectable>& inspectable)
 {
     inspectable_ = inspectable;
     layout_->RemoveAllChildren();
