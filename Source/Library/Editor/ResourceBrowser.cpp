@@ -32,7 +32,7 @@ String ResourceDirectoryItem::GetText()
 }
 
 //////////////////////////////////////////////////////////////////////////
-const Urho3D::ResourceType ResourceType::EMPTY;
+const ResourceType ResourceType::EMPTY;
 
 ResourceType::ResourceType(const StringHash& objectType, const String& resourceType)
     : objectType_(objectType)
@@ -63,10 +63,9 @@ ResourceType ResourceRecognitionLayer::ParseRootNode(const String& /*rootName*/)
 }
 
 //////////////////////////////////////////////////////////////////////////
-ExtensionResourceRecognitionLayer::ExtensionResourceRecognitionLayer(Context* context,
+ExtensionResourceRecognitionLayer::ExtensionResourceRecognitionLayer(
     const String& extension, const String& resourceType, StringHash objectType /*= StringHash()*/)
-    : ResourceRecognitionLayer(context)
-    , extension_(extension)
+    : extension_(extension)
     , type_(objectType, resourceType)
 {
 }
@@ -79,10 +78,9 @@ ResourceType ExtensionResourceRecognitionLayer::ParseFileName(const String& exte
 }
 
 //////////////////////////////////////////////////////////////////////////
-BinaryResourceRecognitionLayer::BinaryResourceRecognitionLayer(Context* context,
+BinaryResourceRecognitionLayer::BinaryResourceRecognitionLayer(
     const String& fileId, const String& resourceType, StringHash objectType /*= StringHash()*/)
-    : ResourceRecognitionLayer(context)
-    , fileId_(fileId)
+    : fileId_(fileId)
     , type_(objectType, resourceType)
 {
 }
@@ -95,10 +93,9 @@ ResourceType BinaryResourceRecognitionLayer::ParseFileID(const String& fileId)
 }
 
 //////////////////////////////////////////////////////////////////////////
-XMLResourceRecognitionLayer::XMLResourceRecognitionLayer(Context* context,
+XMLResourceRecognitionLayer::XMLResourceRecognitionLayer(
     const String& rootName, const String& resourceType, StringHash objectType /*= StringHash()*/)
-    : ResourceRecognitionLayer(context)
-    , rootName_(rootName)
+    : rootName_(rootName)
     , type_(objectType, resourceType)
 {
 }
@@ -108,6 +105,47 @@ ResourceType XMLResourceRecognitionLayer::ParseRootNode(const String& rootName)
     if (rootName_ == rootName)
         return type_;
     return ResourceType::EMPTY;
+}
+
+//////////////////////////////////////////////////////////////////////////
+ResourceRecognitionLayerSPtr MakeExtensionLayer(const String& extension, const String& resourceType, StringHash objectType /*= StringHash()*/)
+{
+    return MakeShared<ExtensionResourceRecognitionLayer>(extension, resourceType, objectType);
+}
+
+ResourceRecognitionLayerArray MakeExtensionLayers(const Vector<String>& extensions, const String& resourceType, StringHash objectType /*= StringHash()*/)
+{
+    ResourceRecognitionLayerArray result;
+    for (const String& extension : extensions)
+        result.Push(MakeExtensionLayer(extension, resourceType, objectType));
+    return result;
+}
+
+ResourceRecognitionLayerSPtr MakeBinaryLayer(const String& fileId, const String& resourceType, StringHash objectType /*= StringHash()*/)
+{
+    return MakeShared<BinaryResourceRecognitionLayer>(fileId, resourceType, objectType);
+}
+
+ResourceRecognitionLayerArray MakeBinaryLayers(const Vector<String>& fileIds, const String& resourceType, StringHash objectType /*= StringHash()*/)
+{
+    ResourceRecognitionLayerArray result;
+    for (const String& fileId : fileIds)
+        result.Push(MakeBinaryLayer(fileId, resourceType, objectType));
+    return result;
+}
+
+ResourceRecognitionLayerSPtr MakeXmlLayer(const String& rootName, const String& resourceType, StringHash objectType /*= StringHash()*/)
+{
+    return MakeShared<XMLResourceRecognitionLayer>(rootName, resourceType, objectType);
+
+}
+
+ResourceRecognitionLayerArray MakeXmlLayers(const Vector<String>& rootNames, const String& resourceType, StringHash objectType /*= StringHash()*/)
+{
+    ResourceRecognitionLayerArray result;
+    for (const String& rootName : rootNames)
+        result.Push(MakeXmlLayer(rootName, resourceType, objectType));
+    return result;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -135,42 +173,14 @@ void ResourceBrowser::AddXmlExtension(const String& extension)
     xmlExtensions_.Insert(extension);
 }
 
-void ResourceBrowser::AddTypeRecognitionLayer(const SharedPtr<ResourceRecognitionLayer>& layer)
+void ResourceBrowser::AddLayer(const SharedPtr<ResourceRecognitionLayer>& layer)
 {
     recognitionLayers_.Push(layer);
 }
 
-void ResourceBrowser::AddExtensionLayer(const String& extension, const String& resourceType, StringHash objectType /*= StringHash()*/)
+void ResourceBrowser::AddLayers(const Vector<SharedPtr<ResourceRecognitionLayer>>& layers)
 {
-    AddTypeRecognitionLayer(MakeShared<ExtensionResourceRecognitionLayer>(context_, extension, resourceType, objectType));
-}
-
-void ResourceBrowser::AddExtensionLayers(const Vector<String>& extensions, const String& resourceType, StringHash objectType /*= StringHash()*/)
-{
-    for (const String& extension : extensions)
-        AddExtensionLayer(extension, resourceType, objectType);
-}
-
-void ResourceBrowser::AddBinaryLayer(const String& fileId, const String& resourceType, StringHash objectType /*= StringHash()*/)
-{
-    AddTypeRecognitionLayer(MakeShared<BinaryResourceRecognitionLayer>(context_, fileId, resourceType, objectType));
-}
-
-void ResourceBrowser::AddBinaryLayers(const Vector<String>& fileIds, const String& resourceType, StringHash objectType /*= StringHash()*/)
-{
-    for (const String& fileId : fileIds)
-        AddBinaryLayer(fileId, resourceType, objectType);
-}
-
-void ResourceBrowser::AddXmlLayer(const String& rootName, const String& resourceType, StringHash objectType /*= StringHash()*/)
-{
-    AddTypeRecognitionLayer(MakeShared<XMLResourceRecognitionLayer>(context_, rootName, resourceType, objectType));
-}
-
-void ResourceBrowser::AddXmlLayers(const Vector<String>& rootNames, const String& resourceType, StringHash objectType /*= StringHash()*/)
-{
-    for (const String& rootName : rootNames)
-        AddXmlLayer(rootName, resourceType, objectType);
+    recognitionLayers_.Insert(recognitionLayers_.End(), layers);
 }
 
 void ResourceBrowser::ScanResources()
@@ -259,57 +269,57 @@ void ResourceBrowser::ClearDirectory(ResourceDirectoryDesc& directory)
 
 ResourceType ResourceBrowser::GetResourceType(const ResourceFileDesc& desc)
 {
-    const ResourceType typeByName = GetResourceTypeByName(desc.extension_, desc.resourceKey_);
-    if (!typeByName.IsEmpty())
-        return typeByName;
+    SharedPtr<File> file;
+    String fileId;
+    String rootNode;
 
-    SharedPtr<File> file = cache_->GetFile(desc.resourceKey_, false);
-    const String fileId = file->ReadFileID();
-    const ResourceType typeById = GetResourceTypeByFileID(fileId);
-    if (!typeById.IsEmpty())
-        return typeById;
-
-    if (xmlExtensions_.Contains(desc.extension_))
-    {
-        file->Seek(0);
-        XMLFile xml(context_);
-        xml.Load(*file);
-        const ResourceType xmlType = GetResourceTypeByRootNode(xml.GetRoot().GetName());
-        if (!xmlType.IsEmpty())
-            return xmlType;
-    }
-    return ResourceType::EMPTY;
-}
-
-ResourceType ResourceBrowser::GetResourceTypeByName(const String& extension, const String& fullName)
-{
     for (ResourceRecognitionLayer* layer : recognitionLayers_)
     {
-        const ResourceType type = layer->ParseFileName(extension, fullName);
-        if (!type.IsEmpty())
-            return type;
-    }
-    return ResourceType::EMPTY;
-}
+        // Try to parse file name
+        if (layer->CanParseFileName())
+        {
+            const ResourceType typeByName = layer->ParseFileName(desc.extension_, desc.resourceKey_);
+            if (!typeByName.IsEmpty())
+                return typeByName;
+        }
 
-ResourceType ResourceBrowser::GetResourceTypeByFileID(const String& fileID)
-{
-    for (ResourceRecognitionLayer* layer : recognitionLayers_)
-    {
-        const ResourceType type = layer->ParseFileID(fileID);
-        if (!type.IsEmpty())
-            return type;
-    }
-    return ResourceType::EMPTY;
-}
+        // Load file if needed
+        if (layer->CanParseFileID() || layer->CanParseRootNode())
+        {
+            file = cache_->GetFile(desc.resourceKey_, false);
+        }
 
-ResourceType ResourceBrowser::GetResourceTypeByRootNode(const String& rootName)
-{
-    for (ResourceRecognitionLayer* layer : recognitionLayers_)
-    {
-        const ResourceType type = layer->ParseRootNode(rootName);
-        if (!type.IsEmpty())
-            return type;
+        // Try to parse file ID
+        if (layer->CanParseFileID())
+        {
+            // Load file ID
+            if (fileId.Empty())
+            {
+                file->Seek(0);
+                fileId = file->ReadFileID();
+            }
+
+            const ResourceType typeById = layer->ParseFileID(fileId);
+            if (!typeById.IsEmpty())
+                return typeById;
+        }
+
+        // Try to parse root node name
+        if (layer->CanParseRootNode() && xmlExtensions_.Contains(desc.extension_))
+        {
+            // Load root node name
+            if (rootNode.Empty())
+            {
+                file->Seek(0);
+                XMLFile xml(context_);
+                xml.Load(*file);
+                rootNode = xml.GetRoot().GetName();
+            }
+
+            const ResourceType xmlType = layer->ParseRootNode(rootNode);
+            if (!xmlType.IsEmpty())
+                return xmlType;
+        }
     }
     return ResourceType::EMPTY;
 }

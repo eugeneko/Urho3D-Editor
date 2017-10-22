@@ -72,25 +72,30 @@ public:
     WeakPtr<ResourceDirectoryItem> item_;
 };
 
-class ResourceRecognitionLayer : public Object
+/// Resource type recognition layer.
+class ResourceRecognitionLayer : public RefCounted
 {
-    URHO3D_OBJECT(ResourceRecognitionLayer, Object);
-
 public:
-    ResourceRecognitionLayer(Context* context) : Object(context) { }
+    virtual bool CanParseFileName() const { return false; }
     virtual ResourceType ParseFileName(const String& extension, const String& fullName);
+    virtual bool CanParseFileID() const { return false; }
     virtual ResourceType ParseFileID(const String& fileId);
+    virtual bool CanParseRootNode() const { return false; }
     virtual ResourceType ParseRootNode(const String& rootName);
 };
 
+/// Shared pointer onto resource type recognition layer.
+using ResourceRecognitionLayerSPtr = SharedPtr<ResourceRecognitionLayer>;
+
+/// Array of resource type recognition layers.
+using ResourceRecognitionLayerArray = Vector<ResourceRecognitionLayerSPtr>;
+
 class ExtensionResourceRecognitionLayer : public ResourceRecognitionLayer
 {
-    URHO3D_OBJECT(ExtensionResourceRecognitionLayer, ResourceRecognitionLayer);
-
 public:
-    ExtensionResourceRecognitionLayer(Context* context,
-        const String& extension, const String& resourceType, StringHash objectType = StringHash());
+    ExtensionResourceRecognitionLayer(const String& extension, const String& resourceType, StringHash objectType = StringHash());
 
+    virtual bool CanParseFileName() const { return true; }
     ResourceType ParseFileName(const String& extension, const String& fullName) override;
 
 private:
@@ -101,9 +106,9 @@ private:
 class BinaryResourceRecognitionLayer : public ResourceRecognitionLayer
 {
 public:
-    BinaryResourceRecognitionLayer(Context* context,
-        const String& fileId, const String& resourceType, StringHash objectType = StringHash());
+    BinaryResourceRecognitionLayer(const String& fileId, const String& resourceType, StringHash objectType = StringHash());
 
+    bool CanParseFileID() const override { return true; }
     ResourceType ParseFileID(const String& fileId) override;
 
 private:
@@ -114,15 +119,40 @@ private:
 class XMLResourceRecognitionLayer : public ResourceRecognitionLayer
 {
 public:
-    XMLResourceRecognitionLayer(Context* context,
-        const String& rootName, const String& resourceType, StringHash objectType = StringHash());
+    XMLResourceRecognitionLayer(const String& rootName, const String& resourceType, StringHash objectType = StringHash());
 
+    bool CanParseRootNode() const override { return true; }
     ResourceType ParseRootNode(const String& rootName) override;
 
 private:
     const String rootName_;
     const ResourceType type_;
 };
+
+/// Create extension type recognition layer.
+ResourceRecognitionLayerSPtr MakeExtensionLayer(const String& extension, const String& resourceType, StringHash objectType = StringHash());
+/// Create extension type recognition layers.
+ResourceRecognitionLayerArray MakeExtensionLayers(const Vector<String>& extensions, const String& resourceType, StringHash objectType = StringHash());
+/// Create extension type recognition layer for object type.
+template <class T> ResourceRecognitionLayerSPtr MakeExtensionLayer(const String& extension) { return MakeExtensionLayer(extension, T::GetTypeNameStatic(), T::GetTypeStatic()); }
+/// Create extension type recognition layers for object type.
+template <class T> ResourceRecognitionLayerArray MakeExtensionLayers(const Vector<String>& extensions) { return MakeExtensionLayers(extensions, T::GetTypeNameStatic(), T::GetTypeStatic()); }
+/// Create binary type recognition layer.
+ResourceRecognitionLayerSPtr MakeBinaryLayer(const String& fileId, const String& resourceType, StringHash objectType = StringHash());
+/// Create binary type recognition layers.
+ResourceRecognitionLayerArray MakeBinaryLayers(const Vector<String>& fileIds, const String& resourceType, StringHash objectType = StringHash());
+/// Create binary type recognition layer for object type.
+template <class T> ResourceRecognitionLayerSPtr MakeBinaryLayer(const String& fileId) { return MakeBinaryLayer(fileId, T::GetTypeNameStatic(), T::GetTypeStatic()); }
+/// Create binary type recognition layer for object type.
+template <class T> ResourceRecognitionLayerArray MakeBinaryLayers(const Vector<String>& fileIds) { return MakeBinaryLayers(fileIds, T::GetTypeNameStatic(), T::GetTypeStatic()); }
+/// Create XML type recognition layer.
+ResourceRecognitionLayerSPtr MakeXmlLayer(const String& rootName, const String& resourceType, StringHash objectType = StringHash());
+/// Create XML type recognition layers.
+ResourceRecognitionLayerArray MakeXmlLayers(const Vector<String>& rootNames, const String& resourceType, StringHash objectType = StringHash());
+/// Create XML type recognition layer for object type.
+template <class T> ResourceRecognitionLayerSPtr MakeXmlLayer(const String& rootName) { return MakeXmlLayer(rootName, T::GetTypeNameStatic(), T::GetTypeStatic()); }
+/// Create XML type recognition layer for object type.
+template <class T> ResourceRecognitionLayerArray MakeXmlLayers(const Vector<String>& rootNames) { return MakeXmlLayers(rootNames, T::GetTypeNameStatic(), T::GetTypeStatic()); }
 
 /// Resource Browser dock.
 class ResourceBrowser : public Object
@@ -136,33 +166,9 @@ public:
     /// Add XML extension filter.
     void AddXmlExtension(const String& extension);
     /// Add resource type recognition layer.
-    void AddTypeRecognitionLayer(const SharedPtr<ResourceRecognitionLayer>& layer);
-
-    /// Add extension type recognition layer.
-    void AddExtensionLayer(const String& extension, const String& resourceType, StringHash objectType = StringHash());
-    /// Add extension type recognition layers.
-    void AddExtensionLayers(const Vector<String>& extensions, const String& resourceType, StringHash objectType = StringHash());
-    /// Add extension type recognition layer for object type.
-    template <class T> void AddExtensionLayer(const String& extension) { AddExtensionLayer(extension, T::GetTypeNameStatic(), T::GetTypeStatic()); }
-    /// Add extension type recognition layers for object type.
-    template <class T> void AddExtensionLayers(const Vector<String>& extensions) { AddExtensionLayers(extensions, T::GetTypeNameStatic(), T::GetTypeStatic()); }
-    /// Add binary type recognition layer.
-    void AddBinaryLayer(const String& fileId, const String& resourceType, StringHash objectType = StringHash());
-    /// Add binary type recognition layers.
-    void AddBinaryLayers(const Vector<String>& fileIds, const String& resourceType, StringHash objectType = StringHash());
-    /// Add binary type recognition layer for object type.
-    template <class T> void AddBinaryLayer(const String& fileId) { AddBinaryLayer(fileId, T::GetTypeNameStatic(), T::GetTypeStatic()); }
-    /// Add binary type recognition layer for object type.
-    template <class T> void AddBinaryLayers(const Vector<String>& fileIds) { AddBinaryLayers(fileIds, T::GetTypeNameStatic(), T::GetTypeStatic()); }
-    /// Add XML type recognition layer.
-    void AddXmlLayer(const String& rootName, const String& resourceType, StringHash objectType = StringHash());
-    /// Add XML type recognition layers.
-    void AddXmlLayers(const Vector<String>& rootNames, const String& resourceType, StringHash objectType = StringHash());
-    /// Add XML type recognition layer for object type.
-    template <class T> void AddXmlLayer(const String& rootName) { AddXmlLayer(rootName, T::GetTypeNameStatic(), T::GetTypeStatic()); }
-    /// Add XML type recognition layer for object type.
-    template <class T> void AddXmlLayers(const Vector<String>& rootNames) { AddXmlLayers(rootNames, T::GetTypeNameStatic(), T::GetTypeStatic()); }
-
+    void AddLayer(const SharedPtr<ResourceRecognitionLayer>& layer);
+    /// Add multiple resource type recognition layers.
+    void AddLayers(const Vector<SharedPtr<ResourceRecognitionLayer>>& layers);
     /// Rescan resources.
     void ScanResources();
 
@@ -183,12 +189,6 @@ private:
 
     /// Get resource file type.
     ResourceType GetResourceType(const ResourceFileDesc& desc);
-    /// Get resource file type by name.
-    ResourceType GetResourceTypeByName(const String& extension, const String& fullName);
-    /// Get resource file type by file ID.
-    ResourceType GetResourceTypeByFileID(const String& fileID);
-    /// Get resource file type by root node name.
-    ResourceType GetResourceTypeByRootNode(const String& rootName);
 
     /// Scan resource directory for directories and files.
     void ScanResourceDirectory(const String& path, unsigned resourceDirIndex);
