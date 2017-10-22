@@ -166,6 +166,16 @@ ResourceBrowser::ResourceBrowser(AbstractMainWindow* mainWindow)
         UpdateFileView(*static_cast<ResourceDirectoryItem*>(item)->GetDesc());
     };
     filesView_ = layout_->CreateCell<AbstractHierarchyList>(0, 1);
+    filesView_->onItemClicked_ = [=](AbstractHierarchyListItem* item)
+    {
+        if (onResourceClicked_)
+            onResourceClicked_(*static_cast<ResourceFileItem*>(item)->GetDesc());
+    };
+    filesView_->onItemDoubleClicked_ = [=](AbstractHierarchyListItem* item)
+    {
+        if (onResourceDoubleClicked_)
+            onResourceDoubleClicked_(*static_cast<ResourceFileItem*>(item)->GetDesc());
+    };
 }
 
 void ResourceBrowser::AddXmlExtension(const String& extension)

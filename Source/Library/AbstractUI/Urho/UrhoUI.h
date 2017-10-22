@@ -183,6 +183,8 @@ private:
 
 class UrhoHierarchyListItemWidget : public Text
 {
+    URHO3D_OBJECT(UrhoHierarchyListItemWidget, Text);
+
 public:
     UrhoHierarchyListItemWidget(Context* context, AbstractHierarchyListItem* item);
     void ApplyStyle();
@@ -209,7 +211,6 @@ private:
     void OnParentSet() override;
 
     void InsertItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent);
-    void HandleItemClicked(StringHash eventType, VariantMap& eventData);
 
 private:
     ListView* hierarchyList_ = nullptr;

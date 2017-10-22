@@ -287,6 +287,7 @@ public:
 
 public:
     std::function<void(AbstractHierarchyListItem* item)> onItemClicked_;
+    std::function<void(AbstractHierarchyListItem* item)> onItemDoubleClicked_;
 };
 
 class AbstractView3D : public AbstractWidget

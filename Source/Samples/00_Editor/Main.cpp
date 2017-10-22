@@ -203,6 +203,17 @@ public:
         resourceBrowser_->AddLayer(MakeExtensionLayer<XMLFile>(".xml"));
         resourceBrowser_->ScanResources();
 
+        resourceBrowser_->onResourceDoubleClicked_ = [=](const ResourceFileDesc& file)
+        {
+            if (file.type_.objectType_ == Scene::GetTypeStatic())
+            {
+                ResourceCache* cache = GetSubsystem<ResourceCache>();
+                SharedPtr<XMLFile> xml = cache->GetTempResource<XMLFile>(file.resourceKey_);
+                scene_->RemoveAllChildren();
+                scene_->LoadXML(xml->GetRoot());
+            }
+        };
+
         inspector_ = MakeShared<Inspector>(mainWindow);
 
         auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);

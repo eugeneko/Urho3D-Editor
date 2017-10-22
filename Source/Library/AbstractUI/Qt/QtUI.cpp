@@ -476,6 +476,16 @@ QtHierarchyList::QtHierarchyList(AbstractMainWindow* mainWindow)
         }
     });
 
+    connect(treeView_, &QTreeView::doubleClicked,
+        [=](const QModelIndex& index)
+    {
+        if (AbstractHierarchyListItem* item = model_->GetItem(index))
+        {
+            if (onItemDoubleClicked_)
+                onItemDoubleClicked_(item);
+        }
+    });
+
     SetInternalWidget(this, treeView_);
 }
 

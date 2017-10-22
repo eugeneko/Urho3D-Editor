@@ -179,7 +179,9 @@ public:
 
 public:
     /// Called when file is clicked.
+    std::function<void(const ResourceFileDesc& file)> onResourceClicked_;
     /// Called when file is double-clicked.
+    std::function<void(const ResourceFileDesc& file)> onResourceDoubleClicked_;
 
 private:
     /// Recursive sort of directory content.

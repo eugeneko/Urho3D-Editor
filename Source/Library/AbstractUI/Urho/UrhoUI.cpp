@@ -591,7 +591,26 @@ void UrhoHierarchyList::OnParentSet()
     hierarchyList_->SetHighlightMode(HM_ALWAYS);
     hierarchyList_->SetSelectOnClickEnd(true);
     hierarchyList_->SetHierarchyMode(true);
-    SubscribeToEvent(hierarchyList_, E_ITEMCLICKED, URHO3D_HANDLER(UrhoHierarchyList, HandleItemClicked));
+    SubscribeToEvent(hierarchyList_, E_ITEMCLICKED,
+        [=](StringHash /*eventType*/, VariantMap& eventData)
+    {
+        UIElement* element = static_cast<UIElement*>(eventData[ItemClicked::P_ITEM].GetPtr());
+        if (auto item = element->IsInstanceOf<UrhoHierarchyListItemWidget>())
+        {
+            if (onItemClicked_)
+                onItemClicked_(item->GetItem());
+        }
+    });
+    SubscribeToEvent(hierarchyList_, E_ITEMDOUBLECLICKED,
+        [=](StringHash /*eventType*/, VariantMap& eventData)
+    {
+        UIElement* element = static_cast<UIElement*>(eventData[ItemClicked::P_ITEM].GetPtr());
+        if (auto item = element->IsInstanceOf<UrhoHierarchyListItemWidget>())
+        {
+            if (onItemDoubleClicked_)
+                onItemDoubleClicked_(item->GetItem());
+        }
+    });
 
     SetInternalElement(this, hierarchyList_);
 }
@@ -609,16 +628,6 @@ void UrhoHierarchyList::InsertItem(AbstractHierarchyListItem* item, unsigned ind
         hierarchyList_->InsertItem(M_MAX_UNSIGNED, itemWidget, parentWidget);
         for (unsigned i = 0; i < item->GetNumChildren(); ++i)
             InsertItem(item->GetChild(i), M_MAX_UNSIGNED, item);
-    }
-}
-
-void UrhoHierarchyList::HandleItemClicked(StringHash /*eventType*/, VariantMap& eventData)
-{
-    RefCounted* element = eventData[ItemClicked::P_ITEM].GetPtr();
-    if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
-    {
-        if (onItemClicked_)
-            onItemClicked_(item->GetItem());
     }
 }
 
