@@ -6,6 +6,7 @@
 #include <Urho3D/UI/UI.h>
 #include <Urho3D/UI/UIEvents.h>
 #include <Urho3D/UI/ListView.h>
+#include <Urho3D/UI/DropDownList.h>
 #include <Urho3D/UI/CheckBox.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/Button.h>
@@ -595,7 +596,7 @@ void UrhoHierarchyList::OnParentSet()
         [=](StringHash /*eventType*/, VariantMap& eventData)
     {
         UIElement* element = static_cast<UIElement*>(eventData[ItemClicked::P_ITEM].GetPtr());
-        if (auto item = element->IsInstanceOf<UrhoHierarchyListItemWidget>())
+        if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
         {
             if (onItemClicked_)
                 onItemClicked_(item->GetItem());
@@ -605,7 +606,7 @@ void UrhoHierarchyList::OnParentSet()
         [=](StringHash /*eventType*/, VariantMap& eventData)
     {
         UIElement* element = static_cast<UIElement*>(eventData[ItemClicked::P_ITEM].GetPtr());
-        if (auto item = element->IsInstanceOf<UrhoHierarchyListItemWidget>())
+        if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
         {
             if (onItemDoubleClicked_)
                 onItemDoubleClicked_(item->GetItem());
@@ -667,7 +668,6 @@ void UrhoView3D::OnParentSet()
 
     SetInternalElement(this, view3D_);
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 StandardUrhoInput::StandardUrhoInput(Context* context)
@@ -826,12 +826,18 @@ void UrhoMenu::HandleMenuSelected(StringHash eventType, VariantMap& eventData)
 }
 
 //////////////////////////////////////////////////////////////////////////
+const Urho3D::StringHash UrhoMainWindow::VAR_DOCUMENT("Document");
+
 UrhoMainWindow::UrhoMainWindow(Context* context)
     : AbstractMainWindow()
     , Object(context)
     , input_(context)
 {
-    SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(UrhoMainWindow, HandleResized));
+    SubscribeToEvent(E_SCREENMODE,
+        [=](StringHash /*eventType*/, VariantMap& /*eventData*/)
+    {
+        UpdateMainLayout();
+    });
 }
 
 AbstractDock* UrhoMainWindow::AddDock(DockLocation hint)
@@ -849,18 +855,58 @@ void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)
 
 AbstractMenu* UrhoMainWindow::AddMenu(const String& name)
 {
-    if (!menuBar_)
+    EnsureUIInitialized();
+    menus_.Push(MakeShared<UrhoMenu>(this, menuBar_, name, "", true, true));
+    UpdateMainLayout();
+    return menus_.Back();
+}
+
+void UrhoMainWindow::InsertDocument(Object* document, const String& title, unsigned index)
+{
+    EnsureUIInitialized();
+
+    documents_.Insert(SharedPtr<Object>(document));
+    Text* documentTitle = documentList_->CreateChild<Text>();
+    documentTitle->SetStyleAuto();
+    documentTitle->SetText(title);
+    documentTitle->SetVar(VAR_DOCUMENT, document);
+    documentList_->AddItem(documentTitle);
+
+    // Notify if newly inserted item is selected
+    if (documentList_->GetSelectedItem() == documentList_)
     {
-        UI* ui = GetSubsystem<UI>();
-        Graphics* graphics = GetSubsystem<Graphics>();
-        menuBar_ = ui->GetRoot()->CreateChild<BorderImage>("MenuBar");
-        menuBar_->SetLayout(LM_HORIZONTAL);
-        menuBar_->SetFixedWidth(graphics->GetWidth());
-        menuBar_->SetStyle("EditorMenuBar");
+        if (onCurrentDocumentChanged_)
+            onCurrentDocumentChanged_(document);
     }
 
-    menus_.Push(MakeShared<UrhoMenu>(this, menuBar_, name, "", true, true));
-    return menus_.Back();
+    UpdateMainLayout();
+}
+
+void UrhoMainWindow::SelectDocument(Object* document)
+{
+    if (!documentList_)
+        return;
+
+    for (unsigned i = 0; i < documentList_->GetNumItems(); ++i)
+    {
+        UIElement* item = documentList_->GetItem(i);
+        Object* itemDocument = static_cast<Object*>(item->GetVar(VAR_DOCUMENT).GetPtr());
+        if (itemDocument == document)
+            documentList_->SetSelection(i);
+    }
+}
+
+PODVector<Object*> UrhoMainWindow::GetDocuments() const
+{
+    PODVector<Object*> result;
+    const unsigned numDocuments = documentList_->GetNumItems();
+    result.Resize(numDocuments);
+    for (unsigned i = 0; i < numDocuments; ++i)
+    {
+        UIElement* item = documentList_->GetItem(i);
+        result[i] = static_cast<Object*>(item->GetVar(VAR_DOCUMENT).GetPtr());
+    }
+    return result;
 }
 
 AbstractAction* UrhoMainWindow::FindAction(const String& actionId) const
@@ -884,12 +930,57 @@ void UrhoMainWindow::CollapseMenuPopups(Menu* menu) const
         menu->ShowPopup(false);
 }
 
-void UrhoMainWindow::HandleResized(StringHash eventType, VariantMap& eventData)
+void UrhoMainWindow::EnsureUIInitialized()
 {
-    if (menuBar_)
+    if (!menuBar_ || !documentBar_)
+    {
+        UI* ui = GetSubsystem<UI>();
+        Graphics* graphics = GetSubsystem<Graphics>();
+        UIElement* root = ui->GetRoot();
+
+        mainElement_ = root->CreateChild<UIElement>("MainWindow");
+        mainElement_->SetLayout(LM_VERTICAL);
+
+        menuBar_ = mainElement_->CreateChild<BorderImage>("MenuBar");
+        menuBar_->SetLayout(LM_HORIZONTAL);
+        menuBar_->SetStyle("EditorMenuBar");
+        SubscribeToEvent(menuBar_, E_RESIZED,
+            [=](StringHash /*eventType*/, VariantMap& /*eventData*/)
+        {
+            UpdateMainLayout();
+        });
+
+        documentBar_ = mainElement_->CreateChild<BorderImage>("DocumentBar");
+        documentBar_->SetLayout(LM_HORIZONTAL);
+        documentBar_->SetStyle("EditorMenuBar");
+
+        documentList_ = documentBar_->CreateChild<DropDownList>("DocumentBar_List");
+        documentList_->SetMaxWidth(200);
+        documentList_->SetResizePopup(true);
+        documentList_->SetStyleAuto();
+
+        SubscribeToEvent(documentList_, E_ITEMSELECTED,
+            [=](StringHash /*eventType*/, VariantMap& /*eventData*/)
+        {
+            if (Object* document = static_cast<Object*>(documentList_->GetVar(VAR_DOCUMENT).GetPtr()))
+            {
+                if (onCurrentDocumentChanged_)
+                    onCurrentDocumentChanged_(document);
+            }
+        });
+
+        UpdateMainLayout();
+    }
+}
+
+void UrhoMainWindow::UpdateMainLayout()
+{
+    if (mainElement_ && menuBar_ && documentBar_)
     {
         Graphics* graphics = GetSubsystem<Graphics>();
-        menuBar_->SetFixedWidth(graphics->GetWidth());
+
+        mainElement_->SetFixedWidth(graphics->GetWidth());
+        mainElement_->SetHeight(mainElement_->GetEffectiveMinSize().y_);
     }
 }
 

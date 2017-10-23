@@ -298,6 +298,9 @@ public:
     AbstractDock* AddDock(DockLocation hint) override;
     void AddAction(const AbstractAction& actionDesc) override;
     AbstractMenu* AddMenu(const String& name) override;
+    void InsertDocument(Object* document, const String& title, unsigned index) override;
+    void SelectDocument(Object* document) override;
+    PODVector<Object*> GetDocuments() const override;
 
     Context* GetContext() override;
     AbstractInput* GetInput() override;

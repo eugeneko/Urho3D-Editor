@@ -312,6 +312,9 @@ public:
     virtual AbstractDock* AddDock(DockLocation hint = DockLocation::Left) = 0;
     virtual void AddAction(const AbstractAction& actionDesc) = 0;
     virtual AbstractMenu* AddMenu(const String& name) = 0;
+    virtual void InsertDocument(Object* document, const String& title, unsigned index) = 0;
+    virtual void SelectDocument(Object* document) = 0;
+    virtual PODVector<Object*> GetDocuments() const = 0;
 
     virtual Context* GetContext() = 0;
     virtual AbstractInput* GetInput() = 0;
@@ -320,6 +323,9 @@ public:
     {
         AddAction({ id, "", function, keyBinding });
     }
+
+public:
+    std::function<void(Object* document)> onCurrentDocumentChanged_;
 
 private:
     virtual SharedPtr<AbstractWidget> CreateDummyWidget() { return nullptr; }

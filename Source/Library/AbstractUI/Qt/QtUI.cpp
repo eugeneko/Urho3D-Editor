@@ -745,6 +745,21 @@ AbstractMenu* QtMainWindow::AddMenu(const String& name)
     return &menus_.back();
 }
 
+void QtMainWindow::InsertDocument(Object* document, const String& title, unsigned index)
+{
+
+}
+
+void QtMainWindow::SelectDocument(Object* document)
+{
+
+}
+
+PODVector<Object*> QtMainWindow::GetDocuments() const
+{
+    return{};
+}
+
 Context* QtMainWindow::GetContext()
 {
     return context_;

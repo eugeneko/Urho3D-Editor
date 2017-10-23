@@ -15,6 +15,7 @@ class CheckBox;
 class ScrollView;
 class View3D;
 class ListView;
+class DropDownList;
 
 class UrhoMainWindow;
 class GridLayout;
@@ -181,10 +182,9 @@ private:
     Text* text_ = nullptr;
 };
 
+// #TODO Remove this guy
 class UrhoHierarchyListItemWidget : public Text
 {
-    URHO3D_OBJECT(UrhoHierarchyListItemWidget, Text);
-
 public:
     UrhoHierarchyListItemWidget(Context* context, AbstractHierarchyListItem* item);
     void ApplyStyle();
@@ -300,11 +300,16 @@ class UrhoMainWindow : public AbstractMainWindow, public Object
     URHO3D_OBJECT(UrhoMainWindow, Object);
 
 public:
+    static const StringHash VAR_DOCUMENT;
+
     UrhoMainWindow(Context* context);
 
     AbstractDock* AddDock(DockLocation hint) override;
     void AddAction(const AbstractAction& actionDesc) override;
     AbstractMenu* AddMenu(const String& name) override;
+    void InsertDocument(Object* document, const String& title, unsigned index) override;
+    void SelectDocument(Object* document) override;
+    PODVector<Object*> GetDocuments() const override;
 
     Context* GetContext() override { return Object::GetContext(); }
     AbstractInput* GetInput() override { return &input_; }
@@ -323,7 +328,8 @@ private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList,    UrhoHierarchyList);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateView3D,           UrhoView3D);
 
-    void HandleResized(StringHash eventType, VariantMap& eventData);
+    void EnsureUIInitialized();
+    void UpdateMainLayout();
 
 private:
     Vector<SharedPtr<UrhoDock>> dialogs_;
@@ -331,8 +337,14 @@ private:
 
     HashMap<String, AbstractAction> actions_;
 
+    UIElement* mainElement_ = nullptr;
+
     UIElement* menuBar_ = nullptr;
     Vector<SharedPtr<UrhoMenu>> menus_;
+
+    UIElement* documentBar_ = nullptr;
+    DropDownList* documentList_ = nullptr;
+    HashSet<SharedPtr<Object>> documents_;
 };
 
 }

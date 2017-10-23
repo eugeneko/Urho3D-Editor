@@ -102,15 +102,50 @@ void CreateScene(Scene* scene)
     cameraNode->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
 }
 
+class StandardDocument : public Object
+{
+    URHO3D_OBJECT(StandardDocument, Object);
+
+public:
+    StandardDocument(Context* context) : Object(context) { }
+
+    String resourceKey_;
+    SharedPtr<Resource> resource_;
+    SharedPtr<Scene> scene_;
+};
+
 class DefaultEditor : public Object
 {
     URHO3D_OBJECT(DefaultEditor, Object);
 
 public:
+    template <class T> StandardDocument* FindDocument(AbstractMainWindow* mainWindow, T condition)
+    {
+        for (Object* document : mainWindow->GetDocuments())
+            if (condition(document))
+                return static_cast<StandardDocument*>(document);
+        return nullptr;
+    }
+
+    static SharedPtr<StandardDocument> CreateSceneDocument(Scene* scene, const String& resourceKey = String::EMPTY)
+    {
+        Context* context = scene->GetContext();
+        auto document = MakeShared<StandardDocument>(context);
+        document->resourceKey_ = resourceKey;
+        document->scene_ = scene;
+        return document;
+    }
+
     DefaultEditor(AbstractMainWindow* mainWindow, bool blenderHotkeys)
         : Object(mainWindow->GetContext())
     {
+        mainWindow->onCurrentDocumentChanged_ = [=](Object* document)
+        {
+
+        };
+
         scene_ = MakeShared<Scene>(context_);
+        mainWindow->InsertDocument(CreateSceneDocument(scene_), "New Scene", 0);
         CreateScene(scene_);
 
         editor_ = MakeShared<Editor>(mainWindow);
@@ -207,26 +242,46 @@ public:
         {
             if (file.type_.objectType_ == Scene::GetTypeStatic())
             {
-                ResourceCache* cache = GetSubsystem<ResourceCache>();
-                SharedPtr<XMLFile> xml = cache->GetTempResource<XMLFile>(file.resourceKey_);
-                scene_->RemoveAllChildren();
-                scene_->LoadXML(xml->GetRoot());
+                StandardDocument* existingDocument = FindDocument(mainWindow,
+                    [&file](Object* object)
+                {
+                    StandardDocument* document = static_cast<StandardDocument*>(object);
+                    return document->resourceKey_ == file.resourceKey_;
+                });
+
+                if (!existingDocument)
+                {
+                    ResourceCache* cache = GetSubsystem<ResourceCache>();
+                    SharedPtr<XMLFile> xml = cache->GetTempResource<XMLFile>(file.resourceKey_);
+                    auto scene = MakeShared<Scene>(context_);
+                    scene->LoadXML(xml->GetRoot());
+
+                    SharedPtr<StandardDocument> document = CreateSceneDocument(scene, file.resourceKey_);
+                    mainWindow->InsertDocument(document, file.name_, 0);
+
+                    existingDocument = document;
+                }
+
+                mainWindow->SelectDocument(existingDocument);
             }
         };
 
         inspector_ = MakeShared<Inspector>(mainWindow);
 
-        auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
-        attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
-
-        auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
-        inspectorPanel->SetMetadataInjector(attributeMetadataInjector);
-        inspectorPanel->SetMaxLabelLength(100);
-        inspectorPanel->AddObject(scene_->GetChildren()[10]);
-        inspectorPanel->AddObject(scene_->GetChildren()[20]);
-
         auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
-        inspectable->AddPanel(inspectorPanel);
+        for (int i = 0; i < 10; ++i)
+        {
+            auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
+            attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
+
+            auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+            inspectorPanel->SetMetadataInjector(attributeMetadataInjector);
+            inspectorPanel->SetMaxLabelLength(100);
+            inspectorPanel->AddObject(scene_->GetChildren()[10]);
+            inspectorPanel->AddObject(scene_->GetChildren()[20]);
+
+            inspectable->AddPanel(inspectorPanel);
+        }
         inspector_->SetInspectable(inspectable);
 
         if (blenderHotkeys)
@@ -361,5 +416,5 @@ private:
 };
 
 
-URHO3D_DEFINE_MAIN(QtEditorMain())
-// URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)
+// URHO3D_DEFINE_MAIN(QtEditorMain())
+URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)
