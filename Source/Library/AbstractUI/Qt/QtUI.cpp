@@ -702,14 +702,36 @@ QtMainWindow::QtMainWindow(QApplication& application)
     : AbstractMainWindow()
     , context_(new Context)
     , application_(application)
+    , centralLayout_(&centralWidget_)
     , urhoWidget_(*context_, nullptr)
 {
     urhoWidget_.Initialize(Engine::ParseParameters(GetArguments()));
-    setCentralWidget(&urhoWidget_);
+    setCentralWidget(&centralWidget_);
+    centralLayout_.addWidget(&documentsBar_, 0, 0);
+    centralLayout_.addWidget(&urhoWidget_, 1, 0);
+
     setCorner(Qt::TopLeftCorner, Qt::LeftDockWidgetArea);
     setCorner(Qt::TopRightCorner, Qt::RightDockWidgetArea);
     setCorner(Qt::BottomLeftCorner, Qt::BottomDockWidgetArea);
     setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+
+    documentsBar_.setExpanding(false);
+
+    connect(&documentsBar_, &QTabBar::tabMoved,
+        [=](int from, int to)
+    {
+        documents_.move(from, to);
+    });
+
+    connect(&documentsBar_, &QTabBar::currentChanged,
+        [=](int index)
+    {
+        if (index >= 0 && index < documents_.size())
+        {
+            if (onCurrentDocumentChanged_)
+                onCurrentDocumentChanged_(documents_[index]);
+        }
+    });
 }
 
 QtMainWindow::~QtMainWindow()
@@ -747,17 +769,23 @@ AbstractMenu* QtMainWindow::AddMenu(const String& name)
 
 void QtMainWindow::InsertDocument(Object* document, const String& title, unsigned index)
 {
-
+    const int tab = documentsBar_.addTab(Cast(title));
+    documents_.insert(tab, SharedPtr<Object>(document));
+    documentsBar_.moveTab(tab, qMin(documentsBar_.count(), static_cast<int>(index)));
 }
 
 void QtMainWindow::SelectDocument(Object* document)
 {
-
+    const int tab = documents_.indexOf(SharedPtr<Object>(document));
+    documentsBar_.setCurrentIndex(tab);
 }
 
 PODVector<Object*> QtMainWindow::GetDocuments() const
 {
-    return{};
+    PODVector<Object*> result;
+    for (Object* object : documents_)
+        result.Push(object);
+    return result;
 }
 
 Context* QtMainWindow::GetContext()

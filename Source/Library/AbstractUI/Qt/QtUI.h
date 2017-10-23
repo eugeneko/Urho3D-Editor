@@ -17,6 +17,7 @@
 #include <QCheckBox>
 #include <QFrame>
 #include <QImage>
+#include <QTabBar>
 #include <QToolButton>
 #include <Urho3D/Graphics/Texture2D.h>
 #include <Urho3D/Graphics/RenderSurface.h>
@@ -323,11 +324,16 @@ private:
 private:
     SharedPtr<Context> context_;
     QApplication& application_;
+    QWidget centralWidget_;
+    QGridLayout centralLayout_;
+    QTabBar documentsBar_;
     QtUrhoWidget urhoWidget_;
     Vector<SharedPtr<AbstractDock>> dialogs_;
 
     HashMap<String, QAction*> actions_;
     QList<QtMenu> menus_;
+
+    QVector<SharedPtr<Object>> documents_;
 };
 
 }
