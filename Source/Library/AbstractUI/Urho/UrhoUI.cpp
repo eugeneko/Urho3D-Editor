@@ -123,7 +123,10 @@ UIElement* GetParentElement(AbstractWidget* widget)
 //////////////////////////////////////////////////////////////////////////
 UrhoDock::UrhoDock(AbstractMainWindow* mainWindow)
     : AbstractDock(mainWindow)
+    , window_(new Window(context_))
 {
+    window_->SetName("AD_Window");
+    SetInternalElement(this, window_);
 }
 
 void UrhoDock::SetName(const String& name)
@@ -133,12 +136,7 @@ void UrhoDock::SetName(const String& name)
 
 void UrhoDock::OnParentSet()
 {
-    // #TODO Make main window root widget
-    UI* ui = GetSubsystem<UI>();
-    UIElement* uiRoot = ui->GetRoot();
-
     // Create window
-    window_ = uiRoot->CreateChild<Window>("AD_Window");
     window_->SetStyleAuto();
     window_->SetPosition(200, 200);
     window_->SetMinSize(200, 200);
@@ -162,8 +160,6 @@ void UrhoDock::OnParentSet()
 
     bodyElement_ = window_->CreateChild<UIElement>();
     bodyElement_->SetLayoutMode(LM_VERTICAL);
-
-    SetInternalElement(this, window_);
 }
 
 bool UrhoDock::DoSetContent(AbstractWidget* content)
@@ -179,7 +175,10 @@ bool UrhoDock::DoSetContent(AbstractWidget* content)
 //////////////////////////////////////////////////////////////////////////
 UrhoScrollArea::UrhoScrollArea(AbstractMainWindow* mainWindow)
     : AbstractScrollArea(mainWindow)
+    , scrollView_(new ScrollView(context_))
 {
+    scrollView_->SetName("ASR_ScrollView");
+    SetInternalElement(this, scrollView_);
 }
 
 void UrhoScrollArea::SetDynamicWidth(bool dynamicWidth)
@@ -212,15 +211,10 @@ bool UrhoScrollArea::DoSetContent(AbstractWidget* content)
 
 void UrhoScrollArea::OnParentSet()
 {
-    UIElement* parent = GetParentElement(this);
-
-    scrollView_ = parent->CreateChild<ScrollView>("ASR_ScrollView");
     scrollView_->SetStyleAuto();
 
     scrollPanel_ = scrollView_->GetScrollPanel();
     SubscribeToEvent(scrollPanel_, E_LAYOUTUPDATED, URHO3D_HANDLER(UrhoScrollArea, HandleResized));
-
-    SetInternalElement(this, scrollView_);
 }
 
 void UrhoScrollArea::HandleResized(StringHash /*eventType*/, VariantMap& /*eventData*/)
@@ -247,17 +241,14 @@ void UrhoScrollArea::UpdateContentSize()
 //////////////////////////////////////////////////////////////////////////
 UrhoLayout::UrhoLayout(AbstractMainWindow* mainWindow)
     : AbstractLayout(mainWindow)
+    , body_(new GridLayout(context_))
 {
+    body_->SetName("AL_GridLayout");
+    SetInternalElement(this, body_);
 }
 
 void UrhoLayout::OnParentSet()
 {
-    UIElement* parent = GetParentElement(this);
-
-    body_ = new GridLayout(context_);
-    parent->AddChild(body_);
-
-    SetInternalElement(this, body_);
 }
 
 bool UrhoLayout::DoSetCell(unsigned row, unsigned column, AbstractWidget* child)
@@ -293,7 +284,10 @@ void UrhoLayout::DoRemoveChild(AbstractWidget* child)
 //////////////////////////////////////////////////////////////////////////
 UrhoCollapsiblePanel::UrhoCollapsiblePanel(AbstractMainWindow* mainWindow)
     : AbstractCollapsiblePanel(mainWindow)
+    , panel_(new BorderImage(context_))
 {
+    panel_->SetName("CP_Panel");
+    SetInternalElement(this, panel_);
 }
 
 void UrhoCollapsiblePanel::SetHeaderText(const String& text)
@@ -364,9 +358,6 @@ void UrhoCollapsiblePanel::HandleBodyResized(StringHash eventType, VariantMap& e
 
 void UrhoCollapsiblePanel::OnParentSet()
 {
-    UIElement* parent = GetParentElement(this);
-
-    panel_ = parent->CreateChild<BorderImage>("CP_Panel");
     panel_->SetStyle("ToolTipBorderImage");
     panel_->SetLayout(LM_VERTICAL);
 
@@ -387,14 +378,15 @@ void UrhoCollapsiblePanel::OnParentSet()
     headerText_->SetStyleAuto();
     headerSuffix_ = header_->CreateChild<UIElement>("CP_HeaderSuffix");
     headerSuffix_->SetLayout(LM_HORIZONTAL);
-
-    SetInternalElement(this, panel_);
 }
 
 //////////////////////////////////////////////////////////////////////////
 UrhoButton::UrhoButton(AbstractMainWindow* mainWindow)
     : AbstractButton(mainWindow)
+    , button_(new Button(context_))
 {
+    button_->SetName("AB_Button");
+    SetInternalElement(this, button_);
 }
 
 void UrhoButton::SetText(const String& text)
@@ -405,20 +397,15 @@ void UrhoButton::SetText(const String& text)
 
 void UrhoButton::OnParentSet()
 {
-    UIElement* parent = GetParentElement(this);
-
-    button_ = parent->CreateChild<Button>();
     button_->SetStyleAuto();
     button_->SetClipChildren(true);
 
-    text_ = button_->CreateChild<Text>();
+    text_ = button_->CreateChild<Text>("AB_Text");
     text_->SetStyleAuto();
     text_->SetAlignment(HA_CENTER, VA_CENTER);
     text_->SetMinHeight(static_cast<int>(text_->GetRowHeight()));
 
     UpdateButtonSize();
-
-    SetInternalElement(this, button_);
 }
 
 void UrhoButton::UpdateButtonSize()
@@ -431,7 +418,10 @@ void UrhoButton::UpdateButtonSize()
 //////////////////////////////////////////////////////////////////////////
 UrhoText::UrhoText(AbstractMainWindow* mainWindow)
     : AbstractText(mainWindow)
+    , text_(new Text(context_))
 {
+    text_->SetName("AT_Text");
+    SetInternalElement(this, text_);
 }
 
 void UrhoText::SetText(const String& text)
@@ -449,18 +439,16 @@ unsigned UrhoText::GetTextWidth() const
 
 void UrhoText::OnParentSet()
 {
-    UIElement* parent = GetParentElement(this);
-
-    text_ = parent->CreateChild<Text>();
     text_->SetStyleAuto();
-
-    SetInternalElement(this, text_);
 }
 
 //////////////////////////////////////////////////////////////////////////
 UrhoLineEdit::UrhoLineEdit(AbstractMainWindow* mainWindow)
     : AbstractLineEdit(mainWindow)
+    , lineEdit_(new LineEdit(context_))
 {
+    lineEdit_->SetName("ALE_LineEdit");
+    SetInternalElement(this, lineEdit_);
 }
 
 void UrhoLineEdit::SetText(const String& text)
@@ -477,9 +465,6 @@ String UrhoLineEdit::GetText() const
 
 void UrhoLineEdit::OnParentSet()
 {
-    UIElement* parent = GetParentElement(this);
-
-    lineEdit_ = parent->CreateChild<LineEdit>();
     lineEdit_->SetStyleAuto();
     const int defaultHeight = static_cast<int>(lineEdit_->GetTextElement()->GetRowHeight());
     lineEdit_->SetMinSize(defaultHeight * 2, defaultHeight);
@@ -493,14 +478,15 @@ void UrhoLineEdit::OnParentSet()
         if (onTextFinished_)
             onTextFinished_();
     });
-
-    SetInternalElement(this, lineEdit_);
 }
 
 //////////////////////////////////////////////////////////////////////////
 UrhoCheckBox::UrhoCheckBox(AbstractMainWindow* mainWindow)
     : AbstractCheckBox(mainWindow)
+    , panel_(new UIElement(context_))
 {
+    panel_->SetName("ACB_Panel");
+    SetInternalElement(this, panel_);
 }
 
 void UrhoCheckBox::SetChecked(bool checked)
@@ -510,16 +496,10 @@ void UrhoCheckBox::SetChecked(bool checked)
 
 void UrhoCheckBox::OnParentSet()
 {
-    UIElement* parent = GetParentElement(this);
-
-    panel_ = parent->CreateChild<UIElement>("ACB_Panel");
     panel_->SetLayout(LM_HORIZONTAL);
     checkBox_ = panel_->CreateChild<CheckBox>("ACB_CheckBox");
-    text_ = panel_->CreateChild<Text>("ACB_Text");
-
-    SetInternalElement(this, panel_);
-
     checkBox_->SetStyleAuto();
+    text_ = panel_->CreateChild<Text>("ACB_Text");
     text_->SetStyleAuto();
 }
 
@@ -527,7 +507,10 @@ void UrhoCheckBox::OnParentSet()
 UrhoHierarchyList::UrhoHierarchyList(AbstractMainWindow* mainWindow)
     : AbstractHierarchyList(mainWindow)
     , rootItem_(context_)
+    , hierarchyList_(new ListView(context_))
 {
+    hierarchyList_->SetName("AHL_HierarchyList");
+    SetInternalElement(this, hierarchyList_);
 }
 
 void UrhoHierarchyList::SetMultiselect(bool multiselect)
@@ -584,9 +567,6 @@ void UrhoHierarchyList::GetSelection(ItemVector& result)
 
 void UrhoHierarchyList::OnParentSet()
 {
-    UIElement* parent = GetParentElement(this);
-
-    hierarchyList_ = parent->CreateChild<ListView>("AHL_HierarchyList");
     hierarchyList_->SetStyle("HierarchyListView");
     hierarchyList_->SetInternal(true);
     hierarchyList_->SetHighlightMode(HM_ALWAYS);
@@ -612,8 +592,6 @@ void UrhoHierarchyList::OnParentSet()
                 onItemDoubleClicked_(item->GetItem());
         }
     });
-
-    SetInternalElement(this, hierarchyList_);
 }
 
 void UrhoHierarchyList::InsertItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent)
@@ -645,6 +623,14 @@ void UrhoHierarchyListItemWidget::ApplyStyle()
 }
 
 //////////////////////////////////////////////////////////////////////////
+UrhoView3D::UrhoView3D(AbstractMainWindow* mainWindow)
+    : AbstractView3D(mainWindow)
+    , view3D_(new View3D(context_))
+{
+    view3D_->SetName("AV_View3D");
+    SetInternalElement(this, view3D_);
+}
+
 void UrhoView3D::SetView(Scene* scene, Camera* camera)
 {
     view3D_->SetView(scene, camera);
@@ -662,11 +648,6 @@ void UrhoView3D::UpdateView()
 
 void UrhoView3D::OnParentSet()
 {
-    UIElement* parent = GetParentElement(this);
-
-    view3D_ = parent->CreateChild<View3D>();
-
-    SetInternalElement(this, view3D_);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -842,9 +823,14 @@ UrhoMainWindow::UrhoMainWindow(Context* context)
 
 AbstractDock* UrhoMainWindow::AddDock(DockLocation hint)
 {
+    UI* ui = GetSubsystem<UI>();
+    UIElement* uiRoot = ui->GetRoot();
+
     auto dialog = MakeShared<UrhoDock>(this);
+    uiRoot->AddChild(GetInternalElement(dialog));
     dialog->SetParent(nullptr);
     dialogs_.Push(dialog);
+
     return dialog;
 }
 

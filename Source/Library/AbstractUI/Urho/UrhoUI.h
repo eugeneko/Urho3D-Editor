@@ -90,7 +90,6 @@ public:
     void SetHeaderText(const String& text) override;
     void SetExpanded(bool expanded) override;
 
-
 private:
     void OnParentSet() override;
     bool DoSetHeaderPrefix(AbstractWidget* header) override;
@@ -110,7 +109,6 @@ private:
     UIElement* headerSuffix_ = nullptr;
 
     UIElement* body_ = nullptr;
-
 };
 
 class UrhoButton : public AbstractButton
@@ -222,7 +220,7 @@ class UrhoView3D : public AbstractView3D
     URHO3D_OBJECT(UrhoView3D, AbstractView3D);
 
 public:
-    UrhoView3D(AbstractMainWindow* mainWindow) : AbstractView3D(mainWindow) { }
+    UrhoView3D(AbstractMainWindow* mainWindow);
     void SetView(Scene* scene, Camera* camera) override;
     void SetAutoUpdate(bool autoUpdate) override;
     void UpdateView() override;
@@ -232,7 +230,6 @@ private:
 
 private:
     View3D* view3D_ = nullptr;
-
 };
 
 class StandardUrhoInput : public StandardInput, public Object

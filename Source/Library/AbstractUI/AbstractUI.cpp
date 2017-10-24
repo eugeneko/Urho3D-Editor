@@ -23,13 +23,14 @@ void AbstractWidget::SetParent(AbstractWidget* parent)
 bool AbstractDock::SetContent(AbstractWidget* content)
 {
     content_ = content;
-    content_->SetParent(this);
 
     if (!DoSetContent(content))
     {
         content_ = nullptr;
         return false;
     }
+
+    content_->SetParent(this);
     return true;
 }
 
@@ -44,13 +45,14 @@ AbstractWidget* AbstractDock::CreateContent(StringHash type)
 bool AbstractScrollArea::SetContent(AbstractWidget* content)
 {
     content_ = content;
-    content_->SetParent(this);
 
     if (!DoSetContent(content))
     {
         content_ = nullptr;
         return false;
     }
+
+    content_->SetParent(this);
     return true;
 }
 
@@ -77,8 +79,8 @@ bool AbstractLayout::SetCell(AbstractWidget* cell, unsigned row, unsigned column
         return false;
     }
     rows_[row].columns_[column] = cell;
-    cell->SetParent(this);
     DoSetCell(row, column, cell);
+    cell->SetParent(this);
     return true;
 }
 
@@ -105,8 +107,8 @@ bool AbstractLayout::SetRow(AbstractWidget* cell, unsigned row)
         return false;
     }
     rows_[row].columns_[0] = cell;
-    cell->SetParent(this);
     DoSetRow(row, cell);
+    cell->SetParent(this);
     return true;
 }
 
@@ -193,36 +195,42 @@ AbstractWidget* AbstractCollapsiblePanel::CreateBody(StringHash type)
 bool AbstractCollapsiblePanel::SetHeaderPrefix(AbstractWidget* header)
 {
     headerPrefix_ = header;
-    headerPrefix_->SetParent(this);
+
     if (!DoSetHeaderPrefix(header))
     {
         headerPrefix_ = nullptr;
         return false;
     }
+
+    headerPrefix_->SetParent(this);
     return true;
 }
 
 bool AbstractCollapsiblePanel::SetHeaderSuffix(AbstractWidget* header)
 {
     headerSuffix_ = header;
-    headerSuffix_->SetParent(this);
+
     if (!DoSetHeaderSuffix(header))
     {
         headerSuffix_ = nullptr;
         return false;
     }
+
+    headerSuffix_->SetParent(this);
     return true;
 }
 
 bool AbstractCollapsiblePanel::SetBody(AbstractWidget* body)
 {
     body_ = body;
-    body_->SetParent(this);
+
     if (!DoSetBody(body))
     {
         body_ = nullptr;
         return false;
     }
+
+    body_->SetParent(this);
     return true;
 }
 
