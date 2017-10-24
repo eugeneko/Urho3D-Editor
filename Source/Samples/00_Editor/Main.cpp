@@ -139,7 +139,7 @@ public:
         document->selectionTransform_->SetScene(scene);
         document->selectionTransform_->SetSelection(document->selection_);
 
-        HierarchyWindow* hierarchy = hierarchyWindow_->GetDocument(document);
+        Hierarchy* hierarchy = hierarchyWindow_->GetDocument(document);
         hierarchy->SetScene(document->scene_);
         hierarchy->SetSelection(document->selection_);
 
@@ -158,7 +158,7 @@ public:
         editor_ = MakeShared<Editor>(mainWindow);
         viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
         debugGeometryRenderer_ = MakeShared<DebugGeometryRenderer>(context_);
-        hierarchyWindow_ = MakeShared<HierarchyWindow1>(mainWindow);
+        hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow);
         resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow);
         inspector_ = MakeShared<Inspector>(mainWindow);
         gizmo_ = MakeShared<Gizmo>(context_);
@@ -382,7 +382,7 @@ private:
     SharedPtr<ObjectSelector> objectSelector_;
     SharedPtr<Gizmo> gizmo_;
 
-    SharedPtr<HierarchyWindow1> hierarchyWindow_;
+    SharedPtr<HierarchyWindow> hierarchyWindow_;
     SharedPtr<Inspector> inspector_;
     SharedPtr<ResourceBrowser> resourceBrowser_;
 };

@@ -24,13 +24,13 @@ private:
     Object* object_ = nullptr;
 };
 
-class HierarchyWindow : public Object
+class Hierarchy : public Object
 {
-    URHO3D_OBJECT(HierarchyWindow, Object);
+    URHO3D_OBJECT(Hierarchy, Object);
 
 public:
-    HierarchyWindow(AbstractWidgetStack* stack, Object* document);
-    ~HierarchyWindow() override;
+    Hierarchy(AbstractWidgetStack* stack, Object* document);
+    ~Hierarchy() override;
     void RefreshSelection();
     void SetScene(Scene* scene);
     void SetSelection(Selection* selection);
@@ -90,20 +90,20 @@ private:
     bool suppressEditorSelectionChanges_ = false;
 };
 
-class HierarchyWindow1 : public Object
+class HierarchyWindow : public Object
 {
-    URHO3D_OBJECT(HierarchyWindow1, Object);
+    URHO3D_OBJECT(HierarchyWindow, Object);
 
 public:
-    HierarchyWindow1(AbstractMainWindow* mainWindow);
-    HierarchyWindow* GetDocument(Object* key);
+    HierarchyWindow(AbstractMainWindow* mainWindow);
+    Hierarchy* GetDocument(Object* key);
     void RemoveDocument(Object* key);
     void SelectDocument(Object* key);
 
 private:
     AbstractDock* dialog_ = nullptr;
     AbstractWidgetStack* stack_ = nullptr;
-    HashMap<Object*, SharedPtr<HierarchyWindow>> documents_;
+    HashMap<Object*, SharedPtr<Hierarchy>> documents_;
 };
 
 }

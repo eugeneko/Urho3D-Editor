@@ -19,7 +19,7 @@ String HierarchyWindowItem::GetText()
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindow::HierarchyWindow(AbstractWidgetStack* stack, Object* document)
+Hierarchy::Hierarchy(AbstractWidgetStack* stack, Object* document)
     : Object(stack->GetContext())
     , stack_(stack)
     , document_(document)
@@ -33,17 +33,17 @@ HierarchyWindow::HierarchyWindow(AbstractWidgetStack* stack, Object* document)
     SetScene(scene_);
 }
 
-HierarchyWindow::~HierarchyWindow()
+Hierarchy::~Hierarchy()
 {
     stack_->RemoveChild(document_);
 }
 
-void HierarchyWindow::RefreshSelection()
+void Hierarchy::RefreshSelection()
 {
     HandleEditorSelectionChanged();
 }
 
-void HierarchyWindow::SetScene(Scene* scene)
+void Hierarchy::SetScene(Scene* scene)
 {
     if (scene_)
     {
@@ -59,30 +59,30 @@ void HierarchyWindow::SetScene(Scene* scene)
     scene_ = scene;
     if (scene_)
     {
-        SubscribeToEvent(scene_, E_NODEADDED, URHO3D_HANDLER(HierarchyWindow, HandleNodeAdded));
-        SubscribeToEvent(scene_, E_NODEREMOVED, URHO3D_HANDLER(HierarchyWindow, HandleNodeRemoved));
-        SubscribeToEvent(scene_, E_COMPONENTADDED, URHO3D_HANDLER(HierarchyWindow, HandleComponentAdded));
-        SubscribeToEvent(scene_, E_COMPONENTREMOVED, URHO3D_HANDLER(HierarchyWindow, HandleComponentRemoved));
-        SubscribeToEvent(scene_, E_NODENAMECHANGED, URHO3D_HANDLER(HierarchyWindow, HandleNodeNameChanged));
-        SubscribeToEvent(scene_, E_NODEENABLEDCHANGED, URHO3D_HANDLER(HierarchyWindow, HandleNodeEnabledChanged));
-        SubscribeToEvent(scene_, E_COMPONENTENABLEDCHANGED, URHO3D_HANDLER(HierarchyWindow, HandleComponentEnabledChanged));
+        SubscribeToEvent(scene_, E_NODEADDED, URHO3D_HANDLER(Hierarchy, HandleNodeAdded));
+        SubscribeToEvent(scene_, E_NODEREMOVED, URHO3D_HANDLER(Hierarchy, HandleNodeRemoved));
+        SubscribeToEvent(scene_, E_COMPONENTADDED, URHO3D_HANDLER(Hierarchy, HandleComponentAdded));
+        SubscribeToEvent(scene_, E_COMPONENTREMOVED, URHO3D_HANDLER(Hierarchy, HandleComponentRemoved));
+        SubscribeToEvent(scene_, E_NODENAMECHANGED, URHO3D_HANDLER(Hierarchy, HandleNodeNameChanged));
+        SubscribeToEvent(scene_, E_NODEENABLEDCHANGED, URHO3D_HANDLER(Hierarchy, HandleNodeEnabledChanged));
+        SubscribeToEvent(scene_, E_COMPONENTENABLEDCHANGED, URHO3D_HANDLER(Hierarchy, HandleComponentEnabledChanged));
         UpdateListItem(scene_);
     }
 }
 
-void HierarchyWindow::SetSelection(Selection* selection)
+void Hierarchy::SetSelection(Selection* selection)
 {
     selection_ = selection;
 }
 
-Selection::ObjectSet HierarchyWindow::GetSelectedObjects()
+Selection::ObjectSet Hierarchy::GetSelectedObjects()
 {
     Selection::ObjectSet result;
     GatherHierarchyListSelections(result);
     return result;
 }
 
-AbstractHierarchyListItem* HierarchyWindow::FindItem(Object* object)
+AbstractHierarchyListItem* Hierarchy::FindItem(Object* object)
 {
     if (object)
         return objectsToItems_[WeakPtr<Object>(object)];
@@ -90,7 +90,7 @@ AbstractHierarchyListItem* HierarchyWindow::FindItem(Object* object)
         return nullptr;
 }
 
-void HierarchyWindow::Subtract(const Selection::ObjectSet& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const
+void Hierarchy::Subtract(const Selection::ObjectSet& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const
 {
     result.Clear();
     for (Object* object : lhs)
@@ -98,7 +98,7 @@ void HierarchyWindow::Subtract(const Selection::ObjectSet& lhs, const Selection:
             result.Insert(object);
 }
 
-void HierarchyWindow::GatherHierarchyListSelections(Selection::ObjectSet& result) const
+void Hierarchy::GatherHierarchyListSelections(Selection::ObjectSet& result) const
 {
     // TODO: Cache
     for (AbstractHierarchyListItem* item : hierarchyList_->GetSelection())
@@ -107,7 +107,7 @@ void HierarchyWindow::GatherHierarchyListSelections(Selection::ObjectSet& result
                 result.Insert(object);
 }
 
-AbstractHierarchyListItem* HierarchyWindow::CreateListItem(Object* object)
+AbstractHierarchyListItem* Hierarchy::CreateListItem(Object* object)
 {
     auto item = new HierarchyWindowItem(object);
     objectsToItems_[WeakPtr<Object>(object)] = item;
@@ -121,7 +121,7 @@ AbstractHierarchyListItem* HierarchyWindow::CreateListItem(Object* object)
     return item;
 }
 
-void HierarchyWindow::GetObjectParentAndIndex(Object* object, Object*& parent, unsigned& index)
+void Hierarchy::GetObjectParentAndIndex(Object* object, Object*& parent, unsigned& index)
 {
     parent = nullptr;
     index = 0;
@@ -140,7 +140,7 @@ void HierarchyWindow::GetObjectParentAndIndex(Object* object, Object*& parent, u
     }
 }
 
-void HierarchyWindow::UpdateListItem(Object* object)
+void Hierarchy::UpdateListItem(Object* object)
 {
     if (AbstractHierarchyListItem* oldObjectItem = FindItem(object))
         hierarchyList_->RemoveItem(oldObjectItem);
@@ -153,20 +153,20 @@ void HierarchyWindow::UpdateListItem(Object* object)
     hierarchyList_->AddItem(objectItem, objectIndex, parentItem);
 }
 
-void HierarchyWindow::RemoveListItem(Object* object)
+void Hierarchy::RemoveListItem(Object* object)
 {
     AbstractHierarchyListItem* objectItem = FindItem(object);
     hierarchyList_->RemoveItem(objectItem);
 }
 
-void HierarchyWindow::HandleListSelectionChanged()
+void Hierarchy::HandleListSelectionChanged()
 {
     suppressEditorSelectionChanges_ = true;
     selection_->SetSelection(GetSelectedObjects());
     suppressEditorSelectionChanges_ = false;
 }
 
-void HierarchyWindow::HandleEditorSelectionChanged()
+void Hierarchy::HandleEditorSelectionChanged()
 {
     if (suppressEditorSelectionChanges_)
         return;
@@ -201,72 +201,72 @@ void HierarchyWindow::HandleEditorSelectionChanged()
     }
 }
 
-void HierarchyWindow::HandleNodeAdded(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleNodeAdded(StringHash eventType, VariantMap& eventData)
 {
     Node* node = dynamic_cast<Node*>(eventData[NodeAdded::P_NODE].GetPtr());
     UpdateListItem(node);
 }
 
-void HierarchyWindow::HandleNodeRemoved(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleNodeRemoved(StringHash eventType, VariantMap& eventData)
 {
     Node* node = dynamic_cast<Node*>(eventData[NodeRemoved::P_NODE].GetPtr());
     RemoveListItem(node);
 }
 
-void HierarchyWindow::HandleComponentAdded(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleComponentAdded(StringHash eventType, VariantMap& eventData)
 {
     Component* component = dynamic_cast<Component*>(eventData[ComponentAdded::P_COMPONENT].GetPtr());
     UpdateListItem(component);
 }
 
-void HierarchyWindow::HandleComponentRemoved(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleComponentRemoved(StringHash eventType, VariantMap& eventData)
 {
     Component* component = dynamic_cast<Component*>(eventData[ComponentRemoved::P_COMPONENT].GetPtr());
     RemoveListItem(component);
 }
 
-void HierarchyWindow::HandleNodeNameChanged(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleNodeNameChanged(StringHash eventType, VariantMap& eventData)
 {
 
 }
 
-void HierarchyWindow::HandleNodeEnabledChanged(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleNodeEnabledChanged(StringHash eventType, VariantMap& eventData)
 {
 
 }
 
-void HierarchyWindow::HandleComponentEnabledChanged(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleComponentEnabledChanged(StringHash eventType, VariantMap& eventData)
 {
 
 }
 
-void HierarchyWindow::HandleUIElementNameChanged(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleUIElementNameChanged(StringHash eventType, VariantMap& eventData)
 {
 
 }
 
-void HierarchyWindow::HandleUIElementVisibilityChanged(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleUIElementVisibilityChanged(StringHash eventType, VariantMap& eventData)
 {
 
 }
 
-void HierarchyWindow::HandleUIElementAttributeChanged(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleUIElementAttributeChanged(StringHash eventType, VariantMap& eventData)
 {
 
 }
 
-void HierarchyWindow::HandleUIElementAdded(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleUIElementAdded(StringHash eventType, VariantMap& eventData)
 {
 
 }
 
-void HierarchyWindow::HandleUIElementRemoved(StringHash eventType, VariantMap& eventData)
+void Hierarchy::HandleUIElementRemoved(StringHash eventType, VariantMap& eventData)
 {
 
 }
 
 //////////////////////////////////////////////////////////////////////////
-HierarchyWindow1::HierarchyWindow1(AbstractMainWindow* mainWindow)
+HierarchyWindow::HierarchyWindow(AbstractMainWindow* mainWindow)
     : Object(mainWindow->GetContext())
 {
     dialog_ = mainWindow->AddDock(DockLocation::Left);
@@ -275,19 +275,19 @@ HierarchyWindow1::HierarchyWindow1(AbstractMainWindow* mainWindow)
     stack_ = dialog_->CreateContent<AbstractWidgetStack>();
 }
 
-HierarchyWindow* HierarchyWindow1::GetDocument(Object* key)
+Hierarchy* HierarchyWindow::GetDocument(Object* key)
 {
     if (!documents_.Contains(key))
-        documents_[key] = MakeShared<HierarchyWindow>(stack_, key);
+        documents_[key] = MakeShared<Hierarchy>(stack_, key);
     return documents_[key];
 }
 
-void HierarchyWindow1::RemoveDocument(Object* key)
+void HierarchyWindow::RemoveDocument(Object* key)
 {
     stack_->RemoveChild(key);
 }
 
-void HierarchyWindow1::SelectDocument(Object* key)
+void HierarchyWindow::SelectDocument(Object* key)
 {
     stack_->SelectChild(key);
 }
