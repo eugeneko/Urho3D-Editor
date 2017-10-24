@@ -113,6 +113,7 @@ public:
     SharedPtr<Resource> resource_;
     SharedPtr<Scene> scene_;
     SharedPtr<Selection> selection_;
+    SharedPtr<SelectionTransform> selectionTransform_;
 };
 
 class DefaultEditor : public Object
@@ -128,13 +129,25 @@ public:
         return nullptr;
     }
 
-    static SharedPtr<StandardDocument> CreateSceneDocument(Scene* scene, const String& resourceKey = String::EMPTY)
+    SharedPtr<StandardDocument> CreateSceneDocument(Scene* scene, const String& resourceKey = String::EMPTY)
     {
-        Context* context = scene->GetContext();
-        auto document = MakeShared<StandardDocument>(context);
+        auto document = MakeShared<StandardDocument>(context_);
         document->resourceKey_ = resourceKey;
         document->scene_ = scene;
-        document->selection_ = MakeShared<Selection>(context);
+        document->selection_ = MakeShared<Selection>(context_);
+        document->selectionTransform_ = MakeShared<SelectionTransform>(context_);
+        document->selectionTransform_->SetScene(scene);
+        document->selectionTransform_->SetSelection(document->selection_);
+
+        HierarchyWindow* hierarchy = hierarchyWindow_->GetDocument(document);
+        hierarchy->SetScene(document->scene_);
+        hierarchy->SetSelection(document->selection_);
+
+        document->selection_->onSelectionChanged_ = [=]()
+        {
+            hierarchy->RefreshSelection();
+        };
+
         return document;
     }
 
@@ -148,63 +161,51 @@ public:
         hierarchyWindow_ = MakeShared<HierarchyWindow1>(mainWindow);
         resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow);
         inspector_ = MakeShared<Inspector>(mainWindow);
+        gizmo_ = MakeShared<Gizmo>(context_);
+        objectSelector_ = MakeShared<ObjectSelector>(context_);
+        cameraController_ = MakeShared<CameraController>(context_);
 
         mainWindow->onCurrentDocumentChanged_ = [=](Object* object)
         {
             StandardDocument* document = static_cast<StandardDocument*>(object);
             if (document->scene_)
             {
-                HierarchyWindow* hierarchy = hierarchyWindow_->GetDocument(document);
-                hierarchy->SetScene(document->scene_);
-                hierarchy->SetSelection(document->selection_);
                 hierarchyWindow_->SelectDocument(document);
-
                 viewportLayout_->SetScene(document->scene_);
+                cameraController_->SetCamera(&viewportLayout_->GetCurrentCamera());
+                gizmo_->SetTransformable(document->selectionTransform_);
+                objectSelector_->SetScene(document->scene_);
+                objectSelector_->SetSelection(document->selection_);
+                debugGeometryRenderer_->SetScene(document->scene_);
+                debugGeometryRenderer_->SetSelection(document->selection_);
             }
         };
 
-        scene_ = MakeShared<Scene>(context_);
-        mainWindow->InsertDocument(CreateSceneDocument(scene_), "New Scene", 0);
-        CreateScene(scene_);
-
-
-        viewportLayout_->SetScene(scene_);
-        viewportLayout_->SetCameraTransform(scene_->GetChild("Camera"));
+        {
+            auto scene = MakeShared<Scene>(context_);
+            mainWindow->InsertDocument(CreateSceneDocument(scene), "New Scene", 0);
+            CreateScene(scene);
+        }
 
         auto editorContext = MakeShared<StandardEditorContext>(context_, viewportLayout_);
 
-        auto cameraController = MakeShared<CameraController>(context_);
-        cameraController->SetCamera(&viewportLayout_->GetCurrentCamera());
-        cameraController->SetSpeed(Vector3::ONE * 5.0f);
-        cameraController->SetPanSpeed(Vector2::ONE * 2.5f);
-        cameraController->SetAccelerationFactor(Vector3::ONE * 5.0f);
-        cameraController->SetRotationSpeed(Vector2::ONE * 0.2f);
+        cameraController_->SetSpeed(Vector3::ONE * 5.0f);
+        cameraController_->SetPanSpeed(Vector2::ONE * 2.5f);
+        cameraController_->SetAccelerationFactor(Vector3::ONE * 5.0f);
+        cameraController_->SetRotationSpeed(Vector2::ONE * 0.2f);
 
-        auto selection = MakeShared<Selection>(context_);
-        auto objectSelector = MakeShared<ObjectSelector>(context_);
-        objectSelector->SetScene(scene_);
-        objectSelector->SetSelection(selection);
-        objectSelector->AddSelectionTransferring("TerrainPatch", "Terrain");
+        objectSelector_->AddSelectionTransferring("TerrainPatch", "Terrain");
 
-        auto selectionTransform = MakeShared<SelectionTransform>(context_);
-        selectionTransform->SetSelection(selection);
-        selectionTransform->SetScene(scene_);
+        gizmo_->SetGizmoType(GizmoType::Position);
 
-        auto gizmo = MakeShared<Gizmo>(context_);
-        gizmo->SetGizmoType(GizmoType::Position);
-        gizmo->SetTransformable(selectionTransform);
-
-        debugGeometryRenderer_->SetScene(scene_);
-        debugGeometryRenderer_->SetSelection(selection);
         debugGeometryRenderer_->DisableForComponent("Terrain");
 
         editor_->SetEditorContext(editorContext);
         editor_->AddOverlay(viewportLayout_);
-        editor_->AddOverlay(gizmo);
-        editor_->AddOverlay(cameraController);
-        editor_->AddOverlay(objectSelector);
+        editor_->AddOverlay(gizmo_);
+        editor_->AddOverlay(cameraController_);
+        editor_->AddOverlay(objectSelector_);
         editor_->AddOverlay(debugGeometryRenderer_);
-        editor_->AddSubsystem(selectionTransform);
 
 //         {
 //             AbstractDock* dialog = mainWindow->AddDock(DockLocation::Left);
@@ -278,29 +279,29 @@ public:
             }
         };
 
-        auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
-        for (int i = 0; i < 10; ++i)
-        {
-            auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
-            attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
-
-            auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
-            inspectorPanel->SetMetadataInjector(attributeMetadataInjector);
-            inspectorPanel->SetMaxLabelLength(100);
-            inspectorPanel->AddObject(scene_->GetChildren()[10]);
-            inspectorPanel->AddObject(scene_->GetChildren()[20]);
-
-            inspectable->AddPanel(inspectorPanel);
-        }
-        inspector_->SetInspectable(inspectable);
+//         auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
+//         for (int i = 0; i < 10; ++i)
+//         {
+//             auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
+//             attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
+//
+//             auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+//             inspectorPanel->SetMetadataInjector(attributeMetadataInjector);
+//             inspectorPanel->SetMaxLabelLength(100);
+//             inspectorPanel->AddObject(scene_->GetChildren()[10]);
+//             inspectorPanel->AddObject(scene_->GetChildren()[20]);
+//
+//             inspectable->AddPanel(inspectorPanel);
+//         }
+//         inspector_->SetInspectable(inspectable);
 
         if (blenderHotkeys)
         {
             using KB = KeyBinding;
             using CC = CameraController;
-            cameraController->SetFlyMode(false);
-            cameraController->SetPositionControl(false);
-            cameraController->SetControls({
+            cameraController_->SetFlyMode(false);
+            cameraController_->SetPositionControl(false);
+            cameraController_->SetControls({
                 { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
                 { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
                 { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
@@ -320,7 +321,7 @@ public:
             });
 
             using OS = ObjectSelector;
-            objectSelector->SetControls({
+            objectSelector_->SetControls({
                 { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
                 { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
                 { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
@@ -331,9 +332,9 @@ public:
         {
             using KB = KeyBinding;
             using CC = CameraController;
-            cameraController->SetFlyMode(false);
-            cameraController->SetPositionControl(true);
-            cameraController->SetControls({
+            cameraController_->SetFlyMode(false);
+            cameraController_->SetPositionControl(true);
+            cameraController_->SetControls({
                 { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
                 { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
                 { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
@@ -349,7 +350,7 @@ public:
             });
 
             using OS = ObjectSelector;
-            objectSelector->SetControls({
+            objectSelector_->SetControls({
                 { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
                 { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
                 { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
@@ -364,7 +365,6 @@ public:
             [=]()
         {
             // #TODO Implement me
-            selection->GetSelectedNodesAndComponents();
         });
 
         AbstractMenu* menuEdit = mainWindow->AddMenu("Edit");
@@ -378,11 +378,13 @@ private:
     SharedPtr<Editor> editor_;
     SharedPtr<EditorViewportLayout> viewportLayout_;
     SharedPtr<DebugGeometryRenderer> debugGeometryRenderer_;
+    SharedPtr<CameraController> cameraController_;
+    SharedPtr<ObjectSelector> objectSelector_;
+    SharedPtr<Gizmo> gizmo_;
 
     SharedPtr<HierarchyWindow1> hierarchyWindow_;
     SharedPtr<Inspector> inspector_;
     SharedPtr<ResourceBrowser> resourceBrowser_;
-    SharedPtr<Scene> scene_;
 };
 
 int QtEditorMain()

@@ -11,9 +11,9 @@ URHO3D_EVENT(E_EDITORCURRENTVIEWPORTCHANGED, EditorCurrentViewportChanged)
 }
 
 /// Editor selection changed.
-URHO3D_EVENT(E_EDITORSELECTIONCHANGED, EditorSelectionChanged)
-{
-    URHO3D_PARAM(P_SELECTION, Selection);   // Selection ptr
-}
+// URHO3D_EVENT(E_EDITORSELECTIONCHANGED, EditorSelectionChanged)
+// {
+//     URHO3D_PARAM(P_SELECTION, Selection);   // Selection ptr
+// }
 
 }

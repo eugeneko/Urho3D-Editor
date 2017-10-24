@@ -31,6 +31,7 @@ class HierarchyWindow : public Object
 public:
     HierarchyWindow(AbstractWidgetStack* stack, Object* document);
     ~HierarchyWindow() override;
+    void RefreshSelection();
     void SetScene(Scene* scene);
     void SetSelection(Selection* selection);
     Selection::ObjectSet GetSelectedObjects();
@@ -50,7 +51,7 @@ private:
     // @{
 
     void HandleListSelectionChanged();
-    void HandleEditorSelectionChanged(StringHash eventType, VariantMap& eventData);
+    void HandleEditorSelectionChanged();
 
     // @}
 

@@ -71,6 +71,10 @@ public:
     /// Get hovered component.
     Component* GetHoveredComponent() const;
 
+public:
+    /// Called when selection is changed.
+    std::function<void()> onSelectionChanged_;
+
 private:
     /// Gather secondary selection lists.
     void UpdateChangedSelection();

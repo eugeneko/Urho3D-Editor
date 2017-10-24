@@ -38,6 +38,11 @@ HierarchyWindow::~HierarchyWindow()
     stack_->RemoveChild(document_);
 }
 
+void HierarchyWindow::RefreshSelection()
+{
+    HandleEditorSelectionChanged();
+}
+
 void HierarchyWindow::SetScene(Scene* scene)
 {
     if (scene_)
@@ -67,11 +72,7 @@ void HierarchyWindow::SetScene(Scene* scene)
 
 void HierarchyWindow::SetSelection(Selection* selection)
 {
-    if (selection_)
-        UnsubscribeFromEvent(E_EDITORSELECTIONCHANGED);
     selection_ = selection;
-    if (selection_)
-        SubscribeToEvent(E_EDITORSELECTIONCHANGED, URHO3D_HANDLER(HierarchyWindow, HandleEditorSelectionChanged));
 }
 
 Selection::ObjectSet HierarchyWindow::GetSelectedObjects()
@@ -165,7 +166,7 @@ void HierarchyWindow::HandleListSelectionChanged()
     suppressEditorSelectionChanges_ = false;
 }
 
-void HierarchyWindow::HandleEditorSelectionChanged(StringHash /*eventType*/, VariantMap& /*eventData*/)
+void HierarchyWindow::HandleEditorSelectionChanged()
 {
     if (suppressEditorSelectionChanges_)
         return;
@@ -193,7 +194,7 @@ void HierarchyWindow::HandleEditorSelectionChanged(StringHash /*eventType*/, Var
             if (!wasScrolled)
             {
                 wasScrolled = true;
-                // TODO: Add scroll
+                // #TODO: Add scroll
                 // treeView_->scrollTo(index);
             }
         }

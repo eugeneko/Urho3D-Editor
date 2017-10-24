@@ -114,7 +114,8 @@ void Selection::UpdateChangedSelection()
         }
     }
 
-    SendEvent(E_EDITORSELECTIONCHANGED, EditorSelectionChanged::P_SELECTION, this);
+    if (onSelectionChanged_)
+        onSelectionChanged_();
 }
 
 }
