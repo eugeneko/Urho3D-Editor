@@ -29,7 +29,8 @@ class HierarchyWindow : public Object
     URHO3D_OBJECT(HierarchyWindow, Object);
 
 public:
-    HierarchyWindow(AbstractMainWindow* mainWindow);
+    HierarchyWindow(AbstractWidgetStack* stack, Object* document);
+    ~HierarchyWindow() override;
     void SetScene(Scene* scene);
     void SetSelection(Selection* selection);
     Selection::ObjectSet GetSelectedObjects();
@@ -41,7 +42,9 @@ private:
     /// Gather selection from hierarchy list.
     void GatherHierarchyListSelections(Selection::ObjectSet& result) const;
     AbstractHierarchyListItem* CreateListItem(Object* object);
-    void AddNode(Node* node);
+    void GetObjectParentAndIndex(Object* object, Object*& parent, unsigned& index);
+    void UpdateListItem(Object* object);
+    void RemoveListItem(Object* object);
 
     // @name Editor and UI Events
     // @{
@@ -76,13 +79,30 @@ private:
     // @}
 
 private:
-    SharedPtr<AbstractDock> dialog_;
+    AbstractWidgetStack* stack_ = nullptr;
+    Object* document_ = nullptr;
     AbstractHierarchyList* hierarchyList_ = nullptr;
     SharedPtr<Scene> scene_;
     SharedPtr<Selection> selection_;
     HashMap<WeakPtr<Object>, WeakPtr<AbstractHierarchyListItem>> objectsToItems_;
 
     bool suppressEditorSelectionChanges_ = false;
+};
+
+class HierarchyWindow1 : public Object
+{
+    URHO3D_OBJECT(HierarchyWindow1, Object);
+
+public:
+    HierarchyWindow1(AbstractMainWindow* mainWindow);
+    HierarchyWindow* GetDocument(Object* key);
+    void RemoveDocument(Object* key);
+    void SelectDocument(Object* key);
+
+private:
+    AbstractDock* dialog_ = nullptr;
+    AbstractWidgetStack* stack_ = nullptr;
+    HashMap<Object*, SharedPtr<HierarchyWindow>> documents_;
 };
 
 }

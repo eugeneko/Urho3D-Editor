@@ -264,6 +264,7 @@ SharedPtr<AbstractWidget> AbstractMainWindow::CreateWidget(StringHash type)
         { AbstractScrollArea::GetTypeStatic(), &AbstractMainWindow::CreateScrollArea },
         { AbstractLayout::GetTypeStatic(), &AbstractMainWindow::CreateLayout },
         { AbstractCollapsiblePanel::GetTypeStatic(), &AbstractMainWindow::CreateCollapsiblePanel },
+        { AbstractWidgetStack::GetTypeStatic(), &AbstractMainWindow::CreateWidgetStack },
         { AbstractButton::GetTypeStatic(), &AbstractMainWindow::CreateButton},
         { AbstractText::GetTypeStatic(), &AbstractMainWindow::CreateText },
         { AbstractLineEdit::GetTypeStatic(), &AbstractMainWindow::CreateLineEdit },

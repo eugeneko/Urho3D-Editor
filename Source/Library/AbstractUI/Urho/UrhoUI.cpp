@@ -530,6 +530,11 @@ void UrhoHierarchyList::AddItem(AbstractHierarchyListItem* item, unsigned index,
     hierarchyList_->UpdateInternalLayout();
 }
 
+void UrhoHierarchyList::RemoveItem(AbstractHierarchyListItem* item)
+{
+
+}
+
 void UrhoHierarchyList::RemoveAllItems()
 {
     hierarchyList_->RemoveAllItems();

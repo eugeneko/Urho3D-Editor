@@ -41,7 +41,6 @@ public:
     virtual AbstractMenu* AddAction(const String& name, const String& actionId) = 0;
 };
 
-// #TODO: Rename file
 class AbstractWidget : public Object
 {
     URHO3D_OBJECT(AbstractWidget, Object);
@@ -202,6 +201,21 @@ private:
 
 };
 
+class AbstractWidgetStack : public AbstractWidget
+{
+    URHO3D_OBJECT(AbstractWidgetStack, AbstractWidget);
+
+public:
+    AbstractWidgetStack(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
+
+    virtual AbstractWidget* CreateChild(void* key, StringHash type) = 0;
+    template <class T> T* CreateChild(void* key) { return dynamic_cast<T*>(CreateChild(key, T::GetTypeStatic())); }
+
+    virtual void RemoveChild(void* key) = 0;
+    virtual void SelectChild(void* key) = 0;
+
+};
+
 class AbstractButton : public AbstractWidget
 {
     URHO3D_OBJECT(AbstractButton, AbstractWidget);
@@ -279,6 +293,7 @@ public:
     AbstractHierarchyList(AbstractMainWindow* mainWindow) : AbstractWidget(mainWindow) { }
     virtual void SetMultiselect(bool multiselect) = 0;
     virtual void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) = 0;
+    virtual void RemoveItem(AbstractHierarchyListItem* item) = 0;
     virtual void RemoveAllItems() = 0;
     virtual void SelectItem(AbstractHierarchyListItem* item) = 0;
     virtual void DeselectItem(AbstractHierarchyListItem* item) = 0;
@@ -332,12 +347,75 @@ private:
     virtual SharedPtr<AbstractWidget> CreateScrollArea() { return nullptr; }
     virtual SharedPtr<AbstractWidget> CreateLayout() { return nullptr; }
     virtual SharedPtr<AbstractWidget> CreateCollapsiblePanel() { return nullptr; }
+    virtual SharedPtr<AbstractWidget> CreateWidgetStack() { return nullptr; }
     virtual SharedPtr<AbstractWidget> CreateButton() { return nullptr; }
     virtual SharedPtr<AbstractWidget> CreateText() { return nullptr; }
     virtual SharedPtr<AbstractWidget> CreateLineEdit() { return nullptr; }
     virtual SharedPtr<AbstractWidget> CreateCheckBox() { return nullptr; }
     virtual SharedPtr<AbstractWidget> CreateHierarchyList() { return nullptr; }
     virtual SharedPtr<AbstractWidget> CreateView3D() { return nullptr; }
+};
+
+template <class T> class AbstractWidgetStackT : public AbstractWidgetStack
+{
+public:
+    AbstractWidgetStackT(AbstractMainWindow* mainWindow) : AbstractWidgetStack(mainWindow) { }
+
+    AbstractWidget* CreateChild(void* key, StringHash type) override
+    {
+        RemoveChild(key);
+
+        SharedPtr<AbstractWidget> child = mainWindow_->CreateWidget(type);
+        T* internalHandle = child->GetInternalHandle<T*>();
+        assert(internalHandle);
+
+        children_[key] = child;
+        DoAddChild(internalHandle);
+        child->SetParent(this);
+        return child;
+    }
+
+    void RemoveChild(void* key) override
+    {
+        if (!children_.Contains(key))
+            return;
+
+        AbstractWidget* child = children_[key];
+
+        T* internalHandle = child->GetInternalHandle<T*>();
+        assert(internalHandle);
+
+        DoRemoveChild(internalHandle);
+
+        children_.Erase(key);
+    }
+
+    void SelectChild(void* key) override
+    {
+        if (!key)
+            DoSelectChild(nullptr);
+        else
+        {
+            if (!children_.Contains(key))
+                return;
+
+            AbstractWidget* child = children_[key];
+
+            T* internalHandle = child->GetInternalHandle<T*>();
+            assert(internalHandle);
+
+            DoSelectChild(internalHandle);
+        }
+    }
+
+private:
+    virtual void DoAddChild(T* child) = 0;
+    virtual void DoRemoveChild(T* child) = 0;
+    virtual void DoSelectChild(T* child) = 0;
+
+private:
+
+    HashMap<void*, SharedPtr<AbstractWidget>> children_;
 };
 
 }

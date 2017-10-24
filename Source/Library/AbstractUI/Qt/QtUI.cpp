@@ -185,7 +185,7 @@ QtCollapsiblePanel::QtCollapsiblePanel(AbstractMainWindow* mainWindow)
 
     toggleButton_ = new QToolButton();
     toggleButton_->setStyleSheet("QToolButton {border: none;}");
-    toggleButton_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    toggleButton_->setToolButtonStyle(Qt::ToolButtonIconOnly);
     toggleButton_->setArrowType(Qt::ArrowType::RightArrow);
     toggleButton_->setCheckable(true);
     toggleButton_->setChecked(expanded_);
@@ -268,6 +268,32 @@ void QtCollapsiblePanel::UpdateSize()
         body_->setVisible(expanded_);
         panel_->updateGeometry();
     }
+}
+
+//////////////////////////////////////////////////////////////////////////
+QtWidgetStack::QtWidgetStack(AbstractMainWindow* mainWindow)
+    : AbstractWidgetStackT<QWidget>(mainWindow)
+    , stack_(new QStackedWidget)
+{
+    SetInternalWidget(this, stack_);
+}
+
+void QtWidgetStack::DoAddChild(QWidget* child)
+{
+    stack_->addWidget(child);
+}
+
+void QtWidgetStack::DoRemoveChild(QWidget* child)
+{
+    stack_->removeWidget(child);
+}
+
+void QtWidgetStack::DoSelectChild(QWidget* child)
+{
+    if (child)
+        stack_->setCurrentWidget(child);
+    else
+        stack_->setCurrentIndex(-1);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -385,7 +411,7 @@ QModelIndex QtHierarchyListModel::GetIndex(AbstractHierarchyListItem* item, cons
         return hint;
 
     AbstractHierarchyListItem* parent = item->GetParent();
-    return index(item->GetIndex(), 0, GetIndex(parent));
+    return index(item->GetIndex(), 0, GetIndex(parent, hint));
 }
 
 AbstractHierarchyListItem* QtHierarchyListModel::GetItem(const QModelIndex& index) const
@@ -499,6 +525,14 @@ void QtHierarchyList::AddItem(AbstractHierarchyListItem* item, unsigned index, A
     const QModelIndex parentIndex = model_->GetIndex(parent);
     model_->RemoveItem(item, parentIndex);
     model_->InsertItem(item, parentIndex);
+    if (!parent)
+        treeView_->expand(model_->GetIndex(item));
+}
+
+void QtHierarchyList::RemoveItem(AbstractHierarchyListItem* item)
+{
+    const QModelIndex parentIndex = model_->GetIndex(item->GetParent());
+    model_->RemoveItem(item, parentIndex);
 }
 
 void QtHierarchyList::RemoveAllItems()
@@ -769,9 +803,10 @@ AbstractMenu* QtMainWindow::AddMenu(const String& name)
 
 void QtMainWindow::InsertDocument(Object* document, const String& title, unsigned index)
 {
-    const int tab = documentsBar_.addTab(Cast(title));
-    documents_.insert(tab, SharedPtr<Object>(document));
-    documentsBar_.moveTab(tab, qMin(documentsBar_.count(), static_cast<int>(index)));
+    const int clampedIndex = Clamp(static_cast<int>(index), 0, documentsBar_.count());
+    documents_.insert(clampedIndex, SharedPtr<Object>(document));
+    const int tabIndex = documentsBar_.insertTab(clampedIndex, Cast(title));
+    assert(tabIndex == clampedIndex);
 }
 
 void QtMainWindow::SelectDocument(Object* document)

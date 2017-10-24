@@ -7,6 +7,7 @@
 #include <QMainWindow>
 #include <QDockWidget>
 #include <QTreeView>
+#include <QStackedWidget >
 #include <QAbstractItemModel>
 #include <QHeaderView>
 #include <QAction>
@@ -103,7 +104,6 @@ public:
     void SetHeaderText(const String& text) override;
     void SetExpanded(bool expanded) override;
 
-
 private:
     bool DoSetHeaderPrefix(AbstractWidget* header) override;
     bool DoSetHeaderSuffix(AbstractWidget* header) override;
@@ -133,6 +133,23 @@ private:
     int headerHeight_ = 0;
     /// Height of the body.
     int bodyHeight_ = 0;
+
+};
+
+class QtWidgetStack : public QObject, public AbstractWidgetStackT<QWidget>
+{
+    Q_OBJECT
+
+public:
+    QtWidgetStack(AbstractMainWindow* mainWindow);
+
+private:
+    virtual void DoAddChild(QWidget* child) override;
+    virtual void DoRemoveChild(QWidget* child) override;
+    virtual void DoSelectChild(QWidget* child) override;
+
+private:
+    QStackedWidget* stack_ = nullptr;
 
 };
 
@@ -221,6 +238,7 @@ public:
 
     void SetMultiselect(bool multiselect) override;
     void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) override;
+    void RemoveItem(AbstractHierarchyListItem* item) override;
     void RemoveAllItems() override;
     void SelectItem(AbstractHierarchyListItem* item) override;
     void DeselectItem(AbstractHierarchyListItem* item) override;
@@ -314,6 +332,7 @@ private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollArea,       QtScrollArea);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           QtLayout);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCollapsiblePanel, QtCollapsiblePanel);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateWidgetStack,      QtWidgetStack);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           QtButton);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             QtText);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         QtLineEdit);

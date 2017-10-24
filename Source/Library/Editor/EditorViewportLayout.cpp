@@ -80,6 +80,7 @@ void EditorViewportLayout::Update(AbstractInput& input, AbstractEditorContext& e
 void EditorViewportLayout::SetScene(Scene* scene)
 {
     scene_ = scene;
+    viewports_.Clear();
     UpdateViewports();
 }
 

@@ -199,6 +199,7 @@ public:
     UrhoHierarchyList(AbstractMainWindow* mainWindow);
     void SetMultiselect(bool multiselect) override;
     void AddItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent) override;
+    void RemoveItem(AbstractHierarchyListItem* item) override;
     void RemoveAllItems() override;
     void SelectItem(AbstractHierarchyListItem* item) override;
     void DeselectItem(AbstractHierarchyListItem* item) override;

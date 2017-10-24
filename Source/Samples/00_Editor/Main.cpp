@@ -112,6 +112,7 @@ public:
     String resourceKey_;
     SharedPtr<Resource> resource_;
     SharedPtr<Scene> scene_;
+    SharedPtr<Selection> selection_;
 };
 
 class DefaultEditor : public Object
@@ -133,24 +134,40 @@ public:
         auto document = MakeShared<StandardDocument>(context);
         document->resourceKey_ = resourceKey;
         document->scene_ = scene;
+        document->selection_ = MakeShared<Selection>(context);
         return document;
     }
 
     DefaultEditor(AbstractMainWindow* mainWindow, bool blenderHotkeys)
         : Object(mainWindow->GetContext())
     {
-        mainWindow->onCurrentDocumentChanged_ = [=](Object* document)
-        {
+        // Construct widgets and subsystems
+        editor_ = MakeShared<Editor>(mainWindow);
+        viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
+        debugGeometryRenderer_ = MakeShared<DebugGeometryRenderer>(context_);
+        hierarchyWindow_ = MakeShared<HierarchyWindow1>(mainWindow);
+        resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow);
+        inspector_ = MakeShared<Inspector>(mainWindow);
 
+        mainWindow->onCurrentDocumentChanged_ = [=](Object* object)
+        {
+            StandardDocument* document = static_cast<StandardDocument*>(object);
+            if (document->scene_)
+            {
+                HierarchyWindow* hierarchy = hierarchyWindow_->GetDocument(document);
+                hierarchy->SetScene(document->scene_);
+                hierarchy->SetSelection(document->selection_);
+                hierarchyWindow_->SelectDocument(document);
+
+                viewportLayout_->SetScene(document->scene_);
+            }
         };
 
         scene_ = MakeShared<Scene>(context_);
         mainWindow->InsertDocument(CreateSceneDocument(scene_), "New Scene", 0);
         CreateScene(scene_);
 
-        editor_ = MakeShared<Editor>(mainWindow);
 
-        viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
         viewportLayout_->SetScene(scene_);
         viewportLayout_->SetCameraTransform(scene_->GetChild("Camera"));
 
@@ -177,7 +194,6 @@ public:
         gizmo->SetGizmoType(GizmoType::Position);
         gizmo->SetTransformable(selectionTransform);
 
-        debugGeometryRenderer_ = MakeShared<DebugGeometryRenderer>(context_);
         debugGeometryRenderer_->SetScene(scene_);
         debugGeometryRenderer_->SetSelection(selection);
         debugGeometryRenderer_->DisableForComponent("Terrain");
@@ -190,9 +206,6 @@ public:
         editor_->AddOverlay(debugGeometryRenderer_);
         editor_->AddSubsystem(selectionTransform);
 
-        hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow);
-        hierarchyWindow_->SetScene(scene_);
-        hierarchyWindow_->SetSelection(selection);
 //         {
 //             AbstractDock* dialog = mainWindow->AddDock(DockLocation::Left);
 //             dialog->SetName("View3D");
@@ -202,7 +215,6 @@ public:
 //             view->SetView(scene_, scene_->GetChild("Camera")->GetComponent<Camera>());
 //         }
 
-        resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow);
         resourceBrowser_->AddXmlExtension(".xml");
         resourceBrowser_->AddLayers(MakeExtensionLayers<Font>({ ".ttf", ".otf" }));
         resourceBrowser_->AddLayers(MakeExtensionLayers<Sound>({ ".ogg", ".wav" }));
@@ -265,8 +277,6 @@ public:
                 mainWindow->SelectDocument(existingDocument);
             }
         };
-
-        inspector_ = MakeShared<Inspector>(mainWindow);
 
         auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
         for (int i = 0; i < 10; ++i)
@@ -369,7 +379,7 @@ private:
     SharedPtr<EditorViewportLayout> viewportLayout_;
     SharedPtr<DebugGeometryRenderer> debugGeometryRenderer_;
 
-    SharedPtr<HierarchyWindow> hierarchyWindow_;
+    SharedPtr<HierarchyWindow1> hierarchyWindow_;
     SharedPtr<Inspector> inspector_;
     SharedPtr<ResourceBrowser> resourceBrowser_;
     SharedPtr<Scene> scene_;
