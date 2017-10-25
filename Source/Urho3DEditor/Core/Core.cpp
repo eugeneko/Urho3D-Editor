@@ -42,7 +42,7 @@ Core::Core(Configuration& config, QMainWindow& mainWindow)
     mdiArea_->setViewMode(QMdiArea::TabbedView);
     mdiArea_->setTabsMovable(true);
     mdiArea_->setTabsClosable(true);
-    mainWindow_->setCentralWidget(mdiArea_);
+    mainWindow_.setCentralWidget(mdiArea_);
 
     connect(mdiArea_, &QMdiArea::subWindowActivated, this,
         [this](QMdiSubWindow* subWindow) { ChangeDocument(qobject_cast<DocumentWindow*>(subWindow)); });
@@ -93,13 +93,13 @@ bool Core::Initialize()
         return false;
 
     // Open main window
-    mainWindow_->showMaximized();
+    mainWindow_.showMaximized();
     return true;
 }
 
 void Core::Quit()
 {
-    mainWindow_->close();
+    mainWindow_.close();
 }
 
 bool Core::NewProject()
@@ -179,7 +179,7 @@ void Core::CloseProject()
 
     currentProject_.reset();
     urhoHost_->GetWidget().ClearResourceCache();
-    mainWindow_->hide();
+    mainWindow_.hide();
 
     LaunchDialog dialog(*this);
     if (dialog.exec() == QDialog::Rejected)
@@ -188,7 +188,7 @@ void Core::CloseProject()
         return;
     }
 
-    mainWindow_->show();
+    mainWindow_.show();
 }
 
 DocumentFactory* Core::GetDocumentFactory(const QString& documentType) const
@@ -472,7 +472,7 @@ Urho3DWidget& Core::GetUrho3DWidget() const
 
 QMenuBar* Core::GetMenuBar() const
 {
-    return mainWindow_->menuBar();
+    return mainWindow_.menuBar();
 }
 
 QAction* Core::GetAction(const QString& name) const
@@ -501,7 +501,7 @@ QAction* Core::AddAction(const QString& name, const QKeySequence& shortcut /*= Q
 
 void Core::AddDock(Qt::DockWidgetArea area, QDockWidget* dock)
 {
-    mainWindow_->addDockWidget(area, dock);
+    mainWindow_.addDockWidget(area, dock);
 }
 
 void Core::AddDocument(Document* document, bool bringToTop /*= true*/)
@@ -575,7 +575,7 @@ void Core::InitializeLayout()
         if (result == QMessageBox::Yes)
             VarLayout.ResetToDefault();
 
-        mainWindow_->close();
+        mainWindow_.close();
         return;
     }
 
@@ -596,7 +596,7 @@ void Core::InitializeLayout()
             {
                 const QDomNodeList menus = node.childNodes();
                 for (int j = 0; j < menus.count(); ++j)
-                    mainWindow_->menuBar()->addMenu(ReadMenu(menus.at(j)));
+                    mainWindow_.menuBar()->addMenu(ReadMenu(menus.at(j)));
             }
             else
             {
@@ -647,7 +647,7 @@ QAction* Core::ReadAction(const QDomNode& node)
 void Core::UpdateWindowTitle()
 {
     const QString projectName = currentProject_ ? currentProject_->GetTitle() : "(Invalid!)";
-    mainWindow_->setWindowTitle(projectName + tr(" - Urho3D Editor"));
+    mainWindow_.setWindowTitle(projectName + tr(" - Urho3D Editor"));
 }
 
 void Core::UpdateProjectContext()
