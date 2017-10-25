@@ -25,7 +25,6 @@ int GetNumberOfViewports(EditorViewportLayoutScheme layout)
         return 3;
     case EditorViewportLayoutScheme::Quad:
         return 4;
-    case EditorViewportLayoutScheme::Empty:
     default:
         return 0;
     }
@@ -57,7 +56,6 @@ EditorViewportLayout::EditorViewportLayout(Context* context)
     : AbstractEditorOverlay(context)
     , graphics_(*GetSubsystem<Graphics>())
 {
-    SetLayout(EditorViewportLayoutScheme::Single); // #TODO Change
     SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(EditorViewportLayout, HandleResize));
 }
 
@@ -74,7 +72,8 @@ void EditorViewportLayout::Update(AbstractInput& input, AbstractEditorContext& e
     UpdateHoveredViewport(input.GetMousePosition());
 
     // Update ray
-    currentCameraRay_ = ComputeCameraRay(viewports_[hoveredViewport_]->GetViewport(), input.GetMousePosition());
+    if (hoveredViewport_ < viewports_.Size())
+        currentCameraRay_ = ComputeCameraRay(viewports_[hoveredViewport_]->GetViewport(), input.GetMousePosition());
 }
 
 void EditorViewportLayout::SetScene(Scene* scene)
@@ -190,8 +189,6 @@ void EditorViewportLayout::UpdateViewportsSize()
 
     switch (layout_)
     {
-    case EditorViewportLayoutScheme::Empty:
-        break;
     case EditorViewportLayoutScheme::Single:
         viewports_[0]->SetRect(IntRect(0, 0, width, height));
         break;
@@ -236,6 +233,9 @@ void EditorViewportLayout::UpdateViewportsSize()
 
 void EditorViewportLayout::UpdateActiveViewport(const IntVector2& mousePosition)
 {
+    if (viewports_.Empty())
+        return;
+
     activeViewport_ = Min(viewports_.Size() - 1, FindViewport(mousePosition));
 
     // Send event.
@@ -246,6 +246,9 @@ void EditorViewportLayout::UpdateActiveViewport(const IntVector2& mousePosition)
 
 void EditorViewportLayout::UpdateHoveredViewport(const IntVector2& mousePosition)
 {
+    if (viewports_.Empty())
+        return;
+
     hoveredViewport_ = Min(viewports_.Size() - 1, FindViewport(mousePosition));
 }
 

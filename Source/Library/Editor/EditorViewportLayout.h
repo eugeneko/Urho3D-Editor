@@ -48,8 +48,6 @@ private:
 
 enum class EditorViewportLayoutScheme
 {
-    /// No viewports.
-    Empty,
     /// Single viewport.
     Single,
     /// Vertical split.
@@ -113,7 +111,7 @@ private:
     /// Scene.
     Scene* scene_ = nullptr;
     /// Layout type.
-    EditorViewportLayoutScheme layout_ = EditorViewportLayoutScheme::Empty;
+    EditorViewportLayoutScheme layout_ = EditorViewportLayoutScheme::Single;
 
     /// Viewports.
     Vector<SharedPtr<EditorViewport>> viewports_;

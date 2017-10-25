@@ -111,6 +111,25 @@ private:
     UIElement* body_ = nullptr;
 };
 
+class UrhoWidgetStack : public AbstractWidgetStackT<UIElement>
+{
+    URHO3D_OBJECT(UrhoWidgetStack, AbstractWidgetStack);
+
+public:
+    UrhoWidgetStack(AbstractMainWindow* mainWindow);
+
+private:
+    void DoAddChild(UIElement* child) override;
+    void DoRemoveChild(UIElement* child) override;
+    void DoSelectChild(UIElement* child) override;
+
+    void OnParentSet() override;
+
+private:
+    UIElement* element_ = nullptr;
+
+};
+
 class UrhoButton : public AbstractButton
 {
     URHO3D_OBJECT(UrhoButton, AbstractButton);
@@ -319,6 +338,7 @@ private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateScrollArea,       UrhoScrollArea);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLayout,           UrhoLayout);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateCollapsiblePanel, UrhoCollapsiblePanel);
+    URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateWidgetStack,      UrhoWidgetStack);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateButton,           UrhoButton);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateText,             UrhoText);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateLineEdit,         UrhoLineEdit);

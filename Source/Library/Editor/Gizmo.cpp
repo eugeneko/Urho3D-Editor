@@ -100,6 +100,8 @@ void Gizmo::SetGizmoType(GizmoType type, float step /*= 1.0f*/, float snapScale 
 
 void Gizmo::Update(AbstractInput& input, AbstractEditorContext& editorContext, float timeStep)
 {
+    if (!transformable_)
+        return;
     UpdateDragState(input);
     PrepareUndo();
     UseGizmoKeyboard(input, timeStep);

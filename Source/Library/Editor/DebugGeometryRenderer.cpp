@@ -29,6 +29,9 @@ void DebugGeometryRenderer::DisableForComponent(const String& component)
 
 void DebugGeometryRenderer::PostRenderUpdate(AbstractInput& input, AbstractEditorContext& editorContext)
 {
+    if (!scene_)
+        return;
+
     DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
     if (enabled_ && debug)
     {

@@ -33,7 +33,7 @@ void ObjectSelector::AddSelectionTransferring(const String& sourceType, const St
 
 void ObjectSelector::PostRenderUpdate(AbstractInput& input, AbstractEditorContext& editorContext)
 {
-    if (!input.IsUIHovered())
+    if (scene_ && selection_ && !input.IsUIHovered())
         PerformRaycast(input, editorContext);
 }
 

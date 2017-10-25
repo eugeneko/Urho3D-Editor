@@ -381,6 +381,40 @@ void UrhoCollapsiblePanel::OnParentSet()
 }
 
 //////////////////////////////////////////////////////////////////////////
+UrhoWidgetStack::UrhoWidgetStack(AbstractMainWindow* mainWindow)
+    : AbstractWidgetStackT<UIElement>(mainWindow)
+    , element_(new UIElement(context_))
+{
+    element_->SetName("WS_Contaier");
+    SetInternalElement(this, element_);
+}
+
+void UrhoWidgetStack::DoAddChild(UIElement* child)
+{
+    child->SetVisible(false);
+    element_->AddChild(child);
+}
+
+void UrhoWidgetStack::DoRemoveChild(UIElement* child)
+{
+    element_->RemoveChild(child);
+}
+
+void UrhoWidgetStack::DoSelectChild(UIElement* child)
+{
+    element_->DisableLayoutUpdate();
+    for (UIElement* item : element_->GetChildren())
+        item->SetVisible(child == item);
+    element_->EnableLayoutUpdate();
+    element_->UpdateLayout();
+}
+
+void UrhoWidgetStack::OnParentSet()
+{
+    element_->SetLayout(LM_VERTICAL);
+}
+
+//////////////////////////////////////////////////////////////////////////
 UrhoButton::UrhoButton(AbstractMainWindow* mainWindow)
     : AbstractButton(mainWindow)
     , button_(new Button(context_))
@@ -864,7 +898,7 @@ void UrhoMainWindow::InsertDocument(Object* document, const String& title, unsig
     documentList_->AddItem(documentTitle);
 
     // Notify if newly inserted item is selected
-    if (documentList_->GetSelectedItem() == documentList_)
+    if (documentList_->GetSelectedItem() == documentTitle)
     {
         if (onCurrentDocumentChanged_)
             onCurrentDocumentChanged_(document);
@@ -883,7 +917,11 @@ void UrhoMainWindow::SelectDocument(Object* document)
         UIElement* item = documentList_->GetItem(i);
         Object* itemDocument = static_cast<Object*>(item->GetVar(VAR_DOCUMENT).GetPtr());
         if (itemDocument == document)
+        {
             documentList_->SetSelection(i);
+            if (onCurrentDocumentChanged_)
+                onCurrentDocumentChanged_(document);
+        }
     }
 }
 
@@ -951,12 +989,15 @@ void UrhoMainWindow::EnsureUIInitialized()
         documentList_->SetStyleAuto();
 
         SubscribeToEvent(documentList_, E_ITEMSELECTED,
-            [=](StringHash /*eventType*/, VariantMap& /*eventData*/)
+            [=](StringHash /*eventType*/, VariantMap& eventData)
         {
-            if (Object* document = static_cast<Object*>(documentList_->GetVar(VAR_DOCUMENT).GetPtr()))
+            if (UIElement* selectedElement = documentList_->GetSelectedItem())
             {
-                if (onCurrentDocumentChanged_)
-                    onCurrentDocumentChanged_(document);
+                if (Object* document = static_cast<Object*>(selectedElement->GetVar(VAR_DOCUMENT).GetPtr()))
+                {
+                    if (onCurrentDocumentChanged_)
+                        onCurrentDocumentChanged_(document);
+                }
             }
         });
 
