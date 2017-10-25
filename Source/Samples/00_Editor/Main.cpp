@@ -116,265 +116,35 @@ public:
     SharedPtr<SelectionTransform> selectionTransform_;
 };
 
-class DefaultEditor : public Object
+class StandardEditor : public Object
 {
-    URHO3D_OBJECT(DefaultEditor, Object);
+    URHO3D_OBJECT(StandardEditor, Object);
 
 public:
-    template <class T> StandardDocument* FindDocument(AbstractMainWindow* mainWindow, T condition)
+    StandardEditor(AbstractMainWindow* mainWindow, bool blenderHotkeys);
+    void SwitchToDocument(StandardDocument* document);
+
+private:
+    void InitializeResourceLayers();
+    void SetupMenu();
+    void SetupUrhoControls();
+    void SetupBlenderControls();
+
+    template <class T> StandardDocument* FindDocument(T condition)
     {
-        for (Object* document : mainWindow->GetDocuments())
+        for (Object* document : mainWindow_->GetDocuments())
             if (condition(document))
                 return static_cast<StandardDocument*>(document);
         return nullptr;
     }
+    StandardDocument* FindDocumentForResource(const String& resourceKey);
 
-    SharedPtr<StandardDocument> CreateSceneDocument(Scene* scene, const String& resourceKey = String::EMPTY)
-    {
-        auto document = MakeShared<StandardDocument>(context_);
-        document->resourceKey_ = resourceKey;
-        document->scene_ = scene;
-        document->selection_ = MakeShared<Selection>(context_);
-        document->selectionTransform_ = MakeShared<SelectionTransform>(context_);
-        document->selectionTransform_->SetScene(scene);
-        document->selectionTransform_->SetSelection(document->selection_);
-
-        Hierarchy* hierarchy = hierarchyWindow_->GetDocument(document);
-        hierarchy->SetScene(document->scene_);
-        hierarchy->SetSelection(document->selection_);
-
-        document->selection_->onSelectionChanged_ = [=]()
-        {
-            hierarchy->RefreshSelection();
-        };
-
-        return document;
-    }
-
-    DefaultEditor(AbstractMainWindow* mainWindow, bool blenderHotkeys)
-        : Object(mainWindow->GetContext())
-    {
-        // Construct widgets and subsystems
-        editor_ = MakeShared<Editor>(mainWindow);
-        viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
-        debugGeometryRenderer_ = MakeShared<DebugGeometryRenderer>(context_);
-        hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow);
-        resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow);
-        inspector_ = MakeShared<Inspector>(mainWindow);
-        gizmo_ = MakeShared<Gizmo>(context_);
-        objectSelector_ = MakeShared<ObjectSelector>(context_);
-        cameraController_ = MakeShared<CameraController>(context_);
-
-        mainWindow->onCurrentDocumentChanged_ = [=](Object* object)
-        {
-            StandardDocument* document = static_cast<StandardDocument*>(object);
-            if (document->scene_)
-            {
-                hierarchyWindow_->SelectDocument(document);
-                viewportLayout_->SetScene(document->scene_);
-                cameraController_->SetCamera(&viewportLayout_->GetCurrentCamera());
-                gizmo_->SetTransformable(document->selectionTransform_);
-                objectSelector_->SetScene(document->scene_);
-                objectSelector_->SetSelection(document->selection_);
-                debugGeometryRenderer_->SetScene(document->scene_);
-                debugGeometryRenderer_->SetSelection(document->selection_);
-            }
-        };
-
-        {
-            auto scene = MakeShared<Scene>(context_);
-            mainWindow->InsertDocument(CreateSceneDocument(scene), "New Scene", 0);
-            CreateScene(scene);
-        }
-
-        auto editorContext = MakeShared<StandardEditorContext>(context_, viewportLayout_);
-
-        cameraController_->SetSpeed(Vector3::ONE * 5.0f);
-        cameraController_->SetPanSpeed(Vector2::ONE * 2.5f);
-        cameraController_->SetAccelerationFactor(Vector3::ONE * 5.0f);
-        cameraController_->SetRotationSpeed(Vector2::ONE * 0.2f);
-
-        objectSelector_->AddSelectionTransferring("TerrainPatch", "Terrain");
-
-        gizmo_->SetGizmoType(GizmoType::Position);
-
-        debugGeometryRenderer_->DisableForComponent("Terrain");
-
-        editor_->SetEditorContext(editorContext);
-        editor_->AddOverlay(viewportLayout_);
-        editor_->AddOverlay(gizmo_);
-        editor_->AddOverlay(cameraController_);
-        editor_->AddOverlay(objectSelector_);
-        editor_->AddOverlay(debugGeometryRenderer_);
-
-//         {
-//             AbstractDock* dialog = mainWindow->AddDock(DockLocation::Left);
-//             dialog->SetName("View3D");
-//
-//             AbstractView3D* view = dialog->CreateContent<AbstractView3D>();
-//             view->SetAutoUpdate(false);
-//             view->SetView(scene_, scene_->GetChild("Camera")->GetComponent<Camera>());
-//         }
-
-        resourceBrowser_->AddXmlExtension(".xml");
-        resourceBrowser_->AddLayers(MakeExtensionLayers<Font>({ ".ttf", ".otf" }));
-        resourceBrowser_->AddLayers(MakeExtensionLayers<Sound>({ ".ogg", ".wav" }));
-        resourceBrowser_->AddLayers(MakeExtensionLayers<Image>({ ".dds", ".png", ".jpg", ".jpeg", ".hdr", ".bmp", ".tga", ".ktx", ".pvr" }));
-        resourceBrowser_->AddLayers(MakeExtensionLayers({ ".obj", ".fbx", ".dae", ".blend" }, "Raw Model"));
-        resourceBrowser_->AddLayer(MakeExtensionLayer<ScriptFile>(".as"));
-        resourceBrowser_->AddLayer(MakeExtensionLayer<LuaFile>(".lua"));
-        resourceBrowser_->AddLayers(MakeExtensionLayers({ ".hlsl", ".glsl" }, "Shader"));
-        resourceBrowser_->AddLayer(MakeExtensionLayer(".html", "HTML"));
-        resourceBrowser_->AddLayer(MakeBinaryLayer<Scene>("USCN"));
-        resourceBrowser_->AddLayer(MakeBinaryLayer("UPAK", "Package"));
-        resourceBrowser_->AddLayer(MakeBinaryLayer("ULZ4", "Compressed Package"));
-        resourceBrowser_->AddLayer(MakeBinaryLayer<ScriptFile>("ASBC"));
-        resourceBrowser_->AddLayers(MakeBinaryLayers<Model>({ "UMDL", "UMD2" }));
-        resourceBrowser_->AddLayer(MakeBinaryLayer("USHD", "Compiled Shader"));
-        resourceBrowser_->AddLayer(MakeBinaryLayer<Animation>("UANI"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<Scene>("scene"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<Node>("node"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<Material>("material"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<Technique>("technique"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<ParticleEffect>("particleeffect"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<ParticleEmitter>("particleemitter"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<Texture2D>("texture"));
-        resourceBrowser_->AddLayer(MakeXmlLayer("element", "UI Element"));
-        resourceBrowser_->AddLayer(MakeXmlLayer("elements", "UI Elements"));
-        resourceBrowser_->AddLayer(MakeXmlLayer("animation", "Animation Metadata"));
-        resourceBrowser_->AddLayer(MakeXmlLayer("renderpath", "Render Path"));
-        resourceBrowser_->AddLayer(MakeXmlLayer("TextureAtlas", "Texture Atlas"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<ParticleEffect2D>("particleEmitterConfig"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<Texture3D>("texture3d"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<TextureCube>("cubemap"));
-        resourceBrowser_->AddLayer(MakeXmlLayer<AnimationSet2D>("spriter_data"));
-        resourceBrowser_->AddLayer(MakeExtensionLayer<XMLFile>(".xml"));
-        resourceBrowser_->ScanResources();
-
-        resourceBrowser_->onResourceDoubleClicked_ = [=](const ResourceFileDesc& file)
-        {
-            if (file.type_.objectType_ == Scene::GetTypeStatic())
-            {
-                StandardDocument* existingDocument = FindDocument(mainWindow,
-                    [&file](Object* object)
-                {
-                    StandardDocument* document = static_cast<StandardDocument*>(object);
-                    return document->resourceKey_ == file.resourceKey_;
-                });
-
-                if (!existingDocument)
-                {
-                    ResourceCache* cache = GetSubsystem<ResourceCache>();
-                    SharedPtr<XMLFile> xml = cache->GetTempResource<XMLFile>(file.resourceKey_);
-                    auto scene = MakeShared<Scene>(context_);
-                    scene->LoadXML(xml->GetRoot());
-
-                    SharedPtr<StandardDocument> document = CreateSceneDocument(scene, file.resourceKey_);
-                    mainWindow->InsertDocument(document, file.name_, 0);
-
-                    existingDocument = document;
-                }
-
-                mainWindow->SelectDocument(existingDocument);
-            }
-        };
-
-//         auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
-//         for (int i = 0; i < 10; ++i)
-//         {
-//             auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
-//             attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
-//
-//             auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
-//             inspectorPanel->SetMetadataInjector(attributeMetadataInjector);
-//             inspectorPanel->SetMaxLabelLength(100);
-//             inspectorPanel->AddObject(scene_->GetChildren()[10]);
-//             inspectorPanel->AddObject(scene_->GetChildren()[20]);
-//
-//             inspectable->AddPanel(inspectorPanel);
-//         }
-//         inspector_->SetInspectable(inspectable);
-
-        if (blenderHotkeys)
-        {
-            using KB = KeyBinding;
-            using CC = CameraController;
-            cameraController_->SetFlyMode(false);
-            cameraController_->SetPositionControl(false);
-            cameraController_->SetControls({
-                { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
-                { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
-                { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
-                { CC::MOVE_RIGHT,       { KB::OPTIONAL_SHIFT + KB::Key(KEY_D), KB::OPTIONAL_SHIFT + KB::Key(KEY_RIGHT)    } },
-                { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
-                { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
-                { CC::MOVE_ACCEL,       { KB::SHIFT } },
-                { CC::TOGGLE_FLY_MODE,  { KB::SHIFT + KB::Key(KEY_F) } },
-                { CC::RESET_FLY_MODE,   { KB::ANY_MODIFIER + KB::Key(KEY_ESCAPE), KB::ANY_MODIFIER + KB::Mouse(MOUSEB_RIGHT) } },
-                { CC::ROTATE,           { } },
-                { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
-                { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
-                { CC::WHEEL_SCROLL_X,   { KB::CTRL } },
-                { CC::WHEEL_SCROLL_Y,   { KB::SHIFT } },
-                { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
-                { CC::WHEEL_ZOOM,       { KB::ALT } },
-            });
-
-            using OS = ObjectSelector;
-            objectSelector_->SetControls({
-                { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
-                { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
-                { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
-                { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT + KB::CTRL } },
-            });
-        }
-        else
-        {
-            using KB = KeyBinding;
-            using CC = CameraController;
-            cameraController_->SetFlyMode(false);
-            cameraController_->SetPositionControl(true);
-            cameraController_->SetControls({
-                { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
-                { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
-                { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
-                { CC::MOVE_RIGHT,       { KB::OPTIONAL_SHIFT + KB::Key(KEY_D), KB::OPTIONAL_SHIFT + KB::Key(KEY_RIGHT)    } },
-                { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
-                { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
-                { CC::MOVE_ACCEL,       { KB::SHIFT } },
-                { CC::ROTATE,           { KB::OPTIONAL_SHIFT + KB::Mouse(MOUSEB_RIGHT) } },
-                { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
-                { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
-                { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
-                { CC::WHEEL_ZOOM,       { KB::ALT } },
-            });
-
-            using OS = ObjectSelector;
-            objectSelector_->SetControls({
-                { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
-                { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
-                { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
-                { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL + KB::SHIFT } },
-            });
-        }
-
-        mainWindow->AddAction("EditCut", KeyBinding::Key(KEY_X) + KeyBinding::CTRL, [=]() {});
-        mainWindow->AddAction("EditCopy", KeyBinding::Key(KEY_C) + KeyBinding::CTRL, [=]() {});
-        mainWindow->AddAction("EditPaste", KeyBinding::Key(KEY_V) + KeyBinding::CTRL, [=]() {});
-        mainWindow->AddAction("EditDelete", KeyBinding::Key(KEY_DELETE),
-            [=]()
-        {
-            // #TODO Implement me
-        });
-
-        AbstractMenu* menuEdit = mainWindow->AddMenu("Edit");
-        menuEdit->AddAction("Cut", "EditCut");
-        menuEdit->AddAction("Copy", "EditCopy");
-        menuEdit->AddAction("Paste", "EditPaste");
-        menuEdit->AddAction("Delete", "EditDelete");
-    }
+    SharedPtr<StandardDocument> CreateDocumentForResource(const ResourceFileDesc& resource);
+    SharedPtr<StandardDocument> CreateSceneDocument(Scene* scene, const String& resourceKey = String::EMPTY);
 
 private:
+    AbstractMainWindow* mainWindow_ = nullptr;
+
     SharedPtr<Editor> editor_;
     SharedPtr<EditorViewportLayout> viewportLayout_;
     SharedPtr<DebugGeometryRenderer> debugGeometryRenderer_;
@@ -387,6 +157,273 @@ private:
     SharedPtr<ResourceBrowser> resourceBrowser_;
 };
 
+StandardEditor::StandardEditor(AbstractMainWindow* mainWindow, bool blenderHotkeys)
+    : Object(mainWindow->GetContext())
+    , mainWindow_(mainWindow)
+{
+    // Construct widgets and subsystems
+    editor_ = MakeShared<Editor>(mainWindow_);
+    viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
+    debugGeometryRenderer_ = MakeShared<DebugGeometryRenderer>(context_);
+    hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow_);
+    resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow_);
+    inspector_ = MakeShared<Inspector>(mainWindow_);
+    gizmo_ = MakeShared<Gizmo>(context_);
+    objectSelector_ = MakeShared<ObjectSelector>(context_);
+    cameraController_ = MakeShared<CameraController>(context_);
+
+    mainWindow_->onCurrentDocumentChanged_ = [=](Object* object)
+    {
+        StandardDocument* document = static_cast<StandardDocument*>(object);
+        SwitchToDocument(document);
+    };
+
+    {
+        auto scene = MakeShared<Scene>(context_);
+        mainWindow_->InsertDocument(CreateSceneDocument(scene), "New Scene", 0);
+        CreateScene(scene);
+    }
+
+    auto editorContext = MakeShared<StandardEditorContext>(context_, viewportLayout_);
+
+    cameraController_->SetSpeed(Vector3::ONE * 5.0f);
+    cameraController_->SetPanSpeed(Vector2::ONE * 2.5f);
+    cameraController_->SetAccelerationFactor(Vector3::ONE * 5.0f);
+    cameraController_->SetRotationSpeed(Vector2::ONE * 0.2f);
+
+    objectSelector_->AddSelectionTransferring("TerrainPatch", "Terrain");
+
+    gizmo_->SetGizmoType(GizmoType::Position);
+
+    debugGeometryRenderer_->DisableForComponent("Terrain");
+
+    editor_->SetEditorContext(editorContext);
+    editor_->AddOverlay(viewportLayout_);
+    editor_->AddOverlay(gizmo_);
+    editor_->AddOverlay(cameraController_);
+    editor_->AddOverlay(objectSelector_);
+    editor_->AddOverlay(debugGeometryRenderer_);
+
+    InitializeResourceLayers();
+    resourceBrowser_->ScanResources();
+    resourceBrowser_->onResourceDoubleClicked_ = [=](const ResourceFileDesc& file)
+    {
+        if (StandardDocument* existingDocument = FindDocumentForResource(file.resourceKey_))
+        {
+            mainWindow_->SelectDocument(existingDocument);
+        }
+        else if (SharedPtr<StandardDocument> newDocument = CreateDocumentForResource(file))
+        {
+            mainWindow_->InsertDocument(newDocument, file.name_, 0);
+            mainWindow_->SelectDocument(newDocument);
+        }
+    };
+
+    //         auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
+    //         for (int i = 0; i < 10; ++i)
+    //         {
+    //             auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
+    //             attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
+    //
+    //             auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+    //             inspectorPanel->SetMetadataInjector(attributeMetadataInjector);
+    //             inspectorPanel->SetMaxLabelLength(100);
+    //             inspectorPanel->AddObject(scene_->GetChildren()[10]);
+    //             inspectorPanel->AddObject(scene_->GetChildren()[20]);
+    //
+    //             inspectable->AddPanel(inspectorPanel);
+    //         }
+    //         inspector_->SetInspectable(inspectable);
+
+    SetupMenu();
+
+    if (blenderHotkeys)
+        SetupBlenderControls();
+    else
+        SetupUrhoControls();
+}
+
+void StandardEditor::SwitchToDocument(StandardDocument* document)
+{
+    if (document->scene_)
+    {
+        hierarchyWindow_->SelectDocument(document);
+        viewportLayout_->SetScene(document->scene_);
+        cameraController_->SetCamera(&viewportLayout_->GetCurrentCamera());
+        gizmo_->SetTransformable(document->selectionTransform_);
+        objectSelector_->SetScene(document->scene_);
+        objectSelector_->SetSelection(document->selection_);
+        debugGeometryRenderer_->SetScene(document->scene_);
+        debugGeometryRenderer_->SetSelection(document->selection_);
+    }
+}
+
+void StandardEditor::InitializeResourceLayers()
+{
+    resourceBrowser_->AddXmlExtension(".xml");
+    resourceBrowser_->AddLayers(MakeExtensionLayers<Font>({ ".ttf", ".otf" }));
+    resourceBrowser_->AddLayers(MakeExtensionLayers<Sound>({ ".ogg", ".wav" }));
+    resourceBrowser_->AddLayers(MakeExtensionLayers<Image>({ ".dds", ".png", ".jpg", ".jpeg", ".hdr", ".bmp", ".tga", ".ktx", ".pvr" }));
+    resourceBrowser_->AddLayers(MakeExtensionLayers({ ".obj", ".fbx", ".dae", ".blend" }, "Raw Model"));
+    resourceBrowser_->AddLayer(MakeExtensionLayer<ScriptFile>(".as"));
+    resourceBrowser_->AddLayer(MakeExtensionLayer<LuaFile>(".lua"));
+    resourceBrowser_->AddLayers(MakeExtensionLayers({ ".hlsl", ".glsl" }, "Shader"));
+    resourceBrowser_->AddLayer(MakeExtensionLayer(".html", "HTML"));
+    resourceBrowser_->AddLayer(MakeBinaryLayer<Scene>("USCN"));
+    resourceBrowser_->AddLayer(MakeBinaryLayer("UPAK", "Package"));
+    resourceBrowser_->AddLayer(MakeBinaryLayer("ULZ4", "Compressed Package"));
+    resourceBrowser_->AddLayer(MakeBinaryLayer<ScriptFile>("ASBC"));
+    resourceBrowser_->AddLayers(MakeBinaryLayers<Model>({ "UMDL", "UMD2" }));
+    resourceBrowser_->AddLayer(MakeBinaryLayer("USHD", "Compiled Shader"));
+    resourceBrowser_->AddLayer(MakeBinaryLayer<Animation>("UANI"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<Scene>("scene"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<Node>("node"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<Material>("material"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<Technique>("technique"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<ParticleEffect>("particleeffect"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<ParticleEmitter>("particleemitter"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<Texture2D>("texture"));
+    resourceBrowser_->AddLayer(MakeXmlLayer("element", "UI Element"));
+    resourceBrowser_->AddLayer(MakeXmlLayer("elements", "UI Elements"));
+    resourceBrowser_->AddLayer(MakeXmlLayer("animation", "Animation Metadata"));
+    resourceBrowser_->AddLayer(MakeXmlLayer("renderpath", "Render Path"));
+    resourceBrowser_->AddLayer(MakeXmlLayer("TextureAtlas", "Texture Atlas"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<ParticleEffect2D>("particleEmitterConfig"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<Texture3D>("texture3d"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<TextureCube>("cubemap"));
+    resourceBrowser_->AddLayer(MakeXmlLayer<AnimationSet2D>("spriter_data"));
+    resourceBrowser_->AddLayer(MakeExtensionLayer<XMLFile>(".xml"));
+}
+
+void StandardEditor::SetupMenu()
+{
+    mainWindow_->AddAction("EditCut", KeyBinding::Key(KEY_X) + KeyBinding::CTRL, [=]() {});
+    mainWindow_->AddAction("EditCopy", KeyBinding::Key(KEY_C) + KeyBinding::CTRL, [=]() {});
+    mainWindow_->AddAction("EditPaste", KeyBinding::Key(KEY_V) + KeyBinding::CTRL, [=]() {});
+    mainWindow_->AddAction("EditDelete", KeyBinding::Key(KEY_DELETE),
+        [=]()
+    {
+        // #TODO Implement me
+    });
+
+    AbstractMenu* menuEdit = mainWindow_->AddMenu("Edit");
+    menuEdit->AddAction("Cut", "EditCut");
+    menuEdit->AddAction("Copy", "EditCopy");
+    menuEdit->AddAction("Paste", "EditPaste");
+    menuEdit->AddAction("Delete", "EditDelete");
+}
+
+void StandardEditor::SetupUrhoControls()
+{
+    using KB = KeyBinding;
+    using CC = CameraController;
+    cameraController_->SetFlyMode(false);
+    cameraController_->SetPositionControl(true);
+    cameraController_->SetControls({
+        { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
+        { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
+        { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
+        { CC::MOVE_RIGHT,       { KB::OPTIONAL_SHIFT + KB::Key(KEY_D), KB::OPTIONAL_SHIFT + KB::Key(KEY_RIGHT)    } },
+        { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
+        { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
+        { CC::MOVE_ACCEL,       { KB::SHIFT } },
+        { CC::ROTATE,           { KB::OPTIONAL_SHIFT + KB::Mouse(MOUSEB_RIGHT) } },
+        { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
+        { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
+        { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
+        { CC::WHEEL_ZOOM,       { KB::ALT } },
+    });
+
+    using OS = ObjectSelector;
+    objectSelector_->SetControls({
+        { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
+        { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
+        { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
+        { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL + KB::SHIFT } },
+    });
+}
+
+void StandardEditor::SetupBlenderControls()
+{
+    using KB = KeyBinding;
+    using CC = CameraController;
+    cameraController_->SetFlyMode(false);
+    cameraController_->SetPositionControl(false);
+    cameraController_->SetControls({
+        { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
+        { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
+        { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
+        { CC::MOVE_RIGHT,       { KB::OPTIONAL_SHIFT + KB::Key(KEY_D), KB::OPTIONAL_SHIFT + KB::Key(KEY_RIGHT)    } },
+        { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
+        { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
+        { CC::MOVE_ACCEL,       { KB::SHIFT } },
+        { CC::TOGGLE_FLY_MODE,  { KB::SHIFT + KB::Key(KEY_F) } },
+        { CC::RESET_FLY_MODE,   { KB::ANY_MODIFIER + KB::Key(KEY_ESCAPE), KB::ANY_MODIFIER + KB::Mouse(MOUSEB_RIGHT) } },
+        { CC::ROTATE,           { } },
+        { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
+        { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
+        { CC::WHEEL_SCROLL_X,   { KB::CTRL } },
+        { CC::WHEEL_SCROLL_Y,   { KB::SHIFT } },
+        { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
+        { CC::WHEEL_ZOOM,       { KB::ALT } },
+    });
+
+    using OS = ObjectSelector;
+    objectSelector_->SetControls({
+        { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
+        { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
+        { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
+        { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT + KB::CTRL } },
+    });
+}
+
+StandardDocument* StandardEditor::FindDocumentForResource(const String& resourceKey)
+{
+    return FindDocument(
+        [&](Object* object)
+    {
+        StandardDocument* document = static_cast<StandardDocument*>(object);
+        return document->resourceKey_ == resourceKey;
+    });
+}
+
+SharedPtr<StandardDocument> StandardEditor::CreateDocumentForResource(const ResourceFileDesc& resource)
+{
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+
+    if (resource.type_.objectType_ == Scene::GetTypeStatic())
+    {
+        SharedPtr<XMLFile> xml = cache->GetTempResource<XMLFile>(resource.resourceKey_);
+        auto scene = MakeShared<Scene>(context_);
+        scene->LoadXML(xml->GetRoot());
+
+        return CreateSceneDocument(scene, resource.resourceKey_);
+    }
+    return nullptr;
+}
+
+SharedPtr<StandardDocument> StandardEditor::CreateSceneDocument(Scene* scene, const String& resourceKey /*= String::EMPTY*/)
+{
+    auto document = MakeShared<StandardDocument>(context_);
+    document->resourceKey_ = resourceKey;
+    document->scene_ = scene;
+    document->selection_ = MakeShared<Selection>(context_);
+    document->selectionTransform_ = MakeShared<SelectionTransform>(context_);
+    document->selectionTransform_->SetScene(scene);
+    document->selectionTransform_->SetSelection(document->selection_);
+
+    Hierarchy* hierarchy = hierarchyWindow_->GetDocument(document);
+    hierarchy->SetScene(document->scene_);
+    hierarchy->SetSelection(document->selection_);
+
+    document->selection_->onSelectionChanged_ = [=]()
+    {
+        hierarchy->RefreshSelection();
+    };
+
+    return document;
+}
+
 int QtEditorMain()
 {
     static int argcStub = 0;
@@ -394,7 +431,7 @@ int QtEditorMain()
     QApplication::setStyle("Fusion");
     QApplication applicaton(argcStub, argvStub);
     QtMainWindow mainWindow(applicaton);
-    DefaultEditor defaultEditor(&mainWindow, false);
+    StandardEditor defaultEditor(&mainWindow, false);
     mainWindow.showMaximized();
     return applicaton.exec();
 }
@@ -419,12 +456,12 @@ public:
         ui->GetRoot()->SetDefaultStyle(style);
 
         mainWindow_ = MakeShared<UrhoMainWindow>(context_);
-        editor_ = MakeShared<DefaultEditor>(mainWindow_, false);
+        editor_ = MakeShared<StandardEditor>(mainWindow_, false);
     }
 
 private:
     SharedPtr<UrhoMainWindow> mainWindow_;
-    SharedPtr<DefaultEditor> editor_;
+    SharedPtr<StandardEditor> editor_;
 };
 
 
