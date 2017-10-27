@@ -36,32 +36,40 @@ class Selection : public Object
     URHO3D_OBJECT(Selection, Object);
 
 public:
+    /// Vector of objects.
+    using ObjectVector = Vector<WeakPtr<Object>>;
     /// Set of objects.
-    using ObjectSet = HashSet<Object*>;
-    /// Set of nodes.
-    using NodeSet = HashSet<Node*>;
-    /// Set of components.
-    using ComponentSet = HashSet<Component*>;
+    using ObjectSet = HashSet<WeakPtr<Object>>;
+
+    /// Vector of nodes.
+    using NodeVector = Vector<WeakPtr<Node>>;
+    /// Vector of components.
+    using ComponentVector = Vector<WeakPtr<Component>>;
     /// Construct.
     Selection(Context* context) : Object(context) { }
 
     /// Clear selection.
     void ClearSelection();
     /// Select objects.
-    void SetSelection(const ObjectSet& objects);
+    void SetSelection(const ObjectVector& objects);
     /// Select object.
     void SelectObject(Object* object, SelectionAction action, bool clearSelection);
     /// Set hovered object.
     void SetHoveredObject(Object* object);
 
-    /// Get selected objects.
-    const ObjectSet& GetSelected() const { return selectedObjects_; }
+    /// Return whether the object is selected.
+    bool IsSelected(Object* object) const { return selectedObjectsSet_.Contains(WeakPtr<Object>(object)); }
+    /// Get vector of selected objects.
+    const ObjectVector& GetObjects() const { return selectedObjectsVector_; }
+    /// Get set of selected objects.
+    const ObjectSet& GetObjectsSet() const { return selectedObjectsSet_; }
+
     /// Get selected nodes.
-    const NodeSet& GetSelectedNodes() const { return selectedNodes_; }
+    const NodeVector& GetNodes() const { return selectedNodes_; }
     /// Get selected components.
-    const ComponentSet& GetSelectedComponents() const { return selectedComponents_; }
+    const ComponentVector& GetComponents() const { return selectedComponents_; }
     /// Get selected nodes and components.
-    const NodeSet& GetSelectedNodesAndComponents() const { return selectedNodesAndComponents_; }
+    const NodeVector& GetNodesAndComponents() const { return selectedNodesAndComponents_; }
     /// Get center point of selected nodes.
     Vector3 GetSelectedCenter();
     /// Get hovered object.
@@ -80,14 +88,17 @@ private:
     void UpdateChangedSelection();
 
 private:
-    /// Selected objects.
-    ObjectSet selectedObjects_;
+    /// Vector of selected objects.
+    ObjectVector selectedObjectsVector_;
+    /// Set of selected objects.
+    ObjectSet selectedObjectsSet_;
+
     /// Selected nodes.
-    NodeSet selectedNodes_;
+    NodeVector selectedNodes_;
     /// Selected components.
-    ComponentSet selectedComponents_;
+    ComponentVector selectedComponents_;
     /// Selected nodes and components.
-    NodeSet selectedNodesAndComponents_;
+    NodeVector selectedNodesAndComponents_;
     /// Hovered object.
     Object* hoveredObject_ = nullptr;
     /// Last center of selected nodes and components.

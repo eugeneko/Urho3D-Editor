@@ -34,14 +34,14 @@ public:
     void RefreshSelection();
     void SetScene(Scene* scene);
     void SetSelection(Selection* selection);
-    Selection::ObjectSet GetSelectedObjects();
+    const Selection::ObjectVector& GetSelectedObjects() { return cachedSelection_; }
 
 private:
     AbstractHierarchyListItem* FindItem(Object* object);
     /// Subtract right set from left one.
-    void Subtract(const Selection::ObjectSet& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const;
+    void Subtract(const Selection::ObjectVector& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const;
     /// Gather selection from hierarchy list.
-    void GatherHierarchyListSelections(Selection::ObjectSet& result) const;
+    void CacheSelection();
     AbstractHierarchyListItem* CreateListItem(Object* object);
     void GetObjectParentAndIndex(Object* object, Object*& parent, unsigned& index);
     void UpdateListItem(Object* object);
@@ -88,6 +88,8 @@ private:
     HashMap<WeakPtr<Object>, WeakPtr<AbstractHierarchyListItem>> objectsToItems_;
 
     bool suppressEditorSelectionChanges_ = false;
+    Selection::ObjectVector cachedSelection_;
+    Selection::ObjectSet cachedSelectionSet_;
 };
 
 class HierarchyWindow : public Object

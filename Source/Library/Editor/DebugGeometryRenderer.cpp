@@ -84,11 +84,11 @@ void DebugGeometryRenderer::DrawDebugGeometry(DebugRenderer* debug)
         DrawNodeDebug(component->GetNode(), debug);
 
     // Draw selected nodes
-    for (Node* node : selection_->GetSelectedNodes())
+    for (Node* node : selection_->GetNodes())
         DrawNodeDebug(node, debug);
 
     // Draw selected components
-    for (Component* component : selection_->GetSelectedComponents())
+    for (Component* component : selection_->GetComponents())
         component->DrawDebugGeometry(debug, false);
 
     // Draw Renderer

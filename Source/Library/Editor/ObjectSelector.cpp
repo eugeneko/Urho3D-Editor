@@ -106,14 +106,14 @@ void ObjectSelector::PerformRaycast(AbstractInput& input, AbstractEditorContext&
         if (controls_[TOGGLE_COMPONENT].IsPressed(input))
         {
             // Clear selection if there are nodes in existing selection
-            const bool clearSelection = !selection_->GetSelectedNodes().Empty();
+            const bool clearSelection = !selection_->GetNodes().Empty();
             selection_->SelectObject(selectedComponent, SelectionAction::Toggle, clearSelection);
         }
 
         if (controls_[TOGGLE_NODE].IsPressed(input))
         {
             // Clear selection if there are nodes in existing selection
-            const bool clearSelection = !selection_->GetSelectedComponents().Empty();
+            const bool clearSelection = !selection_->GetComponents().Empty();
             selection_->SelectObject(selectedComponent->GetNode(), SelectionAction::Toggle, clearSelection);
         }
     }

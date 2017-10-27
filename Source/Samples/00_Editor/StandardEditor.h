@@ -57,8 +57,13 @@ private:
     SharedPtr<StandardDocument> CreateDocumentForResource(const ResourceFileDesc& resource);
     SharedPtr<StandardDocument> CreateSceneDocument(Scene* scene, const String& resourceKey = String::EMPTY);
 
+    void UpdateInspector();
+    SharedPtr<Inspectable> CreateNodesInspector(const Selection::NodeVector& nodes) const;
+    SharedPtr<Inspectable> CreateComponentsInspector(const Selection::ComponentVector& components) const;
+
 private:
     AbstractMainWindow* mainWindow_ = nullptr;
+    StandardDocument* currentDocument_ = nullptr;
 
     SharedPtr<Editor> editor_;
     SharedPtr<EditorViewportLayout> viewportLayout_;
@@ -70,6 +75,9 @@ private:
     SharedPtr<HierarchyWindow> hierarchyWindow_;
     SharedPtr<Inspector> inspector_;
     SharedPtr<ResourceBrowser> resourceBrowser_;
+
+    // #TODO Hide me
+    unsigned maxInspectorLabelLength_ = 200;
 };
 
 }

@@ -36,14 +36,12 @@ void NodeTransform::Apply(Node& node)
 //////////////////////////////////////////////////////////////////////////
 bool SelectionTransform::IsEmpty()
 {
-    const Selection::NodeSet& nodes = selection_->GetSelectedNodesAndComponents();
-    const bool sceneSelected = nodes.Contains(scene_);
-    return sceneSelected || nodes.Empty();
+    return selection_->IsSelected(scene_) || selection_->GetNodesAndComponents().Empty();
 }
 
 Vector3 SelectionTransform::GetPosition()
 {
-    const Selection::NodeSet& nodes = selection_->GetSelectedNodesAndComponents();
+    const Selection::NodeVector& nodes = selection_->GetNodesAndComponents();
 
     Vector3 center;
     for (Node* node : nodes)
@@ -55,7 +53,7 @@ Vector3 SelectionTransform::GetPosition()
 
 Quaternion SelectionTransform::GetRotation()
 {
-    const Selection::NodeSet& nodes = selection_->GetSelectedNodesAndComponents();
+    const Selection::NodeVector& nodes = selection_->GetNodesAndComponents();
 
     return nodes.Size() == 1
         ? (**nodes.Begin()).GetWorldRotation()
@@ -64,7 +62,7 @@ Quaternion SelectionTransform::GetRotation()
 
 void SelectionTransform::StartTransformation()
 {
-    const Selection::NodeSet& selection = selection_->GetSelectedNodesAndComponents();
+    const Selection::NodeVector& selection = selection_->GetNodesAndComponents();
 
     nodes_.Clear();
     for (Node* node : selection)

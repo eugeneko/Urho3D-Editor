@@ -75,13 +75,6 @@ void Hierarchy::SetSelection(Selection* selection)
     selection_ = selection;
 }
 
-Selection::ObjectSet Hierarchy::GetSelectedObjects()
-{
-    Selection::ObjectSet result;
-    GatherHierarchyListSelections(result);
-    return result;
-}
-
 AbstractHierarchyListItem* Hierarchy::FindItem(Object* object)
 {
     if (object)
@@ -90,21 +83,30 @@ AbstractHierarchyListItem* Hierarchy::FindItem(Object* object)
         return nullptr;
 }
 
-void Hierarchy::Subtract(const Selection::ObjectSet& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const
+void Hierarchy::Subtract(const Selection::ObjectVector& lhs, const Selection::ObjectSet& rhs, Selection::ObjectSet& result) const
 {
     result.Clear();
-    for (Object* object : lhs)
+    for (const WeakPtr<Object>& object : lhs)
         if (!rhs.Contains(object))
             result.Insert(object);
 }
 
-void Hierarchy::GatherHierarchyListSelections(Selection::ObjectSet& result) const
+void Hierarchy::CacheSelection()
 {
-    // TODO: Cache
+    cachedSelection_.Clear();
+    cachedSelectionSet_.Clear();
     for (AbstractHierarchyListItem* item : hierarchyList_->GetSelection())
+    {
         if (HierarchyWindowItem* derivedItem = static_cast<HierarchyWindowItem*>(item))
+        {
             if (Object* object = derivedItem->GetObject())
-                result.Insert(object);
+            {
+                WeakPtr<Object> weakObject(object);
+                cachedSelection_.Push(weakObject);
+                cachedSelectionSet_.Insert(weakObject);
+            }
+        }
+    }
 }
 
 AbstractHierarchyListItem* Hierarchy::CreateListItem(Object* object)
@@ -162,7 +164,8 @@ void Hierarchy::RemoveListItem(Object* object)
 void Hierarchy::HandleListSelectionChanged()
 {
     suppressEditorSelectionChanges_ = true;
-    selection_->SetSelection(GetSelectedObjects());
+    CacheSelection();
+    selection_->SetSelection(cachedSelection_);
     suppressEditorSelectionChanges_ = false;
 }
 
@@ -171,13 +174,13 @@ void Hierarchy::HandleEditorSelectionChanged()
     if (suppressEditorSelectionChanges_)
         return;
 
-    // TODO: Cache
-    Selection::ObjectSet oldSelection = GetSelectedObjects();
-    Selection::ObjectSet newSelection = selection_->GetSelected();
+    CacheSelection();
+
     Selection::ObjectSet toSelect;
-    Subtract(newSelection, oldSelection, toSelect);
+    Subtract(selection_->GetObjects(), cachedSelectionSet_, toSelect);
+
     Selection::ObjectSet toDeselect;
-    Subtract(oldSelection, newSelection, toDeselect);
+    Subtract(cachedSelection_, selection_->GetObjectsSet(), toDeselect);
 
     // Deselect old objects
     for (Object* object : toDeselect)
@@ -199,6 +202,8 @@ void Hierarchy::HandleEditorSelectionChanged()
             }
         }
     }
+
+    CacheSelection();
 }
 
 void Hierarchy::HandleNodeAdded(StringHash eventType, VariantMap& eventData)

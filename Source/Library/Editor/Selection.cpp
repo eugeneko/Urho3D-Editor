@@ -32,24 +32,48 @@ namespace Urho3D
 
 void Selection::ClearSelection()
 {
-    selectedObjects_.Clear();
+    selectedObjectsVector_.Clear();
+    selectedObjectsSet_.Clear();
     UpdateChangedSelection();
 }
 
-void Selection::SetSelection(const ObjectSet& objects)
+void Selection::SetSelection(const ObjectVector& objects)
 {
-    selectedObjects_ = objects;
+    selectedObjectsVector_.Clear();
+    selectedObjectsSet_.Clear();
+    for (Object* object : objects)
+    {
+        if (object)
+        {
+            WeakPtr<Object> weakObject(object);
+            selectedObjectsVector_.Push(weakObject);
+            selectedObjectsSet_.Insert(weakObject);
+        }
+    }
+
     UpdateChangedSelection();
 }
 
 void Selection::SelectObject(Object* object, SelectionAction action, bool clearSelection)
 {
     if (clearSelection)
-        selectedObjects_.Clear();
+    {
+        selectedObjectsVector_.Clear();
+        selectedObjectsSet_.Clear();
+    }
 
-    const bool wasSelected = selectedObjects_.Erase(object);
-    if (!wasSelected && action != SelectionAction::Deselect)
-        selectedObjects_.Insert(object);
+    WeakPtr<Object> weakObject(object);
+    const bool wasSelected = selectedObjectsSet_.Contains(weakObject);
+    if (action != SelectionAction::Select && wasSelected)
+    {
+        selectedObjectsSet_.Erase(weakObject);
+        selectedObjectsVector_.Remove(weakObject);
+    }
+    if (action != SelectionAction::Deselect && !wasSelected)
+    {
+        selectedObjectsSet_.Insert(weakObject);
+        selectedObjectsVector_.Push(weakObject);
+    }
 
     UpdateChangedSelection();
 }
@@ -100,17 +124,20 @@ void Selection::UpdateChangedSelection()
     selectedNodes_.Clear();
     selectedComponents_.Clear();
     selectedNodesAndComponents_.Clear();
-    for (Object* object : selectedObjects_)
+    for (Object* object : selectedObjectsVector_)
     {
         if (Node* node = dynamic_cast<Node*>(object))
         {
-            selectedNodes_.Insert(node);
-            selectedNodesAndComponents_.Insert(node);
+            WeakPtr<Node> weakNode(node);
+            selectedNodes_.Push(weakNode);
+            selectedNodesAndComponents_.Push(weakNode);
         }
         if (Component* component = dynamic_cast<Component*>(object))
         {
-            selectedComponents_.Insert(component);
-            selectedNodesAndComponents_.Insert(component->GetNode());
+            WeakPtr<Component> weakComponent(component);
+            WeakPtr<Node> weakNode(component->GetNode());
+            selectedComponents_.Push(weakComponent);
+            selectedNodesAndComponents_.Push(weakNode);
         }
     }
 

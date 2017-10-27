@@ -348,7 +348,8 @@ void Inspector::SetInspectable(const SharedPtr<Inspectable>& inspectable)
 {
     inspectable_ = inspectable;
     layout_->RemoveAllChildren();
-    inspectable_->BuildUI(layout_);
+    if (inspectable_)
+        inspectable_->BuildUI(layout_);
 }
 
 

@@ -29,6 +29,47 @@
 namespace Urho3D
 {
 
+namespace
+{
+
+void GetNodeComponentTypes(Node* node, Vector<String>& componentTypes)
+{
+    componentTypes.Clear();
+    for (Component* component : node->GetComponents())
+        componentTypes.Push(component->GetTypeName());
+}
+
+Component* GetNodeComponent(Node* node, const String& componentType)
+{
+    for (Component* component : node->GetComponents())
+        if (component->GetTypeName() == componentType)
+            return component;
+    return nullptr;
+}
+
+bool AreNodesWithComponent(const Selection::NodeVector& nodes, const String& componentType)
+{
+    for (Node* node : nodes)
+        if (!GetNodeComponent(node, componentType))
+            return false;
+    return true;
+}
+
+Vector<String> GatherComponentTypes(const Selection::NodeVector& nodes)
+{
+    Vector<String> result;
+    if (!nodes.Empty())
+    {
+        Vector<String> reference;
+        GetNodeComponentTypes(nodes.Front(), reference);
+        for (const String& componentType : reference)
+            if (AreNodesWithComponent(nodes, componentType))
+                result.Push(componentType);
+    }
+    return result;
+
+}
+
 // @{ TEMP
 void CreateScene(Scene* scene)
 {
@@ -86,6 +127,8 @@ void CreateScene(Scene* scene)
 }
 // @} TEMP
 
+}
+
 StandardEditor::StandardEditor(AbstractMainWindow* mainWindow, bool blenderHotkeys)
     : Object(mainWindow->GetContext())
     , mainWindow_(mainWindow)
@@ -103,8 +146,8 @@ StandardEditor::StandardEditor(AbstractMainWindow* mainWindow, bool blenderHotke
 
     mainWindow_->onCurrentDocumentChanged_ = [=](Object* object)
     {
-        StandardDocument* document = static_cast<StandardDocument*>(object);
-        SwitchToDocument(document);
+        currentDocument_ = static_cast<StandardDocument*>(object);
+        SwitchToDocument(currentDocument_);
     };
 
     {
@@ -148,21 +191,8 @@ StandardEditor::StandardEditor(AbstractMainWindow* mainWindow, bool blenderHotke
         }
     };
 
-    //         auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
-    //         for (int i = 0; i < 10; ++i)
-    //         {
-    //             auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
-    //             attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
-    //
-    //             auto inspectorPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
-    //             inspectorPanel->SetMetadataInjector(attributeMetadataInjector);
-    //             inspectorPanel->SetMaxLabelLength(100);
-    //             inspectorPanel->AddObject(scene_->GetChildren()[10]);
-    //             inspectorPanel->AddObject(scene_->GetChildren()[20]);
-    //
-    //             inspectable->AddPanel(inspectorPanel);
-    //         }
-    //         inspector_->SetInspectable(inspectable);
+//     auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
+//     attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
 
     SetupMenu();
 
@@ -184,6 +214,7 @@ void StandardEditor::SwitchToDocument(StandardDocument* document)
         objectSelector_->SetSelection(document->selection_);
         debugGeometryRenderer_->SetScene(document->scene_);
         debugGeometryRenderer_->SetSelection(document->selection_);
+        UpdateInspector();
     }
 }
 
@@ -348,9 +379,77 @@ SharedPtr<StandardDocument> StandardEditor::CreateSceneDocument(Scene* scene, co
     document->selection_->onSelectionChanged_ = [=]()
     {
         hierarchy->RefreshSelection();
+        UpdateInspector();
     };
 
     return document;
+}
+
+void StandardEditor::UpdateInspector()
+{
+    if (!currentDocument_)
+        return;
+
+    if (!currentDocument_->selection_->GetNodes().Empty())
+    {
+        const Selection::NodeVector& nodes = currentDocument_->selection_->GetNodesAndComponents();
+        inspector_->SetInspectable(CreateNodesInspector(nodes));
+    }
+    else if (!currentDocument_->selection_->GetComponents().Empty())
+    {
+        const Selection::ComponentVector& components = currentDocument_->selection_->GetComponents();
+        inspector_->SetInspectable(CreateComponentsInspector(components));
+    }
+}
+
+SharedPtr<Inspectable> StandardEditor::CreateNodesInspector(const Selection::NodeVector& nodes) const
+{
+    auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
+
+    // Create nodes panel
+    auto nodesPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+    nodesPanel->SetMaxLabelLength(maxInspectorLabelLength_);
+    for (Node* node : nodes)
+        if (!nodesPanel->AddObject(node))
+            return nullptr;
+    inspectable->AddPanel(nodesPanel);
+
+    // Create components panels
+    const Vector<String> componentTypes = GatherComponentTypes(nodes);
+    for (const String& componentType : componentTypes)
+    {
+        auto componentsPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+        componentsPanel->SetMaxLabelLength(maxInspectorLabelLength_);
+        for (Node* node : nodes)
+            if (!componentsPanel->AddObject(GetNodeComponent(node, componentType)))
+                return nullptr;
+        inspectable->AddPanel(componentsPanel);
+    }
+
+    return inspectable;
+}
+
+SharedPtr<Inspectable> StandardEditor::CreateComponentsInspector(const Selection::ComponentVector& components) const
+{
+    auto inspectable = MakeShared<MultiplePanelInspectable>(context_);
+
+    // Create nodes panel
+    auto nodesPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+    nodesPanel->SetMaxLabelLength(maxInspectorLabelLength_);
+    for (Component* component : components)
+        if (!nodesPanel->AddObject(component->GetNode()))
+            return nullptr;
+    inspectable->AddPanel(nodesPanel);
+
+    // Create components panel
+    auto componentsPanel = MakeShared<MultipleSerializableInspectorPanel>(context_);
+    componentsPanel->SetMaxLabelLength(maxInspectorLabelLength_);
+    for (Component* component : components)
+        if (!componentsPanel->AddObject(component))
+            return nullptr;
+    inspectable->AddPanel(componentsPanel);
+
+    return inspectable;
 }
 
 }
