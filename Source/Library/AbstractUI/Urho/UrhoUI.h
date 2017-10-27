@@ -346,16 +346,15 @@ private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateHierarchyList,    UrhoHierarchyList);
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateView3D,           UrhoView3D);
 
-    void EnsureUIInitialized();
-    void UpdateMainLayout();
-
 private:
+    UI* ui_ = nullptr;
+    UIElement* uiRoot_ = nullptr;
+    DockStation* mainElement_ = nullptr;
+
     Vector<SharedPtr<UrhoDock>> dialogs_;
     StandardUrhoInput input_;
 
     HashMap<String, AbstractAction> actions_;
-
-    UIElement* mainElement_ = nullptr;
 
     UIElement* menuBar_ = nullptr;
     Vector<SharedPtr<UrhoMenu>> menus_;

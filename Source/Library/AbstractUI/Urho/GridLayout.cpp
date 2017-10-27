@@ -8,7 +8,10 @@ GridLayout::GridLayout(Context* context)
     : UIElement(context)
     , groupData_(1)
 {
-    SubscribeToEvent(this, E_LAYOUTUPDATED, URHO3D_HANDLER(GridLayout, HandleLayoutUpdated));
+    SubscribeToEvent(this, E_LAYOUTUPDATED, [=](StringHash eventType, VariantMap& eventData)
+    {
+        UpdateChildrenLayout();
+    });
 }
 
 void GridLayout::InsertItem(unsigned row, unsigned column, UIElement* element, unsigned minWidth, unsigned minHeight)
@@ -207,11 +210,6 @@ void GridLayout::EnsureCell(unsigned row, unsigned column)
     EnsureRow(row);
     if (rows_[row].cells_.Size() <= column)
         rows_[row].cells_.Resize(column + 1);
-}
-
-void GridLayout::HandleLayoutUpdated(StringHash eventType, VariantMap& eventData)
-{
-    UpdateChildrenLayout();
 }
 
 }

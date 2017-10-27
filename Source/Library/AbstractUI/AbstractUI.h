@@ -2,6 +2,7 @@
 
 #include "KeyBinding.h"
 #include "AbstractInput.h"
+#include "Urho/DockStation.h"
 #include <Urho3D/Core/Object.h>
 #include <Urho3D/Container/HashSet.h>
 #include <Urho3D/Input/Input.h>
@@ -17,14 +18,6 @@ class Serializable;
 class AbstractMainWindow;
 class Selection;
 class AbstractDock;
-
-enum class DockLocation
-{
-    Left,
-    Right,
-    Top,
-    Bottom,
-};
 
 struct AbstractAction
 {

@@ -19,6 +19,8 @@ add_library(AbstractUI
     ${CMAKE_CURRENT_SOURCE_DIR}/Urho/GridLayout.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Urho/UrhoUI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Urho/UrhoUI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Urho/DockStation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Urho/DockStation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Qt/QtUI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Qt/QtUI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Qt/QtUrhoWidget.cpp

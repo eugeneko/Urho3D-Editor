@@ -42,8 +42,6 @@ public:
     void OnResize(const IntVector2& newSize, const IntVector2& delta) override;
 
 private:
-    void HandleLayoutUpdated(StringHash eventType, VariantMap& eventData);
-
     void UpdateChildrenLayout();
     void StretchSizes(Vector<int>& sizes, const Vector<int>& maxSizes, int value);
     void EnsureRow(unsigned row);

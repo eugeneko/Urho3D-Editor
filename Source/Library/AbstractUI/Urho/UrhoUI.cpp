@@ -851,13 +851,56 @@ const Urho3D::StringHash UrhoMainWindow::VAR_DOCUMENT("Document");
 UrhoMainWindow::UrhoMainWindow(Context* context)
     : AbstractMainWindow()
     , Object(context)
-    , input_(context)
+    , ui_(GetSubsystem<UI>())
+    , uiRoot_(ui_->GetRoot())
+    , mainElement_(new DockStation(context_))
+    , input_(context_)
 {
+    Graphics* graphics = GetSubsystem<Graphics>();
+
+    // Create dock station
+    mainElement_->SetName("MainWindow");
+    uiRoot_->AddChild(mainElement_);
+    mainElement_->SetFixedSize(graphics->GetWidth(), graphics->GetHeight());
+
     SubscribeToEvent(E_SCREENMODE,
         [=](StringHash /*eventType*/, VariantMap& /*eventData*/)
     {
-        UpdateMainLayout();
+        mainElement_->SetFixedSize(graphics->GetWidth(), graphics->GetHeight());
     });
+
+    // Create menu bar
+    menuBar_ = new BorderImage(context_);
+    menuBar_->SetName("MenuBar");
+    mainElement_->AddDock(menuBar_, DockLocation::Top);
+    menuBar_->SetLayout(LM_HORIZONTAL);
+    menuBar_->SetStyle("EditorMenuBar");
+
+    // Create document bar
+    documentBar_ = new BorderImage(context_);
+    documentBar_->SetName("DocumentBar");
+    mainElement_->AddDock(documentBar_, DockLocation::Top);
+    documentBar_->SetLayout(LM_HORIZONTAL);
+    documentBar_->SetStyle("EditorMenuBar");
+
+    documentList_ = documentBar_->CreateChild<DropDownList>("DocumentBar_List");
+    documentList_->SetMaxWidth(200);
+    documentList_->SetResizePopup(true);
+    documentList_->SetStyleAuto();
+
+    SubscribeToEvent(documentList_, E_ITEMSELECTED,
+        [=](StringHash /*eventType*/, VariantMap& eventData)
+    {
+        if (UIElement* selectedElement = documentList_->GetSelectedItem())
+        {
+            if (Object* document = static_cast<Object*>(selectedElement->GetVar(VAR_DOCUMENT).GetPtr()))
+            {
+                if (onCurrentDocumentChanged_)
+                    onCurrentDocumentChanged_(document);
+            }
+        }
+    });
+
 }
 
 AbstractDock* UrhoMainWindow::AddDock(DockLocation hint)
@@ -866,7 +909,7 @@ AbstractDock* UrhoMainWindow::AddDock(DockLocation hint)
     UIElement* uiRoot = ui->GetRoot();
 
     auto dialog = MakeShared<UrhoDock>(this);
-    uiRoot->AddChild(GetInternalElement(dialog));
+    mainElement_->AddDock(GetInternalElement(dialog), hint);
     dialog->SetParent(nullptr);
     dialogs_.Push(dialog);
 
@@ -880,22 +923,19 @@ void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)
 
 AbstractMenu* UrhoMainWindow::AddMenu(const String& name)
 {
-    EnsureUIInitialized();
     menus_.Push(MakeShared<UrhoMenu>(this, menuBar_, name, "", true, true));
-    UpdateMainLayout();
     return menus_.Back();
 }
 
 void UrhoMainWindow::InsertDocument(Object* document, const String& title, unsigned index)
 {
-    EnsureUIInitialized();
-
     documents_.Insert(SharedPtr<Object>(document));
     Text* documentTitle = documentList_->CreateChild<Text>();
     documentTitle->SetStyleAuto();
     documentTitle->SetText(title);
     documentTitle->SetVar(VAR_DOCUMENT, document);
     documentList_->AddItem(documentTitle);
+    documentList_->SetMinHeight(documentTitle->GetMinHeight());
 
     // Notify if newly inserted item is selected
     if (documentList_->GetSelectedItem() == documentTitle)
@@ -903,8 +943,6 @@ void UrhoMainWindow::InsertDocument(Object* document, const String& title, unsig
         if (onCurrentDocumentChanged_)
             onCurrentDocumentChanged_(document);
     }
-
-    UpdateMainLayout();
 }
 
 void UrhoMainWindow::SelectDocument(Object* document)
@@ -957,63 +995,6 @@ void UrhoMainWindow::CollapseMenuPopups(Menu* menu) const
 
     if (menu->GetParent() == menuBar_)
         menu->ShowPopup(false);
-}
-
-void UrhoMainWindow::EnsureUIInitialized()
-{
-    if (!menuBar_ || !documentBar_)
-    {
-        UI* ui = GetSubsystem<UI>();
-        Graphics* graphics = GetSubsystem<Graphics>();
-        UIElement* root = ui->GetRoot();
-
-        mainElement_ = root->CreateChild<UIElement>("MainWindow");
-        mainElement_->SetLayout(LM_VERTICAL);
-
-        menuBar_ = mainElement_->CreateChild<BorderImage>("MenuBar");
-        menuBar_->SetLayout(LM_HORIZONTAL);
-        menuBar_->SetStyle("EditorMenuBar");
-        SubscribeToEvent(menuBar_, E_RESIZED,
-            [=](StringHash /*eventType*/, VariantMap& /*eventData*/)
-        {
-            UpdateMainLayout();
-        });
-
-        documentBar_ = mainElement_->CreateChild<BorderImage>("DocumentBar");
-        documentBar_->SetLayout(LM_HORIZONTAL);
-        documentBar_->SetStyle("EditorMenuBar");
-
-        documentList_ = documentBar_->CreateChild<DropDownList>("DocumentBar_List");
-        documentList_->SetMaxWidth(200);
-        documentList_->SetResizePopup(true);
-        documentList_->SetStyleAuto();
-
-        SubscribeToEvent(documentList_, E_ITEMSELECTED,
-            [=](StringHash /*eventType*/, VariantMap& eventData)
-        {
-            if (UIElement* selectedElement = documentList_->GetSelectedItem())
-            {
-                if (Object* document = static_cast<Object*>(selectedElement->GetVar(VAR_DOCUMENT).GetPtr()))
-                {
-                    if (onCurrentDocumentChanged_)
-                        onCurrentDocumentChanged_(document);
-                }
-            }
-        });
-
-        UpdateMainLayout();
-    }
-}
-
-void UrhoMainWindow::UpdateMainLayout()
-{
-    if (mainElement_ && menuBar_ && documentBar_)
-    {
-        Graphics* graphics = GetSubsystem<Graphics>();
-
-        mainElement_->SetFixedWidth(graphics->GetWidth());
-        mainElement_->SetHeight(mainElement_->GetEffectiveMinSize().y_);
-    }
 }
 
 }

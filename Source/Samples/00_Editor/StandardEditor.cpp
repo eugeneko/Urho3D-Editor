@@ -94,9 +94,9 @@ StandardEditor::StandardEditor(AbstractMainWindow* mainWindow, bool blenderHotke
     editor_ = MakeShared<Editor>(mainWindow_);
     viewportLayout_ = MakeShared<EditorViewportLayout>(context_);
     debugGeometryRenderer_ = MakeShared<DebugGeometryRenderer>(context_);
-    hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow_);
-    resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow_);
     inspector_ = MakeShared<Inspector>(mainWindow_);
+    resourceBrowser_ = MakeShared<ResourceBrowser>(mainWindow_);
+    hierarchyWindow_ = MakeShared<HierarchyWindow>(mainWindow_);
     gizmo_ = MakeShared<Gizmo>(context_);
     objectSelector_ = MakeShared<ObjectSelector>(context_);
     cameraController_ = MakeShared<CameraController>(context_);
