@@ -858,6 +858,11 @@ UrhoMainWindow::UrhoMainWindow(Context* context)
 {
     Graphics* graphics = GetSubsystem<Graphics>();
 
+    // Create cursor
+    auto cursor = MakeShared<Cursor>(context_);
+    cursor->SetStyleAuto();
+    ui_->SetCursor(cursor);
+
     // Create dock station
     mainElement_->SetName("MainWindow");
     uiRoot_->AddChild(mainElement_);
