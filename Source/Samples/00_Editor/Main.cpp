@@ -1,11 +1,10 @@
-#include "StandardEditor.h"
+#include "../../Library/Editor/StandardEditor.h"
+#include "../../Library/AbstractUI/Urho/UrhoUI.h"
+#include "../../Library/AbstractUI/Qt/QtUI.h"
 
 #include <Urho3D/Engine/Application.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/UI/UI.h>
-
-#include "../../Library/AbstractUI/Urho/UrhoUI.h"
-#include "../../Library/AbstractUI/Qt/QtUI.h"
 
 #include <Urho3D/DebugNew.h>
 

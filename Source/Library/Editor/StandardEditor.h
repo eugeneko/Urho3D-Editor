@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../../Library/AbstractUI/AbstractUI.h"
-#include "../../Library/AbstractUI/KeyBinding.h"
-#include "../../Library/Editor/CameraController.h"
-#include "../../Library/Editor/Editor.h"
-#include "../../Library/Editor/Selection.h"
-#include "../../Library/Editor/HierarchyWindow.h"
-#include "../../Library/Editor/ObjectSelector.h"
-#include "../../Library/Editor/EditorViewportLayout.h"
-#include "../../Library/Editor/DebugGeometryRenderer.h"
-#include "../../Library/Editor/Gizmo.h"
-#include "../../Library/Editor/ResourceBrowser.h"
-#include "../../Library/Editor/Inspector.h"
-#include "../../Library/Editor/Transformable.h"
+#include "../AbstractUI/AbstractUI.h"
+#include "../AbstractUI/KeyBinding.h"
+#include "CameraController.h"
+#include "Editor.h"
+#include "Selection.h"
+#include "HierarchyWindow.h"
+#include "ObjectSelector.h"
+#include "EditorViewportLayout.h"
+#include "DebugGeometryRenderer.h"
+#include "Gizmo.h"
+#include "ResourceBrowser.h"
+#include "Inspector.h"
+#include "Transformable.h"
 
 namespace Urho3D
 {

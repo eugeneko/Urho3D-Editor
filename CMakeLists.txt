@@ -32,6 +32,5 @@ setup_main_executable ()
 target_link_libraries (EditorLauncher Urho3DEditor)
 
 # Add projects
-add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Library/AbstractUI)
-add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Library/Editor)
+add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Library)
 add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Samples/00_Editor)
