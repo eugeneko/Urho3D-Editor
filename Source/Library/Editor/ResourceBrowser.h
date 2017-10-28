@@ -65,7 +65,6 @@ class ResourceDirectoryDesc : public RefCounted
 {
 public:
     String directoryKey_;
-    String fullPath_;
     String name_;
     Vector<SharedPtr<ResourceDirectoryDesc>> children_;
     Vector<SharedPtr<ResourceFileDesc>> files_;
@@ -197,7 +196,7 @@ private:
     /// Add new directory with files.
     void AddDirectory(const String& directoryKey, const String& resourceDir, unsigned resourceDirIndex);
     /// Scan directory for files.
-    void ScanResourceFiles(ResourceDirectoryDesc& directory, unsigned resourceDirIndex);
+    void ScanResourceFiles(ResourceDirectoryDesc& directory, const String& resourceDir, unsigned resourceDirIndex);
     /// Update directory viewer UI.
     void UpdateDirectoryView(ResourceDirectoryDesc& directory, unsigned index, ResourceDirectoryItem* parent);
     /// Update file viewer UI.

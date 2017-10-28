@@ -200,8 +200,12 @@ void ResourceBrowser::ScanResources()
     if (const ResourceDirectoryDesc* directory = GetSelectedDirectory())
         selectedDirectory = directory->directoryKey_;
 
-    // Scan resources
+    // Cleanup caches
     ClearDirectory(rootDirectory_);
+    directories_.Clear();
+    directories_[""] = &rootDirectory_;
+
+    // Scan resources
     const Vector<String> resourceDirs = cache_->GetResourceDirs();
     for (unsigned i = 0; i < resourceDirs.Size(); ++i)
         ScanResourceDirectory(resourceDirs[i], i);
@@ -215,8 +219,7 @@ void ResourceBrowser::ScanResources()
     UpdateDirectoryView(rootDirectory_, 0, nullptr);
 
     // Select directory
-    if (!selectedDirectory.Empty())
-        SelectDirectory(selectedDirectory);
+    SelectDirectory(selectedDirectory);
 
     // Update types
     for (auto& item : directories_)
@@ -344,6 +347,8 @@ void ResourceBrowser::ScanResourceDirectory(const String& path, unsigned resourc
             continue;
         AddDirectory(directory, path, resourceDirIndex);
     }
+
+    ScanResourceFiles(rootDirectory_, path, resourceDirIndex);
 }
 
 void ResourceBrowser::AddDirectory(const String& directoryKey, const String& resourceDir, unsigned resourceDirIndex)
@@ -368,7 +373,6 @@ void ResourceBrowser::AddDirectory(const String& directoryKey, const String& res
         {
             auto desc = MakeShared<ResourceDirectoryDesc>();
             desc->directoryKey_ = parentKey;
-            desc->fullPath_ = resourceDir + parentKey;
             desc->name_ = parts[i];
 
             parent->children_.Push(desc);
@@ -379,13 +383,13 @@ void ResourceBrowser::AddDirectory(const String& directoryKey, const String& res
         parent = directories_[parentKey];
     }
 
-    ScanResourceFiles(*parent, resourceDirIndex);
+    ScanResourceFiles(*parent, resourceDir, resourceDirIndex);
 }
 
-void ResourceBrowser::ScanResourceFiles(ResourceDirectoryDesc& directory, unsigned resourceDirIndex)
+void ResourceBrowser::ScanResourceFiles(ResourceDirectoryDesc& directory, const String& resourceDir, unsigned resourceDirIndex)
 {
     Vector<String> files;
-    fileSystem_->ScanDir(files, directory.fullPath_, "*.*", SCAN_FILES, false);
+    fileSystem_->ScanDir(files, resourceDir + directory.directoryKey_, "*.*", SCAN_FILES, false);
 
     for (const String& file : files)
     {
