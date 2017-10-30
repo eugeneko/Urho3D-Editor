@@ -199,17 +199,6 @@ private:
     Text* text_ = nullptr;
 };
 
-// #TODO Remove this guy
-class UrhoHierarchyListItemWidget : public Text
-{
-public:
-    UrhoHierarchyListItemWidget(Context* context, AbstractHierarchyListItem* item);
-    void ApplyStyle();
-    AbstractHierarchyListItem* GetItem() { return item_; }
-private:
-    AbstractHierarchyListItem* item_ = nullptr;;
-};
-
 class UrhoHierarchyList : public AbstractHierarchyList
 {
     URHO3D_OBJECT(UrhoHierarchyList, AbstractHierarchyList);
@@ -222,6 +211,7 @@ public:
     void RemoveAllItems() override;
     void SelectItem(AbstractHierarchyListItem* item) override;
     void DeselectItem(AbstractHierarchyListItem* item) override;
+    void ExpandItem(AbstractHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
 
 

@@ -113,9 +113,31 @@ void SetInternalElement(AbstractWidget* widget, UIElement* element)
     widget->SetInternalHandle(element);
 }
 
+UIElement* GetInternalElement(AbstractHierarchyListItem* item)
+{
+    return item ? item->GetInternalHandle<UIElement*>() : nullptr;
+}
+
+void SetInternalElement(AbstractHierarchyListItem* item, UIElement* element)
+{
+    item->SetInternalHandle(element);
+}
+
 UIElement* GetParentElement(AbstractWidget* widget)
 {
     return GetInternalElement(widget->GetParent());
+}
+
+static const StringHash elementItem("Item");
+
+void SetElementItem(UIElement* element, AbstractHierarchyListItem* widget)
+{
+    element->SetVar(elementItem, widget);
+}
+
+AbstractHierarchyListItem* GetElementItem(UIElement* element)
+{
+    return static_cast<AbstractHierarchyListItem*>(element->GetVar(elementItem).GetPtr());
 }
 
 }
@@ -576,7 +598,7 @@ void UrhoHierarchyList::RemoveAllItems()
 
 void UrhoHierarchyList::SelectItem(AbstractHierarchyListItem* item)
 {
-    if (auto itemWidget = dynamic_cast<UIElement*>(item->GetInternalPointer()))
+    if (auto itemWidget = GetInternalElement(item))
     {
         const unsigned index = hierarchyList_->FindItem(itemWidget);
         if (!hierarchyList_->IsSelected(index))
@@ -586,11 +608,22 @@ void UrhoHierarchyList::SelectItem(AbstractHierarchyListItem* item)
 
 void UrhoHierarchyList::DeselectItem(AbstractHierarchyListItem* item)
 {
-    if (auto itemWidget = dynamic_cast<UIElement*>(item->GetInternalPointer()))
+    if (auto itemWidget = GetInternalElement(item))
     {
         const unsigned index = hierarchyList_->FindItem(itemWidget);
         if (hierarchyList_->IsSelected(index))
             hierarchyList_->ToggleSelection(index);
+    }
+}
+
+void UrhoHierarchyList::ExpandItem(AbstractHierarchyListItem* item)
+{
+    while (item)
+    {
+        UIElement* element = GetInternalElement(item);
+        const unsigned elementIndex = hierarchyList_->FindItem(element);
+        hierarchyList_->Expand(elementIndex, true);
+        item = item->GetParent();
     }
 }
 
@@ -599,8 +632,8 @@ void UrhoHierarchyList::GetSelection(ItemVector& result)
     for (unsigned index : hierarchyList_->GetSelections())
     {
         UIElement* element = hierarchyList_->GetItem(index);
-        if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
-            result.Push(item->GetItem());
+        if (auto item = GetElementItem(element))
+            result.Push(item);
     }
 }
 
@@ -615,50 +648,38 @@ void UrhoHierarchyList::OnParentSet()
         [=](StringHash /*eventType*/, VariantMap& eventData)
     {
         UIElement* element = static_cast<UIElement*>(eventData[ItemClicked::P_ITEM].GetPtr());
-        if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
+        if (auto item = GetElementItem(element))
         {
             if (onItemClicked_)
-                onItemClicked_(item->GetItem());
+                onItemClicked_(item);
         }
     });
     SubscribeToEvent(hierarchyList_, E_ITEMDOUBLECLICKED,
         [=](StringHash /*eventType*/, VariantMap& eventData)
     {
         UIElement* element = static_cast<UIElement*>(eventData[ItemClicked::P_ITEM].GetPtr());
-        if (auto item = dynamic_cast<UrhoHierarchyListItemWidget*>(element))
+        if (auto item = GetElementItem(element))
         {
             if (onItemDoubleClicked_)
-                onItemDoubleClicked_(item->GetItem());
+                onItemDoubleClicked_(item);
         }
     });
 }
 
 void UrhoHierarchyList::InsertItem(AbstractHierarchyListItem* item, unsigned index, AbstractHierarchyListItem* parent)
 {
-    auto itemWidget = MakeShared<UrhoHierarchyListItemWidget>(context_, item);
+    auto itemWidget = MakeShared<Text>(context_);
+    SetElementItem(itemWidget, item);
     itemWidget->SetText(item->GetText());
-    itemWidget->ApplyStyle();
-    item->SetInternalPointer(itemWidget);
+    itemWidget->SetStyle("FileSelectorListText");
+    SetInternalElement(item, itemWidget);
 
-    UIElement* parentWidget = parent ? dynamic_cast<UIElement*>(parent->GetInternalPointer()) : nullptr;
-    if (itemWidget)
-    {
-        hierarchyList_->InsertItem(M_MAX_UNSIGNED, itemWidget, parentWidget);
-        for (unsigned i = 0; i < item->GetNumChildren(); ++i)
-            InsertItem(item->GetChild(i), M_MAX_UNSIGNED, item);
-    }
-}
-
-//////////////////////////////////////////////////////////////////////////
-UrhoHierarchyListItemWidget::UrhoHierarchyListItemWidget(Context* context, AbstractHierarchyListItem* item)
-    : Text(context)
-    , item_(item)
-{
-}
-
-void UrhoHierarchyListItemWidget::ApplyStyle()
-{
-    SetStyle("FileSelectorListText");
+    UIElement* parentWidget = GetInternalElement(parent);
+    hierarchyList_->InsertItem(M_MAX_UNSIGNED, itemWidget, parentWidget);
+    for (unsigned i = 0; i < item->GetNumChildren(); ++i)
+        InsertItem(item->GetChild(i), M_MAX_UNSIGNED, item);
+    if (parentWidget)
+        hierarchyList_->Expand(hierarchyList_->FindItem(itemWidget), false);
 }
 
 //////////////////////////////////////////////////////////////////////////

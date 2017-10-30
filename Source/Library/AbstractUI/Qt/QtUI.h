@@ -216,8 +216,8 @@ public:
 
     QModelIndex GetIndex(AbstractHierarchyListItem* item, const QModelIndex& hint = QModelIndex());
     AbstractHierarchyListItem* GetItem(const QModelIndex& index) const;
-private:
 
+public:
     QVariant data(const QModelIndex& index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
@@ -225,6 +225,7 @@ private:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override { return 1; }
 
+private:
     AbstractHierarchyListItem rootItem_;
 
 };
@@ -242,6 +243,7 @@ public:
     void RemoveAllItems() override;
     void SelectItem(AbstractHierarchyListItem* item) override;
     void DeselectItem(AbstractHierarchyListItem* item) override;
+    void ExpandItem(AbstractHierarchyListItem* item) override;
     void GetSelection(ItemVector& result) override;
 
 private:

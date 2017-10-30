@@ -188,18 +188,12 @@ void Hierarchy::HandleEditorSelectionChanged()
             hierarchyList_->DeselectItem(item);
 
     // Select new objects
-    bool wasScrolled = false;
     for (Object* object : toSelect)
     {
         if (AbstractHierarchyListItem* item = FindItem(object))
         {
+            hierarchyList_->ExpandItem(item);
             hierarchyList_->SelectItem(item);
-            if (!wasScrolled)
-            {
-                wasScrolled = true;
-                // #TODO: Add scroll
-                // treeView_->scrollTo(index);
-            }
         }
     }
 

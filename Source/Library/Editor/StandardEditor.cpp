@@ -367,6 +367,7 @@ SharedPtr<StandardDocument> StandardEditor::CreateSceneDocument(Scene* scene, co
     auto document = MakeShared<StandardDocument>(context_);
     document->resourceKey_ = resourceKey;
     document->scene_ = scene;
+    document->scene_->SetUpdateEnabled(false);
     document->selection_ = MakeShared<Selection>(context_);
     document->selectionTransform_ = MakeShared<SelectionTransform>(context_);
     document->selectionTransform_->SetScene(scene);

@@ -547,7 +547,10 @@ void QtHierarchyList::SelectItem(AbstractHierarchyListItem* item)
     QItemSelectionModel* selectionModel = treeView_->selectionModel();
     const QModelIndex itemIndex = model_->GetIndex(item);
     if (itemIndex.isValid())
+    {
         selectionModel->select(itemIndex, QItemSelectionModel::Select);
+        treeView_->scrollTo(itemIndex);
+    }
 }
 
 void QtHierarchyList::DeselectItem(AbstractHierarchyListItem* item)
@@ -556,6 +559,16 @@ void QtHierarchyList::DeselectItem(AbstractHierarchyListItem* item)
     const QModelIndex itemIndex = model_->GetIndex(item);
     if (itemIndex.isValid())
         selectionModel->select(itemIndex, QItemSelectionModel::Deselect);
+}
+
+void QtHierarchyList::ExpandItem(AbstractHierarchyListItem* item)
+{
+    QModelIndex itemIndex = model_->GetIndex(item);
+    while (itemIndex.isValid())
+    {
+        treeView_->expand(itemIndex);
+        itemIndex = model_->parent(itemIndex);
+    }
 }
 
 void QtHierarchyList::GetSelection(ItemVector& result)

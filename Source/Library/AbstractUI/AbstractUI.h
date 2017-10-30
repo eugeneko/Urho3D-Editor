@@ -44,8 +44,8 @@ public:
     void SetParent(AbstractWidget* parent);
     AbstractWidget* GetParent() const { return parent_; }
 
-    template <class T> void SetInternalHandle(T pointer) { internalPointer_ = MakeCustomValue(pointer); }
-    template <class T> T GetInternalHandle() const { return internalPointer_.GetCustom<T>(); }
+    template <class T> void SetInternalHandle(T pointer) { internalHandle_ = MakeCustomValue(pointer); }
+    template <class T> T GetInternalHandle() const { return internalHandle_.GetCustom<T>(); }
 
     AbstractMainWindow* GetMainWindow() const { return mainWindow_; }
 
@@ -58,7 +58,7 @@ protected:
 
 private:
     AbstractWidget* parent_ = nullptr;
-    Variant internalPointer_;
+    Variant internalHandle_;
     bool attachedToRoot_ = false;
 };
 
@@ -258,8 +258,8 @@ class AbstractHierarchyListItem : public Object
 public:
     AbstractHierarchyListItem(Context* context) : Object(context) { }
     void SetParent(AbstractHierarchyListItem* parent) { parent_ = parent; }
-    void SetInternalPointer(Object* internalPointer) { internalPointer_ = internalPointer; }
-    Object* GetInternalPointer() const { return internalPointer_; }
+    template <class T> void SetInternalHandle(T pointer) { internalHandle_ = MakeCustomValue(pointer); }
+    template <class T> T GetInternalHandle() const { return internalHandle_.GetCustom<T>(); }
 
     void InsertChild(AbstractHierarchyListItem* item, unsigned index);
     void RemoveChild(unsigned index);
@@ -273,7 +273,7 @@ public:
 
 private:
     AbstractHierarchyListItem* parent_ = nullptr;
-    Object* internalPointer_ = nullptr;
+    Variant internalHandle_;
     Vector<SharedPtr<AbstractHierarchyListItem>> children_;
 };
 
@@ -290,6 +290,7 @@ public:
     virtual void RemoveAllItems() = 0;
     virtual void SelectItem(AbstractHierarchyListItem* item) = 0;
     virtual void DeselectItem(AbstractHierarchyListItem* item) = 0;
+    virtual void ExpandItem(AbstractHierarchyListItem* item) = 0;
     virtual void GetSelection(ItemVector& result) = 0;
     ItemVector GetSelection() { ItemVector result; GetSelection(result); return result; }
 
