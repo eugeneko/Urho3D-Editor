@@ -707,14 +707,21 @@ void QtView3D::UpdateView()
 
 //////////////////////////////////////////////////////////////////////////
 QtMenu::QtMenu(QtMainWindow* host, QMenu* menu)
-    : host_(host)
+    : AbstractMenu(host->GetContext())
+    , host_(host)
     , menu_(menu)
 {
-
+    connect(menu_, &QMenu::aboutToShow, [=]()
+    {
+        for (QtMenu* child : children_)
+            if (child->onShown_)
+                child->onShown_();
+    });
 }
 
 QtMenu::QtMenu(QtMainWindow* host, QAction* action)
-    : host_(host)
+    : AbstractMenu(host->GetContext())
+    , host_(host)
     , action_(action)
 {
 
@@ -725,8 +732,8 @@ AbstractMenu* QtMenu::AddMenu(const String& name)
     if (!menu_)
         return nullptr;
     QMenu* childMenu = menu_->addMenu(Cast(name));
-    children_.push_back(QtMenu(host_, childMenu));
-    return &children_.back();
+    children_.Push(MakeShared<QtMenu>(host_, childMenu));
+    return children_.Back();
 }
 
 AbstractMenu* QtMenu::AddAction(const String& name, const String& actionId)
@@ -734,14 +741,26 @@ AbstractMenu* QtMenu::AddAction(const String& name, const String& actionId)
     if (!menu_)
         return nullptr;
 
-    QAction* childAction = host_->FindAction(actionId);
-    if (!childAction)
+    const AbstractAction* actionDesc = host_->FindAction(actionId);
+    if (!actionDesc)
         return nullptr;
 
-    childAction->setText(Cast(name));
-    menu_->addAction(childAction);
-    children_.push_back(QtMenu(host_, childAction));
-    return &children_.back();
+    QAction* action = new QAction(this);
+    action->setText(Cast(name));
+    action->setShortcut(Cast(actionDesc->keyBinding_));
+    connect(action, &QAction::triggered, this, actionDesc->actionCallback_);
+
+    menu_->addAction(action);
+    children_.Push(MakeShared<QtMenu>(host_, action));
+    return children_.Back();
+}
+
+void QtMenu::SetName(const String& name)
+{
+    if (menu_)
+        menu_->setTitle(Cast(name));
+    else if (action_)
+        action_->setText(Cast(name));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -783,9 +802,6 @@ QtMainWindow::QtMainWindow(QApplication& application)
 
 QtMainWindow::~QtMainWindow()
 {
-    // Delete actions first
-    for (const auto& item : actions_)
-        delete item.second_;
 }
 
 AbstractDock* QtMainWindow::AddDock(DockLocation hint /*= DialogLocationHint::Undocked*/)
@@ -800,18 +816,14 @@ AbstractDock* QtMainWindow::AddDock(DockLocation hint /*= DialogLocationHint::Un
 
 void QtMainWindow::AddAction(const AbstractAction& actionDesc)
 {
-    QAction* action = new QAction(this);
-    action->setText(Cast(actionDesc.text_));
-    action->setShortcut(Cast(actionDesc.keyBinding_));
-    connect(action, &QAction::triggered, this, actionDesc.actionCallback_);
-    actions_[actionDesc.id_] = action;
+    actions_[actionDesc.id_] = actionDesc;
 }
 
 AbstractMenu* QtMainWindow::AddMenu(const String& name)
 {
     QMenu* menu = menuBar()->addMenu(Cast(name));
-    menus_.push_back(QtMenu(this, menu));
-    return &menus_.back();
+    menus_.Push(MakeShared<QtMenu>(this, menu));
+    return menus_.Back();
 }
 
 void QtMainWindow::InsertDocument(Object* document, const String& title, unsigned index)
@@ -846,11 +858,13 @@ AbstractInput* QtMainWindow::GetInput()
     return urhoWidget_.GetInput();
 }
 
-QAction* QtMainWindow::FindAction(const String& id) const
+const AbstractAction* QtMainWindow::FindAction(const String& id) const
 {
-    QAction* action = nullptr;
-    actions_.TryGetValue(id, action);
-    return action;
+    auto iter = actions_.Find(id);
+    if (iter != actions_.End())
+        return &iter->second_;
+    else
+        return nullptr;
 }
 
 }

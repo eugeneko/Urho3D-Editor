@@ -10,7 +10,6 @@
 #include <Urho3D/UI/CheckBox.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/Button.h>
-#include <Urho3D/UI/Menu.h>
 #include <Urho3D/UI/View3D.h>
 #include <Urho3D/UI/LineEdit.h>
 #include <numeric>
@@ -772,7 +771,7 @@ int StandardUrhoInput::GetMouseWheelMove() const
 //////////////////////////////////////////////////////////////////////////
 UrhoMenu::UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& text, const String& actionId,
     bool hasPopup, bool topLevel)
-    : Object(mainWindow->GetContext())
+    : AbstractMenu(mainWindow->GetContext())
     , mainWindow_(mainWindow)
 {
     AbstractAction* action = nullptr;
@@ -781,7 +780,7 @@ UrhoMenu::UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& 
         action = mainWindow_->FindAction(actionId);
     }
 
-    menu_ = new Menu(context_);
+    menu_ = new MenuWithPopupCallback(context_, this);
     menu_->SetDefaultStyle(parent->GetDefaultStyle());
     menu_->SetStyleAuto();
     menu_->SetLayout(LM_HORIZONTAL, 0, IntRect(8, 2, 8, 2));
@@ -825,6 +824,15 @@ UrhoMenu::UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& 
             accelKeyText->SetText(PrintKeyBinding(keyBinding));
         }
     }
+    else
+    {
+        SubscribeToEvent(menu_, E_PRESSED,
+            [=](StringHash /*eventType*/, VariantMap& /*eventData*/)
+        {
+            if (onShown_)
+                onShown_();
+        });
+    }
 
     if (hasPopup)
     {
@@ -855,6 +863,18 @@ AbstractMenu* UrhoMenu::AddAction(const String& name, const String& actionId)
     return children_.Back();
 }
 
+void UrhoMenu::SetName(const String& name)
+{
+    text_->SetText(name);
+}
+
+void UrhoMenu::OnShowPopup()
+{
+    for (UrhoMenu* child : children_)
+        if (child->onShown_)
+            child->onShown_();
+}
+
 void UrhoMenu::HandleMenuSelected(StringHash eventType, VariantMap& eventData)
 {
     if (menu_->GetPopup())
@@ -864,6 +884,19 @@ void UrhoMenu::HandleMenuSelected(StringHash eventType, VariantMap& eventData)
 
     if (actionCallback_)
         actionCallback_();
+}
+
+//////////////////////////////////////////////////////////////////////////
+MenuWithPopupCallback::MenuWithPopupCallback(Context* context, UrhoMenu* abstractMenu)
+    : Menu(context)
+    , menu_(abstractMenu)
+{
+
+}
+
+void MenuWithPopupCallback::OnShowPopup()
+{
+    menu_->OnShowPopup();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -949,7 +982,8 @@ void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)
 
 AbstractMenu* UrhoMainWindow::AddMenu(const String& name)
 {
-    menus_.Push(MakeShared<UrhoMenu>(this, menuBar_, name, "", true, true));
+    auto menu = MakeShared<UrhoMenu>(this, menuBar_, name, "", true, true);
+    menus_.Push(menu);
     return menus_.Back();
 }
 

@@ -27,11 +27,20 @@ struct AbstractAction
     KeyBinding keyBinding_;
 };
 
-class AbstractMenu
+class AbstractMenu : public Object
 {
+    URHO3D_OBJECT(AbstractMenu, Object);
+
 public:
+    AbstractMenu(Context* context) : Object(context) {}
+
     virtual AbstractMenu* AddMenu(const String& name) = 0;
     virtual AbstractMenu* AddAction(const String& name, const String& actionId) = 0;
+    virtual void SetName(const String& name) = 0;
+
+public:
+    std::function<void()> onShown_;
+
 };
 
 class AbstractWidget : public Object
@@ -335,6 +344,7 @@ public:
 
 public:
     std::function<void(Object* document)> onCurrentDocumentChanged_;
+    std::function<void()> onMenuShown_;
 
 private:
     virtual SharedPtr<AbstractWidget> CreateDummyWidget() { return nullptr; }

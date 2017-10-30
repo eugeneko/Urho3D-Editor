@@ -294,18 +294,21 @@ private:
     SharedPtr<Image> image_;
 };
 
-class QtMenu : public AbstractMenu
+class QtMenu : public QObject, public AbstractMenu
 {
+    Q_OBJECT
+
 public:
     QtMenu(QtMainWindow* host, QMenu* menu);
     QtMenu(QtMainWindow* host, QAction* action);
     AbstractMenu* AddMenu(const String& name) override;
     AbstractMenu* AddAction(const String& name, const String& actionId) override;
+    void SetName(const String& name) override;
 private:
     QtMainWindow* host_ = nullptr;
     QMenu* menu_ = nullptr;
     QAction* action_ = nullptr;
-    QList<QtMenu> children_;
+    Vector<SharedPtr<QtMenu>> children_;
 };
 
 class QtMainWindow : public QMainWindow, public AbstractMainWindow
@@ -327,7 +330,7 @@ public:
     AbstractInput* GetInput() override;
 
     QtUrhoWidget& GetUrhoWidget() { return urhoWidget_; }
-    QAction* FindAction(const String& id) const;
+    const AbstractAction* FindAction(const String& id) const;
 
 private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateDummyWidget,      QtDummyWidget);
@@ -351,8 +354,8 @@ private:
     QtUrhoWidget urhoWidget_;
     Vector<SharedPtr<AbstractDock>> dialogs_;
 
-    HashMap<String, QAction*> actions_;
-    QList<QtMenu> menus_;
+    HashMap<String, AbstractAction> actions_;
+    Vector<SharedPtr<QtMenu>> menus_;
 
     QVector<SharedPtr<Object>> documents_;
 };

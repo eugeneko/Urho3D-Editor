@@ -265,12 +265,32 @@ void StandardEditor::SetupMenu()
     {
         // #TODO Implement me
     });
+    mainWindow_->AddAction("SceneTogglePlay", KeyBinding::Key(KEY_F5),
+        [=]()
+    {
+        if (currentDocument_ && currentDocument_->scene_)
+        {
+            Scene* currentScene = currentDocument_->scene_;
+            currentScene->SetUpdateEnabled(!currentScene->IsUpdateEnabled());
+        }
+    });
 
     AbstractMenu* menuEdit = mainWindow_->AddMenu("Edit");
     menuEdit->AddAction("Cut", "EditCut");
     menuEdit->AddAction("Copy", "EditCopy");
     menuEdit->AddAction("Paste", "EditPaste");
     menuEdit->AddAction("Delete", "EditDelete");
+
+    AbstractMenu* menuScene = mainWindow_->AddMenu("Scene");
+    AbstractMenu* menuSceneTogglePlay = menuScene->AddAction("Play Scene", "SceneTogglePlay");
+    menuSceneTogglePlay->onShown_ = [=]()
+    {
+        if (currentDocument_ && currentDocument_->scene_)
+        {
+            Scene* currentScene = currentDocument_->scene_;
+            menuSceneTogglePlay->SetName(currentScene->IsUpdateEnabled() ? "Pause Scene" : "Play Scene");
+        }
+    };
 }
 
 void StandardEditor::SetupUrhoControls()

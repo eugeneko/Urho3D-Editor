@@ -3,12 +3,12 @@
 #include "../AbstractUI.h"
 #include <Urho3D/UI/Window.h>
 #include <Urho3D/UI/Text.h>
+#include <Urho3D/UI/Menu.h>
 
 namespace Urho3D
 {
 
 class UI;
-class Menu;
 class LineEdit;
 class Button;
 class CheckBox;
@@ -279,27 +279,40 @@ private:
     UI* ui_ = nullptr;
 };
 
-class UrhoMenu : public AbstractMenu, public Object
+class UrhoMenu : public AbstractMenu
 {
-    URHO3D_OBJECT(UrhoMenu, Object);
+    URHO3D_OBJECT(UrhoMenu, AbstractMenu);
 
 public:
-    static const StringHash VAR_ACTION;
     UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& text, const String& actionId, bool hasPopup, bool topLevel);
     AbstractMenu* AddMenu(const String& name) override;
     AbstractMenu* AddAction(const String& name, const String& actionId) override;
+    void SetName(const String& name) override;
+
+    void OnShowPopup();
 
 private:
     void HandleMenuSelected(StringHash eventType, VariantMap& eventData);
 
 private:
-    UrhoMainWindow* mainWindow_;
+    UrhoMainWindow* mainWindow_ = nullptr;
     // #TODO Hide em
     Menu* menu_ = nullptr;
     Text* text_ = nullptr;
     SharedPtr<Window> popup_ = nullptr;
     std::function<void()> actionCallback_;
     Vector<SharedPtr<UrhoMenu>> children_;
+};
+
+class MenuWithPopupCallback : public Menu
+{
+public:
+    MenuWithPopupCallback(Context* context, UrhoMenu* menu);
+
+    virtual void OnShowPopup() override;
+
+private:
+    UrhoMenu* menu_ = nullptr;
 };
 
 class UrhoMainWindow : public AbstractMainWindow, public Object
