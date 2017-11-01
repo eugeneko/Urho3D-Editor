@@ -294,6 +294,7 @@ void Gizmo::MarkMoved()
     axisY_.Moved();
     axisZ_.Moved();
     moved_ = true;
+    OnChanged();
     // #TODO
 //     for (Node* node : editNodes_)
 //         emit document_.nodeTransformChanged(*node);
@@ -584,6 +585,12 @@ bool Gizmo::ScaleNodes(Vector3 adjust)
     if (IsSnapped())
         transformable_->SnapScale(step_ * snapScale_);
     return true;
+}
+
+void Gizmo::OnChanged()
+{
+    if (onChanged_)
+        onChanged_();
 }
 
 }

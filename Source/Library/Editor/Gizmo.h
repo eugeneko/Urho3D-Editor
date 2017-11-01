@@ -51,6 +51,9 @@ class Gizmo : public AbstractEditorOverlay
     URHO3D_OBJECT(Gizmo, AbstractEditorOverlay);
 
 public:
+    std::function<void()> onChanged_;
+
+public:
     /// Construct.
     Gizmo(Context* context);
     /// Set transformable.
@@ -110,6 +113,9 @@ private:
     bool RotateNodes(Vector3 adjust);
     /// Scale edited nodes.
     bool ScaleNodes(Vector3 adjust);
+
+    /// Signal that gizmo is changed
+    void OnChanged();
 
 private:
     /// Transformable.

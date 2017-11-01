@@ -201,10 +201,7 @@ void MultipleSerializableInspector::BuildUI(AbstractLayout* layout)
 
             attributeEditor->BuildUI(layout, row, occupyRow);
 
-            values.Clear();
-            for (Serializable* object : objects_)
-                values.Push(object->GetAttribute(i));
-
+            LoadAttributeValues(i, values);
             attributeEditor->SetValues(values);
             attributeEditor->onChanged_ = [=]()
             {
@@ -220,6 +217,19 @@ void MultipleSerializableInspector::BuildUI(AbstractLayout* layout)
         }
 
         ++row;
+    }
+}
+
+void MultipleSerializableInspector::Refresh()
+{
+    Vector<Variant> values;
+    for (unsigned i = 0; i < attributeEditors_.Size(); ++i)
+    {
+        if (AttributeEditor* attributeEditor = attributeEditors_[i])
+        {
+            LoadAttributeValues(i, values);
+            attributeEditor->SetValues(values);
+        }
     }
 }
 
@@ -315,6 +325,11 @@ void MultipleSerializableInspectorPanel::BuildUI(AbstractCollapsiblePanel* panel
     content_.BuildUI(contentLayout_);
 }
 
+void MultipleSerializableInspectorPanel::Refresh()
+{
+    content_.Refresh();
+}
+
 //////////////////////////////////////////////////////////////////////////
 void MultiplePanelInspectable::AddPanel(const SharedPtr<InspectablePanel>& panel)
 {
@@ -331,6 +346,12 @@ void MultiplePanelInspectable::BuildUI(AbstractLayout* layout)
         panel->BuildUI(collapsiblePanel);
         ++row;
     }
+}
+
+void MultiplePanelInspectable::Refresh()
+{
+    for (InspectablePanel* panel : panels_)
+        panel->Refresh();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -351,5 +372,11 @@ void Inspector::SetInspectable(const SharedPtr<Inspectable>& inspectable)
         inspectable_->BuildUI(layout_);
 }
 
+
+void Inspector::Refresh()
+{
+    if (inspectable_)
+        inspectable_->Refresh();
+}
 
 }

@@ -50,6 +50,7 @@ class Inspectable : public Object
 public:
     Inspectable(Context* context) : Object(context) { }
     virtual void BuildUI(AbstractLayout* layout) = 0;
+    virtual void Refresh() = 0;
 
 };
 
@@ -113,6 +114,7 @@ public:
     unsigned GetNumObjects() const { return objects_.Size(); }
 
     void BuildUI(AbstractLayout* layout) override;
+    void Refresh() override;
 
 private:
     SharedPtr<AttributeEditor> CreateAttributeEditor(unsigned attributeIndex, const AttributeInfo& attributeInfo);
@@ -141,6 +143,7 @@ public:
     InspectablePanel(Context* context) : Object(context) { }
 
     virtual void BuildUI(AbstractCollapsiblePanel* panel) = 0;
+    virtual void Refresh() = 0;
 };
 
 class MultipleSerializableInspectorPanel : public InspectablePanel
@@ -156,6 +159,7 @@ public:
     bool AddObject(Serializable* object);
 
     void BuildUI(AbstractCollapsiblePanel* panel) override;
+    void Refresh() override;
 
 private:
     MultipleSerializableInspector content_;
@@ -173,6 +177,7 @@ public:
     void AddPanel(const SharedPtr<InspectablePanel>& panel);
 
     void BuildUI(AbstractLayout* layout) override;
+    void Refresh() override;
 
 private:
     Vector<SharedPtr<InspectablePanel>> panels_;
@@ -185,6 +190,7 @@ class Inspector : public Object
 public:
     Inspector(AbstractMainWindow* mainWindow);
     void SetInspectable(const SharedPtr<Inspectable>& inspectable);
+    void Refresh();
 
 private:
     AbstractDock* dialog_ = nullptr;

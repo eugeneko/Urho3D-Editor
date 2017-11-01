@@ -150,6 +150,11 @@ StandardEditor::StandardEditor(AbstractMainWindow* mainWindow, bool blenderHotke
         SwitchToDocument(currentDocument_);
     };
 
+    gizmo_->onChanged_ = [=]()
+    {
+        inspector_->Refresh();
+    };
+
     {
         auto scene = MakeShared<Scene>(context_);
         mainWindow_->InsertDocument(CreateSceneDocument(scene), "New Scene", 0);
