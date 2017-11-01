@@ -201,6 +201,7 @@ StandardEditor::StandardEditor(AbstractMainWindow* mainWindow, bool blenderHotke
 
     SetupMenu();
 
+    SetupControlsGeneric();
     if (blenderHotkeys)
         SetupBlenderControls();
     else
@@ -298,6 +299,31 @@ void StandardEditor::SetupMenu()
     };
 }
 
+void StandardEditor::SetupControlsGeneric()
+{
+    using KB = KeyBinding;
+    gizmo_->SetControls({
+        { Gizmo::DRAG_GIZMO,            { KeyBinding::OPTIONAL_CTRL + KB::Mouse(MOUSEB_LEFT) } },
+        { Gizmo::SNAP_DRAG,             { KeyBinding::CTRL } },
+        { Gizmo::SMOOTH_X_NEG,          { KB::Key(KEY_LEFT)         + KeyBinding::ALT } },
+        { Gizmo::SMOOTH_X_POS,          { KB::Key(KEY_RIGHT)        + KeyBinding::ALT } },
+        { Gizmo::SMOOTH_Y_NEG,          { KB::Key(KEY_PAGEDOWN)     + KeyBinding::ALT } },
+        { Gizmo::SMOOTH_Y_POS,          { KB::Key(KEY_PAGEUP)       + KeyBinding::ALT } },
+        { Gizmo::SMOOTH_Z_NEG,          { KB::Key(KEY_DOWN)         + KeyBinding::ALT } },
+        { Gizmo::SMOOTH_Z_POS,          { KB::Key(KEY_UP)           + KeyBinding::ALT } },
+        { Gizmo::SMOOTH_UPSCALE,        { KB::Key(KEY_KP_PLUS)      + KeyBinding::ALT } },
+        { Gizmo::SMOOTH_DOWNSCALE,      { KB::Key(KEY_KP_MINUS)     + KeyBinding::ALT } },
+        { Gizmo::STEPPED_X_NEG,         { KB::Key(KEY_LEFT)         + KeyBinding::CTRL } },
+        { Gizmo::STEPPED_X_POS,         { KB::Key(KEY_RIGHT)        + KeyBinding::CTRL } },
+        { Gizmo::STEPPED_Y_NEG,         { KB::Key(KEY_PAGEDOWN)     + KeyBinding::CTRL } },
+        { Gizmo::STEPPED_Y_POS,         { KB::Key(KEY_PAGEUP)       + KeyBinding::CTRL } },
+        { Gizmo::STEPPED_Z_NEG,         { KB::Key(KEY_DOWN)         + KeyBinding::CTRL } },
+        { Gizmo::STEPPED_Z_POS,         { KB::Key(KEY_UP)           + KeyBinding::CTRL } },
+        { Gizmo::STEPPED_UPSCALE,       { KB::Key(KEY_KP_PLUS)      + KeyBinding::CTRL } },
+        { Gizmo::STEPPED_DOWNSCALE,     { KB::Key(KEY_KP_MINUS)     + KeyBinding::CTRL } }
+    });
+}
+
 void StandardEditor::SetupUrhoControls()
 {
     using KB = KeyBinding;
@@ -312,7 +338,7 @@ void StandardEditor::SetupUrhoControls()
         { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
         { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
         { CC::MOVE_ACCEL,       { KB::SHIFT } },
-        { CC::ROTATE,           { KB::OPTIONAL_SHIFT + KB::Mouse(MOUSEB_RIGHT) } },
+        { CC::ROTATE,           { KB::ANY_MODIFIER + KB::Mouse(MOUSEB_RIGHT) } },
         { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
         { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
         { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },

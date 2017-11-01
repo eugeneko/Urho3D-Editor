@@ -69,11 +69,6 @@ Gizmo::Gizmo(Context* context)
     : AbstractEditorOverlay(context)
     , gizmoNode_(context_)
     , gizmo_(*gizmoNode_.CreateComponent<StaticModel>())
-    , mouseDrag_(false)
-    , lastMouseDrag_(false)
-    , keyDrag_(false)
-    , lastKeyDrag_(false)
-    , moved_(false)
 {
     // Setup gizmo
     ResourceCache* cache = GetSubsystem<ResourceCache>();
@@ -87,7 +82,7 @@ Gizmo::Gizmo(Context* context)
     gizmoNode_.SetName("EditorGizmo");
 }
 
-void Gizmo::SetGizmoType(GizmoType type, float step /*= 1.0f*/, float snapScale /*= 0.0f*/)
+void Gizmo::SetGizmoType(GizmoType type, float step /*= 0.0f*/)
 {
     if (gizmoType_ != type)
     {
@@ -95,22 +90,22 @@ void Gizmo::SetGizmoType(GizmoType type, float step /*= 1.0f*/, float snapScale 
         gizmoType_ = type;
     }
     step_ = step;
-    snapScale_ = snapScale;
 }
 
 void Gizmo::Update(AbstractInput& input, AbstractEditorContext& editorContext, float timeStep)
 {
     if (!transformable_)
         return;
-    UpdateDragState(input);
-    PrepareUndo();
+
+    const bool wasTransforming = transforming_;
+    transforming_ = false;
+
     UseGizmoKeyboard(input, timeStep);
-    if (UseGizmoMouse(editorContext.GetMouseRay()))
-    {
-        input.GrabMouseButton(MOUSEB_LEFT);
-        input.GrabMouseMove();
-    }
-    FinalizeUndo();
+    if (!input.IsMouseMoveGrabbed())
+        UseGizmoMouse(input, editorContext.GetMouseRay());
+
+    if (wasTransforming && !transforming_)
+        transformable_->EndTransformation();
     PositionGizmo();
     ResizeGizmo(editorContext);
 }
@@ -172,62 +167,6 @@ void Gizmo::ShowGizmo()
 void Gizmo::HideGizmo()
 {
     gizmo_.SetEnabled(false);
-}
-
-void Gizmo::UpdateDragState(AbstractInput& input)
-{
-    // Update mouse drag state
-    mouseDrag_ = input.IsMouseButtonDown(MOUSEB_LEFT)
-        && !input.IsMouseButtonGrabbed(MOUSEB_LEFT) && !input.IsMouseMoveGrabbed();
-
-    // Update keyboard drag state
-    keyDrag_ = false;
-    if (input.IsKeyDown(KEY_CTRL))
-    {
-        if (input.IsKeyDown(KEY_UP) || input.IsKeyDown(KEY_DOWN)
-            || input.IsKeyDown(KEY_LEFT) || input.IsKeyDown(KEY_RIGHT)
-            || input.IsKeyDown(KEY_PAGEUP) || input.IsKeyDown(KEY_PAGEDOWN))
-        {
-            keyDrag_ = true;
-        }
-        if (gizmoType_ == GizmoType::Scale
-            && (input.IsKeyDown(KEY_KP_PLUS) || input.IsKeyDown(KEY_KP_MINUS)))
-        {
-            keyDrag_ = true;
-        }
-    }
-}
-
-void Gizmo::PrepareUndo()
-{
-    if (!gizmo_.IsEnabled() || gizmoType_ == GizmoType::Select)
-    {
-        FlushActions();
-        lastMouseDrag_ = false;
-        lastKeyDrag_ = false;
-    }
-
-    if (gizmoType_ == GizmoType::Select)
-        return;
-
-    // Store initial transforms for undo when gizmo drag started
-    // #TODO
-//     if (IsDragging() && !WasDragging())
-//     {
-//         editNodes_ = document_.GetSelectedNodesAndComponents().toList();
-//         oldTransforms_.resize(editNodes_.size());
-//         for (int i = 0; i < editNodes_.size(); ++i)
-//             oldTransforms_[i].Define(*editNodes_[i]);
-//     }
-}
-
-void Gizmo::FinalizeUndo()
-{
-    if (!IsDragging() && WasDragging())
-        FlushActions();
-
-    lastKeyDrag_ = keyDrag_;
-    lastMouseDrag_ = mouseDrag_;
 }
 
 void Gizmo::PositionGizmo()
@@ -293,25 +232,16 @@ void Gizmo::MarkMoved()
     axisX_.Moved();
     axisY_.Moved();
     axisZ_.Moved();
-    moved_ = true;
     OnChanged();
-    // #TODO
-//     for (Node* node : editNodes_)
-//         emit document_.nodeTransformChanged(*node);
 }
 
-void Gizmo::FlushActions()
+void Gizmo::EnsureTransformationStarted()
 {
-    // #TODO:
-//     if (moved_ && !editNodes_.isEmpty() && editNodes_.size() == oldTransforms_.size())
-//     {
-//         QScopedPointer<QUndoCommand> group(new QUndoCommand("Transform"));
-//         for (int i = 0; i < editNodes_.size(); ++i)
-//             new EditNodeTransformAction(document_, *editNodes_[i], oldTransforms_[i], group.data());
-//         document_.AddAction(group.take());
-//     }
-
-    moved_ = false;
+    if (!transforming_)
+    {
+        transformable_->StartTransformation();
+        transforming_ = true;
+    }
 }
 
 void Gizmo::UseGizmoKeyboard(AbstractInput& input, float timeStep)
@@ -321,125 +251,83 @@ void Gizmo::UseGizmoKeyboard(AbstractInput& input, float timeStep)
     if (transformable_->IsEmpty() || gizmoType_ == GizmoType::Select)
         return;
 
-//     Configuration& config = document_.GetConfig();
-//     const HotKeyMode hotKeyMode = (HotKeyMode)config.GetValue(SceneEditor::VarHotKeyMode).toInt();
-//     const GizmoType gizmoType_ = (GizmoType)config.GetValue(SceneEditor::VarGizmoType).toInt();
-//     const float moveStep = config.GetValue(SceneEditor::VarSnapPositionStep).toFloat();
-//     const bool moveSnap = config.GetValue(SceneEditor::VarSnapPosition).toBool();
-//     const float rotateStep = config.GetValue(SceneEditor::VarSnapRotationStep).toFloat();
-//     const bool rotateSnap = config.GetValue(SceneEditor::VarSnapRotation).toBool();
-//     const float scaleStep = config.GetValue(SceneEditor::VarSnapScaleStep).toFloat();
-//     const bool scaleSnap = config.GetValue(SceneEditor::VarSnapScale).toBool();
-
-    // Process continuous movement
-    if (!input.IsKeyDown(KEY_CTRL))
-        return;
+    const float speed = 10.0f;
 
     Vector3 adjust(0, 0, 0);
-    if (input.IsKeyDown(KEY_UP))
-        adjust.z_ = 1;
-    if (input.IsKeyDown(KEY_DOWN))
-        adjust.z_ = -1;
-    if (input.IsKeyDown(KEY_LEFT))
-        adjust.x_ = -1;
-    if (input.IsKeyDown(KEY_RIGHT))
-        adjust.x_ = 1;
-    if (input.IsKeyDown(KEY_PAGEUP))
-        adjust.y_ = 1;
-    if (input.IsKeyDown(KEY_PAGEDOWN))
-        adjust.y_ = -1;
-    if (gizmoType_ == GizmoType::Scale)
+
+    // Gather smooth controls
+    if (controls_[SMOOTH_X_NEG].IsDown(input))
+        adjust.x_ -= speed * timeStep;
+    if (controls_[SMOOTH_X_POS].IsDown(input))
+        adjust.x_ += speed * timeStep;
+    if (controls_[SMOOTH_Y_NEG].IsDown(input))
+        adjust.y_ -= speed * timeStep;
+    if (controls_[SMOOTH_Y_POS].IsDown(input))
+        adjust.y_ += speed * timeStep;
+    if (controls_[SMOOTH_Z_NEG].IsDown(input))
+        adjust.z_ -= speed * timeStep;
+    if (controls_[SMOOTH_Z_POS].IsDown(input))
+        adjust.z_ += speed * timeStep;
+    if (controls_[SMOOTH_DOWNSCALE].IsDown(input))
+        adjust -= speed * timeStep * Vector3::ONE;
+    if (controls_[SMOOTH_UPSCALE].IsDown(input))
+        adjust += speed * timeStep * Vector3::ONE;
+
+    // Gather stepped controls
+    if (controls_[STEPPED_X_NEG].IsPressed(input))
+        adjust.x_ -= step_;
+    if (controls_[STEPPED_X_POS].IsPressed(input))
+        adjust.x_ += step_;
+    if (controls_[STEPPED_Y_NEG].IsPressed(input))
+        adjust.y_ -= step_;
+    if (controls_[STEPPED_Y_POS].IsPressed(input))
+        adjust.y_ += step_;
+    if (controls_[STEPPED_Z_NEG].IsPressed(input))
+        adjust.z_ -= step_;
+    if (controls_[STEPPED_Z_POS].IsPressed(input))
+        adjust.z_ += step_;
+    if (controls_[STEPPED_Z_NEG].IsPressed(input))
+        adjust -= step_ * Vector3::ONE;
+    if (controls_[STEPPED_Z_POS].IsPressed(input))
+        adjust += step_ * Vector3::ONE;
+
+    // Apply transform
+    if (adjust == Vector3::ZERO)
+        return;
+
+    bool moved = false;
+
+    switch (gizmoType_)
     {
-        if (input.IsKeyDown(KEY_KP_PLUS))
-            adjust = Vector3(1, 1, 1);
-        if (input.IsKeyDown(KEY_KP_MINUS))
-            adjust = Vector3(-1, -1, -1);
+    case GizmoType::Position:
+        EnsureTransformationStarted();
+        moved = MoveNodes(adjust, false);
+        break;
+
+    case GizmoType::Rotation:
+        EnsureTransformationStarted();
+        moved = RotateNodes(adjust, false);
+        break;
+
+    case GizmoType::Scale:
+        EnsureTransformationStarted();
+        moved = ScaleNodes(adjust, false);
+        break;
     }
 
-    if (adjust != Vector3::ZERO)
-    {
-        bool moved = false;
-        adjust *= timeStep * 10;
-
-        switch (gizmoType_)
-        {
-        case GizmoType::Position:
-            if (!IsSnapped())
-                moved = MoveNodes(adjust);
-            break;
-
-        case GizmoType::Rotation:
-            if (!IsSnapped())
-                moved = RotateNodes(adjust);
-            break;
-
-        case GizmoType::Scale:
-            if (!IsSnapped())
-                moved = ScaleNodes(adjust);
-            break;
-        }
-
-        if (moved)
-            MarkMoved();
-    }
-
-    // Process snapped movement
-    adjust = Vector3::ZERO;
-    if (input.IsKeyPressed(KEY_UP))
-        adjust.z_ = 1;
-    if (input.IsKeyPressed(KEY_DOWN))
-        adjust.z_ = -1;
-    if (input.IsKeyPressed(KEY_LEFT))
-        adjust.x_ = -1;
-    if (input.IsKeyPressed(KEY_RIGHT))
-        adjust.x_ = 1;
-    if (input.IsKeyPressed(KEY_PAGEUP))
-        adjust.y_ = 1;
-    if (input.IsKeyPressed(KEY_PAGEDOWN))
-        adjust.y_ = -1;
-    if (gizmoType_ == GizmoType::Scale)
-    {
-        if (input.IsKeyPressed(KEY_KP_PLUS))
-            adjust = Vector3(1, 1, 1);
-        if (input.IsKeyPressed(KEY_KP_MINUS))
-            adjust = Vector3(-1, -1, -1);
-    }
-
-    if (adjust != Vector3::ZERO)
-    {
-        bool moved = false;
-
-        switch (gizmoType_)
-        {
-        case GizmoType::Position:
-            if (IsSnapped())
-                moved = MoveNodes(adjust);
-            break;
-
-        case GizmoType::Rotation:
-            if (IsSnapped())
-                moved = RotateNodes(adjust * step_ * snapScale_);
-            break;
-
-        case GizmoType::Scale:
-            if (IsSnapped())
-                moved = ScaleNodes(adjust * step_ * snapScale_);
-            break;
-        }
-
-        if (moved)
-            MarkMoved();
-    }
+    if (moved)
+        MarkMoved();
 }
 
-bool Gizmo::UseGizmoMouse(const Ray& mouseRay)
+void Gizmo::UseGizmoMouse(AbstractInput& input, const Ray& mouseRay)
 {
     using namespace Urho3D;
 
+    const bool dragRequested = controls_[DRAG_GIZMO].IsDown(input, true, false);
     const float scale = gizmoNode_.GetScale().x_;
 
     // Recalculate axes only when not left-dragging
-    if (!mouseDrag_)
+    if (!dragRequested)
         CalculateGizmoAxes();
 
     // #TODO Move to config
@@ -447,9 +335,9 @@ bool Gizmo::UseGizmoMouse(const Ray& mouseRay)
     const float axisMaxT = 1.0f;
     const float rotSensitivity = 50.0f;
 
-    axisX_.Update(mouseRay, scale, mouseDrag_, axisMaxT, axisMaxD);
-    axisY_.Update(mouseRay, scale, mouseDrag_, axisMaxT, axisMaxD);
-    axisZ_.Update(mouseRay, scale, mouseDrag_, axisMaxT, axisMaxD);
+    axisX_.Update(mouseRay, scale, dragRequested, axisMaxT, axisMaxD);
+    axisY_.Update(mouseRay, scale, dragRequested, axisMaxT, axisMaxD);
+    axisZ_.Update(mouseRay, scale, dragRequested, axisMaxT, axisMaxD);
 
     if (axisX_.selected != axisX_.lastSelected)
     {
@@ -467,79 +355,79 @@ bool Gizmo::UseGizmoMouse(const Ray& mouseRay)
         axisZ_.lastSelected = axisZ_.selected;
     };
 
-    if (mouseDrag_)
+    // Drag request is processed if either was dragged before or any axis is selected
+    const bool anySelected = axisX_.selected || axisY_.selected || axisZ_.selected;
+    dragging_ = dragRequested && (dragging_ || anySelected);
+    if (!dragging_)
+        return;
+
+    // Grab inputs
+    controls_[DRAG_GIZMO].IsDown(input);
+    input.GrabMouseMove();
+
+    bool moved = false;
+
+    const bool snapped = controls_[SNAP_DRAG].IsDown(input);
+    if (gizmoType_ == GizmoType::Position)
     {
-        // Store initial transforms for undo when gizmo drag started
-        if (!lastMouseDrag_)
-            transformable_->StartTransformation();
+        EnsureTransformationStarted();
 
-        bool moved = false;
+        Vector3 adjust(0, 0, 0);
+        if (axisX_.selected)
+            adjust += Vector3(1, 0, 0) * (axisX_.t - axisX_.lastT);
+        if (axisY_.selected)
+            adjust += Vector3(0, 1, 0) * (axisY_.t - axisY_.lastT);
+        if (axisZ_.selected)
+            adjust += Vector3(0, 0, 1) * (axisZ_.t - axisZ_.lastT);
 
-        if (gizmoType_ == GizmoType::Position)
-        {
-            Vector3 adjust(0, 0, 0);
-            if (axisX_.selected)
-                adjust += Vector3(1, 0, 0) * (axisX_.t - axisX_.lastT);
-            if (axisY_.selected)
-                adjust += Vector3(0, 1, 0) * (axisY_.t - axisY_.lastT);
-            if (axisZ_.selected)
-                adjust += Vector3(0, 0, 1) * (axisZ_.t - axisZ_.lastT);
-
-            moved = MoveNodes(adjust);
-        }
-        else if (gizmoType_ == GizmoType::Rotation)
-        {
-            Vector3 adjust(0, 0, 0);
-            if (axisX_.selected)
-                adjust.x_ = (axisX_.d - axisX_.lastD) * rotSensitivity / scale;
-            if (axisY_.selected)
-                adjust.y_ = -(axisY_.d - axisY_.lastD) * rotSensitivity / scale;
-            if (axisZ_.selected)
-                adjust.z_ = (axisZ_.d - axisZ_.lastD) * rotSensitivity / scale;
-
-            moved = RotateNodes(adjust);
-        }
-        else if (gizmoType_ == GizmoType::Scale)
-        {
-            Vector3 adjust(0, 0, 0);
-            if (axisX_.selected)
-                adjust += Vector3(1, 0, 0) * (axisX_.t - axisX_.lastT);
-            if (axisY_.selected)
-                adjust += Vector3(0, 1, 0) * (axisY_.t - axisY_.lastT);
-            if (axisZ_.selected)
-                adjust += Vector3(0, 0, 1) * (axisZ_.t - axisZ_.lastT);
-
-            // Special handling for uniform scale: use the unmodified X-axis movement only
-            if (gizmoType_ == GizmoType::Scale && axisX_.selected && axisY_
-                .selected && axisZ_.selected)
-            {
-                float x = axisX_.t - axisX_.lastT;
-                adjust = Vector3(x, x, x);
-            }
-
-            moved = ScaleNodes(adjust);
-        }
-
-        if (moved)
-            MarkMoved();
+        moved = MoveNodes(adjust, snapped);
     }
-    else
+    else if (gizmoType_ == GizmoType::Rotation)
     {
-        if (lastMouseDrag_)
-            FlushActions();
+        EnsureTransformationStarted();
+
+        Vector3 adjust(0, 0, 0);
+        if (axisX_.selected)
+            adjust.x_ = (axisX_.d - axisX_.lastD) * rotSensitivity / scale;
+        if (axisY_.selected)
+            adjust.y_ = -(axisY_.d - axisY_.lastD) * rotSensitivity / scale;
+        if (axisZ_.selected)
+            adjust.z_ = (axisZ_.d - axisZ_.lastD) * rotSensitivity / scale;
+
+        moved = RotateNodes(adjust, snapped);
+    }
+    else if (gizmoType_ == GizmoType::Scale)
+    {
+        EnsureTransformationStarted();
+
+        Vector3 adjust(0, 0, 0);
+        if (axisX_.selected)
+            adjust += Vector3(1, 0, 0) * (axisX_.t - axisX_.lastT);
+        if (axisY_.selected)
+            adjust += Vector3(0, 1, 0) * (axisY_.t - axisY_.lastT);
+        if (axisZ_.selected)
+            adjust += Vector3(0, 0, 1) * (axisZ_.t - axisZ_.lastT);
+
+        // Special handling for uniform scale: use the unmodified X-axis movement only
+        if (gizmoType_ == GizmoType::Scale && axisX_.selected && axisY_
+            .selected && axisZ_.selected)
+        {
+            const float x = axisX_.t - axisX_.lastT;
+            adjust = Vector3(x, x, x);
+        }
+
+        moved = ScaleNodes(adjust, snapped);
     }
 
-    lastMouseDrag_ = mouseDrag_;
-
-    return (axisX_.selected || axisY_.selected || axisZ_.selected)
-        && gizmoType_ != GizmoType::Select && gizmo_.IsEnabled();
+    if (moved)
+        MarkMoved();
 }
 
-bool Gizmo::MoveNodes(Vector3 adjust)
+bool Gizmo::MoveNodes(Vector3 adjust, bool snap)
 {
     // Apply snap
-    if (IsSnapped())
-        SnapVector(adjust, step_ * snapScale_);
+    if (snap)
+        SnapVector(adjust, step_);
 
     if (adjust.Length() < M_EPSILON)
         return false;
@@ -553,11 +441,11 @@ bool Gizmo::MoveNodes(Vector3 adjust)
     return true;
 }
 
-bool Gizmo::RotateNodes(Vector3 adjust)
+bool Gizmo::RotateNodes(Vector3 adjust, bool snap)
 {
     // Apply snap
-    if (IsSnapped())
-        SnapVector(adjust, step_ * snapScale_);
+    if (snap)
+        SnapVector(adjust, step_);
 
     if (adjust.Length() < M_EPSILON)
         return false;
@@ -575,15 +463,15 @@ bool Gizmo::RotateNodes(Vector3 adjust)
     return true;
 }
 
-bool Gizmo::ScaleNodes(Vector3 adjust)
+bool Gizmo::ScaleNodes(Vector3 adjust, bool snap)
 {
     if (adjust.Length() < M_EPSILON)
         return false;
 
     // Apply transform
     transformable_->ApplyScaleChange(adjust);
-    if (IsSnapped())
-        transformable_->SnapScale(step_ * snapScale_);
+    if (snap)
+        transformable_->SnapScale(step_);
     return true;
 }
 

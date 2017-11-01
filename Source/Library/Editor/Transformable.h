@@ -32,6 +32,8 @@ public:
     virtual void ApplyScaleChange(const Vector3& delta) = 0;
     /// Snap scale values to grid.
     virtual void SnapScale(float step) = 0;
+    /// End transformation.
+    virtual void EndTransformation() = 0;
 
 };
 
@@ -89,8 +91,10 @@ public:
     void ApplyRotationChange(const Quaternion& delta) override;
     /// \see Transformable::ApplyScaleChange
     void ApplyScaleChange(const Vector3& delta) override;
-    /// \see Transformable::ApplyScaleChange
+    /// \see Transformable::SnapScale
     void SnapScale(float step) override;
+    /// \see Transformable::EndTransformation
+    void EndTransformation() override;
 
 private:
     Scene* scene_ = nullptr;

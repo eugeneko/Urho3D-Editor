@@ -42,6 +42,7 @@ public:
 private:
     void InitializeResourceLayers();
     void SetupMenu();
+    void SetupControlsGeneric();
     void SetupUrhoControls();
     void SetupBlenderControls();
 

@@ -102,4 +102,9 @@ void SelectionTransform::SnapScale(float step)
         node->SetScale(SnapVector(node->GetScale(), step));
 }
 
+void SelectionTransform::EndTransformation()
+{
+
+}
+
 }
