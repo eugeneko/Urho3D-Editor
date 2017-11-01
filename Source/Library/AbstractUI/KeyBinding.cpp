@@ -42,22 +42,21 @@ ModifierState MergeModifier(ModifierState lhs, ModifierState rhs)
 }
 
 const KeyBinding KeyBinding::EMPTY;
-const KeyBinding KeyBinding::SHIFT(-1, -1, ModifierState::Required, ModifierState::Forbidden, ModifierState::Forbidden);
-const KeyBinding KeyBinding::ALT(-1, -1, ModifierState::Forbidden, ModifierState::Required, ModifierState::Forbidden);
-const KeyBinding KeyBinding::CTRL(-1, -1, ModifierState::Forbidden, ModifierState::Forbidden, ModifierState::Required);
-const KeyBinding KeyBinding::OPTIONAL_SHIFT(-1, -1, ModifierState::Optional, ModifierState::Forbidden, ModifierState::Forbidden);
-const KeyBinding KeyBinding::OPTIONAL_ALT(-1, -1, ModifierState::Forbidden, ModifierState::Optional, ModifierState::Forbidden);
-const KeyBinding KeyBinding::OPTIONAL_CTRL(-1, -1, ModifierState::Forbidden, ModifierState::Forbidden, ModifierState::Optional);
-const KeyBinding KeyBinding::ANY_MODIFIER(-1, -1, ModifierState::Optional, ModifierState::Optional, ModifierState::Optional);
+const KeyBinding KeyBinding::SHIFT(-1, -1, ModifierState::Required, ModifierState::Optional, ModifierState::Optional);
+const KeyBinding KeyBinding::ALT(-1, -1, ModifierState::Optional, ModifierState::Required, ModifierState::Optional);
+const KeyBinding KeyBinding::CTRL(-1, -1, ModifierState::Optional, ModifierState::Optional, ModifierState::Required);
+const KeyBinding KeyBinding::NO_SHIFT(-1, -1, ModifierState::Forbidden, ModifierState::Optional, ModifierState::Optional);
+const KeyBinding KeyBinding::NO_ALT(-1, -1, ModifierState::Optional, ModifierState::Forbidden, ModifierState::Optional);
+const KeyBinding KeyBinding::NO_CTRL(-1, -1, ModifierState::Optional, ModifierState::Optional, ModifierState::Forbidden);
 
 const KeyBinding KeyBinding::Key(int key)
 {
-    return KeyBinding(-1, key, ModifierState::Forbidden, ModifierState::Forbidden, ModifierState::Forbidden);
+    return KeyBinding(-1, key, ModifierState::Optional, ModifierState::Optional, ModifierState::Optional);
 }
 
 const KeyBinding KeyBinding::Mouse(int mouseButton)
 {
-    return KeyBinding(mouseButton, -1, ModifierState::Forbidden, ModifierState::Forbidden, ModifierState::Forbidden);
+    return KeyBinding(mouseButton, -1, ModifierState::Optional, ModifierState::Optional, ModifierState::Optional);
 }
 
 KeyBinding::KeyBinding(int mouseButton, int key, ModifierState shift, ModifierState alt, ModifierState ctrl)

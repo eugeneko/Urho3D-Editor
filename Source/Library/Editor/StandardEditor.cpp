@@ -303,7 +303,7 @@ void StandardEditor::SetupControlsGeneric()
 {
     using KB = KeyBinding;
     gizmo_->SetControls({
-        { Gizmo::DRAG_GIZMO,            { KeyBinding::OPTIONAL_CTRL + KB::Mouse(MOUSEB_LEFT) } },
+        { Gizmo::DRAG_GIZMO,            { KB::Mouse(MOUSEB_LEFT) } },
         { Gizmo::SNAP_DRAG,             { KeyBinding::CTRL } },
         { Gizmo::SMOOTH_X_NEG,          { KB::Key(KEY_LEFT)         + KeyBinding::ALT } },
         { Gizmo::SMOOTH_X_POS,          { KB::Key(KEY_RIGHT)        + KeyBinding::ALT } },
@@ -331,26 +331,26 @@ void StandardEditor::SetupUrhoControls()
     cameraController_->SetFlyMode(false);
     cameraController_->SetPositionControl(true);
     cameraController_->SetControls({
-        { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
-        { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
-        { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
-        { CC::MOVE_RIGHT,       { KB::OPTIONAL_SHIFT + KB::Key(KEY_D), KB::OPTIONAL_SHIFT + KB::Key(KEY_RIGHT)    } },
-        { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
-        { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
+        { CC::MOVE_FORWARD,     { KB::Key(KEY_W), KB::Key(KEY_UP)       } },
+        { CC::MOVE_BACK,        { KB::Key(KEY_S), KB::Key(KEY_DOWN)     } },
+        { CC::MOVE_LEFT,        { KB::Key(KEY_A), KB::Key(KEY_LEFT)     } },
+        { CC::MOVE_RIGHT,       { KB::Key(KEY_D), KB::Key(KEY_RIGHT)    } },
+        { CC::MOVE_UP,          { KB::Key(KEY_E), KB::Key(KEY_PAGEUP)   } },
+        { CC::MOVE_DOWN,        { KB::Key(KEY_Q), KB::Key(KEY_PAGEDOWN) } },
         { CC::MOVE_ACCEL,       { KB::SHIFT } },
-        { CC::ROTATE,           { KB::ANY_MODIFIER + KB::Mouse(MOUSEB_RIGHT) } },
-        { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
+        { CC::ROTATE,           { KB::Mouse(MOUSEB_RIGHT) } },
+        { CC::ORBIT,            { KB::NO_SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
         { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
-        { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
+        { CC::WHEEL_SCROLL_Z,   { KB::NO_ALT } },
         { CC::WHEEL_ZOOM,       { KB::ALT } },
     });
 
     using OS = ObjectSelector;
     objectSelector_->SetControls({
-        { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
-        { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
-        { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
-        { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL + KB::SHIFT } },
+        { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::NO_SHIFT + KB::NO_CTRL   } },
+        { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::CTRL + KB::NO_SHIFT      } },
+        { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT + KB::NO_CTRL      } },
+        { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL + KB::SHIFT         } },
     });
 }
 
@@ -361,30 +361,30 @@ void StandardEditor::SetupBlenderControls()
     cameraController_->SetFlyMode(false);
     cameraController_->SetPositionControl(false);
     cameraController_->SetControls({
-        { CC::MOVE_FORWARD,     { KB::OPTIONAL_SHIFT + KB::Key(KEY_W), KB::OPTIONAL_SHIFT + KB::Key(KEY_UP)       } },
-        { CC::MOVE_BACK,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_S), KB::OPTIONAL_SHIFT + KB::Key(KEY_DOWN)     } },
-        { CC::MOVE_LEFT,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_A), KB::OPTIONAL_SHIFT + KB::Key(KEY_LEFT)     } },
-        { CC::MOVE_RIGHT,       { KB::OPTIONAL_SHIFT + KB::Key(KEY_D), KB::OPTIONAL_SHIFT + KB::Key(KEY_RIGHT)    } },
-        { CC::MOVE_UP,          { KB::OPTIONAL_SHIFT + KB::Key(KEY_E), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEUP)   } },
-        { CC::MOVE_DOWN,        { KB::OPTIONAL_SHIFT + KB::Key(KEY_Q), KB::OPTIONAL_SHIFT + KB::Key(KEY_PAGEDOWN) } },
+        { CC::MOVE_FORWARD,     { KB::Key(KEY_W), KB::Key(KEY_UP)       } },
+        { CC::MOVE_BACK,        { KB::Key(KEY_S), KB::Key(KEY_DOWN)     } },
+        { CC::MOVE_LEFT,        { KB::Key(KEY_A), KB::Key(KEY_LEFT)     } },
+        { CC::MOVE_RIGHT,       { KB::Key(KEY_D), KB::Key(KEY_RIGHT)    } },
+        { CC::MOVE_UP,          { KB::Key(KEY_E), KB::Key(KEY_PAGEUP)   } },
+        { CC::MOVE_DOWN,        { KB::Key(KEY_Q), KB::Key(KEY_PAGEDOWN) } },
         { CC::MOVE_ACCEL,       { KB::SHIFT } },
         { CC::TOGGLE_FLY_MODE,  { KB::SHIFT + KB::Key(KEY_F) } },
-        { CC::RESET_FLY_MODE,   { KB::ANY_MODIFIER + KB::Key(KEY_ESCAPE), KB::ANY_MODIFIER + KB::Mouse(MOUSEB_RIGHT) } },
+        { CC::RESET_FLY_MODE,   { KB::Key(KEY_ESCAPE), KB::Mouse(MOUSEB_RIGHT) } },
         { CC::ROTATE,           { } },
         { CC::ORBIT,            { KB::Mouse(MOUSEB_MIDDLE) } },
         { CC::PAN,              { KB::SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
-        { CC::WHEEL_SCROLL_X,   { KB::CTRL } },
-        { CC::WHEEL_SCROLL_Y,   { KB::SHIFT } },
-        { CC::WHEEL_SCROLL_Z,   { KB::ANY_MODIFIER } },
-        { CC::WHEEL_ZOOM,       { KB::ALT } },
+        { CC::WHEEL_SCROLL_X,   { KB::CTRL + KB::NO_SHIFT + KB::NO_ALT } },
+        { CC::WHEEL_SCROLL_Y,   { KB::SHIFT + KB::NO_CTRL + KB::NO_ALT } },
+        { CC::WHEEL_SCROLL_Z,   { KB::NO_SHIFT + KB::NO_CTRL + KB::NO_ALT } },
+        { CC::WHEEL_ZOOM,       { KB::ALT + KB::NO_SHIFT + KB::NO_CTRL } },
     });
 
     using OS = ObjectSelector;
     objectSelector_->SetControls({
-        { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT)                        } },
-        { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT            } },
-        { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL             } },
-        { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT + KB::CTRL } },
+        { OS::SELECT_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::NO_SHIFT + KB::NO_CTRL   } },
+        { OS::TOGGLE_NODE,      { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT + KB::NO_CTRL      } },
+        { OS::SELECT_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::CTRL + KB::NO_SHIFT      } },
+        { OS::TOGGLE_COMPONENT, { KB::Mouse(MOUSEB_LEFT) + KB::SHIFT + KB::CTRL         } },
     });
 }
 

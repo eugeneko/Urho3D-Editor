@@ -24,10 +24,9 @@ public:
     static const KeyBinding SHIFT;
     static const KeyBinding ALT;
     static const KeyBinding CTRL;
-    static const KeyBinding OPTIONAL_SHIFT;
-    static const KeyBinding OPTIONAL_ALT;
-    static const KeyBinding OPTIONAL_CTRL;
-    static const KeyBinding ANY_MODIFIER;
+    static const KeyBinding NO_SHIFT;
+    static const KeyBinding NO_ALT;
+    static const KeyBinding NO_CTRL;
     static const KeyBinding Key(int key);
     static const KeyBinding Mouse(int mouseButton);
     KeyBinding() {}
@@ -44,9 +43,9 @@ public:
 private:
     int mouseButton_ = -1;
     int key_ = -1;
-    ModifierState shift_ = ModifierState::Forbidden;
-    ModifierState alt_ = ModifierState::Forbidden;
-    ModifierState ctrl_ = ModifierState::Forbidden;
+    ModifierState shift_ = ModifierState::Optional;
+    ModifierState alt_ = ModifierState::Optional;
+    ModifierState ctrl_ = ModifierState::Optional;
 };
 
 /// Composite key binding.
