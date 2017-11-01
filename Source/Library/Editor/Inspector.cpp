@@ -221,7 +221,6 @@ void MultipleSerializableInspector::BuildUI(AbstractLayout* layout)
 
         ++row;
     }
-    layout->CreateRow<AbstractDummyWidget>(row);
 }
 
 SharedPtr<AttributeEditor> MultipleSerializableInspector::CreateAttributeEditor(
@@ -338,7 +337,7 @@ void MultiplePanelInspectable::BuildUI(AbstractLayout* layout)
 Inspector::Inspector(AbstractMainWindow* mainWindow)
     : Object(mainWindow->GetContext())
 {
-    dialog_ = mainWindow->AddDock(DockLocation::Right);
+    dialog_ = mainWindow->AddDock(DockLocation::Right, IntVector2(350, 350));
     dialog_->SetName("Inspector");
     scrollRegion_ = dialog_->CreateContent<AbstractScrollArea>();
     layout_ = scrollRegion_->CreateContent<AbstractLayout>();

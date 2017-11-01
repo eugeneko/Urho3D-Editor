@@ -327,7 +327,7 @@ class AbstractMainWindow
 {
 public:
     SharedPtr<AbstractWidget> CreateWidget(StringHash type);
-    virtual AbstractDock* AddDock(DockLocation hint = DockLocation::Left) = 0;
+    virtual AbstractDock* AddDock(DockLocation hint = DockLocation::Left, const IntVector2& sizeHint = IntVector2(200, 200)) = 0;
     virtual void AddAction(const AbstractAction& actionDesc) = 0;
     virtual AbstractMenu* AddMenu(const String& name) = 0;
     virtual void InsertDocument(Object* document, const String& title, unsigned index) = 0;

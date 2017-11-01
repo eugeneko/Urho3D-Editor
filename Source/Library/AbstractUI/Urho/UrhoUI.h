@@ -26,7 +26,10 @@ class UrhoDock : public AbstractDock
 
 public:
     UrhoDock(AbstractMainWindow* mainWindow);
+    void SetSizeHint(const IntVector2& sizeHint);
+
     void SetName(const String& name) override;
+
 
 private:
     void OnParentSet() override;
@@ -37,6 +40,8 @@ private:
     Text* windowTitle_ = nullptr;
     Button* buttonClose_ = nullptr;
     UIElement* bodyElement_ = nullptr; // #TODO Remove it
+    IntVector2 sizeHint_;
+    unsigned layoutNestingLevel_ = 0;
 };
 
 class UrhoScrollArea : public AbstractScrollArea
@@ -324,7 +329,7 @@ public:
 
     UrhoMainWindow(Context* context);
 
-    AbstractDock* AddDock(DockLocation hint) override;
+    AbstractDock* AddDock(DockLocation hint, const IntVector2& sizeHint) override;
     void AddAction(const AbstractAction& actionDesc) override;
     AbstractMenu* AddMenu(const String& name) override;
     void InsertDocument(Object* document, const String& title, unsigned index) override;

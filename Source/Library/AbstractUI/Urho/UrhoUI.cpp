@@ -146,21 +146,29 @@ UrhoDock::UrhoDock(AbstractMainWindow* mainWindow)
     : AbstractDock(mainWindow)
     , window_(new Window(context_))
 {
-    window_->SetName("AD_Window");
+    sizeHint_ = IntVector2(200, 200);
     SetInternalElement(this, window_);
+}
+
+void UrhoDock::SetSizeHint(const IntVector2& sizeHint)
+{
+    sizeHint_ = sizeHint;
 }
 
 void UrhoDock::SetName(const String& name)
 {
+    window_->SetName(name);
     windowTitle_->SetText(name);
 }
 
 void UrhoDock::OnParentSet()
 {
+    window_->DisableLayoutUpdate();
+
     // Create window
     window_->SetStyleAuto();
     window_->SetPosition(200, 200);
-    window_->SetMinSize(200, 200);
+    window_->SetSize(sizeHint_);
     window_->SetResizeBorder(IntRect(6, 6, 6, 6));
     window_->SetResizable(true);
     window_->SetMovable(true);
@@ -181,6 +189,10 @@ void UrhoDock::OnParentSet()
 
     bodyElement_ = window_->CreateChild<UIElement>();
     bodyElement_->SetLayoutMode(LM_VERTICAL);
+    bodyElement_->CreateChild<UIElement>(); // Create stub element to avoid collapsing bodyElement_
+
+    window_->EnableLayoutUpdate();
+    window_->UpdateLayout();
 }
 
 bool UrhoDock::DoSetContent(AbstractWidget* content)
@@ -962,12 +974,13 @@ UrhoMainWindow::UrhoMainWindow(Context* context)
 
 }
 
-AbstractDock* UrhoMainWindow::AddDock(DockLocation hint)
+AbstractDock* UrhoMainWindow::AddDock(DockLocation hint, const IntVector2& sizeHint)
 {
     UI* ui = GetSubsystem<UI>();
     UIElement* uiRoot = ui->GetRoot();
 
     auto dialog = MakeShared<UrhoDock>(this);
+    dialog->SetSizeHint(sizeHint);
     mainElement_->AddDock(GetInternalElement(dialog), hint);
     dialog->SetParent(nullptr);
     dialogs_.Push(dialog);

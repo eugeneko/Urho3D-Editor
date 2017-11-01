@@ -63,6 +63,7 @@ void GridLayout::UpdateChildrenLayout()
     maxRowHeights_.Resize(rows_.Size(), 0);
 
     // Gather limits
+    maxWidth_ = 0;
     for (unsigned groupIndex = 0; groupIndex < groupData_.Size(); ++groupIndex)
     {
         GridRowGroup& group = groupData_[groupIndex];
@@ -105,6 +106,30 @@ void GridLayout::UpdateChildrenLayout()
         group.minWidth_ = 0;
         for (int minColumnWidth : group.minColumnWidth_)
             group.minWidth_ += minColumnWidth;
+        group.maxWidth_ = 0;
+        for (int maxColumnWidth : group.maxColumnWidth_)
+        {
+            if (maxColumnWidth != M_MAX_INT)
+                group.maxWidth_ += maxColumnWidth;
+            else
+            {
+                group.maxWidth_ = M_MAX_INT;
+                break;
+            }
+        }
+        maxWidth_ = Max(maxWidth_, group.maxWidth_);
+    }
+
+    maxHeight_ = 0;
+    for (unsigned rowIndex = 0; rowIndex < rows_.Size(); ++rowIndex)
+    {
+        if (maxRowHeights_[rowIndex] != M_MAX_INT)
+            maxHeight_ += maxRowHeights_[rowIndex];
+        else
+        {
+            maxHeight_ = M_MAX_INT;
+            break;
+        }
     }
 
     // Compute min layout size
@@ -118,24 +143,24 @@ void GridLayout::UpdateChildrenLayout()
     for (unsigned rowIndex = 0; rowIndex < rows_.Size(); ++rowIndex)
         minHeight_ += minRowHeights_[rowIndex];
 
-    // Resize self
+    // Update size
     SetMinSize(minWidth_, minHeight_);
-    //SetMaxHeight(minHeight_);
+    SetMaxSize(maxWidth_ ? maxWidth_ : M_MAX_INT, maxHeight_ ? maxHeight_ : M_MAX_INT);
 
     // Stretch x
-    const int height = Max(minHeight_, GetHeight());
-    const int width = Max(minWidth_, GetWidth());
+    const int maxBodyHeight = Max(minHeight_, GetHeight());
+    const int maxBodyWidth = Max(minWidth_, GetWidth());
     for (unsigned groupIndex = 0; groupIndex < groupData_.Size(); ++groupIndex)
     {
         GridRowGroup& group = groupData_[groupIndex];
         const unsigned numColumns = group.minColumnWidth_.Size();
         group.columnWidth_ = group.minColumnWidth_;
-        StretchSizes(group.columnWidth_, group.maxColumnWidth_, width - group.minWidth_);
+        StretchSizes(group.columnWidth_, group.maxColumnWidth_, maxBodyWidth - group.minWidth_);
     }
 
     // Stretch y
     rowHeights_ = minRowHeights_;
-    StretchSizes(rowHeights_, maxRowHeights_, height - minHeight_);
+    StretchSizes(rowHeights_, maxRowHeights_, maxBodyHeight - minHeight_);
 
     // Apply layout
     int y = 0;
@@ -169,7 +194,7 @@ void GridLayout::UpdateChildrenLayout()
     EnableLayoutUpdate();
 }
 
-void GridLayout::StretchSizes(Vector<int>& sizes, const Vector<int>& maxSizes, int value)
+int GridLayout::StretchSizes(Vector<int>& sizes, const Vector<int>& maxSizes, int value)
 {
     // Compute horizontal stretch
     const unsigned numElements = sizes.Size();
@@ -197,6 +222,7 @@ void GridLayout::StretchSizes(Vector<int>& sizes, const Vector<int>& maxSizes, i
             }
         }
     }
+    return remainingStretch;
 }
 
 void GridLayout::EnsureRow(unsigned row)

@@ -61,20 +61,33 @@ void SetInternalWidget(AbstractWidget* widget, QWidget* element)
 }
 
 //////////////////////////////////////////////////////////////////////////
+QtDock::QtDock(AbstractMainWindow* mainWindow)
+    : AbstractDock(mainWindow)
+    , dock_(new QDockWidget())
+    , widget_(new QWidgetHint())
+{
+    dock_->setWidget(widget_);
+
+    SetInternalWidget(this, dock_);
+}
+
+void QtDock::SetSizeHint(const IntVector2& sizeHint)
+{
+    widget_->setSizeHint(QSize(sizeHint.x_, sizeHint.y_));
+    widget_->resize(sizeHint.x_, sizeHint.y_);
+}
+
 bool QtDock::DoSetContent(AbstractWidget* content)
 {
     if (!GetInternalWidget(content))
         return false;
 
-    dock_->setWidget(GetInternalWidget(content));
+    QWidget* widget = GetInternalWidget(content);
+    QVBoxLayout* layout = new QVBoxLayout(widget);
+    widget_->setLayout(layout);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(widget);
     return true;
-}
-
-QtDock::QtDock(AbstractMainWindow* mainWindow)
-    : AbstractDock(mainWindow)
-    , dock_(new QDockWidget())
-{
-    SetInternalWidget(this, dock_);
 }
 
 void QtDock::SetName(const String& name)
@@ -140,6 +153,7 @@ QtLayout::QtLayout(AbstractMainWindow* mainWindow)
     layout_ = new QGridLayout(widget_);
     layout_->setVerticalSpacing(2);
     layout_->setContentsMargins(2, 2, 2, 2);
+    widget_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     SetInternalWidget(this, widget_);
 }
 
@@ -178,6 +192,7 @@ QtCollapsiblePanel::QtCollapsiblePanel(AbstractMainWindow* mainWindow)
     , panel_(new QFrame())
 {
     panel_->setFrameShape(QFrame::Box);
+    panel_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
     layout_ = new QGridLayout(panel_);
     layout_->setVerticalSpacing(0);
@@ -804,9 +819,10 @@ QtMainWindow::~QtMainWindow()
 {
 }
 
-AbstractDock* QtMainWindow::AddDock(DockLocation hint /*= DialogLocationHint::Undocked*/)
+AbstractDock* QtMainWindow::AddDock(DockLocation hint, const IntVector2& sizeHint)
 {
     auto dialog = MakeShared<QtDock>(this);
+    dialog->SetSizeHint(sizeHint);
     dialog->SetParent(nullptr);
     QDockWidget* dockWidget = dynamic_cast<QDockWidget*>(GetInternalWidget(dialog));
     addDockWidget(Cast(hint), dockWidget);

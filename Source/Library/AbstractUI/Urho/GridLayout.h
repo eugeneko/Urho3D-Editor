@@ -25,6 +25,7 @@ struct GridRowGroup
     Vector<int> maxColumnWidth_;
     Vector<int> columnWidth_;
     int minWidth_ = 0;
+    int maxWidth_ = 0;
 };
 
 class GridLayout : public UIElement
@@ -43,7 +44,7 @@ public:
 
 private:
     void UpdateChildrenLayout();
-    void StretchSizes(Vector<int>& sizes, const Vector<int>& maxSizes, int value);
+    int StretchSizes(Vector<int>& sizes, const Vector<int>& maxSizes, int value);
     void EnsureRow(unsigned row);
     void EnsureCell(unsigned row, unsigned column);
 
@@ -56,6 +57,8 @@ private:
     Vector<int> maxRowHeights_;
     int minWidth_ = 0;
     int minHeight_ = 0;
+    int maxWidth_ = 0;
+    int maxHeight_ = 0;
 };
 
 }

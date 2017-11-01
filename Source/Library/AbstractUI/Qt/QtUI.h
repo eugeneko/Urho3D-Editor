@@ -29,11 +29,24 @@ namespace Urho3D
 
 class QtMainWindow;
 
-class QtDock : public AbstractDock
+class QWidgetHint : public QWidget
 {
+public:
+    void setSizeHint(const QSize& sizeHint) { sizeHint_ = sizeHint; }
+    QSize sizeHint() const override { return sizeHint_; }
+
+private:
+    QSize sizeHint_;
+};
+
+class QtDock : public QObject, public AbstractDock
+{
+    Q_OBJECT
 
 public:
     QtDock(AbstractMainWindow* mainWindow);
+    void SetSizeHint(const IntVector2& sizeHint);
+
     void SetName(const String& name) override;
 
 
@@ -42,6 +55,7 @@ private:
 
 private:
     QDockWidget* dock_ = nullptr;
+    QWidgetHint* widget_ = nullptr;
 };
 
 class QtDummyWidget : public AbstractDummyWidget
@@ -319,7 +333,7 @@ public:
     QtMainWindow(QApplication& application);
     ~QtMainWindow() override;
 
-    AbstractDock* AddDock(DockLocation hint) override;
+    AbstractDock* AddDock(DockLocation hint, const IntVector2& sizeHint) override;
     void AddAction(const AbstractAction& actionDesc) override;
     AbstractMenu* AddMenu(const String& name) override;
     void InsertDocument(Object* document, const String& title, unsigned index) override;
