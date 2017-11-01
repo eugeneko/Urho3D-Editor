@@ -331,12 +331,12 @@ void StandardEditor::SetupUrhoControls()
     cameraController_->SetFlyMode(false);
     cameraController_->SetPositionControl(true);
     cameraController_->SetControls({
-        { CC::MOVE_FORWARD,     { KB::Key(KEY_W), KB::Key(KEY_UP)       } },
-        { CC::MOVE_BACK,        { KB::Key(KEY_S), KB::Key(KEY_DOWN)     } },
-        { CC::MOVE_LEFT,        { KB::Key(KEY_A), KB::Key(KEY_LEFT)     } },
-        { CC::MOVE_RIGHT,       { KB::Key(KEY_D), KB::Key(KEY_RIGHT)    } },
-        { CC::MOVE_UP,          { KB::Key(KEY_E), KB::Key(KEY_PAGEUP)   } },
-        { CC::MOVE_DOWN,        { KB::Key(KEY_Q), KB::Key(KEY_PAGEDOWN) } },
+        { CC::MOVE_FORWARD,     { KB::Key(KEY_W), KB::NO_CTRL + KB::Key(KEY_UP)       } },
+        { CC::MOVE_BACK,        { KB::Key(KEY_S), KB::NO_CTRL + KB::Key(KEY_DOWN)     } },
+        { CC::MOVE_LEFT,        { KB::Key(KEY_A), KB::NO_CTRL + KB::Key(KEY_LEFT)     } },
+        { CC::MOVE_RIGHT,       { KB::Key(KEY_D), KB::NO_CTRL + KB::Key(KEY_RIGHT)    } },
+        { CC::MOVE_UP,          { KB::Key(KEY_E), KB::NO_CTRL + KB::Key(KEY_PAGEUP)   } },
+        { CC::MOVE_DOWN,        { KB::Key(KEY_Q), KB::NO_CTRL + KB::Key(KEY_PAGEDOWN) } },
         { CC::MOVE_ACCEL,       { KB::SHIFT } },
         { CC::ROTATE,           { KB::Mouse(MOUSEB_RIGHT) } },
         { CC::ORBIT,            { KB::NO_SHIFT + KB::Mouse(MOUSEB_MIDDLE) } },
@@ -361,12 +361,12 @@ void StandardEditor::SetupBlenderControls()
     cameraController_->SetFlyMode(false);
     cameraController_->SetPositionControl(false);
     cameraController_->SetControls({
-        { CC::MOVE_FORWARD,     { KB::Key(KEY_W), KB::Key(KEY_UP)       } },
-        { CC::MOVE_BACK,        { KB::Key(KEY_S), KB::Key(KEY_DOWN)     } },
-        { CC::MOVE_LEFT,        { KB::Key(KEY_A), KB::Key(KEY_LEFT)     } },
-        { CC::MOVE_RIGHT,       { KB::Key(KEY_D), KB::Key(KEY_RIGHT)    } },
-        { CC::MOVE_UP,          { KB::Key(KEY_E), KB::Key(KEY_PAGEUP)   } },
-        { CC::MOVE_DOWN,        { KB::Key(KEY_Q), KB::Key(KEY_PAGEDOWN) } },
+        { CC::MOVE_FORWARD,     { KB::Key(KEY_W), KB::NO_CTRL + KB::Key(KEY_UP)       } },
+        { CC::MOVE_BACK,        { KB::Key(KEY_S), KB::NO_CTRL + KB::Key(KEY_DOWN)     } },
+        { CC::MOVE_LEFT,        { KB::Key(KEY_A), KB::NO_CTRL + KB::Key(KEY_LEFT)     } },
+        { CC::MOVE_RIGHT,       { KB::Key(KEY_D), KB::NO_CTRL + KB::Key(KEY_RIGHT)    } },
+        { CC::MOVE_UP,          { KB::Key(KEY_E), KB::NO_CTRL + KB::Key(KEY_PAGEUP)   } },
+        { CC::MOVE_DOWN,        { KB::Key(KEY_Q), KB::NO_CTRL + KB::Key(KEY_PAGEDOWN) } },
         { CC::MOVE_ACCEL,       { KB::SHIFT } },
         { CC::TOGGLE_FLY_MODE,  { KB::SHIFT + KB::Key(KEY_F) } },
         { CC::RESET_FLY_MODE,   { KB::Key(KEY_ESCAPE), KB::Mouse(MOUSEB_RIGHT) } },

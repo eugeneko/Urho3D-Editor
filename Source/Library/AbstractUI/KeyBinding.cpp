@@ -26,17 +26,12 @@ bool TestModifier(bool isKeyDown, ModifierState state)
 /// Merge modifier.
 ModifierState MergeModifier(ModifierState lhs, ModifierState rhs)
 {
-    switch (rhs)
-    {
-    case ModifierState::Forbidden:
-        return lhs;
-    case ModifierState::Optional:
-        return lhs == ModifierState::Required ? ModifierState::Required : rhs;
-    case ModifierState::Required:
+    if (lhs == ModifierState::Required || rhs == ModifierState::Required)
         return ModifierState::Required;
-    default:
+    else if (lhs == ModifierState::Forbidden || rhs == ModifierState::Forbidden)
         return ModifierState::Forbidden;
-    }
+    else
+        return ModifierState::Optional;
 }
 
 }
