@@ -25,6 +25,8 @@ add_library(Editor
     ${CMAKE_CURRENT_SOURCE_DIR}/ResourceBrowser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Transformable.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Transformable.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/UndoStack.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/UndoStack.h
     ${CMAKE_CURRENT_SOURCE_DIR}/StandardEditor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/StandardEditor.h
 )

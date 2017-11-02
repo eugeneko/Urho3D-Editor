@@ -199,6 +199,7 @@ StandardEditor::StandardEditor(AbstractMainWindow* mainWindow, bool blenderHotke
 //     auto attributeMetadataInjector = MakeShared<AttributeMetadataInjector>(context_);
 //     attributeMetadataInjector->AddMetadata(Node::GetTypeStatic(), "Position", AttributeMetadata::P_APPLY_ON_COMMIT, true);
 
+    SetupActions();
     SetupMenu();
 
     SetupControlsGeneric();
@@ -261,8 +262,26 @@ void StandardEditor::InitializeResourceLayers()
     resourceBrowser_->AddLayer(MakeExtensionLayer<XMLFile>(".xml"));
 }
 
-void StandardEditor::SetupMenu()
+void StandardEditor::SetupActions()
 {
+    mainWindow_->AddAction("EditUndo", KeyBinding::Key(KEY_Z) + KeyBinding::CTRL,
+        [=]()
+    {
+        if (currentDocument_ && currentDocument_->undoStack_)
+        {
+            currentDocument_->undoStack_->Undo();
+            inspector_->Refresh();
+        }
+    });
+    mainWindow_->AddAction("EditRedo", KeyBinding::Key(KEY_Y) + KeyBinding::CTRL,
+        [=]()
+    {
+        if (currentDocument_ && currentDocument_->undoStack_)
+        {
+            currentDocument_->undoStack_->Redo();
+            inspector_->Refresh();
+        }
+    });
     mainWindow_->AddAction("EditCut", KeyBinding::Key(KEY_X) + KeyBinding::CTRL, [=]() {});
     mainWindow_->AddAction("EditCopy", KeyBinding::Key(KEY_C) + KeyBinding::CTRL, [=]() {});
     mainWindow_->AddAction("EditPaste", KeyBinding::Key(KEY_V) + KeyBinding::CTRL, [=]() {});
@@ -280,8 +299,33 @@ void StandardEditor::SetupMenu()
             currentScene->SetUpdateEnabled(!currentScene->IsUpdateEnabled());
         }
     });
+}
 
+void StandardEditor::SetupMenu()
+{
     AbstractMenu* menuEdit = mainWindow_->AddMenu("Edit");
+    AbstractMenu* menuEditUndo = menuEdit->AddAction("Undo", "EditUndo");
+    menuEditUndo->onShown_ = [=]()
+    {
+        if (currentDocument_ && currentDocument_->undoStack_)
+        {
+            if (currentDocument_->undoStack_->CanUndo())
+                menuEditUndo->SetName("Undo " + currentDocument_->undoStack_->GetUndoTitle());
+            else
+                menuEditUndo->SetName("Cannot Undo");
+        }
+    };
+    AbstractMenu* menuEditRedo = menuEdit->AddAction("Redo", "EditRedo");
+    menuEditRedo->onShown_ = [=]()
+    {
+        if (currentDocument_ && currentDocument_->undoStack_)
+        {
+            if (currentDocument_->undoStack_->CanRedo())
+                menuEditRedo->SetName("Redo " + currentDocument_->undoStack_->GetRedoTitle());
+            else
+                menuEditRedo->SetName("Cannot Redo");
+        }
+    };
     menuEdit->AddAction("Cut", "EditCut");
     menuEdit->AddAction("Copy", "EditCopy");
     menuEdit->AddAction("Paste", "EditPaste");
@@ -419,8 +463,10 @@ SharedPtr<StandardDocument> StandardEditor::CreateSceneDocument(Scene* scene, co
     document->resourceKey_ = resourceKey;
     document->scene_ = scene;
     document->scene_->SetUpdateEnabled(false);
+    document->undoStack_ = MakeShared<UndoStack>(context_);
     document->selection_ = MakeShared<Selection>(context_);
     document->selectionTransform_ = MakeShared<SelectionTransform>(context_);
+    document->selectionTransform_->SetUndoStack(document->undoStack_);
     document->selectionTransform_->SetScene(scene);
     document->selectionTransform_->SetSelection(document->selection_);
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "UndoStack.h"
+#include "Selection.h" // #TODO Hide it
 #include <Urho3D/Math/Vector3.h>
 #include <Urho3D/Math/Quaternion.h>
 
@@ -53,7 +55,7 @@ struct NodeTransform
     /// Define from node.
     void Define(const Node& node);
     /// Apply to node.
-    void Apply(Node& node);
+    void Apply(Node& node) const;
 
     /// Position.
     Vector3 position_;
@@ -70,6 +72,8 @@ class SelectionTransform : public Object, public Transformable
 public:
     /// Construct.
     SelectionTransform(Context* context) : Object(context) { }
+    /// Set undo stack.
+    void SetUndoStack(const SharedPtr<UndoStack>& undoStack) { undoStack_ = undoStack; }
     /// Set scene.
     void SetScene(Scene* scene) { scene_ = scene; }
     /// Set selection.
@@ -97,13 +101,31 @@ public:
     void EndTransformation() override;
 
 private:
-    Scene* scene_ = nullptr;
-    Selection* selection_ = nullptr;
-    Vector<Node*> nodes_;
+    SharedPtr<UndoStack> undoStack_;
+    WeakPtr<Scene> scene_;
+    WeakPtr<Selection> selection_;
+    Vector<WeakPtr<Node>> nodes_;
     Vector<NodeTransform> initialTransforms_;
-    //QVector<NodeTransform> oldTransforms_;
-
 };
 
+// #TODO Move it
+/// Node transform edited.
+class SelectionTransformChanged : public UndoCommand
+{
+public:
+    /// Construct.
+    SelectionTransformChanged(Context* context, Scene* scene, unsigned nodeId,
+        const NodeTransform& oldTransform, const NodeTransform& newTransform);
+
+    void Undo() const override;
+    void Redo() const override;
+    String GetTitle() override { return "Node Transform"; }
+
+private:
+    WeakPtr<Scene> scene_;
+    unsigned nodeId_;
+    NodeTransform oldTransform_;
+    NodeTransform newTransform_;
+};
 
 }

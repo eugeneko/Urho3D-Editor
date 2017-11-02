@@ -13,6 +13,7 @@
 #include "ResourceBrowser.h"
 #include "Inspector.h"
 #include "Transformable.h"
+#include "UndoStack.h"
 
 namespace Urho3D
 {
@@ -27,6 +28,7 @@ public:
     String resourceKey_;
     SharedPtr<Resource> resource_;
     SharedPtr<Scene> scene_;
+    SharedPtr<UndoStack> undoStack_;
     SharedPtr<Selection> selection_;
     SharedPtr<SelectionTransform> selectionTransform_;
 };
@@ -41,6 +43,7 @@ public:
 
 private:
     void InitializeResourceLayers();
+    void SetupActions();
     void SetupMenu();
     void SetupControlsGeneric();
     void SetupUrhoControls();

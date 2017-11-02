@@ -118,9 +118,9 @@ private:
     /// Start transformation.
     void EnsureTransformationStarted();
     /// Use gizmo (by keyboard).
-    void UseGizmoKeyboard(AbstractInput& input, float timeStep);
+    bool UseGizmoKeyboard(AbstractInput& input, float timeStep);
     /// Use gizmo (by mouse). Return true if selected.
-    void UseGizmoMouse(AbstractInput& input, const Ray& mouseRay);
+    bool UseGizmoMouse(AbstractInput& input, const Ray& mouseRay);
 
     /// Move edited nodes.
     bool MoveNodes(Vector3 adjust, bool snap);

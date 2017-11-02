@@ -97,15 +97,19 @@ void Gizmo::Update(AbstractInput& input, AbstractEditorContext& editorContext, f
     if (!transformable_)
         return;
 
-    const bool wasTransforming = transforming_;
-    transforming_ = false;
-
-    UseGizmoKeyboard(input, timeStep);
+    bool stillTransforming = false;
+    if (UseGizmoKeyboard(input, timeStep))
+        stillTransforming = true;
     if (!input.IsMouseMoveGrabbed())
-        UseGizmoMouse(input, editorContext.GetMouseRay());
+        if (UseGizmoMouse(input, editorContext.GetMouseRay()))
+            stillTransforming = true;
 
-    if (wasTransforming && !transforming_)
+    if (transforming_ && !stillTransforming)
+    {
+        transforming_ = false;
         transformable_->EndTransformation();
+    }
+
     PositionGizmo();
     ResizeGizmo(editorContext);
 }
@@ -244,12 +248,12 @@ void Gizmo::EnsureTransformationStarted()
     }
 }
 
-void Gizmo::UseGizmoKeyboard(AbstractInput& input, float timeStep)
+bool Gizmo::UseGizmoKeyboard(AbstractInput& input, float timeStep)
 {
     using namespace Urho3D;
 
     if (transformable_->IsEmpty() || gizmoType_ == GizmoType::Select)
-        return;
+        return false;
 
     const float speed = 10.0f;
 
@@ -293,7 +297,7 @@ void Gizmo::UseGizmoKeyboard(AbstractInput& input, float timeStep)
 
     // Apply transform
     if (adjust == Vector3::ZERO)
-        return;
+        return false;
 
     bool moved = false;
 
@@ -317,9 +321,11 @@ void Gizmo::UseGizmoKeyboard(AbstractInput& input, float timeStep)
 
     if (moved)
         MarkMoved();
+
+    return true;
 }
 
-void Gizmo::UseGizmoMouse(AbstractInput& input, const Ray& mouseRay)
+bool Gizmo::UseGizmoMouse(AbstractInput& input, const Ray& mouseRay)
 {
     using namespace Urho3D;
 
@@ -359,7 +365,7 @@ void Gizmo::UseGizmoMouse(AbstractInput& input, const Ray& mouseRay)
     const bool anySelected = axisX_.selected || axisY_.selected || axisZ_.selected;
     dragging_ = dragRequested && (dragging_ || anySelected);
     if (!dragging_)
-        return;
+        return false;
 
     // Grab inputs
     controls_[DRAG_GIZMO].IsDown(input);
@@ -421,6 +427,7 @@ void Gizmo::UseGizmoMouse(AbstractInput& input, const Ray& mouseRay)
 
     if (moved)
         MarkMoved();
+    return true;
 }
 
 bool Gizmo::MoveNodes(Vector3 adjust, bool snap)

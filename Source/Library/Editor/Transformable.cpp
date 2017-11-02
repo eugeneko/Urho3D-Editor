@@ -28,7 +28,7 @@ void NodeTransform::Define(const Node& node)
     scale_ = node.GetScale();
 }
 
-void NodeTransform::Apply(Node& node)
+void NodeTransform::Apply(Node& node) const
 {
     node.SetTransform(position_, rotation_, scale_);
 }
@@ -66,7 +66,7 @@ void SelectionTransform::StartTransformation()
 
     nodes_.Clear();
     for (Node* node : selection)
-        nodes_.Push(node);
+        nodes_.Push(WeakPtr<Node>(node));
 
     initialTransforms_.Resize(selection.Size());
     for (unsigned i = 0; i < selection.Size(); ++i)
@@ -104,7 +104,53 @@ void SelectionTransform::SnapScale(float step)
 
 void SelectionTransform::EndTransformation()
 {
+    if (!undoStack_ || nodes_.Empty())
+        return;
 
+    auto commandGroup = MakeShared<UndoCommandGroup>(context_, "Node Transforms");
+    for (unsigned i = 0; i < nodes_.Size(); ++i)
+    {
+        Node* node = nodes_[i];
+
+        NodeTransform newTransform;
+        newTransform.Define(*node);
+
+        auto command = MakeShared<SelectionTransformChanged>(context_, scene_, node->GetID(), initialTransforms_[i], newTransform);
+        commandGroup->Push(command);
+    }
+    undoStack_->Push(commandGroup);
+
+    nodes_.Clear();
+    initialTransforms_.Clear();
+}
+
+//////////////////////////////////////////////////////////////////////////
+SelectionTransformChanged::SelectionTransformChanged(Context* context, Scene* scene, unsigned nodeId,
+    const NodeTransform& oldTransform, const NodeTransform& newTransform)
+    : UndoCommand(context)
+    , scene_(scene)
+    , nodeId_(nodeId)
+    , oldTransform_(oldTransform)
+    , newTransform_(newTransform)
+{
+}
+
+void SelectionTransformChanged::Undo() const
+{
+    if (scene_)
+    {
+        if (Node* node = scene_->GetNode(nodeId_))
+            oldTransform_.Apply(*node);
+    }
+}
+
+void SelectionTransformChanged::Redo() const
+{
+    if (scene_)
+    {
+        if (Node* node = scene_->GetNode(nodeId_))
+            newTransform_.Apply(*node);
+    }
 }
 
 }
