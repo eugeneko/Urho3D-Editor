@@ -31,6 +31,12 @@ set (TARGET_NAME EditorLauncher)
 setup_main_executable ()
 target_link_libraries (EditorLauncher Urho3DEditor)
 
+# Configure things
+option (URHO3D_COMPILE_QT "Whether to compile QT UI back-end" 1)
+if (URHO3D_COMPILE_QT)
+    add_definitions (-DURHO3D_COMPILE_QT)
+endif ()
+
 # Add projects
 add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Library)
 add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Samples/00_Editor)

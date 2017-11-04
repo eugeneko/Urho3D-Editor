@@ -60,6 +60,11 @@ void SetInternalWidget(AbstractWidget* widget, QWidget* element)
     widget->SetInternalHandle(element);
 }
 
+void CreateChildrenMenu(const AbstractMenuDesc& desc, QMenu* menu)
+{
+
+}
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -723,61 +728,18 @@ void QtView3D::UpdateView()
 }
 
 //////////////////////////////////////////////////////////////////////////
-QtMenu::QtMenu(QtMainWindow* host, QMenu* menu)
-    : AbstractMenu(host->GetContext())
-    , host_(host)
-    , menu_(menu)
+QtContextMenu::QtContextMenu(Context* context)
+    : AbstractContextMenu(context)
 {
-    connect(menu_, &QMenu::aboutToShow, [=]()
-    {
-        for (QtMenu* child : children_)
-            if (child->onShown_)
-                child->onShown_();
-    });
 }
 
-QtMenu::QtMenu(QtMainWindow* host, QAction* action)
-    : AbstractMenu(host->GetContext())
-    , host_(host)
-    , action_(action)
+QtContextMenu::~QtContextMenu()
 {
-
 }
 
-AbstractMenu* QtMenu::AddMenu(const String& name)
+void QtContextMenu::Show()
 {
-    if (!menu_)
-        return nullptr;
-    QMenu* childMenu = menu_->addMenu(Cast(name));
-    children_.Push(MakeShared<QtMenu>(host_, childMenu));
-    return children_.Back();
-}
-
-AbstractMenu* QtMenu::AddAction(const String& name, const String& actionId)
-{
-    if (!menu_)
-        return nullptr;
-
-    const AbstractAction* actionDesc = host_->FindAction(actionId);
-    if (!actionDesc)
-        return nullptr;
-
-    QAction* action = new QAction(this);
-    action->setText(Cast(name));
-    action->setShortcut(Cast(actionDesc->keyBinding_));
-    connect(action, &QAction::triggered, this, actionDesc->onActivated_);
-
-    menu_->addAction(action);
-    children_.Push(MakeShared<QtMenu>(host_, action));
-    return children_.Back();
-}
-
-void QtMenu::SetName(const String& name)
-{
-    if (menu_)
-        menu_->setTitle(Cast(name));
-    else if (action_)
-        action_->setText(Cast(name));
+    exec(QCursor::pos());
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -832,21 +794,32 @@ AbstractDock* QtMainWindow::AddDock(DockLocation hint, const IntVector2& sizeHin
     return dialog;
 }
 
-void QtMainWindow::AddAction(const AbstractAction& actionDesc)
+void QtMainWindow::CreateMainMenu(const AbstractMenuDesc& desc)
 {
-    actions_[actionDesc.id_] = actionDesc;
+    for (const AbstractMenuDesc& child : desc.children_)
+    {
+        if (child.IsPopupMenu())
+        {
+            QMenu* childPopup = menuBar()->addMenu(Cast(child.text_));
+            SetupMenu(childPopup, child);
+        }
+        else if (child.IsSeparator())
+        {
+            menuBar()->addSeparator();
+        }
+        else
+        {
+            QAction* childAction = menuBar()->addAction(Cast(child.text_));
+            SetupAction(childAction, child);
+        }
+    }
 }
 
-AbstractMenu* QtMainWindow::AddMenu(const String& name)
+SharedPtr<AbstractContextMenu> QtMainWindow::CreateContextMenu(const AbstractMenuDesc& desc)
 {
-    QMenu* menu = menuBar()->addMenu(Cast(name));
-    menus_.Push(MakeShared<QtMenu>(this, menu));
-    return menus_.Back();
-}
-
-SharedPtr<AbstractMenu> QtMainWindow::CreateContextMenu()
-{
-    return nullptr;
+    auto contextMenu = MakeShared<QtContextMenu>(context_);
+    SetupMenu(contextMenu, desc);
+    return contextMenu;
 }
 
 void QtMainWindow::InsertDocument(Object* document, const String& title, unsigned index)
@@ -881,13 +854,55 @@ AbstractInput* QtMainWindow::GetInput()
     return urhoWidget_.GetInput();
 }
 
-const AbstractAction* QtMainWindow::FindAction(const String& id) const
+void QtMainWindow::SetupAction(QAction* action, const AbstractMenuDesc& desc)
 {
-    auto iter = actions_.Find(id);
-    if (iter != actions_.End())
-        return &iter->second_;
-    else
-        return nullptr;
+    action->setShortcut(Cast(desc.hotkey_));
+
+    auto onActivated = desc.action_ ? desc.action_->onActivated_ : nullptr;
+    connect(action, &QAction::triggered,
+        [=]()
+    {
+        if (onActivated)
+            onActivated();
+    });
+}
+
+void QtMainWindow::SetupMenu(QMenu* menu, const AbstractMenuDesc& desc)
+{
+    Vector<Pair<QAction*, AbstractAction*>> actions;
+    for (const AbstractMenuDesc& child : desc.children_)
+    {
+        if (child.IsPopupMenu())
+        {
+            QMenu* childPopup = menu->addMenu(Cast(child.text_));
+            SetupMenu(childPopup, child);
+        }
+        else if (child.IsSeparator())
+        {
+            menu->addSeparator();
+        }
+        else
+        {
+            QAction* childAction = menu->addAction(Cast(child.text_));
+            SetupAction(childAction, child);
+            actions.Push(MakePair(childAction, child.action_));
+        }
+    }
+
+    connect(menu, &QMenu::aboutToShow, [actions]()
+    {
+        for (const auto& item : actions)
+        {
+            QAction* qtAction = item.first_;
+            AbstractAction* actionDesc = item.second_;
+            if (actionDesc && actionDesc->onUpdateText_)
+            {
+                String text = Cast(qtAction->text());
+                actionDesc->onUpdateText_(text);
+                qtAction->setText(Cast(text));
+            }
+        }
+    });
 }
 
 }

@@ -20,6 +20,7 @@
 #include <QCheckBox>
 #include <QFrame>
 #include <QImage>
+#include <QMenu>
 #include <QTabBar>
 #include <QToolButton>
 #include <Urho3D/Graphics/Texture2D.h>
@@ -310,21 +311,15 @@ private:
     SharedPtr<Image> image_;
 };
 
-class QtMenu : public QObject, public AbstractMenu
+class QtContextMenu : public QMenu, public AbstractContextMenu
 {
     Q_OBJECT
 
 public:
-    QtMenu(QtMainWindow* host, QMenu* menu);
-    QtMenu(QtMainWindow* host, QAction* action);
-    AbstractMenu* AddMenu(const String& name) override;
-    AbstractMenu* AddAction(const String& name, const String& actionId) override;
-    void SetName(const String& name) override;
-private:
-    QtMainWindow* host_ = nullptr;
-    QMenu* menu_ = nullptr;
-    QAction* action_ = nullptr;
-    Vector<SharedPtr<QtMenu>> children_;
+    QtContextMenu(Context* context);
+    ~QtContextMenu() override;
+
+    void Show() override;
 };
 
 class QtMainWindow : public QMainWindow, public AbstractMainWindow
@@ -336,9 +331,8 @@ public:
     ~QtMainWindow() override;
 
     AbstractDock* AddDock(DockLocation hint, const IntVector2& sizeHint) override;
-    void AddAction(const AbstractAction& actionDesc) override;
-    AbstractMenu* AddMenu(const String& name) override;
-    SharedPtr<AbstractMenu> CreateContextMenu() override;
+    void CreateMainMenu(const AbstractMenuDesc& desc) override;
+    SharedPtr<AbstractContextMenu> CreateContextMenu(const AbstractMenuDesc& desc) override;
     void InsertDocument(Object* document, const String& title, unsigned index) override;
     void SelectDocument(Object* document) override;
     PODVector<Object*> GetDocuments() const override;
@@ -347,7 +341,10 @@ public:
     AbstractInput* GetInput() override;
 
     QtUrhoWidget& GetUrhoWidget() { return urhoWidget_; }
-    const AbstractAction* FindAction(const String& id) const;
+
+private:
+    void SetupAction(QAction* action, const AbstractMenuDesc& desc);
+    void SetupMenu(QMenu* menu, const AbstractMenuDesc& desc);
 
 private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateDummyWidget,      QtDummyWidget);
@@ -372,7 +369,7 @@ private:
     Vector<SharedPtr<AbstractDock>> dialogs_;
 
     HashMap<String, AbstractAction> actions_;
-    Vector<SharedPtr<QtMenu>> menus_;
+    Vector<SharedPtr<QtContextMenu>> menus_;
 
     QVector<SharedPtr<Object>> documents_;
 };

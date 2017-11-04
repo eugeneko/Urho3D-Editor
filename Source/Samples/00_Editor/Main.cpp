@@ -53,5 +53,5 @@ private:
 };
 
 
-// URHO3D_DEFINE_MAIN(QtEditorMain())
-URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)
+URHO3D_DEFINE_MAIN(QtEditorMain())
+// URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)

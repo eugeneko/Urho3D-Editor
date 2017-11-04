@@ -46,6 +46,9 @@ struct AbstractMenuDesc
     AbstractMenuDesc(const String& text, const Vector<AbstractMenuDesc>& children) : text_(text), children_(children) { }
     AbstractMenuDesc(const String& text, KeyBinding hotkey = KeyBinding::EMPTY, AbstractAction* action = nullptr) : text_(text), hotkey_(hotkey), action_(action) { }
 
+    bool IsPopupMenu() const { return !children_.Empty(); }
+    bool IsSeparator() const { return children_.Empty() && text_.Empty(); }
+
     String text_;
     KeyBinding hotkey_;
     AbstractAction* action_ = nullptr;

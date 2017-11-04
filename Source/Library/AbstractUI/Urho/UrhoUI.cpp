@@ -78,7 +78,7 @@ void CollapseMenuPopups(Menu* menu, bool contextMenu)
 void CreateMenu(Context* context, const AbstractMenuDesc& desc, UIElement* menuRoot, UIElement* parent, bool contextMenu)
 {
     // Create separator
-    if (desc.text_.Empty() && desc.children_.Empty())
+    if (desc.IsSeparator())
     {
         auto separator = parent->CreateChild<UIElement>();
         separator->SetFixedSize(5, 5);
@@ -140,7 +140,7 @@ void CreateMenu(Context* context, const AbstractMenuDesc& desc, UIElement* menuR
         accelKeyText->SetText(desc.hotkey_.ToString());
     }
 
-    if (!desc.children_.Empty())
+    if (desc.IsPopupMenu())
     {
         Window* popup = new Window(context);
         popup->SetStyleAuto();
@@ -160,11 +160,13 @@ void CreateMenu(Context* context, const AbstractMenuDesc& desc, UIElement* menuR
             {
                 if (AbstractAction* action = static_cast<AbstractAction*>(child->GetVar("ActionPtr").GetPtr()))
                 {
-                    Text* textElement = static_cast<Text*>(child->GetVar("TextPtr").GetPtr());
-                    String text = textElement->GetText();
                     if (action->onUpdateText_)
+                    {
+                        Text* textElement = static_cast<Text*>(child->GetVar("TextPtr").GetPtr());
+                        String text = textElement->GetText();
                         action->onUpdateText_(text);
-                    textElement->SetText(text);
+                        textElement->SetText(text);
+                    }
                 }
             }
         };
