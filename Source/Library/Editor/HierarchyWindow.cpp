@@ -33,10 +33,10 @@ Hierarchy::Hierarchy(AbstractWidgetStack* stack, Object* document)
     };
     SetScene(scene_);
 
-    itemContextMenu_ = stack->GetMainWindow()->CreateContextMenu(AbstractMenuDesc({
-        AbstractMenuDesc("First"),
-        AbstractMenuDesc("Second"),
-        AbstractMenuDesc("Third"),
+    itemContextMenu_ = stack->GetMainWindow()->CreateContextMenu(AbstractMenuItem({
+        AbstractMenuItem("First"),
+        AbstractMenuItem("Second"),
+        AbstractMenuItem("Third"),
     }));
 }
 

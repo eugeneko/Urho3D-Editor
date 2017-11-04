@@ -338,8 +338,8 @@ void StandardEditor::SetupActions()
 
 void StandardEditor::SetupMenu()
 {
-    mainWindow_->CreateMainMenu(AbstractMenuDesc({
-        AbstractMenuDesc("Edit",
+    mainWindow_->CreateMainMenu(AbstractMenuItem({
+        AbstractMenuItem("Edit",
         {
             { "Undo",   KeyBinding::Key(KEY_Z) + KeyBinding::CTRL,  mainWindow_->FindAction("EditUndo") },
             { "Redo",   KeyBinding::Key(KEY_Y) + KeyBinding::CTRL,  mainWindow_->FindAction("EditRedo") },
@@ -349,7 +349,7 @@ void StandardEditor::SetupMenu()
             { "Paste",  KeyBinding::Key(KEY_V) + KeyBinding::CTRL,  mainWindow_->FindAction("EditPaste") },
             { "Delete", KeyBinding::Key(KEY_DELETE),                mainWindow_->FindAction("EditDelete") },
         }),
-        AbstractMenuDesc("Scene",
+        AbstractMenuItem("Scene",
         {
             { "Play Scene", KeyBinding::Key(KEY_F5), mainWindow_->FindAction("SceneTogglePlay") },
         })

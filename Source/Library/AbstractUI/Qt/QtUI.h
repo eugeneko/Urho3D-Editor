@@ -331,8 +331,8 @@ public:
     ~QtMainWindow() override;
 
     AbstractDock* AddDock(DockLocation hint, const IntVector2& sizeHint) override;
-    void CreateMainMenu(const AbstractMenuDesc& desc) override;
-    SharedPtr<AbstractContextMenu> CreateContextMenu(const AbstractMenuDesc& desc) override;
+    void CreateMainMenu(const AbstractMenuItem& desc) override;
+    SharedPtr<AbstractContextMenu> CreateContextMenu(const AbstractMenuItem& desc) override;
     void InsertDocument(Object* document, const String& title, unsigned index) override;
     void SelectDocument(Object* document) override;
     PODVector<Object*> GetDocuments() const override;
@@ -343,8 +343,8 @@ public:
     QtUrhoWidget& GetUrhoWidget() { return urhoWidget_; }
 
 private:
-    void SetupAction(QAction* action, const AbstractMenuDesc& desc);
-    void SetupMenu(QMenu* menu, const AbstractMenuDesc& desc);
+    void SetupAction(QAction* action, const AbstractMenuItem& desc);
+    void SetupMenu(QMenu* menu, const AbstractMenuItem& desc);
 
 private:
     URHO3D_IMPLEMENT_WIDGET_FACTORY(CreateDummyWidget,      QtDummyWidget);
@@ -368,7 +368,7 @@ private:
     QtUrhoWidget urhoWidget_;
     Vector<SharedPtr<AbstractDock>> dialogs_;
 
-    HashMap<String, AbstractAction> actions_;
+    HashMap<String, AbstractMenuAction> actions_;
     Vector<SharedPtr<QtContextMenu>> menus_;
 
     QVector<SharedPtr<Object>> documents_;

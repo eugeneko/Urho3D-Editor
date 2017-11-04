@@ -60,7 +60,7 @@ void SetInternalWidget(AbstractWidget* widget, QWidget* element)
     widget->SetInternalHandle(element);
 }
 
-void CreateChildrenMenu(const AbstractMenuDesc& desc, QMenu* menu)
+void CreateChildrenMenu(const AbstractMenuItem& desc, QMenu* menu)
 {
 
 }
@@ -794,9 +794,9 @@ AbstractDock* QtMainWindow::AddDock(DockLocation hint, const IntVector2& sizeHin
     return dialog;
 }
 
-void QtMainWindow::CreateMainMenu(const AbstractMenuDesc& desc)
+void QtMainWindow::CreateMainMenu(const AbstractMenuItem& desc)
 {
-    for (const AbstractMenuDesc& child : desc.children_)
+    for (const AbstractMenuItem& child : desc.children_)
     {
         if (child.IsPopupMenu())
         {
@@ -815,7 +815,7 @@ void QtMainWindow::CreateMainMenu(const AbstractMenuDesc& desc)
     }
 }
 
-SharedPtr<AbstractContextMenu> QtMainWindow::CreateContextMenu(const AbstractMenuDesc& desc)
+SharedPtr<AbstractContextMenu> QtMainWindow::CreateContextMenu(const AbstractMenuItem& desc)
 {
     auto contextMenu = MakeShared<QtContextMenu>(context_);
     SetupMenu(contextMenu, desc);
@@ -854,7 +854,7 @@ AbstractInput* QtMainWindow::GetInput()
     return urhoWidget_.GetInput();
 }
 
-void QtMainWindow::SetupAction(QAction* action, const AbstractMenuDesc& desc)
+void QtMainWindow::SetupAction(QAction* action, const AbstractMenuItem& desc)
 {
     action->setShortcut(Cast(desc.hotkey_));
 
@@ -867,10 +867,10 @@ void QtMainWindow::SetupAction(QAction* action, const AbstractMenuDesc& desc)
     });
 }
 
-void QtMainWindow::SetupMenu(QMenu* menu, const AbstractMenuDesc& desc)
+void QtMainWindow::SetupMenu(QMenu* menu, const AbstractMenuItem& desc)
 {
-    Vector<Pair<QAction*, AbstractAction*>> actions;
-    for (const AbstractMenuDesc& child : desc.children_)
+    Vector<Pair<QAction*, AbstractMenuAction*>> actions;
+    for (const AbstractMenuItem& child : desc.children_)
     {
         if (child.IsPopupMenu())
         {
@@ -894,7 +894,7 @@ void QtMainWindow::SetupMenu(QMenu* menu, const AbstractMenuDesc& desc)
         for (const auto& item : actions)
         {
             QAction* qtAction = item.first_;
-            AbstractAction* actionDesc = item.second_;
+            AbstractMenuAction* actionDesc = item.second_;
             if (actionDesc && actionDesc->onUpdateText_)
             {
                 String text = Cast(qtAction->text());

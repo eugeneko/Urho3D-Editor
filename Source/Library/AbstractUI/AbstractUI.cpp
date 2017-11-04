@@ -7,7 +7,7 @@ namespace Urho3D
 {
 
 AbstractWidget::AbstractWidget(AbstractMainWindow* mainWindow)
-    : Object(mainWindow->GetContext())
+    : AbstractUIElement(mainWindow->GetContext())
     , mainWindow_(mainWindow)
 {
 

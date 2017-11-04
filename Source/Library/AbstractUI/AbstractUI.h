@@ -23,15 +23,15 @@ class AbstractUIElement : public Object
 {
 public:
     AbstractUIElement(Context* context) : Object(context) { }
-    template <class T> void SetInternalHandleVariant(T pointer) { internalHandle_ = MakeCustomValue(pointer); }
-    template <class T> T GetInternalHandleVariant() const { return internalHandle_.GetCustom<T>(); }
+    template <class T> void SetInternalHandle(T pointer) { internalHandle_ = MakeCustomValue(pointer); }
+    template <class T> T GetInternalHandle() const { return internalHandle_.GetCustom<T>(); }
 
 private:
     Variant internalHandle_;
 
 };
 
-class AbstractAction : public RefCounted
+struct AbstractMenuAction : public RefCounted
 {
 public:
     String id_;
@@ -39,33 +39,33 @@ public:
     std::function<void(String& text)> onUpdateText_;
 };
 
-struct AbstractMenuDesc
+struct AbstractMenuItem
 {
-    AbstractMenuDesc() = default;
-    AbstractMenuDesc(const Vector<AbstractMenuDesc>& children) : children_(children) { }
-    AbstractMenuDesc(const String& text, const Vector<AbstractMenuDesc>& children) : text_(text), children_(children) { }
-    AbstractMenuDesc(const String& text, KeyBinding hotkey = KeyBinding::EMPTY, AbstractAction* action = nullptr) : text_(text), hotkey_(hotkey), action_(action) { }
+    AbstractMenuItem() = default;
+    AbstractMenuItem(const Vector<AbstractMenuItem>& children) : children_(children) { }
+    AbstractMenuItem(const String& text, const Vector<AbstractMenuItem>& children) : text_(text), children_(children) { }
+    AbstractMenuItem(const String& text, KeyBinding hotkey = KeyBinding::EMPTY, AbstractMenuAction* action = nullptr) : text_(text), hotkey_(hotkey), action_(action) { }
 
     bool IsPopupMenu() const { return !children_.Empty(); }
     bool IsSeparator() const { return children_.Empty() && text_.Empty(); }
 
     String text_;
     KeyBinding hotkey_;
-    AbstractAction* action_ = nullptr;
-    Vector<AbstractMenuDesc> children_;
+    AbstractMenuAction* action_ = nullptr;
+    Vector<AbstractMenuItem> children_;
 };
 
 class AbstractActionRegister
 {
 public:
-    void RegisterAction(const SharedPtr<AbstractAction>& action)
+    void RegisterAction(const SharedPtr<AbstractMenuAction>& action)
     {
         actions_[action->id_] = action;
     }
 
     template <class T> void RegisterAction(const String& id, T activated)
     {
-        auto action = MakeShared<AbstractAction>();
+        auto action = MakeShared<AbstractMenuAction>();
         action->id_ = id;
         action->onActivated_ = activated;
         RegisterAction(action);
@@ -73,22 +73,22 @@ public:
 
     template <class T, class U> void RegisterAction(const String& id, T activated, U update)
     {
-        auto action = MakeShared<AbstractAction>();
+        auto action = MakeShared<AbstractMenuAction>();
         action->id_ = id;
         action->onActivated_ = activated;
         action->onUpdateText_ = update;
         RegisterAction(action);
     }
 
-    AbstractAction* FindAction(const String& actionId) const
+    AbstractMenuAction* FindAction(const String& actionId) const
     {
-        SharedPtr<AbstractAction>* actionPtr = actions_[actionId];
+        SharedPtr<AbstractMenuAction>* actionPtr = actions_[actionId];
         return actionPtr ? *actionPtr : nullptr;
     }
 
 
 private:
-    HashMap<String, SharedPtr<AbstractAction>> actions_;
+    HashMap<String, SharedPtr<AbstractMenuAction>> actions_;
 };
 
 /// Context menu interface.
@@ -103,18 +103,15 @@ public:
 
 };
 
-class AbstractWidget : public Object
+class AbstractWidget : public AbstractUIElement
 {
-    URHO3D_OBJECT(AbstractWidget, Object);
+    URHO3D_OBJECT(AbstractWidget, AbstractUIElement);
 
 public:
     AbstractWidget(AbstractMainWindow* mainWindow);
 
     void SetParent(AbstractWidget* parent);
     AbstractWidget* GetParent() const { return parent_; }
-
-    template <class T> void SetInternalHandle(T pointer) { internalHandle_ = MakeCustomValue(pointer); }
-    template <class T> T GetInternalHandle() const { return internalHandle_.GetCustom<T>(); }
 
     AbstractMainWindow* GetMainWindow() const { return mainWindow_; }
 
@@ -127,7 +124,6 @@ protected:
 
 private:
     AbstractWidget* parent_ = nullptr;
-    Variant internalHandle_;
     bool attachedToRoot_ = false;
 };
 
@@ -320,15 +316,13 @@ public:
     virtual void SetChecked(bool checked) = 0;
 };
 
-class AbstractHierarchyListItem : public Object
+class AbstractHierarchyListItem : public AbstractUIElement
 {
-    URHO3D_OBJECT(AbstractHierarchyListItem, Object);
+    URHO3D_OBJECT(AbstractHierarchyListItem, AbstractUIElement);
 
 public:
-    AbstractHierarchyListItem(Context* context) : Object(context) { }
+    AbstractHierarchyListItem(Context* context) : AbstractUIElement(context) { }
     void SetParent(AbstractHierarchyListItem* parent) { parent_ = parent; }
-    template <class T> void SetInternalHandle(T pointer) { internalHandle_ = MakeCustomValue(pointer); }
-    template <class T> T GetInternalHandle() const { return internalHandle_.GetCustom<T>(); }
 
     void InsertChild(AbstractHierarchyListItem* item, unsigned index);
     void RemoveChild(unsigned index);
@@ -342,7 +336,6 @@ public:
 
 private:
     AbstractHierarchyListItem* parent_ = nullptr;
-    Variant internalHandle_;
     Vector<SharedPtr<AbstractHierarchyListItem>> children_;
 };
 
@@ -388,8 +381,8 @@ class AbstractMainWindow : public AbstractActionRegister
 public:
     SharedPtr<AbstractWidget> CreateWidget(StringHash type);
     virtual AbstractDock* AddDock(DockLocation hint = DockLocation::Left, const IntVector2& sizeHint = IntVector2(200, 200)) = 0;
-    virtual void CreateMainMenu(const AbstractMenuDesc& desc) = 0;
-    virtual SharedPtr<AbstractContextMenu> CreateContextMenu(const AbstractMenuDesc& desc) = 0;
+    virtual void CreateMainMenu(const AbstractMenuItem& desc) = 0;
+    virtual SharedPtr<AbstractContextMenu> CreateContextMenu(const AbstractMenuItem& desc) = 0;
     virtual void InsertDocument(Object* document, const String& title, unsigned index) = 0;
     virtual void SelectDocument(Object* document) = 0;
     virtual PODVector<Object*> GetDocuments() const = 0;

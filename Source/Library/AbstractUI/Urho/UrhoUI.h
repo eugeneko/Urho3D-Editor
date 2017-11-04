@@ -309,8 +309,8 @@ public:
     UrhoMainWindow(Context* context);
 
     AbstractDock* AddDock(DockLocation hint, const IntVector2& sizeHint) override;
-    void CreateMainMenu(const AbstractMenuDesc& desc) override;
-    SharedPtr<AbstractContextMenu> CreateContextMenu(const AbstractMenuDesc& desc) override;
+    void CreateMainMenu(const AbstractMenuItem& desc) override;
+    SharedPtr<AbstractContextMenu> CreateContextMenu(const AbstractMenuItem& desc) override;
     void InsertDocument(Object* document, const String& title, unsigned index) override;
     void SelectDocument(Object* document) override;
     PODVector<Object*> GetDocuments() const override;

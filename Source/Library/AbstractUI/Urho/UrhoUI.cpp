@@ -75,7 +75,7 @@ void CollapseMenuPopups(Menu* menu, bool contextMenu)
     }
 }
 
-void CreateMenu(Context* context, const AbstractMenuDesc& desc, UIElement* menuRoot, UIElement* parent, bool contextMenu)
+void CreateMenu(Context* context, const AbstractMenuItem& desc, UIElement* menuRoot, UIElement* parent, bool contextMenu)
 {
     // Create separator
     if (desc.IsSeparator())
@@ -110,7 +110,7 @@ void CreateMenu(Context* context, const AbstractMenuDesc& desc, UIElement* menuR
 
         CollapseMenuPopups(menu, contextMenu);
 
-        if (AbstractAction* action = static_cast<AbstractAction*>(menu->GetVar("ActionPtr").GetPtr()))
+        if (AbstractMenuAction* action = static_cast<AbstractMenuAction*>(menu->GetVar("ActionPtr").GetPtr()))
         {
             if (action->onActivated_)
                 action->onActivated_();
@@ -150,7 +150,7 @@ void CreateMenu(Context* context, const AbstractMenuDesc& desc, UIElement* menuR
         menu->SetPopup(popup);
         menu->SetPopupOffset(0, menu->GetHeight());
 
-        for (const AbstractMenuDesc& child : desc.children_)
+        for (const AbstractMenuItem& child : desc.children_)
             CreateMenu(context, child, menuRoot, popup, contextMenu);
 
         // Create popup action
@@ -158,7 +158,7 @@ void CreateMenu(Context* context, const AbstractMenuDesc& desc, UIElement* menuR
         {
             for (UIElement* child : popup->GetChildren())
             {
-                if (AbstractAction* action = static_cast<AbstractAction*>(child->GetVar("ActionPtr").GetPtr()))
+                if (AbstractMenuAction* action = static_cast<AbstractMenuAction*>(child->GetVar("ActionPtr").GetPtr()))
                 {
                     if (action->onUpdateText_)
                     {
@@ -913,20 +913,20 @@ AbstractDock* UrhoMainWindow::AddDock(DockLocation hint, const IntVector2& sizeH
     return dialog;
 }
 
-void UrhoMainWindow::CreateMainMenu(const AbstractMenuDesc& desc)
+void UrhoMainWindow::CreateMainMenu(const AbstractMenuItem& desc)
 {
-    for (const AbstractMenuDesc& child : desc.children_)
+    for (const AbstractMenuItem& child : desc.children_)
         CreateMenu(context_, child, menuBar_, menuBar_, false);
 }
 
-SharedPtr<AbstractContextMenu> UrhoMainWindow::CreateContextMenu(const AbstractMenuDesc& desc)
+SharedPtr<AbstractContextMenu> UrhoMainWindow::CreateContextMenu(const AbstractMenuItem& desc)
 {
     Window* popup = uiRoot_->CreateChild<Window>();
     popup->SetStyleAuto();
     popup->SetLayout(LM_VERTICAL, 1, IntRect(2, 6, 2, 6));
     popup->SetVisible(false);
 
-    for (const AbstractMenuDesc& child : desc.children_)
+    for (const AbstractMenuItem& child : desc.children_)
         CreateMenu(context_, child, popup, popup, true);
     return MakeShared<UrhoContextMenu>(context_, popup);
 }
