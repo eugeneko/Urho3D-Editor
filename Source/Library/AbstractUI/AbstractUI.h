@@ -44,7 +44,7 @@ struct AbstractMenuDesc
     AbstractMenuDesc() = default;
     AbstractMenuDesc(const Vector<AbstractMenuDesc>& children) : children_(children) { }
     AbstractMenuDesc(const String& text, const Vector<AbstractMenuDesc>& children) : text_(text), children_(children) { }
-    AbstractMenuDesc(const String& text, KeyBinding hotkey, AbstractAction* action = nullptr) : text_(text), hotkey_(hotkey), action_(action) { }
+    AbstractMenuDesc(const String& text, KeyBinding hotkey = KeyBinding::EMPTY, AbstractAction* action = nullptr) : text_(text), hotkey_(hotkey), action_(action) { }
 
     String text_;
     KeyBinding hotkey_;
@@ -88,54 +88,15 @@ private:
     HashMap<String, SharedPtr<AbstractAction>> actions_;
 };
 
-class AbstractBaseMenu : public Object
-{
-    URHO3D_OBJECT(AbstractBaseMenu, Object);
-
-public:
-    std::function<void()> onShown_;
-
-public:
-    AbstractBaseMenu(Context* context) : Object(context) {}
-};
-
-/// Action menu interface.
-class AbstractMenuAction : public AbstractBaseMenu
-{
-    URHO3D_OBJECT(AbstractMenuAction, AbstractBaseMenu);
-
-public:
-    AbstractMenuAction(Context* context) : AbstractBaseMenu(context) {}
-
-    virtual void SetName(const String& text) = 0;
-
-};
-
-/// Popup menu interface.
-class AbstractPopupMenu : public AbstractBaseMenu
-{
-    URHO3D_OBJECT(AbstractPopupMenu, AbstractBaseMenu);
-
-public:
-    AbstractPopupMenu(Context* context) : AbstractBaseMenu(context) {}
-
-    virtual AbstractPopupMenu* AddMenu(const String& name) = 0;
-    virtual AbstractMenuAction* AddAction(const String& name, const KeyBinding& keyBinding) = 0;
-    virtual void SetName(const String& name) = 0;
-
-};
-
 /// Context menu interface.
-class AbstractContextMenu : public AbstractBaseMenu
+class AbstractContextMenu : public Object
 {
-    URHO3D_OBJECT(AbstractContextMenu, AbstractBaseMenu);
+    URHO3D_OBJECT(AbstractContextMenu, Object);
 
 public:
-    AbstractContextMenu(Context* context) : AbstractBaseMenu(context) {}
+    AbstractContextMenu(Context* context) : Object(context) {}
 
-    virtual AbstractPopupMenu* AddMenu(const String& name) = 0;
-    virtual AbstractMenuAction* AddAction(const String& name, const KeyBinding& keyBinding) = 0;
-    virtual void ShowAtCursor() = 0;
+    virtual void Show() = 0;
 
 };
 
@@ -425,8 +386,7 @@ public:
     SharedPtr<AbstractWidget> CreateWidget(StringHash type);
     virtual AbstractDock* AddDock(DockLocation hint = DockLocation::Left, const IntVector2& sizeHint = IntVector2(200, 200)) = 0;
     virtual void CreateMainMenu(const AbstractMenuDesc& desc) = 0;
-    virtual AbstractPopupMenu* AddMenu(const String& name) = 0;
-    virtual SharedPtr<AbstractContextMenu> CreateContextMenu() = 0;
+    virtual SharedPtr<AbstractContextMenu> CreateContextMenu(const AbstractMenuDesc& desc) = 0;
     virtual void InsertDocument(Object* document, const String& title, unsigned index) = 0;
     virtual void SelectDocument(Object* document) = 0;
     virtual PODVector<Object*> GetDocuments() const = 0;

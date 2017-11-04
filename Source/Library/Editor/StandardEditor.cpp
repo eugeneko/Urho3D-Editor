@@ -343,6 +343,7 @@ void StandardEditor::SetupMenu()
         {
             { "Undo",   KeyBinding::Key(KEY_Z) + KeyBinding::CTRL,  mainWindow_->FindAction("EditUndo") },
             { "Redo",   KeyBinding::Key(KEY_Y) + KeyBinding::CTRL,  mainWindow_->FindAction("EditRedo") },
+            {},
             { "Cut",    KeyBinding::Key(KEY_X) + KeyBinding::CTRL,  mainWindow_->FindAction("EditCut") },
             { "Copy",   KeyBinding::Key(KEY_C) + KeyBinding::CTRL,  mainWindow_->FindAction("EditCopy") },
             { "Paste",  KeyBinding::Key(KEY_V) + KeyBinding::CTRL,  mainWindow_->FindAction("EditPaste") },

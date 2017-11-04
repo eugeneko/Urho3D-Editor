@@ -285,49 +285,18 @@ private:
     UI* ui_ = nullptr;
 };
 
-class UrhoPopupMenu : public AbstractPopupMenu
-{
-    URHO3D_OBJECT(UrhoPopupMenu, AbstractPopupMenu);
-
-public:
-    UrhoPopupMenu(Context* context, UIElement* menuRoot, UIElement* parent, const String& text);
-
-    AbstractPopupMenu* AddMenu(const String& name) override;
-    AbstractMenuAction* AddAction(const String& name, const KeyBinding& keyBinding) override;
-    void SetName(const String& name) override;
-
-private:
-    SharedPtr<MenuPopup> menu_;
-    Vector<SharedPtr<AbstractBaseMenu>> children_;
-};
-
-class UrhoActionMenu : public AbstractMenuAction
-{
-    URHO3D_OBJECT(UrhoActionMenu, AbstractMenuAction);
-
-public:
-    UrhoActionMenu(Context* context, UIElement* menuRoot, UIElement* parent, const String& text, const KeyBinding& keyBinding);
-
-    void SetName(const String& text) override;
-
-private:
-    SharedPtr<MenuPopup> menu_;
-};
-
 class UrhoContextMenu : public AbstractContextMenu
 {
     URHO3D_OBJECT(UrhoContextMenu, AbstractContextMenu);
 
 public:
-    UrhoContextMenu(Context* context);
+    UrhoContextMenu(Context* context, Window* window);
+    ~UrhoContextMenu() override;
 
-    AbstractPopupMenu* AddMenu(const String& name) override;
-    AbstractMenuAction* AddAction(const String& name, const KeyBinding& keyBinding) override;
-    void ShowAtCursor() override;
+    void Show() override;
 
 private:
-    SharedPtr<MenuPopup> menu_;
-    Vector<SharedPtr<AbstractBaseMenu>> children_;
+    Window* window_ = nullptr;
 };
 
 class UrhoMainWindow : public AbstractMainWindow, public Object
@@ -341,8 +310,7 @@ public:
 
     AbstractDock* AddDock(DockLocation hint, const IntVector2& sizeHint) override;
     void CreateMainMenu(const AbstractMenuDesc& desc) override;
-    AbstractPopupMenu* AddMenu(const String& name) override;
-    SharedPtr<AbstractContextMenu> CreateContextMenu() override;
+    SharedPtr<AbstractContextMenu> CreateContextMenu(const AbstractMenuDesc& desc) override;
     void InsertDocument(Object* document, const String& title, unsigned index) override;
     void SelectDocument(Object* document) override;
     PODVector<Object*> GetDocuments() const override;
@@ -373,7 +341,6 @@ private:
     StandardUrhoInput input_;
 
     UIElement* menuBar_ = nullptr;
-    Vector<SharedPtr<UrhoPopupMenu>> menus_;
 
     UIElement* documentBar_ = nullptr;
     DropDownList* documentList_ = nullptr;

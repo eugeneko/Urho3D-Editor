@@ -77,8 +77,16 @@ void CollapseMenuPopups(Menu* menu, bool contextMenu)
 
 void CreateMenu(Context* context, const AbstractMenuDesc& desc, UIElement* menuRoot, UIElement* parent, bool contextMenu)
 {
+    // Create separator
+    if (desc.text_.Empty() && desc.children_.Empty())
+    {
+        auto separator = parent->CreateChild<UIElement>();
+        separator->SetFixedSize(5, 5);
+        return;
+    }
+
     // Create menu
-    MenuWithPopupCallback* menu = new MenuWithPopupCallback(context, nullptr);
+    MenuWithPopupCallback* menu = new MenuWithPopupCallback(context);
     menu->SetDefaultStyle(parent->GetDefaultStyle());
     menu->SetStyleAuto();
     menu->SetLayout(LM_HORIZONTAL, 0, IntRect(8, 2, 8, 2));
@@ -807,229 +815,24 @@ int StandardUrhoInput::GetMouseWheelMove() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-UrhoPopupMenu::UrhoPopupMenu(Context* context, UIElement* menuRoot, UIElement* parent, const String& text)
-    : AbstractPopupMenu(context)
-{
-    if (menuRoot == parent)
-        menu_ = MakeShared<MenuPopup>(context_, menuRoot, text);
-    else
-        menu_ = MakeShared<MenuPopup>(context_, menuRoot, parent, text);
-
-    menu_->onShowPopup_ = [=]()
-    {
-        if (onShown_)
-            onShown_();
-    };
-}
-
-AbstractPopupMenu* UrhoPopupMenu::AddMenu(const String& name)
-{
-    auto child = MakeShared<UrhoPopupMenu>(context_, menu_->GetMenuRoot(), menu_->GetPopupElement(), name);
-    children_.Push(child);
-    return child;
-}
-
-AbstractMenuAction* UrhoPopupMenu::AddAction(const String& name, const KeyBinding& keyBinding)
-{
-    auto child = MakeShared<UrhoActionMenu>(context_, menu_->GetMenuRoot(), menu_->GetPopupElement(), name, keyBinding);
-    children_.Push(child);
-    return child;
-}
-
-void UrhoPopupMenu::SetName(const String& name)
-{
-
-}
-
-//////////////////////////////////////////////////////////////////////////
-UrhoActionMenu::UrhoActionMenu(Context* context,
-    UIElement* menuRoot, UIElement* parent, const String& text, const KeyBinding& keyBinding)
-    : AbstractMenuAction(context)
-{
-    menu_ = MakeShared<MenuPopup>(context_, menuRoot, parent, text, keyBinding);
-}
-
-void UrhoActionMenu::SetName(const String& text)
-{
-    menu_->GetTextElement()->SetText(text);
-}
-
-//////////////////////////////////////////////////////////////////////////
-UrhoContextMenu::UrhoContextMenu(Context* context)
+UrhoContextMenu::UrhoContextMenu(Context* context, Window* window)
     : AbstractContextMenu(context)
+    , window_(window)
 {
-    menu_ = MakeShared<MenuPopup>(context_);
 }
 
-AbstractPopupMenu* UrhoContextMenu::AddMenu(const String& name)
+UrhoContextMenu::~UrhoContextMenu()
 {
-    auto child = MakeShared<UrhoPopupMenu>(context_, menu_->GetMenuRoot(), menu_->GetPopupElement(), name);
-    children_.Push(child);
-    return child;
+    window_->Remove();
 }
 
-AbstractMenuAction* UrhoContextMenu::AddAction(const String& name, const KeyBinding& keyBinding)
+void UrhoContextMenu::Show()
 {
-    auto child = MakeShared<UrhoActionMenu>(context_, menu_->GetMenuRoot(), menu_->GetPopupElement(), name, keyBinding);
-    children_.Push(child);
-    return child;
-}
-
-void UrhoContextMenu::ShowAtCursor()
-{
-    if (Window* popup = menu_->GetPopupElement())
-    {
-        UI* ui = GetSubsystem<UI>();
-        popup->SetVisible(true);
-        popup->SetPosition(ui->GetCursorPosition());
-        popup->SetFixedSize(popup->GetEffectiveMinSize());
-    }
-}
-
-//////////////////////////////////////////////////////////////////////////
-#if 0
-UrhoMenu::UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& text, const String& actionId,
-    bool hasPopup, bool topLevel, bool popupOnly)
-    : AbstractMenu(mainWindow->GetContext())
-    , mainWindow_(mainWindow)
-{
-    AbstractAction* action = mainWindow_->FindAction(actionId);
-
-    if (!popupOnly)
-    {
-        CreateMenuLabel(text);
-        if (topLevel)
-            menu_->SetMaxWidth(text_->GetWidth() + 20);
-
-        SubscribeToEvent(menu_, E_MENUSELECTED, URHO3D_HANDLER(UrhoMenu, HandleMenuSelected));
-
-        if (action)
-        {
-            actionCallback_ = action->actionCallback_;
-
-            const KeyBinding& keyBinding = action->keyBinding_;
-            if (!keyBinding.IsEmpty())
-                CreateAccelerator(keyBinding);
-        }
-    }
-
-    if (hasPopup)
-    {
-        popup_ = MakeShared<Window>(context_);
-        popup_->SetStyleAuto();
-        popup_->SetLayout(LM_VERTICAL, 1, IntRect(2, 6, 2, 6));
-        if (!popupOnly)
-        {
-            popup_->SetDefaultStyle(menu_->GetDefaultStyle());
-            menu_->SetPopup(popup_);
-            menu_->SetPopupOffset(0, menu_->GetHeight());
-        }
-        else
-        {
-            UI* ui = GetSubsystem<UI>();
-            UIElement* root = ui->GetRoot();
-            popup_->SetVisible(false);
-            root->AddChild(popup_);
-        }
-    }
-    if (!popupOnly)
-    {
-        parent->AddChild(menu_);
-    }
-}
-
-AbstractMenu* UrhoMenu::AddMenu(const String& name)
-{
-    if (!popup_)
-        return nullptr;
-    children_.Push(MakeShared<UrhoMenu>(mainWindow_, popup_, name, "", true, false, false));
-    return children_.Back();
-}
-
-AbstractMenu* UrhoMenu::AddAction(const String& name, const String& actionId)
-{
-    if (!popup_)
-        return nullptr;
-    children_.Push(MakeShared<UrhoMenu>(mainWindow_, popup_, name, actionId, false, false, false));
-    return children_.Back();
-}
-
-void UrhoMenu::SetName(const String& name)
-{
-    text_->SetText(name);
-}
-
-void UrhoMenu::ShowAtCursor()
-{
-    if (popup_ && !menu_)
-    {
-        UI* ui = GetSubsystem<UI>();
-        popup_->SetVisible(true);
-        popup_->SetPosition(ui->GetCursorPosition());
-        popup_->SetFixedSize(popup_->GetEffectiveMinSize());
-    }
-}
-
-void UrhoMenu::OnShowPopup()
-{
-    for (UrhoMenu* child : children_)
-        if (child->onShown_)
-            child->onShown_();
-}
-
-void UrhoMenu::CreateMenuLabel(const String& text)
-{
-    assert(!menu_ && !text_);
     UI* ui = GetSubsystem<UI>();
-
-    menu_ = new MenuWithPopupCallback(context_, this);
-    menu_->SetDefaultStyle(ui->GetRoot()->GetDefaultStyle());
-    menu_->SetStyleAuto();
-    menu_->SetLayout(LM_HORIZONTAL, 0, IntRect(8, 2, 8, 2));
-
-    text_ = menu_->CreateChild<Text>();
-    text_->SetStyle("EditorMenuText");
-    text_->SetText(text);
+    window_->SetVisible(true);
+    window_->SetPosition(ui->GetCursorPosition());
+    window_->SetMinSize(window_->GetEffectiveMinSize());
 }
-
-void UrhoMenu::CreateAccelerator(const KeyBinding& keyBinding)
-{
-    assert(menu_);
-
-    // Setup accelerator
-    int qualifiers = 0;
-    if (keyBinding.GetShift() == ModifierState::Required)
-        qualifiers |= QUAL_SHIFT;
-    if (keyBinding.GetCtrl() == ModifierState::Required)
-        qualifiers |= QUAL_CTRL;
-    if (keyBinding.GetAlt() == ModifierState::Required)
-        qualifiers |= QUAL_ALT;
-    menu_->SetAccelerator(keyBinding.GetKey(), qualifiers);
-
-    // Create accelerator tip
-    UIElement* spacer = menu_->CreateChild<UIElement>();
-    spacer->SetMinWidth(text_->GetIndentSpacing());
-    spacer->SetHeight(text_->GetHeight());
-    menu_->AddChild(spacer);
-
-    Text* accelKeyText = menu_->CreateChild<Text>();
-    accelKeyText->SetStyle("EditorMenuText");
-    accelKeyText->SetTextAlignment(HA_RIGHT);
-    accelKeyText->SetText(PrintKeyBinding(keyBinding));
-}
-
-void UrhoMenu::HandleMenuSelected(StringHash eventType, VariantMap& eventData)
-{
-    if (menu_->GetPopup())
-        return;
-
-    mainWindow_->CollapseMenuPopups(menu_);
-
-    if (actionCallback_)
-        actionCallback_();
-}
-#endif
-//////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////
 const Urho3D::StringHash UrhoMainWindow::VAR_DOCUMENT("Document");
@@ -1114,16 +917,16 @@ void UrhoMainWindow::CreateMainMenu(const AbstractMenuDesc& desc)
         CreateMenu(context_, child, menuBar_, menuBar_, false);
 }
 
-AbstractPopupMenu* UrhoMainWindow::AddMenu(const String& name)
+SharedPtr<AbstractContextMenu> UrhoMainWindow::CreateContextMenu(const AbstractMenuDesc& desc)
 {
-    auto menu = MakeShared<UrhoPopupMenu>(context_, menuBar_, menuBar_, name);
-    menus_.Push(menu);
-    return menus_.Back();
-}
+    Window* popup = uiRoot_->CreateChild<Window>();
+    popup->SetStyleAuto();
+    popup->SetLayout(LM_VERTICAL, 1, IntRect(2, 6, 2, 6));
+    popup->SetVisible(false);
 
-SharedPtr<AbstractContextMenu> UrhoMainWindow::CreateContextMenu()
-{
-    return MakeShared<UrhoContextMenu>(context_);
+    for (const AbstractMenuDesc& child : desc.children_)
+        CreateMenu(context_, child, popup, popup, true);
+    return MakeShared<UrhoContextMenu>(context_, popup);
 }
 
 void UrhoMainWindow::InsertDocument(Object* document, const String& title, unsigned index)

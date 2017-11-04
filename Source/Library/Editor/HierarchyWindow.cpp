@@ -29,14 +29,15 @@ Hierarchy::Hierarchy(AbstractWidgetStack* stack, Object* document)
     hierarchyList_->onItemClicked_ = [=](AbstractHierarchyListItem* item)
     {
         HandleListSelectionChanged();
-        itemContextMenu_->ShowAtCursor();
+        itemContextMenu_->Show();
     };
     SetScene(scene_);
 
-    itemContextMenu_ = stack->GetMainWindow()->CreateContextMenu();
-    itemContextMenu_->AddAction("First", KeyBinding::EMPTY);
-    itemContextMenu_->AddAction("Second", KeyBinding::EMPTY);
-    itemContextMenu_->AddAction("Third", KeyBinding::EMPTY);
+    itemContextMenu_ = stack->GetMainWindow()->CreateContextMenu(AbstractMenuDesc({
+        AbstractMenuDesc("First"),
+        AbstractMenuDesc("Second"),
+        AbstractMenuDesc("Third"),
+    }));
 }
 
 Hierarchy::~Hierarchy()
