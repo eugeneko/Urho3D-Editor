@@ -39,4 +39,4 @@ endif ()
 
 # Add projects
 add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Library)
-add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Samples/00_Editor)
+add_subdirectory (${CMAKE_SOURCE_DIR}/Source/Samples)
