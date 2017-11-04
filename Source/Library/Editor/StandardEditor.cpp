@@ -264,7 +264,8 @@ void StandardEditor::InitializeResourceLayers()
 
 void StandardEditor::SetupActions()
 {
-    mainWindow_->AddAction("EditUndo", KeyBinding::Key(KEY_Z) + KeyBinding::CTRL,
+    // Undo
+    mainWindow_->RegisterAction("EditUndo",
         [=]()
     {
         if (currentDocument_ && currentDocument_->undoStack_)
@@ -272,8 +273,20 @@ void StandardEditor::SetupActions()
             currentDocument_->undoStack_->Undo();
             inspector_->Refresh();
         }
+    },
+        [=](String& text)
+    {
+        if (currentDocument_ && currentDocument_->undoStack_)
+        {
+            if (currentDocument_->undoStack_->CanUndo())
+                text = "Undo " + currentDocument_->undoStack_->GetUndoTitle();
+            else
+                text = "Cannot Undo";
+        }
     });
-    mainWindow_->AddAction("EditRedo", KeyBinding::Key(KEY_Y) + KeyBinding::CTRL,
+
+    // Redo
+    mainWindow_->RegisterAction("EditRedo",
         [=]()
     {
         if (currentDocument_ && currentDocument_->undoStack_)
@@ -281,16 +294,30 @@ void StandardEditor::SetupActions()
             currentDocument_->undoStack_->Redo();
             inspector_->Refresh();
         }
+    },
+        [=](String& text)
+    {
+        if (currentDocument_ && currentDocument_->undoStack_)
+        {
+            if (currentDocument_->undoStack_->CanRedo())
+                text = "Redo " + currentDocument_->undoStack_->GetRedoTitle();
+            else
+                text = "Cannot Redo";
+        }
     });
-    mainWindow_->AddAction("EditCut", KeyBinding::Key(KEY_X) + KeyBinding::CTRL, [=]() {});
-    mainWindow_->AddAction("EditCopy", KeyBinding::Key(KEY_C) + KeyBinding::CTRL, [=]() {});
-    mainWindow_->AddAction("EditPaste", KeyBinding::Key(KEY_V) + KeyBinding::CTRL, [=]() {});
-    mainWindow_->AddAction("EditDelete", KeyBinding::Key(KEY_DELETE),
+
+    // Copy
+    mainWindow_->RegisterAction("EditCut", [=]() {});
+    mainWindow_->RegisterAction("EditCopy", [=]() {});
+    mainWindow_->RegisterAction("EditPaste", [=]() {});
+    mainWindow_->RegisterAction("EditDelete",
         [=]()
     {
         // #TODO Implement me
     });
-    mainWindow_->AddAction("SceneTogglePlay", KeyBinding::Key(KEY_F5),
+
+    // Play
+    mainWindow_->RegisterAction("SceneTogglePlay",
         [=]()
     {
         if (currentDocument_ && currentDocument_->scene_)
@@ -298,49 +325,34 @@ void StandardEditor::SetupActions()
             Scene* currentScene = currentDocument_->scene_;
             currentScene->SetUpdateEnabled(!currentScene->IsUpdateEnabled());
         }
+    },
+        [=](String& text)
+    {
+        if (currentDocument_ && currentDocument_->scene_)
+        {
+            Scene* currentScene = currentDocument_->scene_;
+            text = currentScene->IsUpdateEnabled() ? "Pause Scene" : "Play Scene";
+        }
     });
 }
 
 void StandardEditor::SetupMenu()
 {
-    AbstractMenu* menuEdit = mainWindow_->AddMenu("Edit");
-    AbstractMenu* menuEditUndo = menuEdit->AddAction("Undo", "EditUndo");
-    menuEditUndo->onShown_ = [=]()
-    {
-        if (currentDocument_ && currentDocument_->undoStack_)
+    mainWindow_->CreateMainMenu(AbstractMenuDesc({
+        AbstractMenuDesc("Edit",
         {
-            if (currentDocument_->undoStack_->CanUndo())
-                menuEditUndo->SetName("Undo " + currentDocument_->undoStack_->GetUndoTitle());
-            else
-                menuEditUndo->SetName("Cannot Undo");
-        }
-    };
-    AbstractMenu* menuEditRedo = menuEdit->AddAction("Redo", "EditRedo");
-    menuEditRedo->onShown_ = [=]()
-    {
-        if (currentDocument_ && currentDocument_->undoStack_)
+            { "Undo",   KeyBinding::Key(KEY_Z) + KeyBinding::CTRL,  mainWindow_->FindAction("EditUndo") },
+            { "Redo",   KeyBinding::Key(KEY_Y) + KeyBinding::CTRL,  mainWindow_->FindAction("EditRedo") },
+            { "Cut",    KeyBinding::Key(KEY_X) + KeyBinding::CTRL,  mainWindow_->FindAction("EditCut") },
+            { "Copy",   KeyBinding::Key(KEY_C) + KeyBinding::CTRL,  mainWindow_->FindAction("EditCopy") },
+            { "Paste",  KeyBinding::Key(KEY_V) + KeyBinding::CTRL,  mainWindow_->FindAction("EditPaste") },
+            { "Delete", KeyBinding::Key(KEY_DELETE),                mainWindow_->FindAction("EditDelete") },
+        }),
+        AbstractMenuDesc("Scene",
         {
-            if (currentDocument_->undoStack_->CanRedo())
-                menuEditRedo->SetName("Redo " + currentDocument_->undoStack_->GetRedoTitle());
-            else
-                menuEditRedo->SetName("Cannot Redo");
-        }
-    };
-    menuEdit->AddAction("Cut", "EditCut");
-    menuEdit->AddAction("Copy", "EditCopy");
-    menuEdit->AddAction("Paste", "EditPaste");
-    menuEdit->AddAction("Delete", "EditDelete");
-
-    AbstractMenu* menuScene = mainWindow_->AddMenu("Scene");
-    AbstractMenu* menuSceneTogglePlay = menuScene->AddAction("Play Scene", "SceneTogglePlay");
-    menuSceneTogglePlay->onShown_ = [=]()
-    {
-        if (currentDocument_ && currentDocument_->scene_)
-        {
-            Scene* currentScene = currentDocument_->scene_;
-            menuSceneTogglePlay->SetName(currentScene->IsUpdateEnabled() ? "Pause Scene" : "Play Scene");
-        }
-    };
+            { "Play Scene", KeyBinding::Key(KEY_F5), mainWindow_->FindAction("SceneTogglePlay") },
+        })
+    }));
 }
 
 void StandardEditor::SetupControlsGeneric()

@@ -34,9 +34,9 @@ Hierarchy::Hierarchy(AbstractWidgetStack* stack, Object* document)
     SetScene(scene_);
 
     itemContextMenu_ = stack->GetMainWindow()->CreateContextMenu();
-    itemContextMenu_->AddAction("First", "EditDelete");
-    itemContextMenu_->AddAction("Second", "EditDelete");
-    itemContextMenu_->AddAction("Third", "EditDelete");
+    itemContextMenu_->AddAction("First", KeyBinding::EMPTY);
+    itemContextMenu_->AddAction("Second", KeyBinding::EMPTY);
+    itemContextMenu_->AddAction("Third", KeyBinding::EMPTY);
 }
 
 Hierarchy::~Hierarchy()

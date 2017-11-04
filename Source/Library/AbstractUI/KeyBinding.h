@@ -40,6 +40,7 @@ public:
     ModifierState GetShift() const { return shift_; }
     ModifierState GetAlt() const { return alt_; }
     ModifierState GetCtrl() const { return ctrl_; }
+    String ToString() const;
 private:
     int mouseButton_ = -1;
     int key_ = -1;

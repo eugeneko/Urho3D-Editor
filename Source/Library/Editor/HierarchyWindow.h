@@ -92,7 +92,7 @@ private:
     Selection::ObjectSet cachedSelectionSet_;
 
     // #TODO Hide
-    SharedPtr<AbstractMenu> itemContextMenu_;
+    SharedPtr<AbstractContextMenu> itemContextMenu_;
 };
 
 class HierarchyWindow : public Object

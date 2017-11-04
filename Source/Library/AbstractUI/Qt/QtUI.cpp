@@ -1,4 +1,6 @@
 #include "QtUI.h"
+
+#ifdef URHO3D_COMPILE_QT
 #include "QtUrhoHelpers.h"
 #include <Urho3D/Core/ProcessUtils.h>
 #include <Urho3D/Graphics/Graphics.h>
@@ -763,7 +765,7 @@ AbstractMenu* QtMenu::AddAction(const String& name, const String& actionId)
     QAction* action = new QAction(this);
     action->setText(Cast(name));
     action->setShortcut(Cast(actionDesc->keyBinding_));
-    connect(action, &QAction::triggered, this, actionDesc->actionCallback_);
+    connect(action, &QAction::triggered, this, actionDesc->onActivated_);
 
     menu_->addAction(action);
     children_.Push(MakeShared<QtMenu>(host_, action));
@@ -889,3 +891,5 @@ const AbstractAction* QtMainWindow::FindAction(const String& id) const
 }
 
 }
+
+#endif

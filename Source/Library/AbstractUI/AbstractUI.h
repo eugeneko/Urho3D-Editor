@@ -31,28 +31,111 @@ private:
 
 };
 
-struct AbstractAction
+class AbstractAction : public RefCounted
 {
+public:
     String id_;
-    String text_;
-    std::function<void()> actionCallback_;
-    KeyBinding keyBinding_;
+    std::function<void()> onActivated_;
+    std::function<void(String& text)> onUpdateText_;
 };
 
-class AbstractMenu : public Object
+struct AbstractMenuDesc
 {
-    URHO3D_OBJECT(AbstractMenu, Object);
+    AbstractMenuDesc() = default;
+    AbstractMenuDesc(const Vector<AbstractMenuDesc>& children) : children_(children) { }
+    AbstractMenuDesc(const String& text, const Vector<AbstractMenuDesc>& children) : text_(text), children_(children) { }
+    AbstractMenuDesc(const String& text, KeyBinding hotkey, AbstractAction* action = nullptr) : text_(text), hotkey_(hotkey), action_(action) { }
 
+    String text_;
+    KeyBinding hotkey_;
+    AbstractAction* action_ = nullptr;
+    Vector<AbstractMenuDesc> children_;
+};
+
+class AbstractActionRegister
+{
 public:
-    AbstractMenu(Context* context) : Object(context) {}
+    void RegisterAction(const SharedPtr<AbstractAction>& action)
+    {
+        actions_[action->id_] = action;
+    }
 
-    virtual AbstractMenu* AddMenu(const String& name) = 0;
-    virtual AbstractMenu* AddAction(const String& name, const String& actionId) = 0;
-    virtual void SetName(const String& name) = 0;
-    virtual void ShowAtCursor() {}
+    template <class T> void RegisterAction(const String& id, T activated)
+    {
+        auto action = MakeShared<AbstractAction>();
+        action->id_ = id;
+        action->onActivated_ = activated;
+        RegisterAction(action);
+    }
+
+    template <class T, class U> void RegisterAction(const String& id, T activated, U update)
+    {
+        auto action = MakeShared<AbstractAction>();
+        action->id_ = id;
+        action->onActivated_ = activated;
+        action->onUpdateText_ = update;
+        RegisterAction(action);
+    }
+
+    AbstractAction* FindAction(const String& actionId) const
+    {
+        SharedPtr<AbstractAction>* actionPtr = actions_[actionId];
+        return actionPtr ? *actionPtr : nullptr;
+    }
+
+
+private:
+    HashMap<String, SharedPtr<AbstractAction>> actions_;
+};
+
+class AbstractBaseMenu : public Object
+{
+    URHO3D_OBJECT(AbstractBaseMenu, Object);
 
 public:
     std::function<void()> onShown_;
+
+public:
+    AbstractBaseMenu(Context* context) : Object(context) {}
+};
+
+/// Action menu interface.
+class AbstractMenuAction : public AbstractBaseMenu
+{
+    URHO3D_OBJECT(AbstractMenuAction, AbstractBaseMenu);
+
+public:
+    AbstractMenuAction(Context* context) : AbstractBaseMenu(context) {}
+
+    virtual void SetName(const String& text) = 0;
+
+};
+
+/// Popup menu interface.
+class AbstractPopupMenu : public AbstractBaseMenu
+{
+    URHO3D_OBJECT(AbstractPopupMenu, AbstractBaseMenu);
+
+public:
+    AbstractPopupMenu(Context* context) : AbstractBaseMenu(context) {}
+
+    virtual AbstractPopupMenu* AddMenu(const String& name) = 0;
+    virtual AbstractMenuAction* AddAction(const String& name, const KeyBinding& keyBinding) = 0;
+    virtual void SetName(const String& name) = 0;
+
+};
+
+/// Context menu interface.
+class AbstractContextMenu : public AbstractBaseMenu
+{
+    URHO3D_OBJECT(AbstractContextMenu, AbstractBaseMenu);
+
+public:
+    AbstractContextMenu(Context* context) : AbstractBaseMenu(context) {}
+
+    virtual AbstractPopupMenu* AddMenu(const String& name) = 0;
+    virtual AbstractMenuAction* AddAction(const String& name, const KeyBinding& keyBinding) = 0;
+    virtual void ShowAtCursor() = 0;
 
 };
 
@@ -336,25 +419,20 @@ public:
 
 };
 
-class AbstractMainWindow
+class AbstractMainWindow : public AbstractActionRegister
 {
 public:
     SharedPtr<AbstractWidget> CreateWidget(StringHash type);
     virtual AbstractDock* AddDock(DockLocation hint = DockLocation::Left, const IntVector2& sizeHint = IntVector2(200, 200)) = 0;
-    virtual void AddAction(const AbstractAction& actionDesc) = 0;
-    virtual AbstractMenu* AddMenu(const String& name) = 0;
-    virtual SharedPtr<AbstractMenu> CreateContextMenu() = 0;
+    virtual void CreateMainMenu(const AbstractMenuDesc& desc) = 0;
+    virtual AbstractPopupMenu* AddMenu(const String& name) = 0;
+    virtual SharedPtr<AbstractContextMenu> CreateContextMenu() = 0;
     virtual void InsertDocument(Object* document, const String& title, unsigned index) = 0;
     virtual void SelectDocument(Object* document) = 0;
     virtual PODVector<Object*> GetDocuments() const = 0;
 
     virtual Context* GetContext() = 0;
     virtual AbstractInput* GetInput() = 0;
-
-    template <class T> void AddAction(const String& id, KeyBinding keyBinding, T function)
-    {
-        AddAction({ id, "", function, keyBinding });
-    }
 
 public:
     std::function<void(Object* document)> onCurrentDocumentChanged_;

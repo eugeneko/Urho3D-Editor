@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../AbstractUI.h"
+#include "Menu.h"
 #include <Urho3D/UI/Window.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/Menu.h>
@@ -284,44 +285,49 @@ private:
     UI* ui_ = nullptr;
 };
 
-class UrhoMenu : public AbstractMenu
+class UrhoPopupMenu : public AbstractPopupMenu
 {
-    URHO3D_OBJECT(UrhoMenu, AbstractMenu);
+    URHO3D_OBJECT(UrhoPopupMenu, AbstractPopupMenu);
 
 public:
-    UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& text, const String& actionId, bool hasPopup, bool topLevel, bool popupOnly);
-    AbstractMenu* AddMenu(const String& name) override;
-    AbstractMenu* AddAction(const String& name, const String& actionId) override;
+    UrhoPopupMenu(Context* context, UIElement* menuRoot, UIElement* parent, const String& text);
+
+    AbstractPopupMenu* AddMenu(const String& name) override;
+    AbstractMenuAction* AddAction(const String& name, const KeyBinding& keyBinding) override;
     void SetName(const String& name) override;
-    void ShowAtCursor() override;
-
-    void OnShowPopup();
 
 private:
-    void CreateMenuLabel(const String& text);
-    void CreateAccelerator(const KeyBinding& keyBinding);
-
-    void HandleMenuSelected(StringHash eventType, VariantMap& eventData);
-
-private:
-    UrhoMainWindow* mainWindow_ = nullptr;
-    // #TODO Hide em
-    Menu* menu_ = nullptr;
-    Text* text_ = nullptr;
-    SharedPtr<Window> popup_ = nullptr;
-    std::function<void()> actionCallback_;
-    Vector<SharedPtr<UrhoMenu>> children_;
+    SharedPtr<MenuPopup> menu_;
+    Vector<SharedPtr<AbstractBaseMenu>> children_;
 };
 
-class MenuWithPopupCallback : public Menu
+class UrhoActionMenu : public AbstractMenuAction
 {
-public:
-    MenuWithPopupCallback(Context* context, UrhoMenu* menu);
+    URHO3D_OBJECT(UrhoActionMenu, AbstractMenuAction);
 
-    virtual void OnShowPopup() override;
+public:
+    UrhoActionMenu(Context* context, UIElement* menuRoot, UIElement* parent, const String& text, const KeyBinding& keyBinding);
+
+    void SetName(const String& text) override;
 
 private:
-    UrhoMenu* menu_ = nullptr;
+    SharedPtr<MenuPopup> menu_;
+};
+
+class UrhoContextMenu : public AbstractContextMenu
+{
+    URHO3D_OBJECT(UrhoContextMenu, AbstractContextMenu);
+
+public:
+    UrhoContextMenu(Context* context);
+
+    AbstractPopupMenu* AddMenu(const String& name) override;
+    AbstractMenuAction* AddAction(const String& name, const KeyBinding& keyBinding) override;
+    void ShowAtCursor() override;
+
+private:
+    SharedPtr<MenuPopup> menu_;
+    Vector<SharedPtr<AbstractBaseMenu>> children_;
 };
 
 class UrhoMainWindow : public AbstractMainWindow, public Object
@@ -334,9 +340,9 @@ public:
     UrhoMainWindow(Context* context);
 
     AbstractDock* AddDock(DockLocation hint, const IntVector2& sizeHint) override;
-    void AddAction(const AbstractAction& actionDesc) override;
-    AbstractMenu* AddMenu(const String& name) override;
-    SharedPtr<AbstractMenu> CreateContextMenu() override;
+    void CreateMainMenu(const AbstractMenuDesc& desc) override;
+    AbstractPopupMenu* AddMenu(const String& name) override;
+    SharedPtr<AbstractContextMenu> CreateContextMenu() override;
     void InsertDocument(Object* document, const String& title, unsigned index) override;
     void SelectDocument(Object* document) override;
     PODVector<Object*> GetDocuments() const override;
@@ -344,7 +350,6 @@ public:
     Context* GetContext() override { return Object::GetContext(); }
     AbstractInput* GetInput() override { return &input_; }
 
-    AbstractAction* FindAction(const String& actionId) const;
     void CollapseMenuPopups(Menu* menu) const;
 
 private:
@@ -367,10 +372,8 @@ private:
     Vector<SharedPtr<UrhoDock>> dialogs_;
     StandardUrhoInput input_;
 
-    HashMap<String, AbstractAction> actions_;
-
     UIElement* menuBar_ = nullptr;
-    Vector<SharedPtr<UrhoMenu>> menus_;
+    Vector<SharedPtr<UrhoPopupMenu>> menus_;
 
     UIElement* documentBar_ = nullptr;
     DropDownList* documentList_ = nullptr;

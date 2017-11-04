@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef URHO3D_COMPILE_QT
+
 #include "../AbstractUI.h"
 #include "../Urho/UrhoUI.h"
 #include "QtUrhoWidget.h"
@@ -376,3 +378,5 @@ private:
 };
 
 }
+
+#endif

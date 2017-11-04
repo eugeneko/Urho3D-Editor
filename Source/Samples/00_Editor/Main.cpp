@@ -10,6 +10,7 @@
 
 using namespace Urho3D;
 
+#ifdef URHO3D_COMPILE_QT
 int QtEditorMain()
 {
     static int argcStub = 0;
@@ -21,6 +22,7 @@ int QtEditorMain()
     mainWindow.showMaximized();
     return applicaton.exec();
 }
+#endif // URHO3D_COMPILE_QT
 
 //////////////////////////////////////////////////////////////////////////
 class UrhoEditorApplication : public Application
