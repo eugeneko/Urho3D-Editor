@@ -289,14 +289,18 @@ class UrhoMenu : public AbstractMenu
     URHO3D_OBJECT(UrhoMenu, AbstractMenu);
 
 public:
-    UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& text, const String& actionId, bool hasPopup, bool topLevel);
+    UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& text, const String& actionId, bool hasPopup, bool topLevel, bool popupOnly);
     AbstractMenu* AddMenu(const String& name) override;
     AbstractMenu* AddAction(const String& name, const String& actionId) override;
     void SetName(const String& name) override;
+    void ShowAtCursor() override;
 
     void OnShowPopup();
 
 private:
+    void CreateMenuLabel(const String& text);
+    void CreateAccelerator(const KeyBinding& keyBinding);
+
     void HandleMenuSelected(StringHash eventType, VariantMap& eventData);
 
 private:
@@ -332,6 +336,7 @@ public:
     AbstractDock* AddDock(DockLocation hint, const IntVector2& sizeHint) override;
     void AddAction(const AbstractAction& actionDesc) override;
     AbstractMenu* AddMenu(const String& name) override;
+    SharedPtr<AbstractMenu> CreateContextMenu() override;
     void InsertDocument(Object* document, const String& title, unsigned index) override;
     void SelectDocument(Object* document) override;
     PODVector<Object*> GetDocuments() const override;

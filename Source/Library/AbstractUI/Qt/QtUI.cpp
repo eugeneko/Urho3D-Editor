@@ -842,6 +842,11 @@ AbstractMenu* QtMainWindow::AddMenu(const String& name)
     return menus_.Back();
 }
 
+SharedPtr<AbstractMenu> QtMainWindow::CreateContextMenu()
+{
+    return nullptr;
+}
+
 void QtMainWindow::InsertDocument(Object* document, const String& title, unsigned index)
 {
     const int clampedIndex = Clamp(static_cast<int>(index), 0, documentsBar_.count());

@@ -29,8 +29,14 @@ Hierarchy::Hierarchy(AbstractWidgetStack* stack, Object* document)
     hierarchyList_->onItemClicked_ = [=](AbstractHierarchyListItem* item)
     {
         HandleListSelectionChanged();
+        itemContextMenu_->ShowAtCursor();
     };
     SetScene(scene_);
+
+    itemContextMenu_ = stack->GetMainWindow()->CreateContextMenu();
+    itemContextMenu_->AddAction("First", "EditDelete");
+    itemContextMenu_->AddAction("Second", "EditDelete");
+    itemContextMenu_->AddAction("Third", "EditDelete");
 }
 
 Hierarchy::~Hierarchy()

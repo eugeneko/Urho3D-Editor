@@ -90,6 +90,9 @@ private:
     bool suppressEditorSelectionChanges_ = false;
     Selection::ObjectVector cachedSelection_;
     Selection::ObjectSet cachedSelectionSet_;
+
+    // #TODO Hide
+    SharedPtr<AbstractMenu> itemContextMenu_;
 };
 
 class HierarchyWindow : public Object

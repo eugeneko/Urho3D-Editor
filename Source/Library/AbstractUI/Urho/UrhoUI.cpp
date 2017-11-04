@@ -782,88 +782,60 @@ int StandardUrhoInput::GetMouseWheelMove() const
 
 //////////////////////////////////////////////////////////////////////////
 UrhoMenu::UrhoMenu(UrhoMainWindow* mainWindow, UIElement* parent, const String& text, const String& actionId,
-    bool hasPopup, bool topLevel)
+    bool hasPopup, bool topLevel, bool popupOnly)
     : AbstractMenu(mainWindow->GetContext())
     , mainWindow_(mainWindow)
 {
-    AbstractAction* action = nullptr;
-    if (!actionId.Empty())
+    AbstractAction* action = mainWindow_->FindAction(actionId);
+
+    if (!popupOnly)
     {
-        action = mainWindow_->FindAction(actionId);
-    }
+        CreateMenuLabel(text);
+        if (topLevel)
+            menu_->SetMaxWidth(text_->GetWidth() + 20);
 
-    menu_ = new MenuWithPopupCallback(context_, this);
-    menu_->SetDefaultStyle(parent->GetDefaultStyle());
-    menu_->SetStyleAuto();
-    menu_->SetLayout(LM_HORIZONTAL, 0, IntRect(8, 2, 8, 2));
-
-    text_ = menu_->CreateChild<Text>();
-    text_->SetStyle("EditorMenuText");
-    text_->SetText(text);
-
-    if (topLevel)
-    {
-        menu_->SetMaxWidth(text_->GetWidth() + 20);
-    }
-
-    if (action)
-    {
-        actionCallback_ = action->actionCallback_;
         SubscribeToEvent(menu_, E_MENUSELECTED, URHO3D_HANDLER(UrhoMenu, HandleMenuSelected));
 
-        const KeyBinding& keyBinding = action->keyBinding_;
-        if (!keyBinding.IsEmpty())
+        if (action)
         {
-            // Setup accelerator
-            int qualifiers = 0;
-            if (keyBinding.GetShift() == ModifierState::Required)
-                qualifiers |= QUAL_SHIFT;
-            if (keyBinding.GetCtrl() == ModifierState::Required)
-                qualifiers |= QUAL_CTRL;
-            if (keyBinding.GetAlt() == ModifierState::Required)
-                qualifiers |= QUAL_ALT;
-            menu_->SetAccelerator(keyBinding.GetKey(), qualifiers);
+            actionCallback_ = action->actionCallback_;
 
-            // Create accelerator tip
-            UIElement* spacer = menu_->CreateChild<UIElement>();
-            spacer->SetMinWidth(text_->GetIndentSpacing());
-            spacer->SetHeight(text_->GetHeight());
-            menu_->AddChild(spacer);
-
-            Text* accelKeyText = menu_->CreateChild<Text>();
-            accelKeyText->SetStyle("EditorMenuText");
-            accelKeyText->SetTextAlignment(HA_RIGHT);
-            accelKeyText->SetText(PrintKeyBinding(keyBinding));
+            const KeyBinding& keyBinding = action->keyBinding_;
+            if (!keyBinding.IsEmpty())
+                CreateAccelerator(keyBinding);
         }
-    }
-    else
-    {
-        SubscribeToEvent(menu_, E_PRESSED,
-            [=](StringHash /*eventType*/, VariantMap& /*eventData*/)
-        {
-            if (onShown_)
-                onShown_();
-        });
     }
 
     if (hasPopup)
     {
         popup_ = MakeShared<Window>(context_);
-        popup_->SetDefaultStyle(menu_->GetDefaultStyle());
         popup_->SetStyleAuto();
         popup_->SetLayout(LM_VERTICAL, 1, IntRect(2, 6, 2, 6));
-        menu_->SetPopup(popup_);
-        menu_->SetPopupOffset(0, menu_->GetHeight());
+        if (!popupOnly)
+        {
+            popup_->SetDefaultStyle(menu_->GetDefaultStyle());
+            menu_->SetPopup(popup_);
+            menu_->SetPopupOffset(0, menu_->GetHeight());
+        }
+        else
+        {
+            UI* ui = GetSubsystem<UI>();
+            UIElement* root = ui->GetRoot();
+            popup_->SetVisible(false);
+            root->AddChild(popup_);
+        }
     }
-
-    parent->AddChild(menu_);
+    if (!popupOnly)
+    {
+        parent->AddChild(menu_);
+    }
 }
 
 AbstractMenu* UrhoMenu::AddMenu(const String& name)
 {
     if (!popup_)
         return nullptr;
-    children_.Push(MakeShared<UrhoMenu>(mainWindow_, popup_, name, "", true, false));
+    children_.Push(MakeShared<UrhoMenu>(mainWindow_, popup_, name, "", true, false, false));
     return children_.Back();
 }
 
@@ -871,7 +843,7 @@ AbstractMenu* UrhoMenu::AddAction(const String& name, const String& actionId)
 {
     if (!popup_)
         return nullptr;
-    children_.Push(MakeShared<UrhoMenu>(mainWindow_, popup_, name, actionId, false, false));
+    children_.Push(MakeShared<UrhoMenu>(mainWindow_, popup_, name, actionId, false, false, false));
     return children_.Back();
 }
 
@@ -880,11 +852,63 @@ void UrhoMenu::SetName(const String& name)
     text_->SetText(name);
 }
 
+void UrhoMenu::ShowAtCursor()
+{
+    if (popup_ && !menu_)
+    {
+        UI* ui = GetSubsystem<UI>();
+        popup_->SetVisible(true);
+        popup_->SetPosition(ui->GetCursorPosition());
+        popup_->SetFixedSize(popup_->GetEffectiveMinSize());
+    }
+}
+
 void UrhoMenu::OnShowPopup()
 {
     for (UrhoMenu* child : children_)
         if (child->onShown_)
             child->onShown_();
+}
+
+void UrhoMenu::CreateMenuLabel(const String& text)
+{
+    assert(!menu_ && !text_);
+    UI* ui = GetSubsystem<UI>();
+
+    menu_ = new MenuWithPopupCallback(context_, this);
+    menu_->SetDefaultStyle(ui->GetRoot()->GetDefaultStyle());
+    menu_->SetStyleAuto();
+    menu_->SetLayout(LM_HORIZONTAL, 0, IntRect(8, 2, 8, 2));
+
+    text_ = menu_->CreateChild<Text>();
+    text_->SetStyle("EditorMenuText");
+    text_->SetText(text);
+}
+
+void UrhoMenu::CreateAccelerator(const KeyBinding& keyBinding)
+{
+    assert(menu_);
+
+    // Setup accelerator
+    int qualifiers = 0;
+    if (keyBinding.GetShift() == ModifierState::Required)
+        qualifiers |= QUAL_SHIFT;
+    if (keyBinding.GetCtrl() == ModifierState::Required)
+        qualifiers |= QUAL_CTRL;
+    if (keyBinding.GetAlt() == ModifierState::Required)
+        qualifiers |= QUAL_ALT;
+    menu_->SetAccelerator(keyBinding.GetKey(), qualifiers);
+
+    // Create accelerator tip
+    UIElement* spacer = menu_->CreateChild<UIElement>();
+    spacer->SetMinWidth(text_->GetIndentSpacing());
+    spacer->SetHeight(text_->GetHeight());
+    menu_->AddChild(spacer);
+
+    Text* accelKeyText = menu_->CreateChild<Text>();
+    accelKeyText->SetStyle("EditorMenuText");
+    accelKeyText->SetTextAlignment(HA_RIGHT);
+    accelKeyText->SetText(PrintKeyBinding(keyBinding));
 }
 
 void UrhoMenu::HandleMenuSelected(StringHash eventType, VariantMap& eventData)
@@ -903,7 +927,6 @@ MenuWithPopupCallback::MenuWithPopupCallback(Context* context, UrhoMenu* abstrac
     : Menu(context)
     , menu_(abstractMenu)
 {
-
 }
 
 void MenuWithPopupCallback::OnShowPopup()
@@ -995,9 +1018,14 @@ void UrhoMainWindow::AddAction(const AbstractAction& actionDesc)
 
 AbstractMenu* UrhoMainWindow::AddMenu(const String& name)
 {
-    auto menu = MakeShared<UrhoMenu>(this, menuBar_, name, "", true, true);
+    auto menu = MakeShared<UrhoMenu>(this, menuBar_, name, "", true, true, false);
     menus_.Push(menu);
     return menus_.Back();
+}
+
+SharedPtr<AbstractMenu> UrhoMainWindow::CreateContextMenu()
+{
+    return MakeShared<UrhoMenu>(this, nullptr, "", "", true, false, true);;
 }
 
 void UrhoMainWindow::InsertDocument(Object* document, const String& title, unsigned index)
@@ -1063,11 +1091,15 @@ void UrhoMainWindow::CollapseMenuPopups(Menu* menu) const
         if (parentMenu)
             menu = parentMenu;
         else
+        {
+            // Hide menu popup or hide window
+            if (parent == menuBar_)
+                menu->ShowPopup(false);
+            else
+                parent->SetVisible(false);
             break;
+        }
     }
-
-    if (menu->GetParent() == menuBar_)
-        menu->ShowPopup(false);
 }
 
 }

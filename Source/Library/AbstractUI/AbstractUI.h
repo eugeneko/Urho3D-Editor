@@ -19,6 +19,18 @@ class AbstractMainWindow;
 class Selection;
 class AbstractDock;
 
+class AbstractUIElement : public Object
+{
+public:
+    AbstractUIElement(Context* context) : Object(context) { }
+    template <class T> void SetInternalHandleVariant(T pointer) { internalHandle_ = MakeCustomValue(pointer); }
+    template <class T> T GetInternalHandleVariant() const { return internalHandle_.GetCustom<T>(); }
+
+private:
+    Variant internalHandle_;
+
+};
+
 struct AbstractAction
 {
     String id_;
@@ -37,6 +49,7 @@ public:
     virtual AbstractMenu* AddMenu(const String& name) = 0;
     virtual AbstractMenu* AddAction(const String& name, const String& actionId) = 0;
     virtual void SetName(const String& name) = 0;
+    virtual void ShowAtCursor() {}
 
 public:
     std::function<void()> onShown_;
@@ -330,6 +343,7 @@ public:
     virtual AbstractDock* AddDock(DockLocation hint = DockLocation::Left, const IntVector2& sizeHint = IntVector2(200, 200)) = 0;
     virtual void AddAction(const AbstractAction& actionDesc) = 0;
     virtual AbstractMenu* AddMenu(const String& name) = 0;
+    virtual SharedPtr<AbstractMenu> CreateContextMenu() = 0;
     virtual void InsertDocument(Object* document, const String& title, unsigned index) = 0;
     virtual void SelectDocument(Object* document) = 0;
     virtual PODVector<Object*> GetDocuments() const = 0;
