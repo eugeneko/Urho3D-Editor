@@ -1,14 +1,20 @@
 #pragma once
 
+#include <Urho3D/UI/BorderImage.h>
 #include <Urho3D/UI/Menu.h>
 
 namespace Urho3D
 {
 
-class MenuBar : public UIElement
+class MenuBar : public BorderImage
 {
+    URHO3D_OBJECT(MenuBar, BorderImage);
+
 public:
     MenuBar(Context* context);
+
+    static void RegisterObject(Context* context);
+
     void SetMenuLayout(int spacing, const IntRect& border);
     void SetPopupLayout(int spacing, const IntRect& border);
     Menu* CreateMenu(const String& text, int key, int quals, Menu* parent = nullptr);

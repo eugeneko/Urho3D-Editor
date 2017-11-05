@@ -1,5 +1,6 @@
 #include "MenuBar.h"
 #include "Common.h"
+#include <Urho3D/Core/Context.h>
 #include <Urho3D/Input/InputEvents.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/Window.h>
@@ -7,13 +8,21 @@
 namespace Urho3D
 {
 
+extern const char* UI_CATEGORY;
+
 static const StringHash menuTextVar("MenuText");
 static const StringHash menuAccelTextVar("MenuAccelText");
 
 MenuBar::MenuBar(Context* context)
-    : UIElement(context)
+    : BorderImage(context)
 {
 
+}
+
+void MenuBar::RegisterObject(Context* context)
+{
+    context->RegisterFactory<MenuBar>(UI_CATEGORY);
+    URHO3D_COPY_BASE_ATTRIBUTES(BorderImage);
 }
 
 void MenuBar::SetMenuLayout(int spacing, const IntRect& border)

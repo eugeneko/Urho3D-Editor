@@ -1,8 +1,10 @@
 #include "../../Library/AdvancedUI/MenuBar.h"
+#include "../../Library/AdvancedUI/SplitView.h"
 
 #include <Urho3D/Engine/Application.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Graphics/Graphics.h>
+#include <Urho3D/Graphics/GraphicsEvents.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/UI/UI.h>
 
@@ -10,12 +12,12 @@
 
 using namespace Urho3D;
 
-class UrhoEditorApplication : public Application
+class SampleApplication : public Application
 {
-    URHO3D_OBJECT(UrhoEditorApplication, Application);
+    URHO3D_OBJECT(SampleApplication, Application);
 
 public:
-    UrhoEditorApplication(Context* context) : Application(context) { }
+    SampleApplication(Context* context) : Application(context) { }
 
     virtual void Start() override
     {
@@ -29,8 +31,14 @@ public:
         UIElement* uiRoot = ui->GetRoot();
         uiRoot->SetDefaultStyle(style);
 
+        MenuBar::RegisterObject(context_);
+        SplitLine::RegisterObject(context_);
+        SplitView::RegisterObject(context_);
+
         CreateUI();
         UpdateElements();
+
+        SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(SampleApplication, HandleResized));
     }
 
 private:
@@ -44,12 +52,22 @@ private:
         UI* ui = GetSubsystem<UI>();
         UIElement* uiRoot = ui->GetRoot();
 
+        // Setup cursor
+        auto cursor = MakeShared<Cursor>(context_);
+        cursor->SetStyleAuto();
+        ui->SetCursor(cursor);
+
+        // Setup main UI
+        mainUi_ = uiRoot->CreateChild<UIElement>();
+        mainUi_->SetLayout(LM_VERTICAL);
+
         // Create menu bar
         menuBar_ = new MenuBar(context_);
         menuBar_->SetLayout(LM_HORIZONTAL);
-        uiRoot->AddChild(menuBar_);
+        mainUi_->AddChild(menuBar_);
+        menuBar_->SetStyle("Menu");
 
-        // Create menus
+        // Create menu
         if (Menu* menuFile = menuBar_->CreateMenu("File"))
         {
             menuBar_->CreateMenu("Open", KEY_O, QUAL_CTRL, menuFile);
@@ -68,16 +86,64 @@ private:
             menuBar_->CreateMenu("Paste", KEY_P, QUAL_CTRL, menuEdit);
             menuBar_->CreateMenu("Delete", KEY_DELETE, 0, menuEdit);
         }
+
+        // Create document content
+        document_ = mainUi_->CreateChild<UIElement>();
+        document_->SetLayout(LM_HORIZONTAL);
+
+        SplitView* splitView = document_->CreateChild<SplitView>();
+        splitView->SetDefaultLineStyle();
+        splitView->SetSplit(SPLIT_VERTICAL);
+        splitView->SetRelativePosition(0.5f);
+        {
+            SplitView* leftSplit = splitView->CreateFirstChild<SplitView>();
+            leftSplit->SetDefaultLineStyle();
+            leftSplit->SetSplit(SPLIT_HORIZONTAL);
+            leftSplit->SetFixedPosition(100, SA_BEGIN);
+            {
+                SplitView* topSplit = leftSplit->CreateFirstChild<SplitView>();
+                topSplit->SetDefaultLineStyle();
+                topSplit->SetSplit(SPLIT_HORIZONTAL);
+                topSplit->SetRelativePosition(0.3f);
+            }
+            {
+                SplitView* bottomSplit = leftSplit->CreateSecondChild<SplitView>();
+                bottomSplit->SetDefaultLineStyle();
+                bottomSplit->SetSplit(SPLIT_VERTICAL);
+                bottomSplit->SetFixedPosition(100, SA_BEGIN);
+            }
+        }
+        {
+            SplitView* rightSplit = splitView->CreateSecondChild<SplitView>();
+            rightSplit->SetDefaultLineStyle();
+            rightSplit->SetSplit(SPLIT_HORIZONTAL);
+            rightSplit->SetFixedPosition(100, SA_END);
+            {
+                SplitView* topSplit = rightSplit->CreateFirstChild<SplitView>();
+                topSplit->SetDefaultLineStyle();
+                topSplit->SetSplit(SPLIT_VERTICAL);
+                topSplit->SetFixedPosition(100, SA_END);
+            }
+            {
+                SplitView* bottomSplit = rightSplit->CreateSecondChild<SplitView>();
+                bottomSplit->SetDefaultLineStyle();
+                bottomSplit->SetSplit(SPLIT_VERTICAL);
+                bottomSplit->SetRelativePosition(0.3f);
+            }
+        }
     }
 
     void UpdateElements()
     {
         Graphics* graphics = GetSubsystem<Graphics>();
-        menuBar_->SetSize(graphics->GetWidth(), menuBar_->GetEffectiveMinSize().y_);
+        mainUi_->SetFixedSize(graphics->GetWidth(), graphics->GetHeight());
+        menuBar_->SetFixedWidth(graphics->GetWidth());
+        menuBar_->SetMaxHeight(menuBar_->GetEffectiveMinSize().y_);
     }
 
+    UIElement* mainUi_ = nullptr;
     MenuBar* menuBar_ = nullptr;
-
+    UIElement* document_ = nullptr;
 };
 
-URHO3D_DEFINE_APPLICATION_MAIN(UrhoEditorApplication)
+URHO3D_DEFINE_APPLICATION_MAIN(SampleApplication)
