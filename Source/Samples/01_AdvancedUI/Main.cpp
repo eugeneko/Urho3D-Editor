@@ -1,5 +1,6 @@
 #include "../../Library/AdvancedUI/MenuBar.h"
 #include "../../Library/AdvancedUI/SplitView.h"
+#include "../../Library/AdvancedUI/TabBar.h"
 
 #include <Urho3D/Engine/Application.h>
 #include <Urho3D/Input/Input.h>
@@ -24,16 +25,13 @@ public:
         Application::Start();
 
         Input* input = GetSubsystem<Input>();
-        UI* ui = GetSubsystem<UI>();
-        ResourceCache* cache = GetSubsystem<ResourceCache>();
-        XMLFile* style = cache->GetResource<XMLFile>("UI/DefaultStyle.xml");
         input->SetMouseVisible(true);
-        UIElement* uiRoot = ui->GetRoot();
-        uiRoot->SetDefaultStyle(style);
+        UI* ui = GetSubsystem<UI>();
 
         MenuBar::RegisterObject(context_);
         SplitLine::RegisterObject(context_);
         SplitView::RegisterObject(context_);
+        TabBar::RegisterObject(context_);
 
         CreateUI();
         UpdateElements();
@@ -52,6 +50,12 @@ private:
         UI* ui = GetSubsystem<UI>();
         UIElement* uiRoot = ui->GetRoot();
 
+        // Setup UI
+        ResourceCache* cache = GetSubsystem<ResourceCache>();
+        XMLFile* style = cache->GetResource<XMLFile>("UI/DefaultStyle.xml");
+        uiRoot->SetDefaultStyle(style);
+        ui->SetNonFocusedMouseWheel(true);
+
         // Setup cursor
         auto cursor = MakeShared<Cursor>(context_);
         cursor->SetStyleAuto();
@@ -62,9 +66,8 @@ private:
         mainUi_->SetLayout(LM_VERTICAL);
 
         // Create menu bar
-        menuBar_ = new MenuBar(context_);
+        menuBar_ = mainUi_->CreateChild<MenuBar>();
         menuBar_->SetLayout(LM_HORIZONTAL);
-        mainUi_->AddChild(menuBar_);
         menuBar_->SetStyle("Menu");
 
         // Create menu
@@ -86,6 +89,20 @@ private:
             menuBar_->CreateMenu("Paste", KEY_P, QUAL_CTRL, menuEdit);
             menuBar_->CreateMenu("Delete", KEY_DELETE, 0, menuEdit);
         }
+        menuBar_->CreateMenu("About");
+
+        // Create tab bar
+        tabBar_ = mainUi_->CreateChild<TabBar>();
+        tabBar_->SetStyle("Menu");
+        tabBar_->SetHoverOffset(IntVector2::ZERO);
+        tabBar_->AddTab("Document1");
+        tabBar_->AddTab("Document2");
+        tabBar_->AddTab("Document3");
+        tabBar_->AddTab("Document4");
+        tabBar_->AddTab("Document With Very Very Very Long Title 1");
+        tabBar_->AddTab("Document With Very Very Very Long Title 2");
+        tabBar_->AddTab("Document With Very Very Very Long Title 3");
+        tabBar_->AddTab("Document With Very Very Very Long Title 4");
 
         // Create document content
         document_ = mainUi_->CreateChild<UIElement>();
@@ -139,10 +156,14 @@ private:
         mainUi_->SetFixedSize(graphics->GetWidth(), graphics->GetHeight());
         menuBar_->SetFixedWidth(graphics->GetWidth());
         menuBar_->SetMaxHeight(menuBar_->GetEffectiveMinSize().y_);
+        tabBar_->SetFixedWidth(graphics->GetWidth());
+        tabBar_->SetMaxHeight(tabBar_->GetEffectiveMinSize().y_);
+
     }
 
     UIElement* mainUi_ = nullptr;
     MenuBar* menuBar_ = nullptr;
+    TabBar* tabBar_ = nullptr;
     UIElement* document_ = nullptr;
 };
 
