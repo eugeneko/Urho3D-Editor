@@ -14,12 +14,21 @@ TabBar::TabBar(Context* context)
     SetEnabled(true);
     SetFocusMode(FM_FOCUSABLE);
     SetLayout(LM_HORIZONTAL, 8);
+
+    // Add filler
+    filler_ = CreateChild<UIElement>();
+    filler_->SetVisible(false);
 }
 
 void TabBar::RegisterObject(Context* context)
 {
     context->RegisterFactory<TabBar>(UI_CATEGORY);
     URHO3D_COPY_BASE_ATTRIBUTES(BorderImage);
+}
+
+void TabBar::SetFill(bool fill)
+{
+    filler_->SetVisible(fill);
 }
 
 void TabBar::SetTabBorder(const IntRect& tabBorder)
@@ -52,9 +61,12 @@ Button* TabBar::AddTab(const String& text)
     if (tabs_.Empty())
         tabButton->SetSelected(true);
 
+    // Insert new tab before filler
     tabs_.Push(tabButton);
-    AddChild(tabButton);
+    assert(GetNumChildren() > 0);
+    InsertChild(GetNumChildren() - 1, tabButton);
 
+    // Update layout
     UpdateOffset();
 
     return tabButton;
@@ -67,7 +79,7 @@ void TabBar::OnResize(const IntVector2& newSize, const IntVector2& delta)
 
 void TabBar::OnWheel(int delta, int /*buttons*/, int /*qualifiers*/)
 {
-    offset_ += delta * scrollSpeed_;
+    offset_ -= delta * scrollSpeed_;
     UpdateOffset();
 }
 

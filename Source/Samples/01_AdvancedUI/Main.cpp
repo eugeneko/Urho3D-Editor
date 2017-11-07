@@ -1,6 +1,7 @@
 #include "../../Library/AdvancedUI/MenuBar.h"
 #include "../../Library/AdvancedUI/SplitView.h"
 #include "../../Library/AdvancedUI/TabBar.h"
+#include "../../Library/AdvancedUI/DockView.h"
 
 #include <Urho3D/Engine/Application.h>
 #include <Urho3D/Input/Input.h>
@@ -8,6 +9,8 @@
 #include <Urho3D/Graphics/GraphicsEvents.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/UI/UI.h>
+
+#include <Urho3D/UI/Text.h>
 
 #include <Urho3D/DebugNew.h>
 
@@ -32,6 +35,7 @@ public:
         SplitLine::RegisterObject(context_);
         SplitView::RegisterObject(context_);
         TabBar::RegisterObject(context_);
+        DockView::RegisterObject(context_);
 
         CreateUI();
         UpdateElements();
@@ -95,6 +99,7 @@ private:
         tabBar_ = mainUi_->CreateChild<TabBar>();
         tabBar_->SetStyle("Menu");
         tabBar_->SetHoverOffset(IntVector2::ZERO);
+        tabBar_->SetFill(true);
         tabBar_->AddTab("Document1");
         tabBar_->AddTab("Document2");
         tabBar_->AddTab("Document3");
@@ -105,7 +110,26 @@ private:
         tabBar_->AddTab("Document With Very Very Very Long Title 4");
 
         // Create document content
-        document_ = mainUi_->CreateChild<UIElement>();
+        document_ = mainUi_->CreateChild<DockView>();
+        document_->SetDefaultSplitStyle();
+        document_->SetDefaultTabBarStyle();
+
+        auto createDock = [=](DockLocation location, const String& title)
+        {
+            Button* button = new Button(context_);
+            Text* text = button->CreateChild<Text>();
+            document_->AddDock(location, title, nullptr);
+            button->SetStyleAuto();
+            text->SetStyleAuto();
+            text->SetText(title);
+        };
+
+        createDock(DL_LEFT, "Hierarchy");
+        createDock(DL_RIGHT, "Inspector");
+        createDock(DL_BOTTOM, "Resource Browser");
+        createDock(DL_BOTTOM, "Log");
+
+        /*document_ = mainUi_->CreateChild<UIElement>();
         document_->SetLayout(LM_HORIZONTAL);
 
         SplitView* splitView = document_->CreateChild<SplitView>();
@@ -147,7 +171,7 @@ private:
                 bottomSplit->SetSplit(SPLIT_VERTICAL);
                 bottomSplit->SetRelativePosition(0.3f);
             }
-        }
+        }*/
     }
 
     void UpdateElements()
@@ -156,7 +180,6 @@ private:
         mainUi_->SetFixedSize(graphics->GetWidth(), graphics->GetHeight());
         menuBar_->SetFixedWidth(graphics->GetWidth());
         menuBar_->SetMaxHeight(menuBar_->GetEffectiveMinSize().y_);
-        tabBar_->SetFixedWidth(graphics->GetWidth());
         tabBar_->SetMaxHeight(tabBar_->GetEffectiveMinSize().y_);
 
     }
@@ -164,7 +187,7 @@ private:
     UIElement* mainUi_ = nullptr;
     MenuBar* menuBar_ = nullptr;
     TabBar* tabBar_ = nullptr;
-    UIElement* document_ = nullptr;
+    DockView* document_ = nullptr;
 };
 
 URHO3D_DEFINE_APPLICATION_MAIN(SampleApplication)

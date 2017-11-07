@@ -74,7 +74,7 @@ void SplitLine::OnDragCancel(const IntVector2& position, const IntVector2& scree
 SplitView::SplitView(Context* context)
     : UIElement(context)
 {
-    splitLine_ = CreateChild<SplitLine>();
+    splitLine_ = CreateChild<SplitLine>("SV_SplitLine");
 
     SubscribeToEvent(splitLine_, E_DRAGMOVE, URHO3D_HANDLER(SplitView, HandleSplitLineMoved));
 

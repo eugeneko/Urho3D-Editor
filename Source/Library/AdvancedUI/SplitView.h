@@ -58,7 +58,7 @@ public:
 
     void SetDefaultLineStyle();
     void SetThreshold(int threshold);
-    void SetSplit(SplitOrientation orientation);
+    void SetSplit(SplitOrientation orientation); // #TODO Rename
     void SetRelativePosition(float relativePosition);
     void SetFixedPosition(int offset, SplitAnchor anchor);
 

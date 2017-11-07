@@ -15,6 +15,8 @@ public:
 
     static void RegisterObject(Context* context);
 
+    /// Set whether to fill the tab bar to its max size.
+    void SetFill(bool fill);
     void SetTabBorder(const IntRect& tabBorder);
     void SetScrollSpeed(int scrollSpeed);
 
@@ -35,7 +37,9 @@ private:
 
 private:
     IntRect tabBorder_ = IntRect(8, 2, 8, 2);
-    int scrollSpeed_ = 20;
+    int scrollSpeed_ = 60;
+
+    UIElement* filler_ = nullptr;
 
     PODVector<Button*> tabs_;
 
