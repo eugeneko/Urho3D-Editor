@@ -102,7 +102,7 @@ private:
         tabBar_ = mainUi_->CreateChild<TabBar>();
         tabBar_->SetStyle("Menu");
         tabBar_->SetHoverOffset(IntVector2::ZERO);
-        tabBar_->SetFill(true);
+        tabBar_->SetExpand(true);
         tabBar_->AddTab("Document1");
         tabBar_->AddTab("Document2");
         tabBar_->AddTab("Document3");

@@ -42,6 +42,7 @@ public:
 private:
     void RelocateDock(TabButton* dockTitle, UIElement* newPanel, const IntVector2& hintPosition);
     void UpdateDockSplits();
+    void HandleTabSelected(StringHash eventType, VariantMap& eventData);
 
 private:
     /// Split views (unordered).

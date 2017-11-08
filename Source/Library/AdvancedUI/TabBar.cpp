@@ -69,6 +69,9 @@ TabBar::TabBar(Context* context)
     // Add filler
     filler_ = CreateChild<UIElement>();
     filler_->SetVisible(false);
+
+    SubscribeToEvent(this, E_RESIZED, URHO3D_HANDLER(TabBar, HandleLayoutUpdated));
+    SubscribeToEvent(this, E_LAYOUTUPDATED, URHO3D_HANDLER(TabBar, HandleLayoutUpdated));
 }
 
 void TabBar::RegisterObject(Context* context)
@@ -77,9 +80,9 @@ void TabBar::RegisterObject(Context* context)
     URHO3D_COPY_BASE_ATTRIBUTES(BorderImage);
 }
 
-void TabBar::SetFill(bool fill)
+void TabBar::SetExpand(bool expand)
 {
-    filler_->SetVisible(fill);
+    filler_->SetVisible(expand);
 }
 
 void TabBar::SetTabBorder(const IntRect& tabBorder)
@@ -90,6 +93,24 @@ void TabBar::SetTabBorder(const IntRect& tabBorder)
 void TabBar::SetScrollSpeed(int scrollSpeed)
 {
     scrollSpeed_ = scrollSpeed;
+}
+
+TabButton* TabBar::ConstructDefaultTab(const String& text) const
+{
+    TabButton* tabButton = new TabButton(context_);
+    tabButton->SetDefaultStyle(GetDefaultStyle());
+    tabButton->SetStyle("Menu");
+    tabButton->SetLayout(LM_HORIZONTAL, 0, tabBorder_);
+    tabButton->SetFocusMode(FM_RESETFOCUS);
+
+    Text* tabText = tabButton->CreateChild<Text>();
+    tabText->SetStyle("EditorMenuText");
+    tabText->SetText(text);
+    tabText->SetTextAlignment(HA_CENTER);
+
+    tabButton->SetFixedWidth(tabText->GetMinWidth() + tabText->GetMinHeight());
+
+    return tabButton;
 }
 
 void TabBar::AddTab(TabButton* tab)
@@ -137,14 +158,17 @@ void TabBar::AddTab(TabButton* tab)
         ReorderTab(tab, dragBeginIndex_);
     });
 
-    // Select if first added tab
-    if (tabs_.Empty())
-        tab->SetSelected(true);
+    // Reset selection
+    tab->SetSelected(false);
 
     // Insert new tab before filler
     tabs_.Push(tab);
     assert(GetNumChildren() > 0);
     InsertChild(GetNumChildren() - 1, tab);
+
+    // Switch to tab
+    if (GetNumTabs() == 1)
+        SwitchToTab(tab);
 
     // Update layout
     UpdateOffset();
@@ -152,21 +176,9 @@ void TabBar::AddTab(TabButton* tab)
 
 TabButton* TabBar::AddTab(const String& text)
 {
-    TabButton* tabButton = new TabButton(context_);
-    tabButton->SetDefaultStyle(GetDefaultStyle());
-    tabButton->SetStyle("Menu");
-    tabButton->SetLayout(LM_HORIZONTAL, 0, tabBorder_);
-    tabButton->SetFocusMode(FM_RESETFOCUS);
-
-    Text* tabText = tabButton->CreateChild<Text>();
-    tabText->SetStyle("EditorMenuText");
-    tabText->SetText(text);
-    tabText->SetTextAlignment(HA_CENTER);
-
-    tabButton->SetFixedWidth(tabText->GetMinWidth() + tabText->GetMinHeight());
-
-    AddTab(tabButton);
-    return tabButton;
+    TabButton* tab = ConstructDefaultTab(text);
+    AddTab(tab);
+    return tab;
 }
 
 void TabBar::RemoveTab(TabButton* tab)
@@ -179,11 +191,37 @@ void TabBar::RemoveTab(TabButton* tab)
     UnsubscribeFromEvent(tab, E_DRAGMOVE);
     UnsubscribeFromEvent(tab, E_DRAGCANCEL);
 
-    tabs_.Remove(tab);
-    RemoveChild(tab);
+    const unsigned tabIndex = tabs_.IndexOf(tab);
+    tabs_.Erase(tabIndex);
+    RemoveChildAtIndex(tabIndex);
+
+    if (activeTab_ == tab)
+    {
+        if (tabs_.Empty())
+            SwitchToTab(nullptr);
+        else
+        {
+            const unsigned nextTabIndex = Min(tabIndex, tabs_.Size() - 1);
+            SwitchToTab(tabs_[nextTabIndex]);
+        }
+    }
 
     // Update layout
     UpdateOffset();
+}
+
+void TabBar::SwitchToTab(TabButton* tab)
+{
+    if (activeTab_ != tab)
+    {
+        activeTab_ = tab;
+        for (TabButton* item : tabs_)
+            item->SetSelected(activeTab_ == item);
+
+        SendEvent(E_TABSELECTED,
+            TabSelected::P_ELEMENT, this,
+            TabSelected::P_TAB, tab);
+    }
 }
 
 void TabBar::ReorderTab(TabButton* tab, unsigned index)
@@ -222,11 +260,15 @@ void TabBar::OnWheel(int delta, int /*buttons*/, int /*qualifiers*/)
     UpdateOffset();
 }
 
+void TabBar::HandleLayoutUpdated(StringHash /*eventType*/, VariantMap& /*eventData*/)
+{
+    SetMaxHeight(GetEffectiveMinSize().y_);
+}
+
 void TabBar::HandleTabClicked(StringHash /*eventType*/, VariantMap& eventData)
 {
-    TabButton* button = static_cast<TabButton*>(eventData[Pressed::P_ELEMENT].GetPtr());
-    for (TabButton* tab : tabs_)
-        tab->SetSelected(button == tab);
+    TabButton* tab = static_cast<TabButton*>(eventData[Pressed::P_ELEMENT].GetPtr());
+    SwitchToTab(tab);
 }
 
 void TabBar::UpdateOffset()

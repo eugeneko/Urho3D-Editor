@@ -68,18 +68,24 @@ DockView::DockView(Context* context)
     splitElements_[0] = CreateChild<SplitView>("DV_Split" + String(0));
     for (int i = 0; i < DL_COUNT; ++i)
     {
-        UIElement* container = splitElements_[i]->CreateFirstChild<UIElement>("DV_Container" + String(i));
-        container->SetClipChildren(true);
-        container->SetLayout(LM_VERTICAL);
+        UIElement* panel = splitElements_[i]->CreateFirstChild<UIElement>("DV_Container" + String(i));
+        panel->SetClipChildren(true);
+        panel->SetLayout(LM_VERTICAL);
 
-        TabBar* tabBar = container->CreateChild<TabBar>("DV_Tab" + String(i));
-        tabBar->SetFill(true);
+        TabBar* tabBar = panel->CreateChild<TabBar>("DV_Tab" + String(i));
+        tabBar->SetMinHeight(10); // #TODO Make configurable
+        tabBar->SetExpand(true);
+        SubscribeToEvent(tabBar, E_TABSELECTED, URHO3D_HANDLER(DockView, HandleTabSelected));
 
-        StackView* stack = container->CreateChild<StackView>("DV_Stack" + String(i));
-        SetPanelTabBar(container, tabBar);
-        SetPanelStack(container, stack);
+        StackView* stack = panel->CreateChild<StackView>("DV_Stack" + String(i));
 
-        containerElements_[i] = container;
+        SetPanel(tabBar, panel);
+        SetPanelStack(tabBar, stack);
+
+        SetPanelTabBar(panel, tabBar);
+        SetPanelStack(panel, stack);
+
+        containerElements_[i] = panel;
         tabBars_[i] = tabBar;
 
         if (i < DL_COUNT - 1)
@@ -129,8 +135,7 @@ void DockView::AddDock(DockLocation location, const String& title, UIElement* co
 {
     UIElement* panel = dockContainers_[location];
     TabBar* tabBar = GetPanelTabBar(panel);
-    TabButton* titleButton = tabBar->AddTab(title);
-    tabBar->SetMaxHeight(tabBar->GetEffectiveMinSize().y_);
+    TabButton* titleButton = tabBar->ConstructDefaultTab(title);
 
     SetContent(titleButton, content);
     RelocateDock(titleButton, panel, IntVector2::ZERO);
@@ -191,13 +196,13 @@ void DockView::RelocateDock(TabButton* dockTitle, UIElement* newPanel, const Int
         TabBar* newTabBar = GetPanelTabBar(newPanel);
         StackView* newStack = GetPanelStack(newPanel);
 
-        newTabBar->AddTab(dockTitle);
-        newStack->AddItem(dockContent);
-
         // Set variables
         SetPanel(dockTitle, newPanel);
         SetPanelTabBar(dockTitle, newTabBar);
         SetPanelStack(dockTitle, newStack);
+
+        newStack->AddItem(dockContent);
+        newTabBar->AddTab(dockTitle);
     }
 }
 
@@ -232,6 +237,21 @@ void DockView::UpdateDockSplits()
             split->SetSecondChild(container);
             split->SetFixedPosition(offsets_[location], SA_END);
         }
+    }
+}
+
+void DockView::HandleTabSelected(StringHash eventType, VariantMap& eventData)
+{
+    TabBar* tabBar = static_cast<TabBar*>(eventData[TabSelected::P_ELEMENT].GetPtr());
+    StackView* stack = GetPanelStack(tabBar);
+
+    TabButton* dockTitle = static_cast<TabButton*>(eventData[TabSelected::P_TAB].GetPtr());
+    if (!dockTitle)
+        stack->SwitchToItem(nullptr);
+    else
+    {
+        UIElement* dockContent = GetContent(dockTitle);
+        stack->SwitchToItem(dockContent);
     }
 }
 
