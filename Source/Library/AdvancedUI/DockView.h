@@ -35,6 +35,9 @@ public:
 
     void AddDock(DockLocation location, const String& title, UIElement* content);
 
+    /// Find best dock location for given screen position.
+    UIElement* FindBestLocation(const IntVector2& position);
+
 private:
     void UpdateDockSplits();
 

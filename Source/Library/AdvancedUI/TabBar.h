@@ -42,7 +42,9 @@ public:
     void SetTabBorder(const IntRect& tabBorder);
     void SetScrollSpeed(int scrollSpeed);
 
+    void AddTab(TabButton* tab);
     TabButton* AddTab(const String& text);
+    void RemoveTab(TabButton* tab);
     void ReorderTab(TabButton* tab, unsigned index);
 
     /// \see UIElement::OnResize

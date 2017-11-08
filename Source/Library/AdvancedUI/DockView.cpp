@@ -1,6 +1,7 @@
 #include "DockView.h"
 #include "TabBar.h"
 #include <Urho3D/Core/Context.h>
+#include <Urho3D/UI/UIEvents.h>
 
 namespace Urho3D
 {
@@ -8,7 +9,8 @@ namespace Urho3D
 namespace
 {
 
-static const StringHash tabBarElement("TabBar");
+static const StringHash tabBarElement("DV_TabBar");
+static const StringHash containerElement("DV_DockContainer");
 
 TabBar* GetTabBar(UIElement* element)
 {
@@ -18,6 +20,16 @@ TabBar* GetTabBar(UIElement* element)
 void SetTabBar(UIElement* element, TabBar* tabBar)
 {
     element->SetVar(tabBarElement, tabBar);
+}
+
+UIElement* GetDockContainer(UIElement* element)
+{
+    return static_cast<UIElement*>(element->GetVar(containerElement).GetPtr());
+}
+
+void SetDockContainer(UIElement* element, UIElement* container)
+{
+    element->SetVar(containerElement, container);
 }
 
 }
@@ -34,6 +46,7 @@ DockView::DockView(Context* context)
     for (int i = 0; i < DL_COUNT; ++i)
     {
         UIElement* container = splitElements_[i]->CreateFirstChild<UIElement>("DV_Container" + String(i));
+        container->SetClipChildren(true);
         container->SetLayout(LM_VERTICAL);
         TabBar* tabBar = container->CreateChild<TabBar>("DV_Tab" + String(i));
         tabBar->SetFill(true);
@@ -87,9 +100,43 @@ void DockView::SetPriority(DockLocation first, DockLocation second, DockLocation
 
 void DockView::AddDock(DockLocation location, const String& title, UIElement* content)
 {
-    TabBar* tabBar = GetTabBar(dockContainers_[location]);
-    Button* titleButton = tabBar->AddTab(title);
+    UIElement* dockContainer = dockContainers_[location];
+    TabBar* tabBar = GetTabBar(dockContainer);
+    TabButton* titleButton = tabBar->AddTab(title);
     tabBar->SetMaxHeight(tabBar->GetEffectiveMinSize().y_);
+
+    SetTabBar(titleButton, tabBar);
+    SetDockContainer(titleButton, dockContainer);
+
+    SubscribeToEvent(titleButton, E_DRAGMOVE,
+        [=](StringHash eventType, VariantMap& eventData)
+    {
+        const IntVector2 screenPos(eventData[DragMove::P_X].GetInt(), eventData[DragMove::P_Y].GetInt());
+        TabBar* tabBar = GetTabBar(titleButton);
+        UIElement* dockContainer = GetDockContainer(titleButton);
+        UIElement* bestDockContainer = FindBestLocation(screenPos);
+        if (bestDockContainer != dockContainer)
+        {
+            if (bestDockContainer)
+            {
+                SharedPtr<TabButton> titleButtonHolder(titleButton);
+                TabBar* bestTabBar = GetTabBar(bestDockContainer);
+                tabBar->RemoveTab(titleButton);
+                bestTabBar->AddTab(titleButton);
+                bestTabBar->SetMaxHeight(bestTabBar->GetEffectiveMinSize().y_);
+                SetDockContainer(titleButton, bestDockContainer);
+                SetTabBar(titleButton, bestTabBar);
+            }
+        }
+    });
+}
+
+UIElement* DockView::FindBestLocation(const IntVector2& position)
+{
+    for (UIElement* container : containerElements_)
+        if (container->IsInside(position, true))
+            return container;
+    return nullptr;
 }
 
 void DockView::UpdateDockSplits()

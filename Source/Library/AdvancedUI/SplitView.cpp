@@ -246,12 +246,12 @@ void SplitView::UpdateChildren()
         if (firstChild_)
         {
             firstChild_->SetPosition(0, 0);
-            firstChild_->SetSize(splitPosition, GetHeight());
+            firstChild_->SetFixedSize(splitPosition, GetHeight());
         }
         if (secondChild_)
         {
             secondChild_->SetPosition(splitPosition + threshold_, 0);
-            secondChild_->SetSize(GetWidth() - splitPosition - threshold_, GetHeight());
+            secondChild_->SetFixedSize(GetWidth() - splitPosition - threshold_, GetHeight());
         }
     }
     else
@@ -260,12 +260,12 @@ void SplitView::UpdateChildren()
         if (firstChild_)
         {
             firstChild_->SetPosition(0, 0);
-            firstChild_->SetSize(GetWidth(), splitPosition);
+            firstChild_->SetFixedSize(GetWidth(), splitPosition);
         }
         if (secondChild_)
         {
             secondChild_->SetPosition(0, splitPosition + threshold_);
-            secondChild_->SetSize(GetWidth(), GetHeight() - splitPosition - threshold_);
+            secondChild_->SetFixedSize(GetWidth(), GetHeight() - splitPosition - threshold_);
         }
     }
 }

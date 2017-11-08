@@ -92,6 +92,63 @@ void TabBar::SetScrollSpeed(int scrollSpeed)
     scrollSpeed_ = scrollSpeed;
 }
 
+void TabBar::AddTab(TabButton* tab)
+{
+    assert(!tabs_.Contains(tab));
+
+    SubscribeToEvent(tab, E_ITEMCLICKED, URHO3D_HANDLER(TabBar, HandleTabClicked));
+
+    SubscribeToEvent(tab, E_DRAGBEGIN,
+        [=](StringHash eventType, VariantMap& eventData)
+    {
+        dragBeginIndex_ = tabs_.IndexOf(tab);
+    });
+
+    SubscribeToEvent(tab, E_DRAGMOVE,
+        [=](StringHash eventType, VariantMap& eventData)
+    {
+        const unsigned movingButtonIndex = tabs_.IndexOf(tab);
+        const IntVector2 screenPos(eventData[DragMove::P_X].GetInt(), eventData[DragMove::P_Y].GetInt());
+        assert(movingButtonIndex < tabs_.Size());
+        for (unsigned i = 0; i < movingButtonIndex; ++i)
+        {
+            const int referenceX = tabs_[i]->GetScreenPosition().x_ + tabs_[i]->GetWidth() / 4;
+            if (referenceX > screenPos.x_)
+            {
+                ReorderTab(tab, i);
+                break;
+            }
+        }
+        for (unsigned i = tabs_.Size(); i > movingButtonIndex + 1; --i)
+        {
+            const int referenceX = tabs_[i - 1]->GetScreenPosition().x_ + tabs_[i - 1]->GetWidth() * 3 / 4;
+            if (referenceX < screenPos.x_)
+            {
+                ReorderTab(tab, i - 1);
+                break;
+            }
+        }
+    });
+
+    SubscribeToEvent(tab, E_DRAGCANCEL,
+        [=](StringHash eventType, VariantMap& eventData)
+    {
+        ReorderTab(tab, dragBeginIndex_);
+    });
+
+    // Select if first added tab
+    if (tabs_.Empty())
+        tab->SetSelected(true);
+
+    // Insert new tab before filler
+    tabs_.Push(tab);
+    assert(GetNumChildren() > 0);
+    InsertChild(GetNumChildren() - 1, tab);
+
+    // Update layout
+    UpdateOffset();
+}
+
 TabButton* TabBar::AddTab(const String& text)
 {
     TabButton* tabButton = new TabButton(context_);
@@ -106,68 +163,39 @@ TabButton* TabBar::AddTab(const String& text)
     tabText->SetTextAlignment(HA_CENTER);
 
     tabButton->SetFixedWidth(tabText->GetMinWidth() + tabText->GetMinHeight());
-    SubscribeToEvent(tabButton, E_ITEMCLICKED, URHO3D_HANDLER(TabBar, HandleTabClicked));
 
-    SubscribeToEvent(tabButton, E_DRAGBEGIN,
-        [=](StringHash eventType, VariantMap& eventData)
-    {
-        dragBeginIndex_ = tabs_.IndexOf(tabButton);
-    });
+    AddTab(tabButton);
+    return tabButton;
+}
 
-    SubscribeToEvent(tabButton, E_DRAGMOVE,
-        [=](StringHash eventType, VariantMap& eventData)
-    {
-        const unsigned movingButtonIndex = tabs_.IndexOf(tabButton);
-        const IntVector2 screenPos(eventData[DragMove::P_X].GetInt(), eventData[DragMove::P_Y].GetInt());
-        assert(movingButtonIndex < tabs_.Size());
-        for (unsigned i = 0; i < movingButtonIndex; ++i)
-        {
-            const int referenceX = tabs_[i]->GetScreenPosition().x_ + tabs_[i]->GetWidth() / 4;
-            if (referenceX > screenPos.x_)
-            {
-                ReorderTab(tabButton, i);
-                break;
-            }
-        }
-        for (unsigned i = tabs_.Size(); i > movingButtonIndex + 1; --i)
-        {
-            const int referenceX = tabs_[i - 1]->GetScreenPosition().x_ + tabs_[i - 1]->GetWidth() * 3 / 4;
-            if (referenceX < screenPos.x_)
-            {
-                ReorderTab(tabButton, i - 1);
-                break;
-            }
-        }
-    });
+void TabBar::RemoveTab(TabButton* tab)
+{
+    assert(tabs_.Contains(tab));
 
-    SubscribeToEvent(tabButton, E_DRAGCANCEL,
-        [=](StringHash eventType, VariantMap& eventData)
-    {
-        ReorderTab(tabButton, dragBeginIndex_);
-    });
+    UnsubscribeFromEvent(tab, E_ITEMCLICKED);
+    UnsubscribeFromEvent(tab, E_DRAGBEGIN);
+    UnsubscribeFromEvent(tab, E_DRAGMOVE);
+    UnsubscribeFromEvent(tab, E_DRAGCANCEL);
 
-    // Select if first added tab
-    if (tabs_.Empty())
-        tabButton->SetSelected(true);
-
-    // Insert new tab before filler
-    tabs_.Push(tabButton);
-    assert(GetNumChildren() > 0);
-    InsertChild(GetNumChildren() - 1, tabButton);
+    tabs_.Remove(tab);
+    RemoveChild(tab);
 
     // Update layout
     UpdateOffset();
-
-    return tabButton;
 }
 
 void TabBar::ReorderTab(TabButton* tab, unsigned index)
 {
+    index = Min(index, tabs_.Size() - 1);
     const unsigned oldIndex = tabs_.IndexOf(tab);
     assert(oldIndex < tabs_.Size());
+    assert(GetNumChildren() >= 1);
 
     if (oldIndex == index)
         return;
+
+    const unsigned oldNumChildren = GetNumChildren();
+    const unsigned oldNumTabs = tabs_.Size();
 
     SharedPtr<TabButton> tabHolder(tab);
     RemoveChildAtIndex(oldIndex);
@@ -175,6 +203,10 @@ void TabBar::ReorderTab(TabButton* tab, unsigned index)
 
     InsertChild(index, tab);
     tabs_.Insert(index, tab);
+
+    assert(GetNumChildren() == oldNumChildren);
+    assert(tabs_.Size() == oldNumTabs);
+    assert(GetChildren().Back() == filler_);
 }
 
 void TabBar::OnResize(const IntVector2& newSize, const IntVector2& delta)
