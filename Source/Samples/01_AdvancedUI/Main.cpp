@@ -34,6 +34,7 @@ public:
         MenuBar::RegisterObject(context_);
         SplitLine::RegisterObject(context_);
         SplitView::RegisterObject(context_);
+        TabButton::RegisterObject(context_);
         TabBar::RegisterObject(context_);
         DockView::RegisterObject(context_);
 
@@ -116,12 +117,12 @@ private:
 
         auto createDock = [=](DockLocation location, const String& title)
         {
-            Button* button = new Button(context_);
-            Text* text = button->CreateChild<Text>();
+//             Button* button = new Button(context_);
+//             Text* text = button->CreateChild<Text>();
             document_->AddDock(location, title, nullptr);
-            button->SetStyleAuto();
-            text->SetStyleAuto();
-            text->SetText(title);
+//             button->SetStyleAuto();
+//             text->SetStyleAuto();
+//             text->SetText(title);
         };
 
         createDock(DL_LEFT, "Hierarchy");

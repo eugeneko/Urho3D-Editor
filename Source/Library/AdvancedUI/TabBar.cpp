@@ -1,5 +1,6 @@
 #include "TabBar.h"
 #include <Urho3D/Core/Context.h>
+#include <Urho3D/Input/InputEvents.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UIEvents.h>
 
@@ -8,6 +9,56 @@ namespace Urho3D
 
 extern const char* UI_CATEGORY;
 
+TabButton::TabButton(Context* context)
+    : Button(context)
+{
+}
+
+void TabButton::RegisterObject(Context* context)
+{
+    context->RegisterFactory<TabButton>(UI_CATEGORY);
+    URHO3D_COPY_BASE_ATTRIBUTES(Button);
+}
+
+void TabButton::Update(float timeStep)
+{
+    Button::Update(timeStep);
+
+    // Enforce hovering if dragging
+    if (isDragging_)
+        hovering_ = true;
+}
+
+void TabButton::OnDragBegin(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor)
+{
+    Button::OnDragBegin(position, screenPosition, buttons, qualifiers, cursor);
+    if (buttons & MOUSEB_LEFT)
+    {
+        isDragging_ = true;
+    }
+}
+
+void TabButton::OnDragEnd(const IntVector2& position, const IntVector2& screenPosition, int dragButtons, int buttons, Cursor* cursor)
+{
+    Button::OnDragEnd(position, screenPosition, dragButtons, buttons, cursor);
+    if (isDragging_)
+    {
+        isDragging_ = false;
+//         SetPressed(false);
+    }
+}
+
+void TabButton::OnDragCancel(const IntVector2& position, const IntVector2& screenPosition, int dragButtons, int buttons, Cursor* cursor)
+{
+    Button::OnDragCancel(position, screenPosition, dragButtons, buttons, cursor);
+    if (isDragging_)
+    {
+        isDragging_ = false;
+//         SetPressed(false);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////
 TabBar::TabBar(Context* context)
     : BorderImage(context)
 {
@@ -41,9 +92,9 @@ void TabBar::SetScrollSpeed(int scrollSpeed)
     scrollSpeed_ = scrollSpeed;
 }
 
-Button* TabBar::AddTab(const String& text)
+TabButton* TabBar::AddTab(const String& text)
 {
-    Button* tabButton = new Button(context_);
+    TabButton* tabButton = new TabButton(context_);
     tabButton->SetDefaultStyle(GetDefaultStyle());
     tabButton->SetStyle("Menu");
     tabButton->SetLayout(LM_HORIZONTAL, 0, tabBorder_);
@@ -55,7 +106,46 @@ Button* TabBar::AddTab(const String& text)
     tabText->SetTextAlignment(HA_CENTER);
 
     tabButton->SetFixedWidth(tabText->GetMinWidth() + tabText->GetMinHeight());
-    SubscribeToEvent(tabButton, E_PRESSED, URHO3D_HANDLER(TabBar, HandleTabClicked));
+    SubscribeToEvent(tabButton, E_ITEMCLICKED, URHO3D_HANDLER(TabBar, HandleTabClicked));
+
+    SubscribeToEvent(tabButton, E_DRAGBEGIN,
+        [=](StringHash eventType, VariantMap& eventData)
+    {
+        dragBeginPosition_ = tabs_.IndexOf(tabButton);
+    });
+
+    SubscribeToEvent(tabButton, E_DRAGMOVE,
+        [=](StringHash eventType, VariantMap& eventData)
+    {
+        const unsigned movingButtonIndex = tabs_.IndexOf(tabButton);
+        const IntVector2 screenPos(eventData[DragMove::P_X].GetInt(), eventData[DragMove::P_Y].GetInt());
+        assert(movingButtonIndex < tabs_.Size());
+        for (unsigned i = 0; i < movingButtonIndex; ++i)
+        {
+            const int referenceX = tabs_[i]->GetScreenPosition().x_ + tabs_[i]->GetWidth() / 4;
+            if (referenceX > screenPos.x_)
+            {
+                SharedPtr<TabButton> tabButtonHolder(tabButton);
+                RemoveChild(tabButton);
+                tabs_.Remove(tabButton);
+                InsertChild(i, tabButton);
+                tabs_.Insert(i, tabButton);
+                break;
+            }
+        }
+        for (unsigned i = tabs_.Size(); i > movingButtonIndex + 1; --i)
+        {
+            const int referenceX = tabs_[i - 1]->GetScreenPosition().x_ + tabs_[i - 1]->GetWidth() * 3 / 4;
+            if (referenceX < screenPos.x_)
+            {
+                SharedPtr<TabButton> tabButtonHolder(tabButton);
+                RemoveChild(tabButton);
+                tabs_.Remove(tabButton);
+                InsertChild(i - 1, tabButton);
+                tabs_.Insert(i - 1, tabButton);
+            }
+        }
+    });
 
     // Select if first added tab
     if (tabs_.Empty())
@@ -85,14 +175,14 @@ void TabBar::OnWheel(int delta, int /*buttons*/, int /*qualifiers*/)
 
 void TabBar::HandleTabClicked(StringHash /*eventType*/, VariantMap& eventData)
 {
-    Button* button = static_cast<Button*>(eventData[Pressed::P_ELEMENT].GetPtr());
-    for (Button* tab : tabs_)
+    TabButton* button = static_cast<TabButton*>(eventData[Pressed::P_ELEMENT].GetPtr());
+    for (TabButton* tab : tabs_)
         tab->SetSelected(button == tab);
 }
 
 void TabBar::UpdateOffset()
 {
-    const int maxOffset = Max(0, GetEffectiveMinSize().x_ - GetMaxWidth());
+    const int maxOffset = Max(0, GetEffectiveMinSize().x_ - GetParent()->GetWidth());
     offset_ = Clamp(offset_, 0, maxOffset);
     SetChildOffset(IntVector2(-offset_, 0));
 }
