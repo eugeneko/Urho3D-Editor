@@ -1,6 +1,7 @@
 #include "../../Library/AdvancedUI/MenuBar.h"
 #include "../../Library/AdvancedUI/SplitView.h"
 #include "../../Library/AdvancedUI/TabBar.h"
+#include "../../Library/AdvancedUI/StackView.h"
 #include "../../Library/AdvancedUI/DockView.h"
 
 #include <Urho3D/Engine/Application.h>
@@ -37,6 +38,7 @@ public:
         TabButton::RegisterObject(context_);
         TabBar::RegisterObject(context_);
         DockView::RegisterObject(context_);
+        StackView::RegisterObject(context_);
 
         CreateUI();
         UpdateElements();
@@ -117,12 +119,12 @@ private:
 
         auto createDock = [=](DockLocation location, const String& title)
         {
-//             Button* button = new Button(context_);
-//             Text* text = button->CreateChild<Text>();
-            document_->AddDock(location, title, nullptr);
-//             button->SetStyleAuto();
-//             text->SetStyleAuto();
-//             text->SetText(title);
+            Button* button = new Button(context_);
+            Text* text = button->CreateChild<Text>();
+            document_->AddDock(location, title, button);
+            button->SetStyleAuto();
+            text->SetStyleAuto();
+            text->SetText(title);
         };
 
         createDock(DL_LEFT, "Hierarchy");

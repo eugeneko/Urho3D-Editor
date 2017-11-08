@@ -1,5 +1,6 @@
 #include "DockView.h"
 #include "TabBar.h"
+#include "StackView.h"
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/UI/UIEvents.h>
 
@@ -9,27 +10,49 @@ namespace Urho3D
 namespace
 {
 
-static const StringHash tabBarElement("DV_TabBar");
-static const StringHash containerElement("DV_DockContainer");
+static const StringHash panelTabBarElement("DV_PanelTabBar");
+static const StringHash panelElement("DV_Panel");
+static const StringHash panelStackElement("DV_PanelStack");
+static const StringHash contentElement("DV_Content");
 
-TabBar* GetTabBar(UIElement* element)
+TabBar* GetPanelTabBar(UIElement* element)
 {
-    return static_cast<TabBar*>(element->GetVar(tabBarElement).GetPtr());
+    return static_cast<TabBar*>(element->GetVar(panelTabBarElement).GetPtr());
 }
 
-void SetTabBar(UIElement* element, TabBar* tabBar)
+void SetPanelTabBar(UIElement* element, TabBar* tabBar)
 {
-    element->SetVar(tabBarElement, tabBar);
+    element->SetVar(panelTabBarElement, tabBar);
 }
 
-UIElement* GetDockContainer(UIElement* element)
+UIElement* GetPanel(UIElement* element)
 {
-    return static_cast<UIElement*>(element->GetVar(containerElement).GetPtr());
+    return static_cast<UIElement*>(element->GetVar(panelElement).GetPtr());
 }
 
-void SetDockContainer(UIElement* element, UIElement* container)
+void SetPanel(UIElement* element, UIElement* panel)
 {
-    element->SetVar(containerElement, container);
+    element->SetVar(panelElement, panel);
+}
+
+StackView* GetPanelStack(UIElement* element)
+{
+    return static_cast<StackView*>(element->GetVar(panelStackElement).GetPtr());
+}
+
+void SetPanelStack(UIElement* element, StackView* stack)
+{
+    element->SetVar(panelStackElement, stack);
+}
+
+UIElement* GetContent(UIElement* element)
+{
+    return static_cast<UIElement*>(element->GetVar(contentElement).GetPtr());
+}
+
+void SetContent(UIElement* element, UIElement* content)
+{
+    element->SetVar(contentElement, content);
 }
 
 }
@@ -48,9 +71,13 @@ DockView::DockView(Context* context)
         UIElement* container = splitElements_[i]->CreateFirstChild<UIElement>("DV_Container" + String(i));
         container->SetClipChildren(true);
         container->SetLayout(LM_VERTICAL);
+
         TabBar* tabBar = container->CreateChild<TabBar>("DV_Tab" + String(i));
         tabBar->SetFill(true);
-        SetTabBar(container, tabBar);
+
+        StackView* stack = container->CreateChild<StackView>("DV_Stack" + String(i));
+        SetPanelTabBar(container, tabBar);
+        SetPanelStack(container, stack);
 
         containerElements_[i] = container;
         tabBars_[i] = tabBar;
@@ -100,33 +127,24 @@ void DockView::SetPriority(DockLocation first, DockLocation second, DockLocation
 
 void DockView::AddDock(DockLocation location, const String& title, UIElement* content)
 {
-    UIElement* dockContainer = dockContainers_[location];
-    TabBar* tabBar = GetTabBar(dockContainer);
+    UIElement* panel = dockContainers_[location];
+    TabBar* tabBar = GetPanelTabBar(panel);
     TabButton* titleButton = tabBar->AddTab(title);
     tabBar->SetMaxHeight(tabBar->GetEffectiveMinSize().y_);
 
-    SetTabBar(titleButton, tabBar);
-    SetDockContainer(titleButton, dockContainer);
+    SetContent(titleButton, content);
+    RelocateDock(titleButton, panel, IntVector2::ZERO);
 
     SubscribeToEvent(titleButton, E_DRAGMOVE,
         [=](StringHash eventType, VariantMap& eventData)
     {
         const IntVector2 screenPos(eventData[DragMove::P_X].GetInt(), eventData[DragMove::P_Y].GetInt());
-        TabBar* tabBar = GetTabBar(titleButton);
-        UIElement* dockContainer = GetDockContainer(titleButton);
-        UIElement* bestDockContainer = FindBestLocation(screenPos);
-        if (bestDockContainer != dockContainer)
+        TabBar* tabBar = GetPanelTabBar(titleButton);
+        UIElement* panel = GetPanel(titleButton);
+        UIElement* bestPanel = FindBestLocation(screenPos);
+        if (bestPanel && bestPanel != panel)
         {
-            if (bestDockContainer)
-            {
-                SharedPtr<TabButton> titleButtonHolder(titleButton);
-                TabBar* bestTabBar = GetTabBar(bestDockContainer);
-                tabBar->RemoveTab(titleButton);
-                bestTabBar->AddTab(titleButton);
-                bestTabBar->SetMaxHeight(bestTabBar->GetEffectiveMinSize().y_);
-                SetDockContainer(titleButton, bestDockContainer);
-                SetTabBar(titleButton, bestTabBar);
-            }
+            RelocateDock(titleButton, bestPanel, screenPos);
         }
     });
 }
@@ -137,6 +155,50 @@ UIElement* DockView::FindBestLocation(const IntVector2& position)
         if (container->IsInside(position, true))
             return container;
     return nullptr;
+}
+
+void DockView::RelocateDock(TabButton* dockTitle, UIElement* newPanel, const IntVector2& hintPosition)
+{
+    // Get all related elements
+    UIElement* dockContent = GetContent(dockTitle);
+    UIElement* oldPanel = GetPanel(dockTitle);
+
+    // Keep title and content
+    SharedPtr<TabButton> dockTitleHolder(dockTitle);
+    SharedPtr<UIElement> dockContentHolder(dockContent);
+
+    // Remove dock from old panel
+    if (oldPanel)
+    {
+        TabBar* oldTabBar = GetPanelTabBar(oldPanel);
+        StackView* oldStack = GetPanelStack(oldPanel);
+
+        assert(oldTabBar == GetPanelTabBar(dockTitle));
+        assert(oldStack == GetPanelStack(dockTitle));
+
+        oldTabBar->RemoveTab(dockTitle);
+        oldStack->RemoveItem(dockContent);
+
+        // Reset variables
+        SetPanel(dockTitle, nullptr);
+        SetPanelTabBar(dockTitle, nullptr);
+        SetPanelStack(dockTitle, nullptr);
+    }
+
+    // Put dock into new panel
+    if (newPanel)
+    {
+        TabBar* newTabBar = GetPanelTabBar(newPanel);
+        StackView* newStack = GetPanelStack(newPanel);
+
+        newTabBar->AddTab(dockTitle);
+        newStack->AddItem(dockContent);
+
+        // Set variables
+        SetPanel(dockTitle, newPanel);
+        SetPanelTabBar(dockTitle, newTabBar);
+        SetPanelStack(dockTitle, newStack);
+    }
 }
 
 void DockView::UpdateDockSplits()

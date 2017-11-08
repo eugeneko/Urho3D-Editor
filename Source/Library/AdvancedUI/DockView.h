@@ -7,6 +7,7 @@ namespace Urho3D
 {
 
 class TabBar;
+class TabButton;
 
 enum DockLocation
 {
@@ -39,6 +40,7 @@ public:
     UIElement* FindBestLocation(const IntVector2& position);
 
 private:
+    void RelocateDock(TabButton* dockTitle, UIElement* newPanel, const IntVector2& hintPosition);
     void UpdateDockSplits();
 
 private:

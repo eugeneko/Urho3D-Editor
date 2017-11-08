@@ -94,9 +94,10 @@ void TabBar::SetScrollSpeed(int scrollSpeed)
 
 void TabBar::AddTab(TabButton* tab)
 {
-    assert(!tabs_.Contains(tab));
+    if (tabs_.Contains(tab))
+        return;
 
-    SubscribeToEvent(tab, E_ITEMCLICKED, URHO3D_HANDLER(TabBar, HandleTabClicked));
+    SubscribeToEvent(tab, E_CLICK, URHO3D_HANDLER(TabBar, HandleTabClicked));
 
     SubscribeToEvent(tab, E_DRAGBEGIN,
         [=](StringHash eventType, VariantMap& eventData)
@@ -170,9 +171,10 @@ TabButton* TabBar::AddTab(const String& text)
 
 void TabBar::RemoveTab(TabButton* tab)
 {
-    assert(tabs_.Contains(tab));
+    if (!tabs_.Contains(tab))
+        return;
 
-    UnsubscribeFromEvent(tab, E_ITEMCLICKED);
+    UnsubscribeFromEvent(tab, E_CLICK);
     UnsubscribeFromEvent(tab, E_DRAGBEGIN);
     UnsubscribeFromEvent(tab, E_DRAGMOVE);
     UnsubscribeFromEvent(tab, E_DRAGCANCEL);
