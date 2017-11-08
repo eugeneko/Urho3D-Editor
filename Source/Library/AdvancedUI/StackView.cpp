@@ -9,8 +9,9 @@ extern const char* UI_CATEGORY;
 StackView::StackView(Context* context)
     : UIElement(context)
 {
+    SetLayout(LM_VERTICAL);
     filler_ = CreateChild<UIElement>();
-    filler_->SetVisible(false);
+    UpdateChildren();
 }
 
 void StackView::RegisterObject(Context* context)

@@ -91,8 +91,10 @@ DockView::DockView(Context* context)
         if (i < DL_COUNT - 1)
             splitElements_[i + 1] = splitElements_[i]->CreateSecondChild<SplitView>("DV_Split" + String(i + 1));
         else
-            centerElement_ = splitElements_[i]->CreateSecondChild<UIElement>("DV_Center");
+            centralElement_ = splitElements_[i]->CreateSecondChild<UIElement>("DV_Center");
     }
+
+    centralElement_->SetClipChildren(true);
 
     UpdateDockSplits();
 }
@@ -203,6 +205,7 @@ void DockView::RelocateDock(TabButton* dockTitle, UIElement* newPanel, const Int
 
         newStack->AddItem(dockContent);
         newTabBar->AddTab(dockTitle);
+        newTabBar->SwitchToTab(dockTitle);
     }
 }
 
@@ -213,7 +216,7 @@ void DockView::UpdateDockSplits()
         const DockLocation location = locations_[i];
         SplitView* split = splitElements_[i];
         UIElement* container = containerElements_[i];
-        UIElement* nextElement = i < DL_COUNT - 1 ? splitElements_[i + 1].Get() : centerElement_.Get();
+        UIElement* nextElement = i < DL_COUNT - 1 ? splitElements_[i + 1].Get() : centralElement_.Get();
 
         dockContainers_[location] = container;
 

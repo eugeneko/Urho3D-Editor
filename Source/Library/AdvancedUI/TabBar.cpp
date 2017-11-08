@@ -65,6 +65,7 @@ TabBar::TabBar(Context* context)
     SetEnabled(true);
     SetFocusMode(FM_FOCUSABLE);
     SetLayout(LM_HORIZONTAL, 8);
+    SetClipChildren(true);
 
     // Add filler
     filler_ = CreateChild<UIElement>();

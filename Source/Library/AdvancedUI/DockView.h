@@ -36,6 +36,9 @@ public:
 
     void AddDock(DockLocation location, const String& title, UIElement* content);
 
+    /// Get central element.
+    UIElement* GetCentralElement() const { return centralElement_; }
+
     /// Find best dock location for given screen position.
     UIElement* FindBestLocation(const IntVector2& position);
 
@@ -50,7 +53,7 @@ private:
     /// Dock containers (unordered).
     SharedPtr<UIElement> containerElements_[DL_COUNT];
     /// Center element.
-    SharedPtr<UIElement> centerElement_;
+    SharedPtr<UIElement> centralElement_;
     /// Tab bars (unordered);
     TabBar* tabBars_[DL_COUNT] = { nullptr, nullptr, nullptr, nullptr };
 

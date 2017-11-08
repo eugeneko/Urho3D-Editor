@@ -10,6 +10,7 @@
 #include <Urho3D/Graphics/GraphicsEvents.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/UI/UI.h>
+#include <Urho3D/UI/UIEvents.h>
 
 #include <Urho3D/UI/Text.h>
 
@@ -43,15 +44,14 @@ public:
         CreateUI();
         UpdateElements();
 
-        SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(SampleApplication, HandleResized));
+        SubscribeToEvent(E_SCREENMODE,
+            [=](StringHash /*eventType*/, VariantMap& /*eventData*/)
+        {
+            UpdateElements();
+        });
     }
 
 private:
-    void HandleResized(StringHash /*eventType*/, VariantMap& /*eventData*/)
-    {
-        UpdateElements();
-    }
-
     void CreateUI()
     {
         UI* ui = GetSubsystem<UI>();
@@ -98,20 +98,6 @@ private:
         }
         menuBar_->CreateMenu("About");
 
-        // Create tab bar
-        tabBar_ = mainUi_->CreateChild<TabBar>();
-        tabBar_->SetStyle("Menu");
-        tabBar_->SetHoverOffset(IntVector2::ZERO);
-        tabBar_->SetExpand(true);
-        tabBar_->AddTab("Document1");
-        tabBar_->AddTab("Document2");
-        tabBar_->AddTab("Document3");
-        tabBar_->AddTab("Document4");
-        tabBar_->AddTab("Document With Very Very Very Long Title 1");
-        tabBar_->AddTab("Document With Very Very Very Long Title 2");
-        tabBar_->AddTab("Document With Very Very Very Long Title 3");
-        tabBar_->AddTab("Document With Very Very Very Long Title 4");
-
         // Create document content
         document_ = mainUi_->CreateChild<DockView>();
         document_->SetDefaultSplitStyle();
@@ -123,6 +109,7 @@ private:
             Text* text = button->CreateChild<Text>();
             document_->AddDock(location, title, button);
             button->SetStyleAuto();
+            button->SetLayout(LM_HORIZONTAL, 0, IntRect(2, 2, 2, 2));
             text->SetStyleAuto();
             text->SetText(title);
         };
@@ -132,49 +119,25 @@ private:
         createDock(DL_BOTTOM, "Resource Browser");
         createDock(DL_BOTTOM, "Log");
 
-        /*document_ = mainUi_->CreateChild<UIElement>();
-        document_->SetLayout(LM_HORIZONTAL);
+        // Setup center element
+        UIElement* centerElement = document_->GetCentralElement();
+        centerElement->SetLayout(LM_VERTICAL);
+        SubscribeToEvent(centerElement, E_RESIZED,
+            [=](StringHash eventType, VariantMap& eventData)
+        {
+            UpdateCentralElement();
+        });
 
-        SplitView* splitView = document_->CreateChild<SplitView>();
-        splitView->SetDefaultLineStyle();
-        splitView->SetSplit(SPLIT_VERTICAL);
-        splitView->SetRelativePosition(0.5f);
-        {
-            SplitView* leftSplit = splitView->CreateFirstChild<SplitView>();
-            leftSplit->SetDefaultLineStyle();
-            leftSplit->SetSplit(SPLIT_HORIZONTAL);
-            leftSplit->SetFixedPosition(100, SA_BEGIN);
-            {
-                SplitView* topSplit = leftSplit->CreateFirstChild<SplitView>();
-                topSplit->SetDefaultLineStyle();
-                topSplit->SetSplit(SPLIT_HORIZONTAL);
-                topSplit->SetRelativePosition(0.3f);
-            }
-            {
-                SplitView* bottomSplit = leftSplit->CreateSecondChild<SplitView>();
-                bottomSplit->SetDefaultLineStyle();
-                bottomSplit->SetSplit(SPLIT_VERTICAL);
-                bottomSplit->SetFixedPosition(100, SA_BEGIN);
-            }
-        }
-        {
-            SplitView* rightSplit = splitView->CreateSecondChild<SplitView>();
-            rightSplit->SetDefaultLineStyle();
-            rightSplit->SetSplit(SPLIT_HORIZONTAL);
-            rightSplit->SetFixedPosition(100, SA_END);
-            {
-                SplitView* topSplit = rightSplit->CreateFirstChild<SplitView>();
-                topSplit->SetDefaultLineStyle();
-                topSplit->SetSplit(SPLIT_VERTICAL);
-                topSplit->SetFixedPosition(100, SA_END);
-            }
-            {
-                SplitView* bottomSplit = rightSplit->CreateSecondChild<SplitView>();
-                bottomSplit->SetDefaultLineStyle();
-                bottomSplit->SetSplit(SPLIT_VERTICAL);
-                bottomSplit->SetRelativePosition(0.3f);
-            }
-        }*/
+        // Create tab bar
+        tabBar_ = centerElement->CreateChild<TabBar>();
+        tabBar_->SetStyle("Menu");
+        tabBar_->SetHoverOffset(IntVector2::ZERO);
+        tabBar_->SetExpand(true);
+        tabBar_->AddTab("Document1");
+        tabBar_->AddTab("Document2");
+        tabBar_->AddTab("Document3");
+        tabBar_->AddTab("Document4");
+        tabBar_->AddTab("Document With Very Very Very Long Title");
     }
 
     void UpdateElements()
@@ -183,14 +146,15 @@ private:
         mainUi_->SetFixedSize(graphics->GetWidth(), graphics->GetHeight());
         menuBar_->SetFixedWidth(graphics->GetWidth());
         menuBar_->SetMaxHeight(menuBar_->GetEffectiveMinSize().y_);
-        tabBar_->SetMaxHeight(tabBar_->GetEffectiveMinSize().y_);
-
+    }
+    void UpdateCentralElement()
+    {
     }
 
     UIElement* mainUi_ = nullptr;
     MenuBar* menuBar_ = nullptr;
-    TabBar* tabBar_ = nullptr;
     DockView* document_ = nullptr;
+    TabBar* tabBar_ = nullptr;
 };
 
 URHO3D_DEFINE_APPLICATION_MAIN(SampleApplication)
