@@ -111,7 +111,7 @@ TabButton* TabBar::AddTab(const String& text)
     SubscribeToEvent(tabButton, E_DRAGBEGIN,
         [=](StringHash eventType, VariantMap& eventData)
     {
-        dragBeginPosition_ = tabs_.IndexOf(tabButton);
+        dragBeginIndex_ = tabs_.IndexOf(tabButton);
     });
 
     SubscribeToEvent(tabButton, E_DRAGMOVE,
@@ -125,11 +125,7 @@ TabButton* TabBar::AddTab(const String& text)
             const int referenceX = tabs_[i]->GetScreenPosition().x_ + tabs_[i]->GetWidth() / 4;
             if (referenceX > screenPos.x_)
             {
-                SharedPtr<TabButton> tabButtonHolder(tabButton);
-                RemoveChild(tabButton);
-                tabs_.Remove(tabButton);
-                InsertChild(i, tabButton);
-                tabs_.Insert(i, tabButton);
+                ReorderTab(tabButton, i);
                 break;
             }
         }
@@ -138,13 +134,16 @@ TabButton* TabBar::AddTab(const String& text)
             const int referenceX = tabs_[i - 1]->GetScreenPosition().x_ + tabs_[i - 1]->GetWidth() * 3 / 4;
             if (referenceX < screenPos.x_)
             {
-                SharedPtr<TabButton> tabButtonHolder(tabButton);
-                RemoveChild(tabButton);
-                tabs_.Remove(tabButton);
-                InsertChild(i - 1, tabButton);
-                tabs_.Insert(i - 1, tabButton);
+                ReorderTab(tabButton, i - 1);
+                break;
             }
         }
+    });
+
+    SubscribeToEvent(tabButton, E_DRAGCANCEL,
+        [=](StringHash eventType, VariantMap& eventData)
+    {
+        ReorderTab(tabButton, dragBeginIndex_);
     });
 
     // Select if first added tab
@@ -160,6 +159,22 @@ TabButton* TabBar::AddTab(const String& text)
     UpdateOffset();
 
     return tabButton;
+}
+
+void TabBar::ReorderTab(TabButton* tab, unsigned index)
+{
+    const unsigned oldIndex = tabs_.IndexOf(tab);
+    assert(oldIndex < tabs_.Size());
+
+    if (oldIndex == index)
+        return;
+
+    SharedPtr<TabButton> tabHolder(tab);
+    RemoveChildAtIndex(oldIndex);
+    tabs_.Erase(oldIndex);
+
+    InsertChild(index, tab);
+    tabs_.Insert(index, tab);
 }
 
 void TabBar::OnResize(const IntVector2& newSize, const IntVector2& delta)

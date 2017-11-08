@@ -43,6 +43,7 @@ public:
     void SetScrollSpeed(int scrollSpeed);
 
     TabButton* AddTab(const String& text);
+    void ReorderTab(TabButton* tab, unsigned index);
 
     /// \see UIElement::OnResize
     void OnResize(const IntVector2& newSize, const IntVector2& delta) override;
@@ -66,7 +67,7 @@ private:
     PODVector<TabButton*> tabs_;
 
     int offset_ = 0;
-    unsigned dragBeginPosition_ = 0;
+    unsigned dragBeginIndex_ = 0;
 };
 
 }
